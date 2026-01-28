@@ -1,0 +1,29 @@
+{
+    "name": "cpcmomentum/worktime",
+    "description": "Nextcloud App zur Arbeitszeiterfassung",
+    "type": "project",
+    "license": "AGPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "cpcMomentum GmbH"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "tecnickcom/tcpdf": "^6.6"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5",
+        "nextcloud/ocp": "^32.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "OCA\\WorkTime\\": "lib/"
+        }
+    },
+    "config": {
+        "platform": {
+            "php": "8.2"
+        }
+    }
+}

@@ -1,0 +1,48 @@
+{
+    "name": "worktime",
+    "version": "0.0.1",
+    "description": "Nextcloud App zur Arbeitszeiterfassung",
+    "main": "src/main.js",
+    "scripts": {
+        "build": "webpack --node-env production --progress",
+        "dev": "webpack --node-env development --progress",
+        "watch": "webpack --node-env development --progress --watch",
+        "serve": "webpack --node-env development serve --progress",
+        "lint": "eslint --ext .js,.vue src",
+        "lint:fix": "eslint --ext .js,.vue src --fix"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/cpcMomentum/worktime.git"
+    },
+    "keywords": [
+        "nextcloud",
+        "app",
+        "worktime",
+        "time-tracking"
+    ],
+    "author": "cpcMomentum GmbH",
+    "license": "AGPL-3.0-or-later",
+    "dependencies": {
+        "@nextcloud/axios": "^2.5.0",
+        "@nextcloud/dialogs": "^5.3.0",
+        "@nextcloud/initial-state": "^2.2.0",
+        "@nextcloud/l10n": "^3.1.0",
+        "@nextcloud/router": "^3.0.1",
+        "@nextcloud/vue": "^8.19.0",
+        "vue": "^2.7.16",
+        "vue-material-design-icons": "^5.3.0",
+        "vuex": "^3.6.2"
+    },
+    "devDependencies": {
+        "@nextcloud/eslint-config": "^8.4.1",
+        "@nextcloud/webpack-vue-config": "^6.1.1",
+        "eslint": "^8.57.0",
+        "webpack": "^5.94.0",
+        "webpack-cli": "^6.0.1"
+    },
+    "engines": {
+        "node": ">=20.0.0",
+        "npm": ">=10.0.0"
+    }
+}

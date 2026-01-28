@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+# vendor/ wird NICHT ignoriert - für einfache Nextcloud-Installation benötigt
+
+# Build output (js/ is committed for easy installation)
+# js/
+css/*.css
+css/*.css.map
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+
+# Composer
+composer.lock
+
+# Package lock (keep package-lock.json for reproducible builds)
+# package-lock.json
+
+# Test coverage
+coverage/
+.phpunit.result.cache
+
+# Nextcloud
+appinfo/signature.json
+
+# Internal documentation
+CLAUDE.md
+docs/archive/
