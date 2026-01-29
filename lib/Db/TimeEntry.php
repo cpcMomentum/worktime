@@ -33,6 +33,14 @@ use OCP\AppFramework\Db\Entity;
  * @method void setCreatedAt(DateTime $createdAt)
  * @method DateTime getUpdatedAt()
  * @method void setUpdatedAt(DateTime $updatedAt)
+ * @method DateTime|null getSubmittedAt()
+ * @method void setSubmittedAt(?DateTime $submittedAt)
+ * @method int|null getSubmittedBy()
+ * @method void setSubmittedBy(?int $submittedBy)
+ * @method DateTime|null getApprovedAt()
+ * @method void setApprovedAt(?DateTime $approvedAt)
+ * @method int|null getApprovedBy()
+ * @method void setApprovedBy(?int $approvedBy)
  */
 class TimeEntry extends Entity implements JsonSerializable {
 
@@ -52,6 +60,10 @@ class TimeEntry extends Entity implements JsonSerializable {
     protected string $status = self::STATUS_DRAFT;
     protected ?DateTime $createdAt = null;
     protected ?DateTime $updatedAt = null;
+    protected ?DateTime $submittedAt = null;
+    protected ?int $submittedBy = null;
+    protected ?DateTime $approvedAt = null;
+    protected ?int $approvedBy = null;
 
     public function __construct() {
         $this->addType('id', 'integer');
@@ -64,6 +76,10 @@ class TimeEntry extends Entity implements JsonSerializable {
         $this->addType('projectId', 'integer');
         $this->addType('createdAt', 'datetime');
         $this->addType('updatedAt', 'datetime');
+        $this->addType('submittedAt', 'datetime');
+        $this->addType('submittedBy', 'integer');
+        $this->addType('approvedAt', 'datetime');
+        $this->addType('approvedBy', 'integer');
     }
 
     public function getWorkHours(): float {
@@ -93,6 +109,10 @@ class TimeEntry extends Entity implements JsonSerializable {
             'status' => $this->status,
             'createdAt' => $this->createdAt?->format('c'),
             'updatedAt' => $this->updatedAt?->format('c'),
+            'submittedAt' => $this->submittedAt?->format('c'),
+            'submittedBy' => $this->submittedBy,
+            'approvedAt' => $this->approvedAt?->format('c'),
+            'approvedBy' => $this->approvedBy,
         ];
     }
 }

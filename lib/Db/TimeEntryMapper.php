@@ -178,4 +178,42 @@ class TimeEntryMapper extends QBMapper {
 
         return (int)$count;
     }
+
+    /**
+     * Get monthly status summary for an employee
+     *
+     * @return array{draft: int, submitted: int, approved: int, rejected: int}
+     */
+    public function getMonthlyStatusSummary(int $employeeId, int $year, int $month): array {
+        $startDate = new DateTime("$year-$month-01");
+        $endDate = (clone $startDate)->modify('last day of this month');
+
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('status', $qb->func()->count('id', 'count'))
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('employee_id', $qb->createNamedParameter($employeeId, IQueryBuilder::PARAM_INT)))
+            ->andWhere($qb->expr()->gte('date', $qb->createNamedParameter($startDate, IQueryBuilder::PARAM_DATE)))
+            ->andWhere($qb->expr()->lte('date', $qb->createNamedParameter($endDate, IQueryBuilder::PARAM_DATE)))
+            ->groupBy('status');
+
+        $result = $qb->executeQuery();
+        $rows = $result->fetchAll();
+        $result->closeCursor();
+
+        $summary = [
+            TimeEntry::STATUS_DRAFT => 0,
+            TimeEntry::STATUS_SUBMITTED => 0,
+            TimeEntry::STATUS_APPROVED => 0,
+            TimeEntry::STATUS_REJECTED => 0,
+        ];
+
+        foreach ($rows as $row) {
+            $status = $row['status'];
+            if (isset($summary[$status])) {
+                $summary[$status] = (int)$row['count'];
+            }
+        }
+
+        return $summary;
+    }
 }

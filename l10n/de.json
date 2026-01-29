@@ -188,7 +188,31 @@
         "HR-Manager": "HR-Manager",
         "HR-Manager können Mitarbeiter verwalten und Anträge genehmigen.": "HR-Manager können Mitarbeiter verwalten und Anträge genehmigen.",
         "Benutzer oder Gruppen auswählen": "Benutzer oder Gruppen auswählen",
-        "HR-Manager gespeichert": "HR-Manager gespeichert"
+        "HR-Manager gespeichert": "HR-Manager gespeichert",
+
+        "Monat einreichen": "Monat einreichen",
+        "Monat genehmigen": "Monat genehmigen",
+        "Möchten Sie alle Einträge für {month} einreichen? Nach dem Einreichen können Sie keine Änderungen mehr vornehmen.": "Möchten Sie alle Einträge für {month} einreichen? Nach dem Einreichen können Sie keine Änderungen mehr vornehmen.",
+        "{count} Einträge wurden eingereicht.": "{count} Einträge wurden eingereicht.",
+        "{count} Einträge wurden genehmigt.": "{count} Einträge wurden genehmigt.",
+        "Fehler beim Einreichen des Monats.": "Fehler beim Einreichen des Monats.",
+        "Fehler beim Genehmigen des Monats.": "Fehler beim Genehmigen des Monats.",
+
+        "Genehmigungen": "Genehmigungen",
+        "{count} Einträge genehmigt": "{count} Einträge genehmigt",
+        "Fehler beim Genehmigen": "Fehler beim Genehmigen",
+        "Alle Status": "Alle Status",
+        "Ausstehend (zur Genehmigung)": "Ausstehend (zur Genehmigung)",
+        "Vollständig genehmigt": "Vollständig genehmigt",
+        "In Bearbeitung": "In Bearbeitung",
+        "Vollständig": "Vollständig",
+        "Mitarbeiter": "Mitarbeiter",
+        "Keine Mitarbeiter mit dem gewählten Filter gefunden.": "Keine Mitarbeiter mit dem gewählten Filter gefunden.",
+
+        "PDF-Archivierung": "PDF-Archivierung",
+        "Genehmigte Monatsberichte werden automatisch als PDF in diesem Ordner archiviert.": "Genehmigte Monatsberichte werden automatisch als PDF in diesem Ordner archiviert.",
+        "Archiv-Ordner": "Archiv-Ordner",
+        "Ordnerstruktur: {path}/{Jahr}/{Nachname_Vorname}/Arbeitszeitnachweis_YYYY-MM.pdf": "Ordnerstruktur: {path}/{Jahr}/{Nachname_Vorname}/Arbeitszeitnachweis_YYYY-MM.pdf"
     },
     "pluralForm": "nplurals=2; plural=(n != 1);"
 }

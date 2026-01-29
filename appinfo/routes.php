@@ -9,6 +9,8 @@ return [
 
         // Time Entries API (specific routes before {id})
         ['name' => 'time_entry#suggestBreak', 'url' => '/api/time-entries/suggest-break', 'verb' => 'POST'],
+        ['name' => 'time_entry#submitMonth', 'url' => '/api/time-entries/submit-month', 'verb' => 'POST'],
+        ['name' => 'time_entry#approveMonth', 'url' => '/api/time-entries/approve-month', 'verb' => 'POST'],
         ['name' => 'time_entry#monthlyStats', 'url' => '/api/time-entries/stats/monthly', 'verb' => 'GET'],
         ['name' => 'time_entry#index', 'url' => '/api/time-entries', 'verb' => 'GET'],
         ['name' => 'time_entry#create', 'url' => '/api/time-entries', 'verb' => 'POST'],
@@ -77,5 +79,6 @@ return [
         ['name' => 'report#pdf', 'url' => '/api/reports/pdf', 'verb' => 'GET'],
         ['name' => 'report#team', 'url' => '/api/reports/team', 'verb' => 'GET'],
         ['name' => 'report#overtime', 'url' => '/api/reports/overtime', 'verb' => 'GET'],
+        ['name' => 'report#allEmployeesStatus', 'url' => '/api/reports/all-status', 'verb' => 'GET'],
     ]
 ];

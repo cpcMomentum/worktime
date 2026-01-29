@@ -22,6 +22,23 @@
                         <span class="details">{{ member.employee.weeklyHours }} Std./Woche</span>
                     </div>
                 </div>
+
+                <!-- Status Badges -->
+                <div v-if="member.monthStatus" class="team-card__status">
+                    <span v-if="member.monthStatus.draft > 0" class="status-badge status-draft">
+                        {{ member.monthStatus.draft }} {{ t('worktime', 'Entwurf') }}
+                    </span>
+                    <span v-if="member.monthStatus.submitted > 0" class="status-badge status-submitted">
+                        {{ member.monthStatus.submitted }} {{ t('worktime', 'Eingereicht') }}
+                    </span>
+                    <span v-if="member.monthStatus.approved > 0" class="status-badge status-approved">
+                        {{ member.monthStatus.approved }} {{ t('worktime', 'Genehmigt') }}
+                    </span>
+                    <span v-if="member.monthStatus.rejected > 0" class="status-badge status-rejected">
+                        {{ member.monthStatus.rejected }} {{ t('worktime', 'Abgelehnt') }}
+                    </span>
+                </div>
+
                 <div class="team-card__stats">
                     <div class="stat">
                         <span class="label">{{ t('worktime', 'Soll') }}</span>
@@ -42,6 +59,19 @@
                         {{ member.statistics.absenceDays }} {{ t('worktime', 'Abwesenheitstage') }}
                     </span>
                 </div>
+
+                <!-- Approve Month Button -->
+                <div v-if="member.monthStatus && member.monthStatus.canApprove" class="team-card__actions">
+                    <NcButton type="primary"
+                        :disabled="approvingEmployee === member.employee.id"
+                        @click="approveMonth(member.employee.id)">
+                        <template #icon>
+                            <NcLoadingIcon v-if="approvingEmployee === member.employee.id" :size="20" />
+                            <CheckIcon v-else :size="20" />
+                        </template>
+                        {{ t('worktime', 'Monat genehmigen') }}
+                    </NcButton>
+                </div>
             </div>
         </div>
 
@@ -61,11 +91,15 @@
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import NcAvatar from '@nextcloud/vue/dist/Components/NcAvatar.js'
+import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import AccountGroupIcon from 'vue-material-design-icons/AccountGroup.vue'
+import CheckIcon from 'vue-material-design-icons/Check.vue'
 import MonthPicker from '../components/MonthPicker.vue'
 import ReportService from '../services/ReportService.js'
+import TimeEntryService from '../services/TimeEntryService.js'
 import { formatMinutesWithUnit } from '../utils/timeUtils.js'
 import { getCurrentYear, getCurrentMonth } from '../utils/dateUtils.js'
+import { showSuccess, showError } from '@nextcloud/dialogs'
 
 export default {
     name: 'TeamView',
@@ -73,7 +107,9 @@ export default {
         NcLoadingIcon,
         NcEmptyContent,
         NcAvatar,
+        NcButton,
         AccountGroupIcon,
+        CheckIcon,
         MonthPicker,
     },
     data() {
@@ -82,6 +118,7 @@ export default {
             month: getCurrentMonth(),
             teamReport: [],
             loading: false,
+            approvingEmployee: null,
         }
     },
     created() {
@@ -107,6 +144,20 @@ export default {
         formatMinutes(minutes) {
             return formatMinutesWithUnit(minutes)
         },
+        async approveMonth(employeeId) {
+            this.approvingEmployee = employeeId
+            try {
+                const result = await TimeEntryService.approveMonth(employeeId, this.year, this.month)
+                showSuccess(t('worktime', '{count} Einträge genehmigt', { count: result.approved }))
+                // Reload to update status badges
+                await this.loadTeamReport()
+            } catch (error) {
+                console.error('Failed to approve month:', error)
+                showError(t('worktime', 'Fehler beim Genehmigen'))
+            } finally {
+                this.approvingEmployee = null
+            }
+        },
     },
 }
 </script>
@@ -114,6 +165,7 @@ export default {
 <style scoped>
 .team-view {
     padding: 20px;
+    padding-left: 50px;
     max-width: 1200px;
 }
 
@@ -143,7 +195,7 @@ export default {
 .team-card__header {
     display: flex;
     gap: 12px;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 .team-card__info {
@@ -159,6 +211,41 @@ export default {
 .team-card__info .details {
     font-size: 0.85em;
     color: var(--color-text-maxcontrast);
+}
+
+.team-card__status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.75em;
+    font-weight: 500;
+}
+
+.status-draft {
+    background: var(--color-background-darker);
+    color: var(--color-text-maxcontrast);
+}
+
+.status-submitted {
+    background: var(--color-warning-element-light);
+    color: var(--color-warning-text);
+}
+
+.status-approved {
+    background: var(--color-success-element-light);
+    color: var(--color-success-text);
+}
+
+.status-rejected {
+    background: var(--color-error-element-light);
+    color: var(--color-error-text);
 }
 
 .team-card__stats {
@@ -195,5 +282,11 @@ export default {
     gap: 16px;
     font-size: 0.85em;
     color: var(--color-text-maxcontrast);
+    margin-bottom: 12px;
+}
+
+.team-card__actions {
+    padding-top: 12px;
+    border-top: 1px solid var(--color-border);
 }
 </style>

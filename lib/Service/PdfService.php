@@ -6,9 +6,12 @@ namespace OCA\WorkTime\Service;
 
 use DateTime;
 use OCA\WorkTime\Db\Absence;
+use OCA\WorkTime\Db\CompanySetting;
 use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\Holiday;
 use OCA\WorkTime\Db\TimeEntry;
+use OCP\Files\IRootFolder;
+use OCP\Files\NotFoundException as FilesNotFoundException;
 use TCPDF;
 
 class PdfService {
@@ -21,6 +24,7 @@ class PdfService {
 
     public function __construct(
         private CompanySettingsService $settingsService,
+        private IRootFolder $rootFolder,
     ) {
     }
 
@@ -34,6 +38,7 @@ class PdfService {
      * @param Absence[] $absences
      * @param Holiday[] $holidays
      * @param array $statistics
+     * @param array|null $approvalInfo Optional approval info: ['approvedBy' => Employee, 'approvedAt' => DateTime]
      * @return string PDF content
      */
     public function generateMonthlyReport(
@@ -43,7 +48,8 @@ class PdfService {
         array $timeEntries,
         array $absences,
         array $holidays,
-        array $statistics
+        array $statistics,
+        ?array $approvalInfo = null
     ): string {
         $pdf = $this->createPdf();
 
@@ -63,6 +69,11 @@ class PdfService {
 
         // Signature section
         $this->addSignatureSection($pdf);
+
+        // Approval info section (if provided)
+        if ($approvalInfo !== null) {
+            $this->addApprovalInfoSection($pdf, $approvalInfo);
+        }
 
         return $pdf->Output('', 'S');
     }
@@ -384,5 +395,101 @@ class PdfService {
             5 => 'Fr', 6 => 'Sa', 7 => 'So',
         ];
         return $days[$dayOfWeek] ?? '';
+    }
+
+    /**
+     * Add approval info section to PDF
+     */
+    private function addApprovalInfoSection(TCPDF $pdf, array $approvalInfo): void {
+        $pdf->Ln(10);
+
+        $pdf->SetFillColor(240, 248, 255);
+        $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_NORMAL);
+        $pdf->Cell(0, 8, 'Genehmigungsvermerk', 1, 1, 'L', true);
+
+        $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_SMALL);
+
+        $approvedBy = $approvalInfo['approvedBy'] ?? null;
+        $approvedAt = $approvalInfo['approvedAt'] ?? null;
+
+        $approverName = $approvedBy instanceof Employee ? $approvedBy->getFullName() : 'Unbekannt';
+        $approvalDate = $approvedAt instanceof DateTime ? $approvedAt->format('d.m.Y H:i') : 'Unbekannt';
+
+        $pdf->Cell(40, 6, 'Genehmigt von:', 1, 0, 'L');
+        $pdf->Cell(0, 6, $approverName, 1, 1, 'L');
+
+        $pdf->Cell(40, 6, 'Genehmigt am:', 1, 0, 'L');
+        $pdf->Cell(0, 6, $approvalDate . ' Uhr', 1, 1, 'L');
+    }
+
+    /**
+     * Archive monthly report PDF to Nextcloud folder
+     *
+     * @param string $adminUserId User ID with write access (usually admin or HR)
+     * @param Employee $employee The employee whose report is archived
+     * @param int $year
+     * @param int $month
+     * @param string $pdfContent PDF content to save
+     * @return string Path where the file was saved
+     * @throws \Exception If archive folder cannot be created or file cannot be written
+     */
+    public function archiveMonthlyReport(
+        string $adminUserId,
+        Employee $employee,
+        int $year,
+        int $month,
+        string $pdfContent
+    ): string {
+        $archivePath = $this->settingsService->getValue(CompanySetting::KEY_PDF_ARCHIVE_PATH);
+
+        // Build folder path: {archivePath}/{Jahr}/{Nachname_Vorname}/
+        $folderPath = sprintf(
+            '%s/%d/%s_%s',
+            trim($archivePath, '/'),
+            $year,
+            $employee->getLastName(),
+            $employee->getFirstName()
+        );
+
+        // Build filename: Arbeitszeitnachweis_{YYYY-MM}.pdf
+        $filename = sprintf('Arbeitszeitnachweis_%d-%02d.pdf', $year, $month);
+
+        try {
+            $userFolder = $this->rootFolder->getUserFolder($adminUserId);
+
+            // Create folder structure if it doesn't exist
+            $currentPath = '';
+            foreach (explode('/', $folderPath) as $folder) {
+                if (empty($folder)) {
+                    continue;
+                }
+                $currentPath .= '/' . $folder;
+                $relativePath = ltrim($currentPath, '/');
+
+                try {
+                    $userFolder->get($relativePath);
+                } catch (FilesNotFoundException) {
+                    $userFolder->newFolder($relativePath);
+                }
+            }
+
+            $fullPath = $folderPath . '/' . $filename;
+            $relativePath = ltrim($fullPath, '/');
+
+            // Check if file already exists and delete it
+            try {
+                $existingFile = $userFolder->get($relativePath);
+                $existingFile->delete();
+            } catch (FilesNotFoundException) {
+                // File doesn't exist, that's fine
+            }
+
+            // Write the file
+            $userFolder->newFile($relativePath, $pdfContent);
+
+            return $fullPath;
+        } catch (\Exception $e) {
+            throw new \Exception('Could not archive PDF: ' . $e->getMessage());
+        }
     }
 }

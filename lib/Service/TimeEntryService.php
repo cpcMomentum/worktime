@@ -7,6 +7,7 @@ namespace OCA\WorkTime\Service;
 use DateTime;
 use OCA\WorkTime\Db\CompanySettingMapper;
 use OCA\WorkTime\Db\CompanySetting;
+use OCA\WorkTime\Db\EmployeeMapper;
 use OCA\WorkTime\Db\TimeEntry;
 use OCA\WorkTime\Db\TimeEntryMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -16,8 +17,21 @@ class TimeEntryService {
     public function __construct(
         private TimeEntryMapper $timeEntryMapper,
         private CompanySettingMapper $settingsMapper,
+        private EmployeeMapper $employeeMapper,
         private AuditLogService $auditLogService,
     ) {
+    }
+
+    /**
+     * Get employee ID for a user ID
+     */
+    private function getEmployeeIdForUser(string $userId): ?int {
+        try {
+            $employee = $this->employeeMapper->findByUserId($userId);
+            return $employee->getId();
+        } catch (DoesNotExistException) {
+            return null;
+        }
     }
 
     /**
@@ -199,6 +213,14 @@ class TimeEntryService {
 
         $entry->setStatus(TimeEntry::STATUS_SUBMITTED);
         $entry->setUpdatedAt(new DateTime());
+        $entry->setSubmittedAt(new DateTime());
+        if ($currentUserId) {
+            $entry->setSubmittedBy($this->getEmployeeIdForUser($currentUserId));
+        }
+        // Clear any previous approval data when re-submitting
+        $entry->setApprovedAt(null);
+        $entry->setApprovedBy(null);
+
         $entry = $this->timeEntryMapper->update($entry);
 
         // Audit log
@@ -207,6 +229,48 @@ class TimeEntryService {
         }
 
         return $entry;
+    }
+
+    /**
+     * Submit all draft entries for a month
+     *
+     * @return array{submitted: int, skipped: int}
+     */
+    public function submitMonth(int $employeeId, int $year, int $month, string $currentUserId = ''): array {
+        $entries = $this->findByEmployeeAndMonth($employeeId, $year, $month);
+
+        $submitted = 0;
+        $skipped = 0;
+        $submittedByEmployeeId = $currentUserId ? $this->getEmployeeIdForUser($currentUserId) : null;
+        $now = new DateTime();
+
+        foreach ($entries as $entry) {
+            if ($entry->getStatus() === TimeEntry::STATUS_DRAFT || $entry->getStatus() === TimeEntry::STATUS_REJECTED) {
+                $oldValues = $entry->jsonSerialize();
+                $entry->setStatus(TimeEntry::STATUS_SUBMITTED);
+                $entry->setUpdatedAt($now);
+                $entry->setSubmittedAt($now);
+                $entry->setSubmittedBy($submittedByEmployeeId);
+                // Clear any previous approval data when re-submitting
+                $entry->setApprovedAt(null);
+                $entry->setApprovedBy(null);
+                $this->timeEntryMapper->update($entry);
+
+                // Audit log
+                if ($currentUserId) {
+                    $this->auditLogService->log($currentUserId, 'submit', 'time_entry', $entry->getId(), $oldValues, $entry->jsonSerialize());
+                }
+
+                $submitted++;
+            } else {
+                $skipped++;
+            }
+        }
+
+        return [
+            'submitted' => $submitted,
+            'skipped' => $skipped,
+        ];
     }
 
     /**
@@ -222,6 +286,11 @@ class TimeEntryService {
 
         $entry->setStatus(TimeEntry::STATUS_APPROVED);
         $entry->setUpdatedAt(new DateTime());
+        $entry->setApprovedAt(new DateTime());
+        if ($currentUserId) {
+            $entry->setApprovedBy($this->getEmployeeIdForUser($currentUserId));
+        }
+
         $entry = $this->timeEntryMapper->update($entry);
 
         // Audit log
@@ -245,6 +314,12 @@ class TimeEntryService {
 
         $entry->setStatus(TimeEntry::STATUS_REJECTED);
         $entry->setUpdatedAt(new DateTime());
+        // Also track who rejected and when
+        $entry->setApprovedAt(new DateTime());
+        if ($currentUserId) {
+            $entry->setApprovedBy($this->getEmployeeIdForUser($currentUserId));
+        }
+
         $entry = $this->timeEntryMapper->update($entry);
 
         // Audit log
@@ -253,6 +328,45 @@ class TimeEntryService {
         }
 
         return $entry;
+    }
+
+    /**
+     * Approve all submitted entries for a month
+     *
+     * @return array{approved: int, skipped: int}
+     */
+    public function approveMonth(int $employeeId, int $year, int $month, string $currentUserId = ''): array {
+        $entries = $this->findByEmployeeAndMonth($employeeId, $year, $month);
+
+        $approved = 0;
+        $skipped = 0;
+        $approvedByEmployeeId = $currentUserId ? $this->getEmployeeIdForUser($currentUserId) : null;
+        $now = new DateTime();
+
+        foreach ($entries as $entry) {
+            if ($entry->getStatus() === TimeEntry::STATUS_SUBMITTED) {
+                $oldValues = $entry->jsonSerialize();
+                $entry->setStatus(TimeEntry::STATUS_APPROVED);
+                $entry->setUpdatedAt($now);
+                $entry->setApprovedAt($now);
+                $entry->setApprovedBy($approvedByEmployeeId);
+                $this->timeEntryMapper->update($entry);
+
+                // Audit log
+                if ($currentUserId) {
+                    $this->auditLogService->log($currentUserId, 'approve', 'time_entry', $entry->getId(), $oldValues, $entry->jsonSerialize());
+                }
+
+                $approved++;
+            } else {
+                $skipped++;
+            }
+        }
+
+        return [
+            'approved' => $approved,
+            'skipped' => $skipped,
+        ];
     }
 
     /**

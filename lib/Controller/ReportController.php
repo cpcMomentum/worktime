@@ -7,6 +7,7 @@ namespace OCA\WorkTime\Controller;
 use DateTime;
 use OCA\WorkTime\AppInfo\Application;
 use OCA\WorkTime\Db\Employee;
+use OCA\WorkTime\Db\TimeEntryMapper;
 use OCA\WorkTime\Service\AbsenceService;
 use OCA\WorkTime\Service\EmployeeService;
 use OCA\WorkTime\Service\HolidayService;
@@ -27,6 +28,7 @@ class ReportController extends OCSController {
         IRequest $request,
         private ?string $userId,
         private TimeEntryService $timeEntryService,
+        private TimeEntryMapper $timeEntryMapper,
         private AbsenceService $absenceService,
         private EmployeeService $employeeService,
         private HolidayService $holidayService,
@@ -132,9 +134,19 @@ class ReportController extends OCSController {
 
             $stats = $this->calculateMonthlyStats($employee, $year, $month, $timeEntries, $absences, $holidays);
 
+            // Get status summary for approval workflow
+            $statusSummary = $this->timeEntryMapper->getMonthlyStatusSummary($employee->getId(), $year, $month);
+
             $report[] = [
                 'employee' => $employee,
                 'statistics' => $stats,
+                'monthStatus' => [
+                    'draft' => $statusSummary['draft'],
+                    'submitted' => $statusSummary['submitted'],
+                    'approved' => $statusSummary['approved'],
+                    'rejected' => $statusSummary['rejected'],
+                    'canApprove' => $statusSummary['submitted'] > 0,
+                ],
             ];
         }
 
@@ -191,6 +203,42 @@ class ReportController extends OCSController {
         } catch (NotFoundException $e) {
             return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
         }
+    }
+
+    #[NoAdminRequired]
+    public function allEmployeesStatus(int $year, int $month): JSONResponse {
+        if (!$this->userId) {
+            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        }
+
+        // Only Admin and HR Manager can see all employees
+        if (!$this->permissionService->isAdmin($this->userId) && !$this->permissionService->isHrManager($this->userId)) {
+            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+        }
+
+        $allEmployees = $this->employeeService->findAllActive();
+
+        $report = [];
+
+        foreach ($allEmployees as $employee) {
+            $statusSummary = $this->timeEntryMapper->getMonthlyStatusSummary($employee->getId(), $year, $month);
+            $totalEntries = $statusSummary['draft'] + $statusSummary['submitted'] + $statusSummary['approved'] + $statusSummary['rejected'];
+
+            $report[] = [
+                'employee' => $employee,
+                'monthStatus' => [
+                    'draft' => $statusSummary['draft'],
+                    'submitted' => $statusSummary['submitted'],
+                    'approved' => $statusSummary['approved'],
+                    'rejected' => $statusSummary['rejected'],
+                    'total' => $totalEntries,
+                    'canApprove' => $statusSummary['submitted'] > 0,
+                    'isFullyApproved' => $totalEntries > 0 && $statusSummary['approved'] === $totalEntries,
+                ],
+            ];
+        }
+
+        return new JSONResponse($report);
     }
 
     /**

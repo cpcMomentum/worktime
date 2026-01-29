@@ -35,6 +35,17 @@ export default {
         }
     },
 
+    async getAllEmployeesStatus(year, month) {
+        try {
+            const response = await api.get('/reports/all-status', {
+                params: { year, month },
+            })
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
     getPdfUrl(employeeId, year, month) {
         return generateUrl('/apps/worktime/api/reports/pdf') +
             `?employeeId=${employeeId}&year=${year}&month=${month}`

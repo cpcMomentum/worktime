@@ -34,6 +34,15 @@
                 </template>
             </NcAppNavigationItem>
 
+            <NcAppNavigationItem v-if="isAdmin || isHrManager"
+                :name="t('worktime', 'Genehmigungen')"
+                :class="{ active: currentView === 'approvals' }"
+                @click="currentView = 'approvals'">
+                <template #icon>
+                    <CheckDecagramIcon :size="20" />
+                </template>
+            </NcAppNavigationItem>
+
             <template #footer>
                 <NcAppNavigationItem v-if="canManageSettings"
                     :name="t('worktime', 'Einstellungen')"
@@ -62,6 +71,7 @@
             <MonthlyReportView v-else-if="currentView === 'report'" />
             <AbsenceView v-else-if="currentView === 'absences'" />
             <TeamView v-else-if="currentView === 'team'" />
+            <ApprovalOverviewView v-else-if="currentView === 'approvals'" />
             <SettingsView v-else-if="currentView === 'settings'" />
         </NcAppContent>
     </NcContent>
@@ -77,6 +87,7 @@ import ClockIcon from 'vue-material-design-icons/Clock.vue'
 import ChartIcon from 'vue-material-design-icons/ChartBar.vue'
 import CalendarIcon from 'vue-material-design-icons/Calendar.vue'
 import AccountGroupIcon from 'vue-material-design-icons/AccountGroup.vue'
+import CheckDecagramIcon from 'vue-material-design-icons/CheckDecagram.vue'
 import CogIcon from 'vue-material-design-icons/Cog.vue'
 import AlertIcon from 'vue-material-design-icons/Alert.vue'
 import { mapGetters, mapActions } from 'vuex'
@@ -84,6 +95,7 @@ import TimeTrackingView from './views/TimeTrackingView.vue'
 import MonthlyReportView from './views/MonthlyReportView.vue'
 import AbsenceView from './views/AbsenceView.vue'
 import TeamView from './views/TeamView.vue'
+import ApprovalOverviewView from './views/ApprovalOverviewView.vue'
 import SettingsView from './views/SettingsView.vue'
 
 export default {
@@ -98,12 +110,14 @@ export default {
         ChartIcon,
         CalendarIcon,
         AccountGroupIcon,
+        CheckDecagramIcon,
         CogIcon,
         AlertIcon,
         TimeTrackingView,
         MonthlyReportView,
         AbsenceView,
         TeamView,
+        ApprovalOverviewView,
         SettingsView,
     },
     data() {
@@ -112,7 +126,7 @@ export default {
         }
     },
     computed: {
-        ...mapGetters('permissions', ['isEmployee', 'canManageSettings', 'canApprove']),
+        ...mapGetters('permissions', ['isEmployee', 'isAdmin', 'isHrManager', 'canManageSettings', 'canApprove']),
     },
     created() {
         this.initializeApp()

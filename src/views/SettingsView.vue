@@ -160,6 +160,25 @@
                 </div>
             </section>
 
+            <section v-if="canManageSettings" class="settings-section">
+                <h3>{{ t('worktime', 'PDF-Archivierung') }}</h3>
+                <p class="section-description">
+                    {{ t('worktime', 'Genehmigte Monatsberichte werden automatisch als PDF in diesem Ordner archiviert.') }}
+                </p>
+                <div class="form-group">
+                    <label for="pdfArchivePath">{{ t('worktime', 'Archiv-Ordner') }}</label>
+                    <input id="pdfArchivePath"
+                        v-model="settings.pdf_archive_path"
+                        type="text"
+                        class="input-field"
+                        :placeholder="'/WorkTime/Archiv'"
+                        @change="saveSetting('pdf_archive_path')">
+                    <p class="help-text">
+                        {{ t('worktime', 'Ordnerstruktur: {path}/{Jahr}/{Nachname_Vorname}/Arbeitszeitnachweis_YYYY-MM.pdf', { path: settings.pdf_archive_path || '/WorkTime/Archiv' }) }}
+                    </p>
+                </div>
+            </section>
+
             <section v-if="canManageHolidays" class="settings-section">
                 <h3>{{ t('worktime', 'Feiertage generieren') }}</h3>
                 <p class="section-description">
@@ -453,5 +472,11 @@ export default {
 .principal-sublabel {
     color: var(--color-text-maxcontrast);
     font-size: 0.9em;
+}
+
+.help-text {
+    margin-top: 4px;
+    font-size: 0.85em;
+    color: var(--color-text-maxcontrast);
 }
 </style>
