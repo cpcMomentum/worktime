@@ -11,7 +11,9 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCSController;
+use OCP\IGroupManager;
 use OCP\IRequest;
+use OCP\IUserManager;
 
 class SettingsController extends OCSController {
 
@@ -20,6 +22,8 @@ class SettingsController extends OCSController {
         private ?string $userId,
         private CompanySettingsService $settingsService,
         private PermissionService $permissionService,
+        private IUserManager $userManager,
+        private IGroupManager $groupManager,
     ) {
         parent::__construct(Application::APP_ID, $request);
     }
@@ -149,5 +153,44 @@ class SettingsController extends OCSController {
         $this->permissionService->setHrManagers($entries);
 
         return new JSONResponse($this->permissionService->getHrManagers());
+    }
+
+    #[NoAdminRequired]
+    public function availablePrincipals(): JSONResponse {
+        if (!$this->userId) {
+            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        }
+
+        if (!$this->permissionService->canManageSettings($this->userId)) {
+            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+        }
+
+        $principals = [];
+
+        // Add users
+        $this->userManager->callForAllUsers(function ($user) use (&$principals) {
+            $principals[] = [
+                'id' => 'user:' . $user->getUID(),
+                'type' => 'user',
+                'label' => $user->getDisplayName(),
+                'sublabel' => $user->getUID(),
+            ];
+        });
+
+        // Add groups
+        $groups = $this->groupManager->search('');
+        foreach ($groups as $group) {
+            $principals[] = [
+                'id' => 'group:' . $group->getGID(),
+                'type' => 'group',
+                'label' => $group->getDisplayName(),
+                'sublabel' => $group->getGID(),
+            ];
+        }
+
+        // Sort by label
+        usort($principals, fn($a, $b) => strcasecmp($a['label'], $b['label']));
+
+        return new JSONResponse($principals);
     }
 }

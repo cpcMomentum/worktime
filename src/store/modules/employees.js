@@ -4,6 +4,7 @@ const state = {
     employees: [],
     currentEmployee: null,
     federalStates: {},
+    availableUsers: [],
     loading: false,
     error: null,
 }
@@ -12,6 +13,7 @@ const getters = {
     employees: (state) => state.employees,
     currentEmployee: (state) => state.currentEmployee,
     federalStates: (state) => state.federalStates,
+    availableUsers: (state) => state.availableUsers,
     loading: (state) => state.loading,
     error: (state) => state.error,
     getEmployeeById: (state) => (id) => state.employees.find((e) => e.id === id),
@@ -26,6 +28,9 @@ const mutations = {
     },
     SET_FEDERAL_STATES(state, states) {
         state.federalStates = states
+    },
+    SET_AVAILABLE_USERS(state, users) {
+        state.availableUsers = users
     },
     SET_LOADING(state, loading) {
         state.loading = loading
@@ -83,6 +88,15 @@ const actions = {
             commit('SET_FEDERAL_STATES', states)
         } catch (error) {
             console.error('Failed to fetch federal states:', error)
+        }
+    },
+
+    async fetchAvailableUsers({ commit }) {
+        try {
+            const users = await EmployeeService.getAvailableUsers()
+            commit('SET_AVAILABLE_USERS', users)
+        } catch (error) {
+            console.error('Failed to fetch available users:', error)
         }
     },
 

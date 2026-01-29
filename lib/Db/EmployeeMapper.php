@@ -109,4 +109,22 @@ class EmployeeMapper extends QBMapper {
             return false;
         }
     }
+
+    /**
+     * @return string[]
+     */
+    public function getAllUserIds(): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('user_id')
+            ->from($this->getTableName());
+
+        $result = $qb->executeQuery();
+        $userIds = [];
+        while ($row = $result->fetch()) {
+            $userIds[] = $row['user_id'];
+        }
+        $result->closeCursor();
+
+        return $userIds;
+    }
 }

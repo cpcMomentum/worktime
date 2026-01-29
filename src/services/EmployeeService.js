@@ -71,4 +71,13 @@ export default {
             handleApiError(error)
         }
     },
+
+    async getAvailableUsers() {
+        try {
+            const response = await api.get('/employees/available-users')
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
 }

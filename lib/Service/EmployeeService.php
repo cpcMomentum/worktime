@@ -8,12 +8,14 @@ use DateTime;
 use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\EmployeeMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\IUserManager;
 
 class EmployeeService {
 
     public function __construct(
         private EmployeeMapper $employeeMapper,
         private AuditLogService $auditLogService,
+        private IUserManager $userManager,
     ) {
     }
 
@@ -211,5 +213,31 @@ class EmployeeService {
         }
 
         return $errors;
+    }
+
+    /**
+     * Get all Nextcloud users that don't have an employee profile yet.
+     *
+     * @return array<array{user: string, displayName: string, subname: string}>
+     */
+    public function getAvailableUsers(): array {
+        $existingUserIds = $this->employeeMapper->getAllUserIds();
+        $users = [];
+
+        $this->userManager->callForAllUsers(function ($user) use (&$users, $existingUserIds) {
+            $uid = $user->getUID();
+            if (!in_array($uid, $existingUserIds, true)) {
+                $users[] = [
+                    'user' => $uid,
+                    'displayName' => $user->getDisplayName(),
+                    'subname' => $user->getEMailAddress() ?? '',
+                ];
+            }
+        });
+
+        // Sort by display name
+        usort($users, fn($a, $b) => strcasecmp($a['displayName'], $b['displayName']));
+
+        return $users;
     }
 }

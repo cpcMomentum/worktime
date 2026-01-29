@@ -81,4 +81,13 @@ export default {
             handleApiError(error)
         }
     },
+
+    async getAvailablePrincipals() {
+        try {
+            const response = await api.get('/settings/available-principals')
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
 }

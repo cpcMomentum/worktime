@@ -198,4 +198,18 @@ class EmployeeController extends OCSController {
     public function federalStates(): JSONResponse {
         return new JSONResponse(Employee::FEDERAL_STATES);
     }
+
+    #[NoAdminRequired]
+    public function availableUsers(): JSONResponse {
+        if (!$this->userId) {
+            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        }
+
+        if (!$this->permissionService->canManageEmployees($this->userId)) {
+            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+        }
+
+        $users = $this->employeeService->getAvailableUsers();
+        return new JSONResponse($users);
+    }
 }

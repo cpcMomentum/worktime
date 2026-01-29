@@ -5,6 +5,59 @@
         <NcLoadingIcon v-if="loading" :size="44" />
 
         <div v-else class="settings-content">
+            <section v-if="canManageEmployees" class="settings-section">
+                <div class="section-header">
+                    <h3>{{ t('worktime', 'Mitarbeiterverwaltung') }}</h3>
+                    <NcButton type="primary" @click="openNewEmployeeForm">
+                        <template #icon>
+                            <Plus :size="20" />
+                        </template>
+                        {{ t('worktime', 'Neuer Mitarbeiter') }}
+                    </NcButton>
+                </div>
+
+                <EmployeeList
+                    :employees="employees"
+                    @edit="editEmployee"
+                    @delete="handleDeleteEmployee" />
+
+                <NcModal v-if="showEmployeeForm"
+                    :name="editingEmployee ? t('worktime', 'Mitarbeiter bearbeiten') : t('worktime', 'Neuer Mitarbeiter')"
+                    @close="closeEmployeeForm">
+                    <EmployeeForm
+                        :employee="editingEmployee"
+                        @saved="onEmployeeSaved"
+                        @cancel="closeEmployeeForm" />
+                </NcModal>
+            </section>
+
+            <section v-if="canManageSettings" class="settings-section">
+                <h3>{{ t('worktime', 'Berechtigungen') }}</h3>
+                <p class="section-description">
+                    {{ t('worktime', 'HR-Manager können Mitarbeiter verwalten und Anträge genehmigen.') }}
+                </p>
+                <div class="form-group">
+                    <label>{{ t('worktime', 'HR-Manager') }}</label>
+                    <NcSelect
+                        v-model="selectedHrManagers"
+                        :options="principalOptions"
+                        :multiple="true"
+                        :close-on-select="false"
+                        :placeholder="t('worktime', 'Benutzer oder Gruppen auswählen')"
+                        label="label"
+                        @input="saveHrManagers">
+                        <template #option="{ label, sublabel, type }">
+                            <div class="principal-option">
+                                <AccountGroup v-if="type === 'group'" :size="20" />
+                                <Account v-else :size="20" />
+                                <span class="principal-label">{{ label }}</span>
+                                <span class="principal-sublabel">{{ sublabel }}</span>
+                            </div>
+                        </template>
+                    </NcSelect>
+                </div>
+            </section>
+
             <section v-if="canManageSettings" class="settings-section">
                 <h3>{{ t('worktime', 'Firmendaten') }}</h3>
                 <div class="form-group">
@@ -136,9 +189,15 @@ import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
+import NcModal from '@nextcloud/vue/dist/Components/NcModal.js'
+import Plus from 'vue-material-design-icons/Plus.vue'
+import Account from 'vue-material-design-icons/Account.vue'
+import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import { mapGetters, mapActions } from 'vuex'
 import SettingsService from '../services/SettingsService.js'
 import HolidayService from '../services/HolidayService.js'
+import EmployeeForm from '../components/EmployeeForm.vue'
+import EmployeeList from '../components/EmployeeList.vue'
 import { showSuccessMessage, showErrorMessage } from '../utils/errorHandler.js'
 import { getCurrentYear } from '../utils/dateUtils.js'
 
@@ -149,17 +208,28 @@ export default {
         NcButton,
         NcSelect,
         NcCheckboxRadioSwitch,
+        NcModal,
+        Plus,
+        Account,
+        AccountGroup,
+        EmployeeForm,
+        EmployeeList,
     },
     data() {
         return {
             loading: false,
             settings: {},
             holidayYear: getCurrentYear() + 1,
+            showEmployeeForm: false,
+            editingEmployee: null,
+            availablePrincipals: [],
+            hrManagers: [],
         }
     },
     computed: {
-        ...mapGetters('permissions', ['canManageSettings', 'canManageHolidays']),
+        ...mapGetters('permissions', ['canManageSettings', 'canManageHolidays', 'canManageEmployees']),
         ...mapGetters('holidays', ['federalStates']),
+        ...mapGetters('employees', { employees: 'employees' }),
         federalStateOptions() {
             return Object.entries(this.federalStates).map(([id, label]) => ({ id, label }))
         },
@@ -171,13 +241,38 @@ export default {
                 this.settings.default_federal_state = value?.id || 'BY'
             },
         },
+        principalOptions() {
+            return this.availablePrincipals.map(p => ({
+                id: p.id,
+                label: p.label,
+                sublabel: p.sublabel,
+                type: p.type,
+            }))
+        },
+        selectedHrManagers: {
+            get() {
+                return this.hrManagers
+                    .map(id => this.principalOptions.find(p => p.id === id))
+                    .filter(p => p !== undefined)
+            },
+            set(value) {
+                this.hrManagers = value.map(p => p.id)
+            },
+        },
     },
     created() {
         this.loadSettings()
         this.$store.dispatch('holidays/fetchFederalStates')
+        if (this.canManageEmployees) {
+            this.$store.dispatch('employees/fetchEmployees')
+        }
+        if (this.canManageSettings) {
+            this.loadHrManagers()
+        }
     },
     methods: {
         ...mapActions('holidays', ['generateAllHolidays']),
+        ...mapActions('employees', ['deleteEmployee']),
         async loadSettings() {
             this.loading = true
             try {
@@ -225,6 +320,55 @@ export default {
                 showErrorMessage(error.message)
             }
         },
+        openNewEmployeeForm() {
+            this.editingEmployee = null
+            this.showEmployeeForm = true
+        },
+        editEmployee(employee) {
+            this.editingEmployee = employee
+            this.showEmployeeForm = true
+        },
+        closeEmployeeForm() {
+            this.showEmployeeForm = false
+            this.editingEmployee = null
+        },
+        async onEmployeeSaved() {
+            this.closeEmployeeForm()
+            await this.$store.dispatch('employees/fetchEmployees')
+            showSuccessMessage(
+                this.editingEmployee
+                    ? this.t('worktime', 'Mitarbeiter aktualisiert')
+                    : this.t('worktime', 'Mitarbeiter erstellt')
+            )
+        },
+        async handleDeleteEmployee(employee) {
+            try {
+                await this.deleteEmployee(employee.id)
+                showSuccessMessage(this.t('worktime', 'Mitarbeiter gelöscht'))
+            } catch (error) {
+                showErrorMessage(error.message)
+            }
+        },
+        async loadHrManagers() {
+            try {
+                const [principals, managers] = await Promise.all([
+                    SettingsService.getAvailablePrincipals(),
+                    SettingsService.getHrManagers(),
+                ])
+                this.availablePrincipals = principals
+                this.hrManagers = managers
+            } catch (error) {
+                console.error('Failed to load HR managers:', error)
+            }
+        },
+        async saveHrManagers() {
+            try {
+                await SettingsService.setHrManagers(this.hrManagers)
+                showSuccessMessage(this.t('worktime', 'HR-Manager gespeichert'))
+            } catch (error) {
+                showErrorMessage(error.message)
+            }
+        },
     },
 }
 </script>
@@ -232,6 +376,7 @@ export default {
 <style scoped>
 .settings-view {
     padding: 20px;
+    padding-left: 50px;
     max-width: 800px;
 }
 
@@ -248,6 +393,17 @@ export default {
 
 .settings-section h3 {
     margin: 0 0 16px 0;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.section-header h3 {
+    margin: 0;
 }
 
 .section-description {
@@ -282,5 +438,20 @@ export default {
 
 .input-small {
     width: 120px;
+}
+
+.principal-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.principal-label {
+    font-weight: 500;
+}
+
+.principal-sublabel {
+    color: var(--color-text-maxcontrast);
+    font-size: 0.9em;
 }
 </style>
