@@ -1,6 +1,14 @@
 <template>
     <NcContent app-name="worktime">
         <NcAppNavigation>
+            <NcAppNavigationItem :name="t('worktime', 'Übersicht')"
+                :class="{ active: currentView === 'dashboard' }"
+                @click="currentView = 'dashboard'">
+                <template #icon>
+                    <ViewDashboardIcon :size="20" />
+                </template>
+            </NcAppNavigationItem>
+
             <NcAppNavigationItem :name="t('worktime', 'Zeiterfassung')"
                 :class="{ active: currentView === 'tracking' }"
                 @click="currentView = 'tracking'">
@@ -9,19 +17,19 @@
                 </template>
             </NcAppNavigationItem>
 
-            <NcAppNavigationItem :name="t('worktime', 'Monatsübersicht')"
-                :class="{ active: currentView === 'report' }"
-                @click="currentView = 'report'">
-                <template #icon>
-                    <ChartIcon :size="20" />
-                </template>
-            </NcAppNavigationItem>
-
             <NcAppNavigationItem :name="t('worktime', 'Abwesenheiten')"
                 :class="{ active: currentView === 'absences' }"
                 @click="currentView = 'absences'">
                 <template #icon>
                     <CalendarIcon :size="20" />
+                </template>
+            </NcAppNavigationItem>
+
+            <NcAppNavigationItem :name="t('worktime', 'Monatsübersicht')"
+                :class="{ active: currentView === 'report' }"
+                @click="currentView = 'report'">
+                <template #icon>
+                    <ChartIcon :size="20" />
                 </template>
             </NcAppNavigationItem>
 
@@ -67,6 +75,7 @@
                 </NcEmptyContent>
             </div>
 
+            <DashboardView v-else-if="currentView === 'dashboard'" @navigate="currentView = $event" />
             <TimeTrackingView v-else-if="currentView === 'tracking'" />
             <MonthlyReportView v-else-if="currentView === 'report'" />
             <AbsenceView v-else-if="currentView === 'absences'" />
@@ -83,6 +92,7 @@ import NcAppNavigation from '@nextcloud/vue/dist/Components/NcAppNavigation.js'
 import NcAppNavigationItem from '@nextcloud/vue/dist/Components/NcAppNavigationItem.js'
 import NcAppContent from '@nextcloud/vue/dist/Components/NcAppContent.js'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
+import ViewDashboardIcon from 'vue-material-design-icons/ViewDashboard.vue'
 import ClockIcon from 'vue-material-design-icons/Clock.vue'
 import ChartIcon from 'vue-material-design-icons/ChartBar.vue'
 import CalendarIcon from 'vue-material-design-icons/Calendar.vue'
@@ -91,6 +101,7 @@ import CheckDecagramIcon from 'vue-material-design-icons/CheckDecagram.vue'
 import CogIcon from 'vue-material-design-icons/Cog.vue'
 import AlertIcon from 'vue-material-design-icons/Alert.vue'
 import { mapGetters, mapActions } from 'vuex'
+import DashboardView from './views/DashboardView.vue'
 import TimeTrackingView from './views/TimeTrackingView.vue'
 import MonthlyReportView from './views/MonthlyReportView.vue'
 import AbsenceView from './views/AbsenceView.vue'
@@ -106,6 +117,7 @@ export default {
         NcAppNavigationItem,
         NcAppContent,
         NcEmptyContent,
+        ViewDashboardIcon,
         ClockIcon,
         ChartIcon,
         CalendarIcon,
@@ -113,6 +125,7 @@ export default {
         CheckDecagramIcon,
         CogIcon,
         AlertIcon,
+        DashboardView,
         TimeTrackingView,
         MonthlyReportView,
         AbsenceView,
@@ -122,7 +135,7 @@ export default {
     },
     data() {
         return {
-            currentView: 'tracking',
+            currentView: 'dashboard',
         }
     },
     computed: {

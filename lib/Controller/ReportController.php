@@ -243,6 +243,16 @@ class ReportController extends OCSController {
 
     /**
      * Calculate monthly statistics
+     *
+     * Logic:
+     * - Target (Soll) = working days × daily hours (only reduced by unpaid leave)
+     * - Actual (Ist) = worked hours + credited absence hours (paid absences)
+     * - Overtime = Actual - Target
+     *
+     * Absence types:
+     * - Paid (vacation, sick, child_sick, special, training, compensatory):
+     *   Credited as work time (added to Ist)
+     * - Unpaid: Reduces target (Soll), not credited as work time
      */
     private function calculateMonthlyStats(
         Employee $employee,
@@ -253,31 +263,66 @@ class ReportController extends OCSController {
         array $holidays
     ): array {
         $startDate = new DateTime("$year-$month-01");
-        $endDate = (clone $startDate)->modify('last day of this month');
+        $monthEndDate = (clone $startDate)->modify('last day of this month');
+        $today = new DateTime('today');
 
-        // Count working days in the month
+        // For current month: calculate only up to today
+        // For past months: calculate entire month
+        if ($year === (int)$today->format('Y') && $month === (int)$today->format('n') && $today < $monthEndDate) {
+            $endDate = $today;
+        } else {
+            $endDate = $monthEndDate;
+        }
+
+        // Count working days in the period
         $workingDays = $this->countWorkingDays($startDate, $endDate, $holidays);
 
         // Calculate target minutes based on weekly hours
         $dailyMinutes = ((float)$employee->getWeeklyHours() / 5) * 60;
         $targetMinutes = (int)round($workingDays * $dailyMinutes);
 
-        // Count absence days that reduce target
-        $absenceDays = 0;
+        // Process absences: separate paid vs unpaid
+        // Only count absences that have started (startDate <= endDate)
+        $paidAbsenceMinutes = 0;
+        $paidAbsenceDays = 0;
+        $unpaidAbsenceDays = 0;
+
         foreach ($absences as $absence) {
-            if ($absence->isApproved()) {
-                $absenceDays += (float)$absence->getDays();
+            if ($absence->isApproved() && $absence->getStartDate() <= $endDate) {
+                // Calculate actual days within the period
+                $absenceStart = $absence->getStartDate();
+                $absenceEnd = $absence->getEndDate();
+
+                // If absence extends beyond endDate, limit to endDate
+                if ($absenceEnd > $endDate) {
+                    $absenceEnd = $endDate;
+                }
+
+                // Calculate working days for this absence within the period
+                $days = $this->countWorkingDays($absenceStart, $absenceEnd, $holidays);
+
+                if ($absence->getType() === \OCA\WorkTime\Db\Absence::TYPE_UNPAID) {
+                    // Unpaid leave reduces target
+                    $unpaidAbsenceDays += $days;
+                } else {
+                    // Paid leave is credited as work time
+                    $paidAbsenceDays += $days;
+                    $paidAbsenceMinutes += (int)round($days * $dailyMinutes);
+                }
             }
         }
 
-        // Reduce target by absence days
-        $adjustedTargetMinutes = (int)round($targetMinutes - ($absenceDays * $dailyMinutes));
+        // Adjust target only for unpaid leave
+        $adjustedTargetMinutes = (int)round($targetMinutes - ($unpaidAbsenceDays * $dailyMinutes));
 
-        // Sum actual work minutes
-        $actualMinutes = 0;
+        // Sum actual work minutes from time entries
+        $workedMinutes = 0;
         foreach ($timeEntries as $entry) {
-            $actualMinutes += $entry->getWorkMinutes();
+            $workedMinutes += $entry->getWorkMinutes();
         }
+
+        // Effective actual = worked + paid absences
+        $actualMinutes = $workedMinutes + $paidAbsenceMinutes;
 
         // Calculate overtime
         $overtimeMinutes = $actualMinutes - $adjustedTargetMinutes;
@@ -285,10 +330,16 @@ class ReportController extends OCSController {
         return [
             'workingDays' => $workingDays,
             'holidayCount' => count($holidays),
-            'absenceDays' => $absenceDays,
+            'paidAbsenceDays' => $paidAbsenceDays,
+            'unpaidAbsenceDays' => $unpaidAbsenceDays,
+            'absenceDays' => $paidAbsenceDays + $unpaidAbsenceDays,
             'dailyMinutes' => (int)$dailyMinutes,
             'targetMinutes' => $targetMinutes,
             'adjustedTargetMinutes' => $adjustedTargetMinutes,
+            'workedMinutes' => $workedMinutes,
+            'workedHours' => round($workedMinutes / 60, 2),
+            'paidAbsenceMinutes' => $paidAbsenceMinutes,
+            'paidAbsenceHours' => round($paidAbsenceMinutes / 60, 2),
             'actualMinutes' => $actualMinutes,
             'actualHours' => round($actualMinutes / 60, 2),
             'overtimeMinutes' => $overtimeMinutes,

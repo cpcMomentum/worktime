@@ -359,9 +359,18 @@ class TimeEntryController extends OCSController {
         array $holidays
     ): array {
         $startDate = new DateTime("$year-$month-01");
-        $endDate = (clone $startDate)->modify('last day of this month');
+        $monthEndDate = (clone $startDate)->modify('last day of this month');
+        $today = new DateTime('today');
 
-        // Count working days in the month
+        // For current month: calculate only up to today
+        // For past months: calculate entire month
+        if ($year === (int)$today->format('Y') && $month === (int)$today->format('n') && $today < $monthEndDate) {
+            $endDate = $today;
+        } else {
+            $endDate = $monthEndDate;
+        }
+
+        // Count working days in the period
         $workingDays = $this->countWorkingDays($startDate, $endDate, $holidays);
 
         // Calculate target minutes based on weekly hours
@@ -369,10 +378,21 @@ class TimeEntryController extends OCSController {
         $targetMinutes = (int)round($workingDays * $dailyMinutes);
 
         // Count absence days that reduce target
+        // Only count absences that have started (startDate <= endDate)
         $absenceDays = 0;
         foreach ($absences as $absence) {
-            if ($absence->isApproved()) {
-                $absenceDays += (float)$absence->getDays();
+            if ($absence->isApproved() && $absence->getStartDate() <= $endDate) {
+                // Calculate actual days within the period
+                $absenceStart = $absence->getStartDate();
+                $absenceEnd = $absence->getEndDate();
+
+                // If absence extends beyond endDate, limit to endDate
+                if ($absenceEnd > $endDate) {
+                    $absenceEnd = $endDate;
+                }
+
+                // Calculate working days for this absence within the period
+                $absenceDays += $this->countWorkingDays($absenceStart, $absenceEnd, $holidays);
             }
         }
 
