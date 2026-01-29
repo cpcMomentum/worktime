@@ -46,7 +46,7 @@
 
             <div class="report-section">
                 <h3>{{ t('worktime', 'Zeiteinträge') }}</h3>
-                <TimeEntryList :entries="report.timeEntries" />
+                <TimeEntryList :entries="report.timeEntries" readonly />
             </div>
 
             <div v-if="report.absences.length > 0" class="report-section">
@@ -133,6 +133,12 @@ export default {
                 }
             },
         },
+    },
+    mounted() {
+        // Daten bei jedem View-Wechsel neu laden
+        if (this.employeeId) {
+            this.loadReport()
+        }
     },
     methods: {
         async loadReport() {

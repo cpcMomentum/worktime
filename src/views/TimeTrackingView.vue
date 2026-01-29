@@ -36,7 +36,8 @@
 
         <TimeEntryList v-else
             :entries="timeEntries"
-            @edit="editEntry" />
+            @edit="editEntry"
+            @deleted="loadStatistics" />
 
         <NcModal v-if="showForm"
             :name="editingEntry ? t('worktime', 'Eintrag bearbeiten') : t('worktime', 'Neuer Eintrag')"
@@ -104,6 +105,12 @@ export default {
                 }
             },
         },
+    },
+    mounted() {
+        // Daten bei jedem View-Wechsel neu laden
+        if (this.employeeId) {
+            this.loadData()
+        }
     },
     methods: {
         ...mapActions('timeEntries', ['fetchTimeEntries', 'setSelectedMonth', 'submitMonth']),
@@ -190,7 +197,7 @@ export default {
     display: flex;
     align-items: center;
     gap: 6px;
-    color: var(--color-success);
+    color: var(--color-success-text);
     font-weight: 500;
 }
 </style>

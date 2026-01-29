@@ -14,6 +14,24 @@ export function formatDate(date) {
 }
 
 /**
+ * Format a date string with weekday (e.g., "Mo, 07.01.2026")
+ * @param {string|Date} date
+ * @returns {string}
+ */
+export function formatDateWithWeekday(date) {
+    if (!date) return ''
+    const d = typeof date === 'string' ? new Date(date) : date
+    const days = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']
+    const weekday = days[d.getDay()]
+    const dateStr = d.toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+    })
+    return `${weekday}, ${dateStr}`
+}
+
+/**
  * Format a date to short format (DD.MM.)
  * @param {string|Date} date
  * @returns {string}

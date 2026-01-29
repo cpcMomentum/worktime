@@ -159,6 +159,12 @@ export default {
             },
         },
     },
+    mounted() {
+        // Daten bei jedem View-Wechsel neu laden
+        if (this.employeeId) {
+            this.loadData()
+        }
+    },
     methods: {
         ...mapActions('absences', ['fetchAbsences', 'fetchVacationStats', 'deleteAbsence', 'cancelAbsence']),
         async loadData() {

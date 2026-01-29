@@ -64,7 +64,7 @@
                     <div class="progress-stats">
                         <div class="progress-stat">
                             <span class="progress-label">{{ t('worktime', 'Soll') }}</span>
-                            <span class="progress-value">{{ formatMinutesWithUnit(monthlyStats.targetMinutes) }}</span>
+                            <span class="progress-value">{{ formatMinutesWithUnit(monthlyStats.monthlyTargetMinutes) }}</span>
                         </div>
                         <div class="progress-stat">
                             <span class="progress-label">{{ t('worktime', 'Ist') }}</span>
@@ -151,7 +151,7 @@ export default {
                 yearTotal: 0,
             },
             monthlyStats: {
-                targetMinutes: 0,
+                monthlyTargetMinutes: 0,
                 actualMinutes: 0,
                 overtimeMinutes: 0,
             },
@@ -164,12 +164,12 @@ export default {
             return getMonthName(this.month)
         },
         progressPercent() {
-            if (!this.monthlyStats.targetMinutes) return 0
-            const percent = Math.round((this.monthlyStats.actualMinutes / this.monthlyStats.targetMinutes) * 100)
+            if (!this.monthlyStats.monthlyTargetMinutes) return 0
+            const percent = Math.round((this.monthlyStats.actualMinutes / this.monthlyStats.monthlyTargetMinutes) * 100)
             return Math.min(percent, 100)
         },
         remainingMinutes() {
-            return Math.max(0, this.monthlyStats.targetMinutes - this.monthlyStats.actualMinutes)
+            return Math.max(0, this.monthlyStats.monthlyTargetMinutes - this.monthlyStats.actualMinutes)
         },
         remainingDays() {
             if (!this.currentEmployee?.weeklyHours) return 0
@@ -186,6 +186,12 @@ export default {
                 }
             },
         },
+    },
+    mounted() {
+        // Daten bei jedem View-Wechsel neu laden
+        if (this.employeeId) {
+            this.loadData()
+        }
     },
     methods: {
         async loadData() {
@@ -209,7 +215,7 @@ export default {
 
                 if (monthlyReport?.statistics) {
                     this.monthlyStats = {
-                        targetMinutes: monthlyReport.statistics.adjustedTargetMinutes || 0,
+                        monthlyTargetMinutes: monthlyReport.statistics.adjustedMonthlyTargetMinutes || 0,
                         actualMinutes: monthlyReport.statistics.actualMinutes || 0,
                         overtimeMinutes: monthlyReport.statistics.overtimeMinutes || 0,
                     }
@@ -324,11 +330,11 @@ export default {
 }
 
 .stat-value.positive {
-    color: var(--color-success);
+    color: var(--color-success-text);
 }
 
 .stat-value.negative {
-    color: #e53935;
+    color: var(--color-error-text);
 }
 
 .progress-card {
@@ -379,7 +385,7 @@ export default {
 }
 
 .progress-info .complete {
-    color: var(--color-success);
+    color: var(--color-success-text);
     font-weight: 500;
 }
 

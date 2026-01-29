@@ -10,7 +10,7 @@
                     <th>{{ t('worktime', 'Arbeitszeit') }}</th>
                     <th>{{ t('worktime', 'Projekt') }}</th>
                     <th>{{ t('worktime', 'Status') }}</th>
-                    <th>{{ t('worktime', 'Aktionen') }}</th>
+                    <th v-if="!readonly">{{ t('worktime', 'Aktionen') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -28,7 +28,7 @@
                             {{ getStatusLabel(entry.status) }}
                         </span>
                     </td>
-                    <td class="actions">
+                    <td v-if="!readonly" class="actions">
                         <NcButton type="tertiary"
                             v-if="canEdit(entry)"
                             :aria-label="t('worktime', 'Bearbeiten')"
@@ -69,7 +69,7 @@ import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import DeleteIcon from 'vue-material-design-icons/Delete.vue'
 import ClockIcon from 'vue-material-design-icons/Clock.vue'
 import { mapGetters, mapActions } from 'vuex'
-import { formatDate, isWeekend } from '../utils/dateUtils.js'
+import { formatDateWithWeekday, isWeekend } from '../utils/dateUtils.js'
 import { formatMinutesWithUnit } from '../utils/timeUtils.js'
 import { confirmAction } from '../utils/errorHandler.js'
 
@@ -87,6 +87,10 @@ export default {
             type: Array,
             default: () => [],
         },
+        readonly: {
+            type: Boolean,
+            default: false,
+        },
     },
     computed: {
         ...mapGetters('projects', ['getProjectById']),
@@ -102,7 +106,7 @@ export default {
     methods: {
         ...mapActions('timeEntries', ['deleteTimeEntry']),
         formatDate(date) {
-            return formatDate(date)
+            return formatDateWithWeekday(date)
         },
         formatMinutes(minutes) {
             return formatMinutesWithUnit(minutes)
@@ -140,6 +144,7 @@ export default {
             if (confirmed) {
                 try {
                     await this.deleteTimeEntry(entry.id)
+                    this.$emit('deleted')
                 } catch (error) {
                     console.error('Failed to delete entry:', error)
                 }
