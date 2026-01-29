@@ -106,6 +106,20 @@
             <section v-if="canManageSettings" class="settings-section">
                 <h3>{{ t('worktime', 'Arbeitszeit-Regeln') }}</h3>
                 <div class="form-group">
+                    <label for="maxDailyHours">{{ t('worktime', 'Maximale tägliche Arbeitszeit (Stunden)') }}</label>
+                    <input id="maxDailyHours"
+                        v-model.number="settings.max_daily_hours"
+                        type="number"
+                        min="1"
+                        max="24"
+                        step="0.5"
+                        class="input-field input-small"
+                        @change="saveSetting('max_daily_hours')">
+                    <p class="help-text">
+                        {{ t('worktime', 'Nach §3 ArbZG sind maximal 10 Stunden erlaubt (Ausnahmen möglich).') }}
+                    </p>
+                </div>
+                <div class="form-group">
                     <NcCheckboxRadioSwitch :checked.sync="settings.require_project"
                         @update:checked="saveSettingBool('require_project')">
                         {{ t('worktime', 'Projekt erforderlich') }}
@@ -177,6 +191,28 @@
                         {{ t('worktime', 'Ordnerstruktur: {path}/{Jahr}/{Nachname_Vorname}/Arbeitszeitnachweis_YYYY-MM.pdf', { path: settings.pdf_archive_path || '/WorkTime/Archiv' }) }}
                     </p>
                 </div>
+            </section>
+
+            <section v-if="canManageSettings" class="settings-section">
+                <h3>{{ t('worktime', 'Sondertage') }}</h3>
+                <p class="section-description">
+                    {{ t('worktime', 'Definieren Sie, ob Heiligabend und Silvester als halbe Arbeitstage gelten.') }}
+                </p>
+                <div class="form-group">
+                    <NcCheckboxRadioSwitch :checked.sync="settings.christmas_eve_half_day"
+                        @update:checked="saveSettingBool('christmas_eve_half_day')">
+                        {{ t('worktime', 'Heiligabend (24.12.) als halber Arbeitstag') }}
+                    </NcCheckboxRadioSwitch>
+                </div>
+                <div class="form-group">
+                    <NcCheckboxRadioSwitch :checked.sync="settings.new_years_eve_half_day"
+                        @update:checked="saveSettingBool('new_years_eve_half_day')">
+                        {{ t('worktime', 'Silvester (31.12.) als halber Arbeitstag') }}
+                    </NcCheckboxRadioSwitch>
+                </div>
+                <p class="help-text">
+                    {{ t('worktime', 'Hinweis: Änderungen wirken sich auf neu generierte Feiertage aus. Generieren Sie die Feiertage erneut, um die Änderungen anzuwenden.') }}
+                </p>
             </section>
 
             <section v-if="canManageHolidays" class="settings-section">
@@ -303,6 +339,8 @@ export default {
                     require_description: settings.require_description === '1',
                     allow_future_entries: settings.allow_future_entries === '1',
                     approval_required: settings.approval_required === '1',
+                    christmas_eve_half_day: settings.christmas_eve_half_day === '1',
+                    new_years_eve_half_day: settings.new_years_eve_half_day === '1',
                 }
             } catch (error) {
                 console.error('Failed to load settings:', error)

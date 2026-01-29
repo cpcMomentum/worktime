@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Service;
 
 use DateTime;
+use OCA\WorkTime\Db\CompanySetting;
+use OCA\WorkTime\Db\CompanySettingMapper;
 use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\Holiday;
 use OCA\WorkTime\Db\HolidayMapper;
@@ -35,6 +37,7 @@ class HolidayService {
 
     public function __construct(
         private HolidayMapper $holidayMapper,
+        private CompanySettingMapper $settingsMapper,
         private AuditLogService $auditLogService,
     ) {
     }
@@ -114,6 +117,10 @@ class HolidayService {
             $holidays[] = $this->createHoliday($year, (int)$fronleichnam->format('m'), (int)$fronleichnam->format('d'), 'Fronleichnam', $federalState);
         }
 
+        // Add special half-day holidays (Christmas Eve, New Year's Eve)
+        $specialDays = $this->generateSpecialDays($year, $federalState);
+        $holidays = array_merge($holidays, $specialDays);
+
         // Audit log
         if ($currentUserId) {
             $this->auditLogService->logCreate($currentUserId, 'holiday', null, [
@@ -121,6 +128,30 @@ class HolidayService {
                 'federalState' => $federalState,
                 'count' => count($holidays),
             ]);
+        }
+
+        return $holidays;
+    }
+
+    /**
+     * Generate special days (Christmas Eve, New Year's Eve) as half-day holidays
+     * based on company settings
+     *
+     * @return Holiday[]
+     */
+    private function generateSpecialDays(int $year, string $federalState): array {
+        $holidays = [];
+
+        // Christmas Eve (24.12.)
+        $christmasEveHalfDay = $this->settingsMapper->getValueAsBool(CompanySetting::KEY_CHRISTMAS_EVE_HALF_DAY);
+        if ($christmasEveHalfDay) {
+            $holidays[] = $this->createHoliday($year, 12, 24, 'Heiligabend', $federalState, true);
+        }
+
+        // New Year's Eve (31.12.)
+        $newYearsEveHalfDay = $this->settingsMapper->getValueAsBool(CompanySetting::KEY_NEW_YEARS_EVE_HALF_DAY);
+        if ($newYearsEveHalfDay) {
+            $holidays[] = $this->createHoliday($year, 12, 31, 'Silvester', $federalState, true);
         }
 
         return $holidays;
@@ -161,12 +192,12 @@ class HolidayService {
     /**
      * Create and save a holiday
      */
-    private function createHoliday(int $year, int $month, int $day, string $name, string $federalState): Holiday {
+    private function createHoliday(int $year, int $month, int $day, string $name, string $federalState, bool $isHalfDay = false): Holiday {
         $holiday = new Holiday();
         $holiday->setDate(new DateTime("$year-$month-$day"));
         $holiday->setName($name);
         $holiday->setFederalState($federalState);
-        $holiday->setIsHalfDay(false);
+        $holiday->setIsHalfDay($isHalfDay);
         $holiday->setYear($year);
         $holiday->setCreatedAt(new DateTime());
 

@@ -32,6 +32,8 @@ class CompanySetting extends Entity implements JsonSerializable {
     public const KEY_MIN_BREAK_MINUTES_9H = 'min_break_minutes_9h';
     public const KEY_APPROVAL_REQUIRED = 'approval_required';
     public const KEY_PDF_ARCHIVE_PATH = 'pdf_archive_path';
+    public const KEY_CHRISTMAS_EVE_HALF_DAY = 'christmas_eve_half_day';
+    public const KEY_NEW_YEARS_EVE_HALF_DAY = 'new_years_eve_half_day';
 
     public const DEFAULTS = [
         self::KEY_COMPANY_NAME => '',
@@ -46,6 +48,8 @@ class CompanySetting extends Entity implements JsonSerializable {
         self::KEY_MIN_BREAK_MINUTES_9H => '45',
         self::KEY_APPROVAL_REQUIRED => '1',
         self::KEY_PDF_ARCHIVE_PATH => '/WorkTime/Archiv',
+        self::KEY_CHRISTMAS_EVE_HALF_DAY => '1',
+        self::KEY_NEW_YEARS_EVE_HALF_DAY => '1',
     ];
 
     protected string $settingKey = '';

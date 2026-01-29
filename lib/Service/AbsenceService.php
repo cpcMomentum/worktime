@@ -68,19 +68,24 @@ class AbsenceService {
         string $endDate,
         ?string $note = null,
         string $federalState = 'BY',
-        string $currentUserId = ''
+        string $currentUserId = '',
+        bool $isHalfDay = false
     ): Absence {
         $startDateObj = new DateTime($startDate);
         $endDateObj = new DateTime($endDate);
 
         // Validate
-        $errors = $this->validate($employeeId, $type, $startDateObj, $endDateObj);
+        $errors = $this->validate($employeeId, $type, $startDateObj, $endDateObj, null, $isHalfDay);
         if (!empty($errors)) {
             throw new ValidationException($errors);
         }
 
-        // Calculate working days
-        $days = $this->calculateWorkingDays($startDateObj, $endDateObj, $federalState);
+        // Calculate working days (half day = 0.5, otherwise calculate)
+        if ($isHalfDay) {
+            $days = 0.5;
+        } else {
+            $days = $this->calculateWorkingDays($startDateObj, $endDateObj, $federalState);
+        }
 
         $absence = new Absence();
         $absence->setEmployeeId($employeeId);
@@ -88,6 +93,7 @@ class AbsenceService {
         $absence->setStartDate($startDateObj);
         $absence->setEndDate($endDateObj);
         $absence->setDays((string)$days);
+        $absence->setIsHalfDay($isHalfDay);
         $absence->setNote($note);
         $absence->setStatus(Absence::STATUS_PENDING);
         $absence->setCreatedAt(new DateTime());
@@ -114,7 +120,8 @@ class AbsenceService {
         string $endDate,
         ?string $note = null,
         string $federalState = 'BY',
-        string $currentUserId = ''
+        string $currentUserId = '',
+        bool $isHalfDay = false
     ): Absence {
         $absence = $this->find($id);
         $oldValues = $absence->jsonSerialize();
@@ -128,18 +135,23 @@ class AbsenceService {
         $endDateObj = new DateTime($endDate);
 
         // Validate
-        $errors = $this->validate($absence->getEmployeeId(), $type, $startDateObj, $endDateObj, $id);
+        $errors = $this->validate($absence->getEmployeeId(), $type, $startDateObj, $endDateObj, $id, $isHalfDay);
         if (!empty($errors)) {
             throw new ValidationException($errors);
         }
 
-        // Calculate working days
-        $days = $this->calculateWorkingDays($startDateObj, $endDateObj, $federalState);
+        // Calculate working days (half day = 0.5, otherwise calculate)
+        if ($isHalfDay) {
+            $days = 0.5;
+        } else {
+            $days = $this->calculateWorkingDays($startDateObj, $endDateObj, $federalState);
+        }
 
         $absence->setType($type);
         $absence->setStartDate($startDateObj);
         $absence->setEndDate($endDateObj);
         $absence->setDays((string)$days);
+        $absence->setIsHalfDay($isHalfDay);
         $absence->setNote($note);
         $absence->setStatus(Absence::STATUS_PENDING);
         $absence->setUpdatedAt(new DateTime());
@@ -296,7 +308,7 @@ class AbsenceService {
     /**
      * @return array<string, string[]>
      */
-    private function validate(int $employeeId, string $type, DateTime $startDate, DateTime $endDate, ?int $excludeId = null): array {
+    private function validate(int $employeeId, string $type, DateTime $startDate, DateTime $endDate, ?int $excludeId = null, bool $isHalfDay = false): array {
         $errors = [];
 
         if (!array_key_exists($type, Absence::TYPES)) {
@@ -305,6 +317,11 @@ class AbsenceService {
 
         if ($startDate > $endDate) {
             $errors['endDate'] = ['End date must be after start date'];
+        }
+
+        // Half day must be single day
+        if ($isHalfDay && $startDate->format('Y-m-d') !== $endDate->format('Y-m-d')) {
+            $errors['isHalfDay'] = ['Halber Tag ist nur für einen einzelnen Tag möglich'];
         }
 
         // Check for overlapping absences

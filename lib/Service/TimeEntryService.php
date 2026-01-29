@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Service;
 
 use DateTime;
+use OCA\WorkTime\Db\Absence;
+use OCA\WorkTime\Db\AbsenceMapper;
 use OCA\WorkTime\Db\CompanySettingMapper;
 use OCA\WorkTime\Db\CompanySetting;
 use OCA\WorkTime\Db\EmployeeMapper;
@@ -18,6 +20,7 @@ class TimeEntryService {
         private TimeEntryMapper $timeEntryMapper,
         private CompanySettingMapper $settingsMapper,
         private EmployeeMapper $employeeMapper,
+        private AbsenceMapper $absenceMapper,
         private AuditLogService $auditLogService,
     ) {
     }
@@ -90,8 +93,15 @@ class TimeEntryService {
         $startTimeObj = DateTime::createFromFormat('H:i', $startTime);
         $endTimeObj = DateTime::createFromFormat('H:i', $endTime);
 
-        // Validate
-        $errors = $this->validate($dateObj, $startTimeObj, $endTimeObj, $breakMinutes);
+        // Validate (including absence conflict check)
+        $errors = $this->validate($dateObj, $startTimeObj, $endTimeObj, $breakMinutes, $employeeId);
+
+        // Check for overlapping entries
+        $overlapError = $this->checkOverlap($employeeId, $dateObj, $startTimeObj, $endTimeObj);
+        if ($overlapError) {
+            $errors['overlap'] = [$overlapError];
+        }
+
         if (!empty($errors)) {
             throw new ValidationException($errors);
         }
@@ -143,8 +153,15 @@ class TimeEntryService {
         $startTimeObj = DateTime::createFromFormat('H:i', $startTime);
         $endTimeObj = DateTime::createFromFormat('H:i', $endTime);
 
-        // Validate
-        $errors = $this->validate($dateObj, $startTimeObj, $endTimeObj, $breakMinutes);
+        // Validate (including absence conflict check)
+        $errors = $this->validate($dateObj, $startTimeObj, $endTimeObj, $breakMinutes, $entry->getEmployeeId());
+
+        // Check for overlapping entries (exclude current entry)
+        $overlapError = $this->checkOverlap($entry->getEmployeeId(), $dateObj, $startTimeObj, $endTimeObj, $id);
+        if ($overlapError) {
+            $errors['overlap'] = [$overlapError];
+        }
+
         if (!empty($errors)) {
             throw new ValidationException($errors);
         }
@@ -456,21 +473,21 @@ class TimeEntryService {
     /**
      * @return array<string, string[]>
      */
-    private function validate(DateTime $date, ?DateTime $startTime, ?DateTime $endTime, int $breakMinutes): array {
+    private function validate(DateTime $date, ?DateTime $startTime, ?DateTime $endTime, int $breakMinutes, ?int $employeeId = null): array {
         $errors = [];
 
         // Check future dates
         $allowFuture = $this->settingsMapper->getValueAsBool(CompanySetting::KEY_ALLOW_FUTURE_ENTRIES);
         if (!$allowFuture && $date > new DateTime('today')) {
-            $errors['date'] = ['Future dates are not allowed'];
+            $errors['date'] = ['Zukünftige Einträge sind nicht erlaubt'];
         }
 
         if (!$startTime) {
-            $errors['startTime'] = ['Invalid start time format'];
+            $errors['startTime'] = ['Ungültiges Zeitformat'];
         }
 
         if (!$endTime) {
-            $errors['endTime'] = ['Invalid end time format'];
+            $errors['endTime'] = ['Ungültiges Zeitformat'];
         }
 
         if ($startTime && $endTime) {
@@ -482,19 +499,116 @@ class TimeEntryService {
             // Check max daily hours
             $maxHours = $this->settingsMapper->getValueAsFloat(CompanySetting::KEY_MAX_DAILY_HOURS);
             if ($grossMinutes / 60 > $maxHours) {
-                $errors['endTime'] = ["Maximum daily hours ({$maxHours}h) exceeded"];
+                $errors['endTime'] = ["Maximale tägliche Arbeitszeit ({$maxHours} Std.) überschritten"];
             }
 
             // Validate break
             if (!$this->validateBreak((int)$grossMinutes, $breakMinutes)) {
-                $errors['breakMinutes'] = ['Break time does not meet legal requirements'];
+                $minBreak = $grossMinutes > 9 * 60 ? 45 : 30;
+                $errors['breakMinutes'] = ["Mindestpause von {$minBreak} Minuten erforderlich (§4 ArbZG)"];
+            }
+
+            // Check for absence conflict
+            if ($employeeId !== null) {
+                $absenceError = $this->checkAbsenceConflict($employeeId, $date, (int)$grossMinutes - $breakMinutes);
+                if ($absenceError !== null) {
+                    $errors['date'] = [$absenceError];
+                }
             }
         }
 
         if ($breakMinutes < 0) {
-            $errors['breakMinutes'] = ['Break cannot be negative'];
+            $errors['breakMinutes'] = ['Pause kann nicht negativ sein'];
         }
 
         return $errors;
+    }
+
+    /**
+     * Check if a time entry conflicts with an approved absence
+     *
+     * @param int $employeeId Employee ID
+     * @param DateTime $date Date of the time entry
+     * @param int $workMinutes Net work minutes planned
+     * @return string|null Error message if conflict, null otherwise
+     */
+    private function checkAbsenceConflict(int $employeeId, DateTime $date, int $workMinutes): ?string {
+        // Find absences that cover this date
+        $absences = $this->absenceMapper->findByEmployeeAndDate($employeeId, $date);
+
+        foreach ($absences as $absence) {
+            // Only check approved absences
+            if ($absence->getStatus() !== Absence::STATUS_APPROVED) {
+                continue;
+            }
+
+            if ($absence->isHalfDayAbsence()) {
+                // Half-day absence: allow max half of daily hours
+                try {
+                    $employee = $this->employeeMapper->find($employeeId);
+                    $dailyMinutes = ((float)$employee->getWeeklyHours() / 5) * 60;
+                    $maxMinutes = (int)($dailyMinutes / 2);
+
+                    if ($workMinutes > $maxMinutes) {
+                        $maxHours = round($maxMinutes / 60, 1);
+                        return "An diesem Tag haben Sie einen halben {$absence->getTypeName()}. Maximal {$maxHours} Stunden Arbeitszeit möglich.";
+                    }
+                } catch (DoesNotExistException) {
+                    // Employee not found, skip check
+                }
+            } else {
+                // Full-day absence: block entry completely
+                return "An diesem Tag haben Sie {$absence->getTypeName()}. Bitte stornieren Sie zuerst die Abwesenheit.";
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if new time entry overlaps with existing entries
+     *
+     * @param int $employeeId
+     * @param DateTime $date
+     * @param DateTime $startTime
+     * @param DateTime $endTime
+     * @param int|null $excludeId Entry ID to exclude (for updates)
+     * @return string|null Error message if overlap found, null otherwise
+     */
+    private function checkOverlap(int $employeeId, DateTime $date, DateTime $startTime, DateTime $endTime, ?int $excludeId = null): ?string {
+        $existingEntries = $this->timeEntryMapper->findByEmployeeAndDate($employeeId, $date);
+
+        $newStart = (int)$startTime->format('H') * 60 + (int)$startTime->format('i');
+        $newEnd = (int)$endTime->format('H') * 60 + (int)$endTime->format('i');
+
+        // Handle overnight shifts
+        if ($newEnd <= $newStart) {
+            $newEnd += 24 * 60;
+        }
+
+        foreach ($existingEntries as $entry) {
+            // Skip the entry being updated
+            if ($excludeId !== null && $entry->getId() === $excludeId) {
+                continue;
+            }
+
+            $existingStart = (int)$entry->getStartTime()->format('H') * 60 + (int)$entry->getStartTime()->format('i');
+            $existingEnd = (int)$entry->getEndTime()->format('H') * 60 + (int)$entry->getEndTime()->format('i');
+
+            // Handle overnight shifts
+            if ($existingEnd <= $existingStart) {
+                $existingEnd += 24 * 60;
+            }
+
+            // Check for overlap: two time ranges overlap if one starts before the other ends
+            // and ends after the other starts
+            if ($newStart < $existingEnd && $newEnd > $existingStart) {
+                $existingStartStr = $entry->getStartTime()->format('H:i');
+                $existingEndStr = $entry->getEndTime()->format('H:i');
+                return "Überlappung mit bestehendem Eintrag ({$existingStartStr} - {$existingEndStr})";
+            }
+        }
+
+        return null;
     }
 }

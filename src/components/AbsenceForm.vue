@@ -17,7 +17,8 @@
                 <NcDateTimePicker id="startDate"
                     v-model="form.startDate"
                     type="date"
-                    :format="'DD.MM.YYYY'" />
+                    :format="'DD.MM.YYYY'"
+                    @input="onStartDateChange" />
             </div>
 
             <div class="form-group">
@@ -25,8 +26,18 @@
                 <NcDateTimePicker id="endDate"
                     v-model="form.endDate"
                     type="date"
-                    :format="'DD.MM.YYYY'" />
+                    :format="'DD.MM.YYYY'"
+                    :disabled="form.isHalfDay" />
             </div>
+        </div>
+
+        <div class="form-group">
+            <NcCheckboxRadioSwitch :checked.sync="form.isHalfDay" @update:checked="onHalfDayChange">
+                {{ t('worktime', 'Halber Tag') }}
+            </NcCheckboxRadioSwitch>
+            <p v-if="form.isHalfDay" class="half-day-hint">
+                {{ t('worktime', 'Halber Tag = 0,5 Tage. Start- und Enddatum sind identisch.') }}
+            </p>
         </div>
 
         <div class="form-group">
@@ -52,6 +63,7 @@
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js'
+import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
 import { mapGetters, mapActions } from 'vuex'
 import { formatDateISO } from '../utils/dateUtils.js'
 
@@ -61,6 +73,7 @@ export default {
         NcButton,
         NcSelect,
         NcDateTimePicker,
+        NcCheckboxRadioSwitch,
     },
     props: {
         absence: {
@@ -75,6 +88,7 @@ export default {
                 startDate: new Date(),
                 endDate: new Date(),
                 note: '',
+                isHalfDay: false,
             },
         }
     },
@@ -112,6 +126,7 @@ export default {
                         startDate: new Date(absence.startDate),
                         endDate: new Date(absence.endDate),
                         note: absence.note || '',
+                        isHalfDay: absence.isHalfDay || false,
                     }
                 } else {
                     this.resetForm()
@@ -130,6 +145,19 @@ export default {
                 startDate: new Date(),
                 endDate: new Date(),
                 note: '',
+                isHalfDay: false,
+            }
+        },
+        onHalfDayChange(isHalfDay) {
+            if (isHalfDay) {
+                // When half day is selected, end date equals start date
+                this.form.endDate = new Date(this.form.startDate)
+            }
+        },
+        onStartDateChange() {
+            if (this.form.isHalfDay) {
+                // Keep end date in sync for half day
+                this.form.endDate = new Date(this.form.startDate)
             }
         },
         cancel() {
@@ -142,6 +170,7 @@ export default {
                     startDate: formatDateISO(this.form.startDate),
                     endDate: formatDateISO(this.form.endDate),
                     note: this.form.note || null,
+                    isHalfDay: this.form.isHalfDay,
                 }
 
                 if (this.isEdit) {
@@ -199,6 +228,12 @@ export default {
     justify-content: flex-end;
     gap: 8px;
     margin-top: 16px;
+}
+
+.half-day-hint {
+    margin: 4px 0 0 0;
+    font-size: 0.85em;
+    color: var(--color-text-maxcontrast);
 }
 </style>
 

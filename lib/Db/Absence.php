@@ -33,6 +33,7 @@ use OCP\AppFramework\Db\Entity;
  * @method void setCreatedAt(DateTime $createdAt)
  * @method DateTime getUpdatedAt()
  * @method void setUpdatedAt(DateTime $updatedAt)
+ * @method int getIsHalfDay()
  */
 class Absence extends Entity implements JsonSerializable {
 
@@ -70,6 +71,7 @@ class Absence extends Entity implements JsonSerializable {
     protected ?DateTime $approvedAt = null;
     protected ?DateTime $createdAt = null;
     protected ?DateTime $updatedAt = null;
+    protected int $isHalfDay = 0;
 
     public function __construct() {
         $this->addType('id', 'integer');
@@ -80,6 +82,17 @@ class Absence extends Entity implements JsonSerializable {
         $this->addType('approvedAt', 'datetime');
         $this->addType('createdAt', 'datetime');
         $this->addType('updatedAt', 'datetime');
+        $this->addType('isHalfDay', 'integer');
+    }
+
+    public function setIsHalfDay(bool|int $isHalfDay): void {
+        $value = is_bool($isHalfDay) ? ($isHalfDay ? 1 : 0) : $isHalfDay;
+        $this->isHalfDay = $value;
+        $this->markFieldUpdated('isHalfDay');
+    }
+
+    public function isHalfDayAbsence(): bool {
+        return $this->isHalfDay === 1;
     }
 
     public function getTypeName(): string {
@@ -107,6 +120,7 @@ class Absence extends Entity implements JsonSerializable {
             'startDate' => $this->startDate?->format('Y-m-d'),
             'endDate' => $this->endDate?->format('Y-m-d'),
             'days' => (float)$this->days,
+            'isHalfDay' => (bool)$this->isHalfDay,
             'note' => $this->note,
             'status' => $this->status,
             'approvedBy' => $this->approvedBy,

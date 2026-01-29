@@ -40,7 +40,7 @@
                 </div>
             </div>
 
-            <OvertimeSummary :target-minutes="report.statistics.adjustedTargetMinutes"
+            <OvertimeSummary :target-minutes="report.statistics.targetMinutes"
                 :actual-minutes="report.statistics.actualMinutes"
                 :overtime-minutes="report.statistics.overtimeMinutes" />
 

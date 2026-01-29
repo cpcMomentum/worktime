@@ -82,7 +82,8 @@ class AbsenceController extends OCSController {
         string $type,
         string $startDate,
         string $endDate,
-        ?string $note = null
+        ?string $note = null,
+        bool $isHalfDay = false
     ): JSONResponse {
         if (!$this->userId) {
             return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
@@ -104,7 +105,8 @@ class AbsenceController extends OCSController {
                 $endDate,
                 $note,
                 $federalState,
-                $this->userId
+                $this->userId,
+                $isHalfDay
             );
 
             return new JSONResponse($absence, Http::STATUS_CREATED);
@@ -121,7 +123,8 @@ class AbsenceController extends OCSController {
         string $type,
         string $startDate,
         string $endDate,
-        ?string $note = null
+        ?string $note = null,
+        bool $isHalfDay = false
     ): JSONResponse {
         if (!$this->userId) {
             return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
@@ -145,7 +148,8 @@ class AbsenceController extends OCSController {
                 $endDate,
                 $note,
                 $federalState,
-                $this->userId
+                $this->userId,
+                $isHalfDay
             );
 
             return new JSONResponse($absence);

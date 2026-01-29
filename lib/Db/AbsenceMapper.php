@@ -188,6 +188,22 @@ class AbsenceMapper extends QBMapper {
         return $this->findEntities($qb);
     }
 
+    /**
+     * Find absences for a specific employee and date
+     *
+     * @return Absence[]
+     */
+    public function findByEmployeeAndDate(int $employeeId, DateTime $date): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('employee_id', $qb->createNamedParameter($employeeId, IQueryBuilder::PARAM_INT)))
+            ->andWhere($qb->expr()->lte('start_date', $qb->createNamedParameter($date, IQueryBuilder::PARAM_DATE)))
+            ->andWhere($qb->expr()->gte('end_date', $qb->createNamedParameter($date, IQueryBuilder::PARAM_DATE)));
+
+        return $this->findEntities($qb);
+    }
+
     public function sumVacationDaysByEmployeeAndYear(int $employeeId, int $year): float {
         $startDate = new DateTime("$year-01-01");
         $endDate = new DateTime("$year-12-31");
