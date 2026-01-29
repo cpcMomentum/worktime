@@ -233,6 +233,7 @@ export default {
 <style scoped>
 .absence-view {
     padding: 20px;
+    padding-left: 50px;
     max-width: 1200px;
 }
 

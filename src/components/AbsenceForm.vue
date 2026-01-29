@@ -201,3 +201,14 @@ export default {
     margin-top: 16px;
 }
 </style>
+
+<style>
+/* Unscoped: Fix DatePicker popup visibility in modal */
+.modal-wrapper .modal-container {
+    overflow: visible !important;
+}
+
+.modal-wrapper .modal-container__content {
+    overflow: visible !important;
+}
+</style>

@@ -116,7 +116,7 @@ class HolidayService {
 
         // Audit log
         if ($currentUserId) {
-            $this->auditLogService->logCreate($currentUserId, 'holiday', 0, [
+            $this->auditLogService->logCreate($currentUserId, 'holiday', null, [
                 'year' => $year,
                 'federalState' => $federalState,
                 'count' => count($holidays),

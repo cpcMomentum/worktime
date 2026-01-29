@@ -13,8 +13,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setId(int $id)
  * @method int getEmployeeId()
  * @method void setEmployeeId(int $employeeId)
- * @method string getType()
- * @method void setType(string $type)
+ * @method string|null getType()
+ * @method void setType(?string $type)
  * @method DateTime getStartDate()
  * @method void setStartDate(DateTime $startDate)
  * @method DateTime getEndDate()
@@ -23,8 +23,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setDays(string $days)
  * @method string|null getNote()
  * @method void setNote(?string $note)
- * @method string getStatus()
- * @method void setStatus(string $status)
+ * @method string|null getStatus()
+ * @method void setStatus(?string $status)
  * @method int|null getApprovedBy()
  * @method void setApprovedBy(?int $approvedBy)
  * @method DateTime|null getApprovedAt()
@@ -60,12 +60,12 @@ class Absence extends Entity implements JsonSerializable {
     ];
 
     protected int $employeeId = 0;
-    protected string $type = self::TYPE_VACATION;
+    protected ?string $type = null;
     protected ?DateTime $startDate = null;
     protected ?DateTime $endDate = null;
     protected string $days = '0.00';
     protected ?string $note = null;
-    protected string $status = self::STATUS_PENDING;
+    protected ?string $status = null;
     protected ?int $approvedBy = null;
     protected ?DateTime $approvedAt = null;
     protected ?DateTime $createdAt = null;

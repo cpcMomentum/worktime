@@ -17,8 +17,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setAction(string $action)
  * @method string getEntityType()
  * @method void setEntityType(string $entityType)
- * @method int getEntityId()
- * @method void setEntityId(int $entityId)
+ * @method int|null getEntityId()
+ * @method void setEntityId(?int $entityId)
  * @method string|null getOldValues()
  * @method void setOldValues(?string $oldValues)
  * @method string|null getNewValues()
@@ -47,7 +47,7 @@ class AuditLog extends Entity implements JsonSerializable {
     protected string $userId = '';
     protected string $action = '';
     protected string $entityType = '';
-    protected int $entityId = 0;
+    protected ?int $entityId = null;
     protected ?string $oldValues = null;
     protected ?string $newValues = null;
     protected ?string $ipAddress = null;

@@ -132,17 +132,22 @@ class AbsenceMapper extends QBMapper {
     public function findPendingForApproval(int $supervisorEmployeeId): array {
         $qb = $this->db->getQueryBuilder();
 
-        // Subquery to get employee IDs supervised by the given supervisor
-        $subQb = $this->db->getQueryBuilder();
-        $subQb->select('id')
-            ->from('wt_employees')
-            ->where($subQb->expr()->eq('supervisor_id', $subQb->createNamedParameter($supervisorEmployeeId, IQueryBuilder::PARAM_INT)));
-
         $qb->select('*')
             ->from($this->getTableName())
-            ->where($qb->expr()->eq('status', $qb->createNamedParameter(Absence::STATUS_PENDING)))
-            ->andWhere($qb->expr()->in('employee_id', $qb->createFunction('(' . $subQb->getSQL() . ')')))
-            ->orderBy('start_date', 'ASC');
+            ->where($qb->expr()->eq('status', $qb->createNamedParameter(Absence::STATUS_PENDING)));
+
+        // If supervisorEmployeeId > 0, filter by supervisor's team
+        // If 0, return all pending (for Admin/HR)
+        if ($supervisorEmployeeId > 0) {
+            $subQb = $this->db->getQueryBuilder();
+            $subQb->select('id')
+                ->from('wt_employees')
+                ->where($subQb->expr()->eq('supervisor_id', $subQb->createNamedParameter($supervisorEmployeeId, IQueryBuilder::PARAM_INT)));
+
+            $qb->andWhere($qb->expr()->in('employee_id', $qb->createFunction('(' . $subQb->getSQL() . ')')));
+        }
+
+        $qb->orderBy('start_date', 'ASC');
 
         return $this->findEntities($qb);
     }

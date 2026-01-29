@@ -84,6 +84,24 @@ export default {
         }
     },
 
+    async submitMonth(employeeId, year, month) {
+        try {
+            const response = await api.post('/time-entries/submit-month', { employeeId, year, month })
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
+    async approveMonth(employeeId, year, month) {
+        try {
+            const response = await api.post('/time-entries/approve-month', { employeeId, year, month })
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
     async getMonthlyStats(employeeId, year, month) {
         try {
             const response = await api.get('/time-entries/stats/monthly', {

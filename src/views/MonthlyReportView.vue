@@ -175,6 +175,7 @@ export default {
 <style scoped>
 .monthly-report-view {
     padding: 20px;
+    padding-left: 50px;
     max-width: 1200px;
 }
 

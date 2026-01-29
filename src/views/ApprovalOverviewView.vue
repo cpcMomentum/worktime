@@ -1,18 +1,71 @@
 <template>
     <div class="approval-view">
-        <div class="view-header">
-            <h2>{{ t('worktime', 'Genehmigungen') }}</h2>
-            <div class="view-header__controls">
-                <NcSelect v-model="statusFilter"
-                    :options="statusOptions"
-                    :placeholder="t('worktime', 'Alle Status')"
-                    :clearable="true"
-                    label="label"
-                    class="status-filter" />
-                <MonthPicker :year="year"
-                    :month="month"
-                    :allow-past="true"
-                    @update="onMonthChange" />
+        <!-- Ausstehende Abwesenheiten -->
+        <div v-if="pendingAbsences.length > 0" class="section absence-section">
+            <h3>{{ t('worktime', 'Ausstehende Urlaubsanträge') }} ({{ pendingAbsences.length }})</h3>
+            <table class="approval-table">
+                <thead>
+                    <tr>
+                        <th>{{ t('worktime', 'Mitarbeiter') }}</th>
+                        <th>{{ t('worktime', 'Art') }}</th>
+                        <th>{{ t('worktime', 'Zeitraum') }}</th>
+                        <th class="center">{{ t('worktime', 'Tage') }}</th>
+                        <th>{{ t('worktime', 'Bemerkung') }}</th>
+                        <th class="center">{{ t('worktime', 'Aktionen') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="absence in pendingAbsences" :key="absence.id">
+                        <td class="employee-cell">
+                            <NcAvatar :user="absence.employeeUserId"
+                                :display-name="absence.employeeName"
+                                :size="32" />
+                            <span class="employee-name">{{ absence.employeeName }}</span>
+                        </td>
+                        <td>{{ absence.typeName }}</td>
+                        <td>{{ formatDate(absence.startDate) }} - {{ formatDate(absence.endDate) }}</td>
+                        <td class="center">{{ absence.days }}</td>
+                        <td>{{ absence.note || '-' }}</td>
+                        <td class="center actions-cell">
+                            <NcButton type="primary"
+                                :disabled="processingAbsence === absence.id"
+                                @click="approveAbsence(absence.id)">
+                                <template #icon>
+                                    <NcLoadingIcon v-if="processingAbsence === absence.id" :size="20" />
+                                    <CheckIcon v-else :size="20" />
+                                </template>
+                                {{ t('worktime', 'Genehmigen') }}
+                            </NcButton>
+                            <NcButton type="error"
+                                :disabled="processingAbsence === absence.id"
+                                @click="rejectAbsence(absence.id)">
+                                <template #icon>
+                                    <CloseIcon :size="20" />
+                                </template>
+                                {{ t('worktime', 'Ablehnen') }}
+                            </NcButton>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Zeiteinträge Übersicht -->
+        <div class="section">
+            <div class="view-header">
+                <h2>{{ t('worktime', 'Zeiteinträge') }}</h2>
+                <div class="view-header__controls">
+                    <NcSelect v-model="statusFilter"
+                        :options="statusOptions"
+                        :placeholder="t('worktime', 'Alle Status')"
+                        :clearable="true"
+                        label="label"
+                        class="status-filter" />
+                    <MonthPicker :year="year"
+                        :month="month"
+                        :allow-past="true"
+                        @update="onMonthChange" />
+                </div>
             </div>
         </div>
 
@@ -115,10 +168,12 @@ import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import AccountGroupIcon from 'vue-material-design-icons/AccountGroup.vue'
 import CheckIcon from 'vue-material-design-icons/Check.vue'
+import CloseIcon from 'vue-material-design-icons/Close.vue'
 import MonthPicker from '../components/MonthPicker.vue'
 import ReportService from '../services/ReportService.js'
 import TimeEntryService from '../services/TimeEntryService.js'
-import { getCurrentYear, getCurrentMonth } from '../utils/dateUtils.js'
+import AbsenceService from '../services/AbsenceService.js'
+import { getCurrentYear, getCurrentMonth, formatDate } from '../utils/dateUtils.js'
 import { showSuccess, showError } from '@nextcloud/dialogs'
 
 export default {
@@ -131,6 +186,7 @@ export default {
         NcSelect,
         AccountGroupIcon,
         CheckIcon,
+        CloseIcon,
         MonthPicker,
     },
     data() {
@@ -138,8 +194,10 @@ export default {
             year: getCurrentYear(),
             month: getCurrentMonth(),
             employees: [],
+            pendingAbsences: [],
             loading: false,
             approvingEmployee: null,
+            processingAbsence: null,
             statusFilter: null,
             statusOptions: [
                 { value: 'pending', label: t('worktime', 'Ausstehend (zur Genehmigung)') },
@@ -173,36 +231,71 @@ export default {
         },
     },
     created() {
-        this.loadEmployees()
+        this.loadData()
     },
     methods: {
-        async loadEmployees() {
+        async loadData() {
             this.loading = true
             try {
-                this.employees = await ReportService.getAllEmployeesStatus(this.year, this.month)
+                const [employees, absences] = await Promise.all([
+                    ReportService.getAllEmployeesStatus(this.year, this.month),
+                    AbsenceService.getPending(),
+                ])
+                this.employees = employees
+                this.pendingAbsences = absences
             } catch (error) {
-                console.error('Failed to load employees:', error)
+                console.error('Failed to load data:', error)
                 this.employees = []
+                this.pendingAbsences = []
             } finally {
                 this.loading = false
             }
         },
+        formatDate(date) {
+            return formatDate(date)
+        },
         onMonthChange({ year, month }) {
             this.year = year
             this.month = month
-            this.loadEmployees()
+            this.loadData()
         },
         async approveMonth(employeeId) {
             this.approvingEmployee = employeeId
             try {
                 const result = await TimeEntryService.approveMonth(employeeId, this.year, this.month)
                 showSuccess(t('worktime', '{count} Einträge genehmigt', { count: result.approved }))
-                await this.loadEmployees()
+                await this.loadData()
             } catch (error) {
                 console.error('Failed to approve month:', error)
                 showError(t('worktime', 'Fehler beim Genehmigen'))
             } finally {
                 this.approvingEmployee = null
+            }
+        },
+        async approveAbsence(absenceId) {
+            this.processingAbsence = absenceId
+            try {
+                await AbsenceService.approve(absenceId)
+                showSuccess(t('worktime', 'Abwesenheit genehmigt'))
+                await this.loadData()
+            } catch (error) {
+                console.error('Failed to approve absence:', error)
+                showError(t('worktime', 'Fehler beim Genehmigen'))
+            } finally {
+                this.processingAbsence = null
+            }
+        },
+        async rejectAbsence(absenceId) {
+            this.processingAbsence = absenceId
+            try {
+                await AbsenceService.reject(absenceId)
+                showSuccess(t('worktime', 'Abwesenheit abgelehnt'))
+                await this.loadData()
+            } catch (error) {
+                console.error('Failed to reject absence:', error)
+                showError(t('worktime', 'Fehler beim Ablehnen'))
+            } finally {
+                this.processingAbsence = null
             }
         },
     },
@@ -339,5 +432,26 @@ export default {
 
 .no-action {
     color: var(--color-text-maxcontrast);
+}
+
+.section {
+    margin-bottom: 32px;
+}
+
+.absence-section {
+    background: var(--color-background-dark);
+    padding: 16px;
+    border-radius: var(--border-radius-large);
+}
+
+.absence-section h3 {
+    margin: 0 0 16px 0;
+    color: var(--color-primary);
+}
+
+.actions-cell {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
 }
 </style>

@@ -29,13 +29,17 @@ export function formatDateShort(date) {
 
 /**
  * Format a date to ISO format (YYYY-MM-DD)
+ * Uses local timezone to avoid date shifts
  * @param {Date} date
  * @returns {string}
  */
 export function formatDateISO(date) {
     if (!date) return ''
     const d = typeof date === 'string' ? new Date(date) : date
-    return d.toISOString().split('T')[0]
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
 }
 
 /**

@@ -52,7 +52,7 @@ class AuditLogService {
         string $userId,
         string $action,
         string $entityType,
-        int $entityId,
+        ?int $entityId = null,
         ?array $oldValues = null,
         ?array $newValues = null
     ): AuditLog {
@@ -83,21 +83,21 @@ class AuditLogService {
     /**
      * Log a create action
      */
-    public function logCreate(string $userId, string $entityType, int $entityId, array $newValues): AuditLog {
+    public function logCreate(string $userId, string $entityType, ?int $entityId, array $newValues): AuditLog {
         return $this->log($userId, AuditLog::ACTION_CREATE, $entityType, $entityId, null, $newValues);
     }
 
     /**
      * Log an update action
      */
-    public function logUpdate(string $userId, string $entityType, int $entityId, array $oldValues, array $newValues): AuditLog {
+    public function logUpdate(string $userId, string $entityType, ?int $entityId, array $oldValues, array $newValues): AuditLog {
         return $this->log($userId, AuditLog::ACTION_UPDATE, $entityType, $entityId, $oldValues, $newValues);
     }
 
     /**
      * Log a delete action
      */
-    public function logDelete(string $userId, string $entityType, int $entityId, array $oldValues): AuditLog {
+    public function logDelete(string $userId, string $entityType, ?int $entityId, array $oldValues): AuditLog {
         return $this->log($userId, AuditLog::ACTION_DELETE, $entityType, $entityId, $oldValues, null);
     }
 

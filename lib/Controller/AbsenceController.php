@@ -52,7 +52,13 @@ class AbsenceController extends OCSController {
     }
 
     #[NoAdminRequired]
-    public function show(int $id): JSONResponse {
+    public function show(mixed $id): JSONResponse {
+        // Handle route conflict: if $id is not numeric, this might be a misrouted request
+        if (!is_numeric($id)) {
+            return new JSONResponse(['error' => 'Invalid ID'], Http::STATUS_BAD_REQUEST);
+        }
+        $id = (int) $id;
+
         if (!$this->userId) {
             return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
         }
@@ -296,6 +302,21 @@ class AbsenceController extends OCSController {
             $absences = [];
         }
 
-        return new JSONResponse($absences);
+        // Enrich absences with employee data
+        $result = [];
+        foreach ($absences as $absence) {
+            $absenceData = $absence->jsonSerialize();
+            try {
+                $emp = $this->employeeService->find($absence->getEmployeeId());
+                $absenceData['employeeName'] = $emp->getFullName();
+                $absenceData['employeeUserId'] = $emp->getUserId();
+            } catch (\Exception $e) {
+                $absenceData['employeeName'] = 'Unbekannt';
+                $absenceData['employeeUserId'] = '';
+            }
+            $result[] = $absenceData;
+        }
+
+        return new JSONResponse($result);
     }
 }

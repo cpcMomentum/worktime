@@ -29,6 +29,21 @@ const getters = {
     totalWorkMinutes: (state) => {
         return state.timeEntries.reduce((sum, entry) => sum + entry.workMinutes, 0)
     },
+    draftEntries: (state) => {
+        return state.timeEntries.filter((e) => e.status === 'draft' || e.status === 'rejected')
+    },
+    submittedEntries: (state) => {
+        return state.timeEntries.filter((e) => e.status === 'submitted')
+    },
+    hasSubmittableEntries: (state, getters) => {
+        return getters.draftEntries.length > 0
+    },
+    hasApprovableEntries: (state, getters) => {
+        return getters.submittedEntries.length > 0
+    },
+    allEntriesSubmitted: (state) => {
+        return state.timeEntries.length > 0 && state.timeEntries.every((e) => e.status !== 'draft' && e.status !== 'rejected')
+    },
 }
 
 const mutations = {
@@ -119,6 +134,23 @@ const actions = {
 
     async suggestBreak(_, { startTime, endTime }) {
         return await TimeEntryService.suggestBreak(startTime, endTime)
+    },
+
+    async submitMonth({ dispatch, state, rootGetters }) {
+        const employeeId = rootGetters['permissions/employeeId']
+        const { year, month } = state.selectedMonth
+        const result = await TimeEntryService.submitMonth(employeeId, year, month)
+        // Reload entries to get updated status
+        await dispatch('fetchTimeEntries')
+        return result
+    },
+
+    async approveMonth({ dispatch, state }, employeeId) {
+        const { year, month } = state.selectedMonth
+        const result = await TimeEntryService.approveMonth(employeeId, year, month)
+        // Reload entries to get updated status
+        await dispatch('fetchTimeEntries')
+        return result
     },
 }
 
