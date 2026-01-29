@@ -69,10 +69,10 @@ export default {
 }
 
 .overtime-summary__item--highlight.positive .value {
-    color: var(--color-success);
+    color: #2e7d32;
 }
 
 .overtime-summary__item--highlight.negative .value {
-    color: var(--color-error);
+    color: #c9302c;
 }
 </style>

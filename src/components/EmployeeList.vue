@@ -165,7 +165,7 @@ export default {
 }
 
 .status-badge.active {
-    background: var(--color-success);
+    background: #2e7d32;
     color: white;
 }
 

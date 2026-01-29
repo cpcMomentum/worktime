@@ -270,11 +270,11 @@ export default {
 }
 
 .team-card__stats .positive .value {
-    color: var(--color-success);
+    color: #2e7d32;
 }
 
 .team-card__stats .negative .value {
-    color: var(--color-error);
+    color: #c9302c;
 }
 
 .team-card__details {
