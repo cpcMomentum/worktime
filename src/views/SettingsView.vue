@@ -5,16 +5,16 @@
         <NcLoadingIcon v-if="loading" :size="44" />
 
         <div v-else class="settings-content">
-            <section v-if="canManageEmployees" class="settings-section">
-                <div class="section-header">
-                    <h3>{{ t('worktime', 'Mitarbeiterverwaltung') }}</h3>
+            <NcSettingsSection v-if="canManageEmployees"
+                :name="t('worktime', 'Mitarbeiterverwaltung')">
+                <template #actions>
                     <NcButton type="primary" @click="openNewEmployeeForm">
                         <template #icon>
                             <Plus :size="20" />
                         </template>
                         {{ t('worktime', 'Neuer Mitarbeiter') }}
                     </NcButton>
-                </div>
+                </template>
 
                 <EmployeeList
                     :employees="employees"
@@ -29,13 +29,11 @@
                         @saved="onEmployeeSaved"
                         @cancel="closeEmployeeForm" />
                 </NcModal>
-            </section>
+            </NcSettingsSection>
 
-            <section v-if="canManageSettings" class="settings-section">
-                <h3>{{ t('worktime', 'Berechtigungen') }}</h3>
-                <p class="section-description">
-                    {{ t('worktime', 'HR-Manager können Mitarbeiter verwalten und Anträge genehmigen.') }}
-                </p>
+            <NcSettingsSection v-if="canManageSettings"
+                :name="t('worktime', 'Berechtigungen')"
+                :description="t('worktime', 'HR-Manager können Mitarbeiter verwalten und Anträge genehmigen.')">
                 <div class="form-group">
                     <label>{{ t('worktime', 'HR-Manager') }}</label>
                     <NcSelect
@@ -56,10 +54,10 @@
                         </template>
                     </NcSelect>
                 </div>
-            </section>
+            </NcSettingsSection>
 
-            <section v-if="canManageSettings" class="settings-section">
-                <h3>{{ t('worktime', 'Firmendaten') }}</h3>
+            <NcSettingsSection v-if="canManageSettings"
+                :name="t('worktime', 'Firmendaten')">
                 <div class="form-group">
                     <label for="companyName">{{ t('worktime', 'Firmenname') }}</label>
                     <input id="companyName"
@@ -75,10 +73,10 @@
                         :options="federalStateOptions"
                         @input="saveSetting('default_federal_state')" />
                 </div>
-            </section>
+            </NcSettingsSection>
 
-            <section v-if="canManageSettings" class="settings-section">
-                <h3>{{ t('worktime', 'Standardwerte') }}</h3>
+            <NcSettingsSection v-if="canManageSettings"
+                :name="t('worktime', 'Standardwerte')">
                 <div class="form-row">
                     <div class="form-group">
                         <label for="weeklyHours">{{ t('worktime', 'Wochenstunden') }}</label>
@@ -101,10 +99,10 @@
                             @change="saveSetting('default_vacation_days')">
                     </div>
                 </div>
-            </section>
+            </NcSettingsSection>
 
-            <section v-if="canManageSettings" class="settings-section">
-                <h3>{{ t('worktime', 'Arbeitszeit-Regeln') }}</h3>
+            <NcSettingsSection v-if="canManageSettings"
+                :name="t('worktime', 'Arbeitszeit-Regeln')">
                 <div class="form-group">
                     <label for="maxDailyHours">{{ t('worktime', 'Maximale tägliche Arbeitszeit (Stunden)') }}</label>
                     <input id="maxDailyHours"
@@ -143,13 +141,11 @@
                         {{ t('worktime', 'Genehmigung erforderlich') }}
                     </NcCheckboxRadioSwitch>
                 </div>
-            </section>
+            </NcSettingsSection>
 
-            <section v-if="canManageSettings" class="settings-section">
-                <h3>{{ t('worktime', 'Pausenregelung (§4 ArbZG)') }}</h3>
-                <p class="section-description">
-                    {{ t('worktime', 'Mindestpause gemäß deutschem Arbeitszeitgesetz') }}
-                </p>
+            <NcSettingsSection v-if="canManageSettings"
+                :name="t('worktime', 'Pausenregelung (§4 ArbZG)')"
+                :description="t('worktime', 'Mindestpause gemäß deutschem Arbeitszeitgesetz')">
                 <div class="form-row">
                     <div class="form-group">
                         <label for="break6h">{{ t('worktime', 'Bei >6h Arbeitszeit (min)') }}</label>
@@ -172,13 +168,11 @@
                             @change="saveSetting('min_break_minutes_9h')">
                     </div>
                 </div>
-            </section>
+            </NcSettingsSection>
 
-            <section v-if="canManageSettings" class="settings-section">
-                <h3>{{ t('worktime', 'PDF-Archivierung') }}</h3>
-                <p class="section-description">
-                    {{ t('worktime', 'Genehmigte Monatsberichte werden automatisch als PDF archiviert.') }}
-                </p>
+            <NcSettingsSection v-if="canManageSettings"
+                :name="t('worktime', 'PDF-Archivierung')"
+                :description="t('worktime', 'Genehmigte Monatsberichte werden automatisch als PDF archiviert.')">
                 <div class="form-group">
                     <label>{{ t('worktime', 'Archiv-Ordner') }}</label>
                     <div class="folder-picker">
@@ -199,13 +193,11 @@
                         {{ t('worktime', 'Struktur: {path}/{Jahr}/{Nachname_Vorname}/Arbeitszeitnachweis_YYYY-MM.pdf', { path: settings.pdf_archive_path || '...' }) }}
                     </p>
                 </div>
-            </section>
+            </NcSettingsSection>
 
-            <section v-if="canManageSettings" class="settings-section">
-                <h3>{{ t('worktime', 'Sondertage') }}</h3>
-                <p class="section-description">
-                    {{ t('worktime', 'Definieren Sie, ob Heiligabend und Silvester als halbe Arbeitstage gelten.') }}
-                </p>
+            <NcSettingsSection v-if="canManageSettings"
+                :name="t('worktime', 'Sondertage')"
+                :description="t('worktime', 'Definieren Sie, ob Heiligabend und Silvester als halbe Arbeitstage gelten.')">
                 <div class="form-group">
                     <NcCheckboxRadioSwitch :checked.sync="settings.christmas_eve_half_day"
                         @update:checked="saveSettingBool('christmas_eve_half_day')">
@@ -221,13 +213,11 @@
                 <p class="help-text">
                     {{ t('worktime', 'Hinweis: Änderungen wirken sich auf neu generierte Feiertage aus. Generieren Sie die Feiertage erneut, um die Änderungen anzuwenden.') }}
                 </p>
-            </section>
+            </NcSettingsSection>
 
-            <section v-if="canManageHolidays" class="settings-section">
-                <h3>{{ t('worktime', 'Feiertage generieren') }}</h3>
-                <p class="section-description">
-                    {{ t('worktime', 'Feiertage für ein Jahr automatisch generieren lassen.') }}
-                </p>
+            <NcSettingsSection v-if="canManageHolidays"
+                :name="t('worktime', 'Feiertage generieren')"
+                :description="t('worktime', 'Feiertage für ein Jahr automatisch generieren lassen.')">
                 <div class="form-row">
                     <div class="form-group">
                         <label for="holidayYear">{{ t('worktime', 'Jahr') }}</label>
@@ -242,7 +232,7 @@
                         {{ t('worktime', 'Für alle Bundesländer generieren') }}
                     </NcButton>
                 </div>
-            </section>
+            </NcSettingsSection>
         </div>
     </div>
 </template>
@@ -253,6 +243,7 @@ import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
 import NcModal from '@nextcloud/vue/dist/Components/NcModal.js'
+import NcSettingsSection from '@nextcloud/vue/dist/Components/NcSettingsSection.js'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import Account from 'vue-material-design-icons/Account.vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
@@ -274,6 +265,7 @@ export default {
         NcSelect,
         NcCheckboxRadioSwitch,
         NcModal,
+        NcSettingsSection,
         Plus,
         Account,
         AccountGroup,
@@ -470,38 +462,6 @@ export default {
 
 .settings-view h2 {
     margin: 0 0 20px 0;
-}
-
-.settings-section {
-    margin-bottom: 40px;
-    padding-bottom: 32px;
-    border-bottom: 1px solid var(--color-border);
-}
-
-.settings-section:last-child {
-    border-bottom: none;
-}
-
-.settings-section h3 {
-    margin: 0 0 16px 0;
-    font-size: 1.2em;
-}
-
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-}
-
-.section-header h3 {
-    margin: 0;
-}
-
-.section-description {
-    margin: 0 0 16px 0;
-    color: var(--color-text-maxcontrast);
-    font-size: 0.9em;
 }
 
 .form-group {

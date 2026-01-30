@@ -439,9 +439,8 @@ export default {
 }
 
 .absence-section {
-    background: var(--color-background-dark);
-    padding: 16px;
-    border-radius: var(--border-radius-large);
+    padding-top: 24px;
+    border-top: 1px solid var(--color-border);
 }
 
 .absence-section h3 {

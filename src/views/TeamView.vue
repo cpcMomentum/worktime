@@ -188,7 +188,8 @@ export default {
 
 .team-card {
     padding: 16px;
-    background: var(--color-background-dark);
+    background: var(--color-main-background);
+    border: 1px solid var(--color-border);
     border-radius: var(--border-radius-large);
 }
 

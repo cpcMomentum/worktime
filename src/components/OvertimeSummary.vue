@@ -48,8 +48,10 @@ export default {
     display: flex;
     gap: 24px;
     padding: 16px;
-    background: var(--color-background-dark);
+    background: var(--color-main-background);
+    border: 1px solid var(--color-border);
     border-radius: var(--border-radius-large);
+    margin-bottom: 24px;
 }
 
 .overtime-summary__item {

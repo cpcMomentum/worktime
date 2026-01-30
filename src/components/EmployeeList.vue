@@ -137,6 +137,7 @@ export default {
     font-weight: 600;
     color: var(--color-text-maxcontrast);
     font-size: 0.9em;
+    background: var(--color-background-dark);
 }
 
 .employees-table tbody tr:hover {

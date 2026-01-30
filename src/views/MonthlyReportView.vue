@@ -271,7 +271,8 @@ export default {
 
 .stat-card {
     padding: 16px;
-    background: var(--color-background-dark);
+    background: var(--color-main-background);
+    border: 1px solid var(--color-border);
     border-radius: var(--border-radius-large);
     display: flex;
     flex-direction: column;
