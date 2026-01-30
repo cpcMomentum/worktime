@@ -17,7 +17,8 @@ class Application extends App implements IBootstrap {
     }
 
     public function register(IRegistrationContext $context): void {
-        // Background jobs are registered via info.xml
+        // Load Composer autoloader for TCPDF (must be in register(), not global scope)
+        include_once __DIR__ . '/../../vendor/autoload.php';
     }
 
     public function boot(IBootContext $context): void {
