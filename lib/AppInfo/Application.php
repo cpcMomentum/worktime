@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace OCA\WorkTime\AppInfo;
 
-use OCA\WorkTime\BackgroundJob\ArchivePdfJob;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -18,8 +17,7 @@ class Application extends App implements IBootstrap {
     }
 
     public function register(IRegistrationContext $context): void {
-        // Register background jobs
-        $context->registerBackgroundJob(ArchivePdfJob::class);
+        // Background jobs are registered via info.xml
     }
 
     public function boot(IBootContext $context): void {

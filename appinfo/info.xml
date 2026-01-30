@@ -49,6 +49,10 @@ Behalten Sie den Überblick über Arbeitszeiten, Überstunden und Urlaub.
         <php min-version="8.2"/>
     </dependencies>
 
+    <background-jobs>
+        <job>OCA\WorkTime\BackgroundJob\ArchivePdfJob</job>
+    </background-jobs>
+
     <navigations>
         <navigation>
             <name>WorkTime</name>
