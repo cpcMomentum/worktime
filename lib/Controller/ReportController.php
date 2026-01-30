@@ -17,6 +17,7 @@ use OCA\WorkTime\Service\PermissionService;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCSController;
@@ -72,6 +73,7 @@ class ReportController extends OCSController {
     }
 
     #[NoAdminRequired]
+    #[NoCSRFRequired]
     public function pdf(int $employeeId, int $year, int $month): DataDownloadResponse|JSONResponse {
         if (!$this->userId) {
             return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
