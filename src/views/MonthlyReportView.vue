@@ -320,7 +320,7 @@ export default {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--color-success);
+    color: var(--color-success-text);
     font-weight: 500;
 }
 </style>

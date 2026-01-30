@@ -128,7 +128,7 @@ export default {
 
 .employees-table th,
 .employees-table td {
-    padding: 12px 8px;
+    padding: 12px 16px;
     text-align: left;
     border-bottom: 1px solid var(--color-border);
 }
@@ -152,9 +152,15 @@ export default {
     text-align: right;
 }
 
-.actions-col {
+th.actions-col {
     width: 100px;
-    text-align: right;
+    text-align: center;
+}
+
+td.actions-col {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
 }
 
 .status-badge {

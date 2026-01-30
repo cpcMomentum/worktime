@@ -473,14 +473,18 @@ export default {
 }
 
 .settings-section {
-    margin-bottom: 32px;
-    padding: 20px;
-    background: var(--color-background-dark);
-    border-radius: var(--border-radius-large);
+    margin-bottom: 40px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.settings-section:last-child {
+    border-bottom: none;
 }
 
 .settings-section h3 {
     margin: 0 0 16px 0;
+    font-size: 1.2em;
 }
 
 .section-header {

@@ -211,6 +211,8 @@ export default {
 }
 
 .actions {
-    white-space: nowrap;
+    display: flex;
+    justify-content: center;
+    gap: 4px;
 }
 </style>
