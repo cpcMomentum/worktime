@@ -44,6 +44,23 @@ Neue deutsche Übersetzungen in `l10n/de.json`:
 - Mitarbeiterverwaltung
 - HR-Manager/Berechtigungen
 
+### 5. Rechtliche Recherche: Genehmigungsworkflow
+
+**Fragestellung:** Ist der geplante Genehmigungsworkflow (Entwurf → Eingereicht → Genehmigt) gesetzeskonform? Ist eine digitale Genehmigung gleichwertig zur physischen Unterschrift?
+
+**Ergebnis:** Workflow ist gesetzeskonform und sogar strenger als rechtlich erforderlich.
+
+**Kernerkenntnisse:**
+- **Unterschriften sind NICHT erforderlich** (BMAS-Klarstellung)
+- Digitale Genehmigung mit Zeitstempel + User-ID ist mehr als ausreichend
+- Audit-Log übertrifft gesetzliche Anforderungen
+- Aufbewahrungspflicht: 2-6 Jahre (je nach Anwendungsfall)
+- DSGVO: Mitarbeiter haben Einsichtsrecht in eigene Daten
+
+**Dokumentation:**
+- `20260129_Rechtliche-Bewertung-Genehmigungsworkflow.md` - Vollständige Analyse mit Quellen
+- `20260129_Workflow-Arbeitszeiterfassung-Option-A.md` - Bewerteter Workflow-Entwurf
+
 ## Commit
 
 ```
@@ -65,6 +82,8 @@ Neue deutsche Übersetzungen in `l10n/de.json`:
 1. CSS-Kompilierung prüfen/beheben
 2. Test der HR-Manager-Funktionalität
 3. VPS-Deployment
+4. Genehmigungsworkflow implementieren (Status-Feld, Einreichen, Genehmigen)
 
 ---
 *Erstellt: 2026-01-29*
+*Aktualisiert: 2026-01-29 (Rechtliche Recherche)*

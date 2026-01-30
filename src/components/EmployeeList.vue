@@ -175,7 +175,7 @@ export default {
 }
 
 .delete-warning {
-    color: var(--color-error);
+    color: var(--color-error-text);
     font-size: 0.9em;
 }
 </style>

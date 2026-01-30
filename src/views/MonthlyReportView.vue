@@ -6,6 +6,18 @@
                 <MonthPicker :year="year"
                     :month="month"
                     @update="onMonthChange" />
+                <NcButton v-if="hasSubmittableEntries"
+                    type="primary"
+                    @click="confirmSubmitMonth">
+                    <template #icon>
+                        <SendIcon :size="20" />
+                    </template>
+                    {{ t('worktime', 'Monat einreichen') }}
+                </NcButton>
+                <span v-else-if="allEntriesSubmitted && report?.timeEntries?.length > 0" class="status-info">
+                    <CheckIcon :size="20" />
+                    {{ t('worktime', 'Eingereicht') }}
+                </span>
                 <NcButton type="secondary" @click="downloadPdf">
                     <template #icon>
                         <DownloadIcon :size="20" />
@@ -95,11 +107,16 @@ import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import DownloadIcon from 'vue-material-design-icons/Download.vue'
+import SendIcon from 'vue-material-design-icons/Send.vue'
+import CheckIcon from 'vue-material-design-icons/Check.vue'
+import { showSuccess, showError } from '@nextcloud/dialogs'
+import { confirmAction } from '../utils/errorHandler.js'
 import { mapGetters } from 'vuex'
 import MonthPicker from '../components/MonthPicker.vue'
 import OvertimeSummary from '../components/OvertimeSummary.vue'
 import TimeEntryList from '../components/TimeEntryList.vue'
 import ReportService from '../services/ReportService.js'
+import TimeEntryService from '../services/TimeEntryService.js'
 import { formatDate, getCurrentYear, getCurrentMonth } from '../utils/dateUtils.js'
 
 export default {
@@ -109,6 +126,8 @@ export default {
         NcLoadingIcon,
         NcEmptyContent,
         DownloadIcon,
+        SendIcon,
+        CheckIcon,
         MonthPicker,
         OvertimeSummary,
         TimeEntryList,
@@ -123,6 +142,14 @@ export default {
     },
     computed: {
         ...mapGetters('permissions', ['employeeId']),
+        hasSubmittableEntries() {
+            if (!this.report?.timeEntries) return false
+            return this.report.timeEntries.some(e => e.status === 'draft' || e.status === 'rejected')
+        },
+        allEntriesSubmitted() {
+            if (!this.report?.timeEntries?.length) return false
+            return this.report.timeEntries.every(e => e.status !== 'draft' && e.status !== 'rejected')
+        },
     },
     watch: {
         employeeId: {
@@ -173,6 +200,28 @@ export default {
         downloadPdf() {
             if (!this.employeeId) return
             ReportService.downloadPdf(this.employeeId, this.year, this.month)
+        },
+        async confirmSubmitMonth() {
+            const monthName = new Date(this.year, this.month - 1).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })
+
+            const confirmed = await confirmAction(
+                this.t('worktime', 'Möchten Sie alle Einträge für {month} einreichen? Nach dem Einreichen können Sie keine Änderungen mehr vornehmen.', { month: monthName }),
+                this.t('worktime', 'Monat einreichen'),
+                this.t('worktime', 'Einreichen'),
+                false
+            )
+            if (!confirmed) {
+                return
+            }
+
+            try {
+                const result = await TimeEntryService.submitMonth(this.employeeId, this.year, this.month)
+                showSuccess(this.t('worktime', '{count} Einträge wurden eingereicht.', { count: result.submitted }))
+                await this.loadReport()
+            } catch (error) {
+                console.error('Failed to submit month:', error)
+                showError(this.t('worktime', 'Fehler beim Einreichen des Monats.'))
+            }
         },
     },
 }
@@ -265,5 +314,13 @@ export default {
 .holiday-list li {
     padding: 8px 0;
     border-bottom: 1px solid var(--color-border);
+}
+
+.status-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-success);
+    font-weight: 500;
 }
 </style>

@@ -12,18 +12,6 @@
                     </template>
                     {{ t('worktime', 'Neuer Eintrag') }}
                 </NcButton>
-                <NcButton v-if="hasSubmittableEntries"
-                    type="secondary"
-                    @click="confirmSubmitMonth">
-                    <template #icon>
-                        <SendIcon :size="20" />
-                    </template>
-                    {{ t('worktime', 'Monat einreichen') }}
-                </NcButton>
-                <span v-else-if="allEntriesSubmitted && timeEntries.length > 0" class="status-info">
-                    <CheckIcon :size="20" />
-                    {{ t('worktime', 'Eingereicht') }}
-                </span>
             </div>
         </div>
 
@@ -54,9 +42,6 @@ import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcModal from '@nextcloud/vue/dist/Components/NcModal.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import PlusIcon from 'vue-material-design-icons/Plus.vue'
-import SendIcon from 'vue-material-design-icons/Send.vue'
-import CheckIcon from 'vue-material-design-icons/Check.vue'
-import { showSuccess, showError } from '@nextcloud/dialogs'
 import { mapGetters, mapActions, mapState } from 'vuex'
 import MonthPicker from '../components/MonthPicker.vue'
 import OvertimeSummary from '../components/OvertimeSummary.vue'
@@ -71,8 +56,6 @@ export default {
         NcModal,
         NcLoadingIcon,
         PlusIcon,
-        SendIcon,
-        CheckIcon,
         MonthPicker,
         OvertimeSummary,
         TimeEntryForm,
@@ -87,7 +70,7 @@ export default {
     },
     computed: {
         ...mapState('timeEntries', ['selectedMonth']),
-        ...mapGetters('timeEntries', ['timeEntries', 'loading', 'hasSubmittableEntries', 'allEntriesSubmitted']),
+        ...mapGetters('timeEntries', ['timeEntries', 'loading']),
         ...mapGetters('permissions', ['employeeId']),
     },
     watch: {
@@ -113,7 +96,7 @@ export default {
         }
     },
     methods: {
-        ...mapActions('timeEntries', ['fetchTimeEntries', 'setSelectedMonth', 'submitMonth']),
+        ...mapActions('timeEntries', ['fetchTimeEntries', 'setSelectedMonth']),
         async loadData() {
             if (!this.employeeId) return
             await this.fetchTimeEntries()
@@ -147,22 +130,6 @@ export default {
             this.closeForm()
             this.loadData()
         },
-        async confirmSubmitMonth() {
-            const monthName = new Date(this.selectedMonth.year, this.selectedMonth.month - 1).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })
-
-            if (!confirm(this.t('worktime', 'Möchten Sie alle Einträge für {month} einreichen? Nach dem Einreichen können Sie keine Änderungen mehr vornehmen.', { month: monthName }))) {
-                return
-            }
-
-            try {
-                const result = await this.submitMonth()
-                showSuccess(this.t('worktime', '{count} Einträge wurden eingereicht.', { count: result.submitted }))
-                await this.loadStatistics()
-            } catch (error) {
-                console.error('Failed to submit month:', error)
-                showError(this.t('worktime', 'Fehler beim Einreichen des Monats.'))
-            }
-        },
     },
 }
 </script>
@@ -191,13 +158,5 @@ export default {
     display: flex;
     align-items: center;
     gap: 16px;
-}
-
-.status-info {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--color-success-text);
-    font-weight: 500;
 }
 </style>

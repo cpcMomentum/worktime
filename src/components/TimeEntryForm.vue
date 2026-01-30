@@ -32,18 +32,14 @@
 
         <div class="form-group">
             <label for="breakMinutes">{{ t('worktime', 'Pause (Minuten)') }}</label>
-            <div class="break-input-group">
-                <input id="breakMinutes"
-                    v-model.number="form.breakMinutes"
-                    type="number"
-                    min="0"
-                    class="break-input">
-                <NcButton v-if="suggestedBreak !== null && suggestedBreak !== form.breakMinutes"
-                    type="tertiary"
-                    @click="applyBreakSuggestion">
-                    {{ t('worktime', 'Vorschlag: {minutes} min', { minutes: suggestedBreak }) }}
-                </NcButton>
-            </div>
+            <input id="breakMinutes"
+                v-model.number="form.breakMinutes"
+                type="number"
+                min="0"
+                class="break-input">
+            <p v-if="requiredBreak > 0" class="break-hint">
+                {{ t('worktime', 'Mindestpause: {minutes} min (§4 ArbZG)', { minutes: requiredBreak }) }}
+            </p>
         </div>
 
         <div class="form-group">
@@ -85,6 +81,7 @@ import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js
 import { mapGetters, mapActions } from 'vuex'
 import { formatDateISO, getToday } from '../utils/dateUtils.js'
 import { formatMinutesWithUnit, calculateWorkMinutes, suggestBreak as suggestBreakUtil } from '../utils/timeUtils.js'
+import { showErrorMessage } from '../utils/errorHandler.js'
 
 export default {
     name: 'TimeEntryForm',
@@ -109,11 +106,15 @@ export default {
                 projectId: null,
                 description: '',
             },
-            suggestedBreak: null,
         }
     },
     computed: {
         ...mapGetters('projects', ['activeProjects']),
+        requiredBreak() {
+            if (!this.form.startTime || !this.form.endTime) return 0
+            const grossMinutes = calculateWorkMinutes(this.form.startTime, this.form.endTime, 0)
+            return suggestBreakUtil(grossMinutes)
+        },
         isEdit() {
             return !!this.entry
         },
@@ -162,7 +163,7 @@ export default {
         this.$store.dispatch('projects/fetchProjects')
     },
     methods: {
-        ...mapActions('timeEntries', ['createTimeEntry', 'updateTimeEntry', 'suggestBreak']),
+        ...mapActions('timeEntries', ['createTimeEntry', 'updateTimeEntry']),
         formatMinutes(minutes) {
             return formatMinutesWithUnit(minutes)
         },
@@ -176,22 +177,12 @@ export default {
                 description: '',
             }
         },
-        async onTimeChange() {
+        onTimeChange() {
+            // Automatisch die gesetzlich vorgeschriebene Pause eintragen
             if (this.form.startTime && this.form.endTime) {
-                try {
-                    this.suggestedBreak = await this.suggestBreak({
-                        startTime: this.form.startTime,
-                        endTime: this.form.endTime,
-                    })
-                } catch {
-                    // Use local calculation as fallback
-                    const grossMinutes = calculateWorkMinutes(this.form.startTime, this.form.endTime, 0)
-                    this.suggestedBreak = suggestBreakUtil(grossMinutes)
-                }
+                const grossMinutes = calculateWorkMinutes(this.form.startTime, this.form.endTime, 0)
+                this.form.breakMinutes = suggestBreakUtil(grossMinutes)
             }
-        },
-        applyBreakSuggestion() {
-            this.form.breakMinutes = this.suggestedBreak
         },
         cancel() {
             this.$emit('cancel')
@@ -216,6 +207,7 @@ export default {
                 this.$emit('saved')
             } catch (error) {
                 console.error('Failed to save time entry:', error)
+                showErrorMessage(error.message || this.t('worktime', 'Fehler beim Speichern'))
             }
         },
     },
@@ -259,14 +251,14 @@ export default {
     border-radius: var(--border-radius);
 }
 
-.break-input-group {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
 .break-input {
     width: 100px;
+}
+
+.break-hint {
+    margin-top: 4px;
+    font-size: 0.85em;
+    color: var(--color-text-maxcontrast);
 }
 
 .form-info {

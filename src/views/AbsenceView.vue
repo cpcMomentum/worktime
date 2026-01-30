@@ -208,7 +208,10 @@ export default {
         },
         async confirmCancel(absence) {
             const confirmed = await confirmAction(
-                this.t('worktime', 'Möchten Sie diese Abwesenheit wirklich stornieren?')
+                this.t('worktime', 'Möchten Sie diese Abwesenheit wirklich stornieren?'),
+                this.t('worktime', 'Abwesenheit stornieren'),
+                this.t('worktime', 'Stornieren'),
+                true
             )
             if (confirmed) {
                 try {
@@ -221,7 +224,10 @@ export default {
         },
         async confirmDelete(absence) {
             const confirmed = await confirmAction(
-                this.t('worktime', 'Möchten Sie diese Abwesenheit wirklich löschen?')
+                this.t('worktime', 'Möchten Sie diese Abwesenheit wirklich löschen?'),
+                this.t('worktime', 'Abwesenheit löschen'),
+                this.t('worktime', 'Löschen'),
+                true
             )
             if (confirmed) {
                 try {

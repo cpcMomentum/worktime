@@ -54,15 +54,39 @@ export function extractValidationErrors(errors) {
 }
 
 /**
- * Confirm action with dialog
+ * Confirm action with Nextcloud dialog
  * @param {string} message
+ * @param {string} title
+ * @param {string} confirmLabel
+ * @param {boolean} destructive - If true, shows destructive/warning style
  * @returns {Promise<boolean>}
  */
-export function confirmAction(message) {
+export function confirmAction(message, title = 'Bestätigung', confirmLabel = 'OK', destructive = false) {
     return new Promise((resolve) => {
-        // Use native confirm for now
-        // TODO: Replace with OC.dialogs.confirmDestructive when available
-        resolve(window.confirm(message))
+        if (destructive && window.OC?.dialogs?.confirmDestructive) {
+            window.OC.dialogs.confirmDestructive(
+                message,
+                title,
+                {
+                    type: window.OC.dialogs.YES_NO_BUTTONS,
+                    confirm: confirmLabel,
+                    confirmClasses: 'error',
+                    cancel: 'Abbrechen',
+                },
+                (result) => resolve(result),
+                true
+            )
+        } else if (window.OC?.dialogs?.confirm) {
+            window.OC.dialogs.confirm(
+                message,
+                title,
+                (result) => resolve(result),
+                true
+            )
+        } else {
+            // Fallback to native confirm
+            resolve(window.confirm(message))
+        }
     })
 }
 

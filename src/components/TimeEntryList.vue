@@ -139,7 +139,10 @@ export default {
         },
         async confirmDelete(entry) {
             const confirmed = await confirmAction(
-                this.t('worktime', 'Möchten Sie diesen Eintrag wirklich löschen?')
+                this.t('worktime', 'Möchten Sie diesen Eintrag wirklich löschen?'),
+                this.t('worktime', 'Eintrag löschen'),
+                this.t('worktime', 'Löschen'),
+                true
             )
             if (confirmed) {
                 try {
