@@ -135,25 +135,14 @@ export default {
     },
     data() {
         return {
-            currentView: this.getInitialView(),
+            currentView: 'dashboard',
         }
     },
     computed: {
         ...mapGetters('permissions', ['isEmployee', 'isAdmin', 'isHrManager', 'canManageSettings', 'canApprove']),
     },
-    watch: {
-        currentView(newView) {
-            // Update URL hash when view changes
-            window.location.hash = newView
-        },
-    },
     created() {
         this.initializeApp()
-        // Listen for hash changes (browser back/forward)
-        window.addEventListener('hashchange', this.onHashChange)
-    },
-    beforeDestroy() {
-        window.removeEventListener('hashchange', this.onHashChange)
     },
     methods: {
         ...mapActions('employees', ['fetchCurrentEmployee', 'fetchFederalStates']),
@@ -167,17 +156,6 @@ export default {
                 this.fetchProjects(),
                 this.fetchAbsenceTypes(),
             ])
-        },
-        getInitialView() {
-            const validViews = ['dashboard', 'tracking', 'absences', 'report', 'team', 'approvals', 'settings']
-            const hash = window.location.hash.replace('#', '')
-            return validViews.includes(hash) ? hash : 'dashboard'
-        },
-        onHashChange() {
-            const newView = this.getInitialView()
-            if (newView !== this.currentView) {
-                this.currentView = newView
-            }
         },
     },
 }
