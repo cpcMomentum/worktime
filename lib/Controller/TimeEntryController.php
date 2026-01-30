@@ -6,13 +6,12 @@ namespace OCA\WorkTime\Controller;
 
 use DateTime;
 use OCA\WorkTime\AppInfo\Application;
-use OCA\WorkTime\Db\Employee;
-use OCA\WorkTime\Service\AbsenceService;
-use OCA\WorkTime\Service\EmployeeService;
+use OCA\WorkTime\Db\ArchiveQueue;
+use OCA\WorkTime\Db\ArchiveQueueMapper;
+use OCA\WorkTime\Db\CompanySetting;
+use OCA\WorkTime\Service\CompanySettingsService;
 use OCA\WorkTime\Service\ForbiddenException;
-use OCA\WorkTime\Service\HolidayService;
 use OCA\WorkTime\Service\NotFoundException;
-use OCA\WorkTime\Service\PdfService;
 use OCA\WorkTime\Service\PermissionService;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCA\WorkTime\Service\ValidationException;
@@ -30,10 +29,8 @@ class TimeEntryController extends OCSController {
         private ?string $userId,
         private TimeEntryService $timeEntryService,
         private PermissionService $permissionService,
-        private EmployeeService $employeeService,
-        private AbsenceService $absenceService,
-        private HolidayService $holidayService,
-        private PdfService $pdfService,
+        private ArchiveQueueMapper $archiveQueueMapper,
+        private CompanySettingsService $settingsService,
         private LoggerInterface $logger,
     ) {
         parent::__construct(Application::APP_ID, $request);
@@ -276,178 +273,58 @@ class TimeEntryController extends OCSController {
 
         $result = $this->timeEntryService->approveMonth($employeeId, $year, $month, $this->userId);
 
-        // Archive PDF if any entries were approved
-        $archivePath = null;
+        // Queue PDF archiving if any entries were approved
+        $archiveQueued = false;
         if ($result['approved'] > 0) {
-            try {
-                $archivePath = $this->archiveApprovedMonth($employeeId, $year, $month);
-            } catch (\Exception $e) {
-                $this->logger->warning('Failed to archive PDF for employee ' . $employeeId . ': ' . $e->getMessage());
-                // Don't fail the approval if archiving fails
-            }
+            $archiveQueued = $this->queueArchiveJob($employeeId, $year, $month);
         }
 
         return new JSONResponse([
             'status' => 'success',
             'approved' => $result['approved'],
             'skipped' => $result['skipped'],
-            'archivePath' => $archivePath,
+            'archiveQueued' => $archiveQueued,
         ]);
     }
 
     /**
-     * Archive approved month as PDF
+     * Queue a PDF archive job for background processing
      */
-    private function archiveApprovedMonth(int $employeeId, int $year, int $month): ?string {
+    private function queueArchiveJob(int $employeeId, int $year, int $month): bool {
+        // Check if archive is configured
+        $archiveUserId = $this->settingsService->get(CompanySetting::KEY_PDF_ARCHIVE_USER);
+        if (empty($archiveUserId)) {
+            $this->logger->info('PDF archive not configured, skipping archive job');
+            return false;
+        }
+
+        // Check if job already exists
+        if ($this->archiveQueueMapper->existsPending($employeeId, $year, $month)) {
+            $this->logger->info('Archive job already pending for employee ' . $employeeId);
+            return true;
+        }
+
         try {
-            $employee = $this->employeeService->find($employeeId);
-            $approver = $this->permissionService->getEmployeeForUser($this->userId);
+            $approverEmployee = $this->permissionService->getEmployeeForUser($this->userId);
 
-            $timeEntries = $this->timeEntryService->findByEmployeeAndMonth($employeeId, $year, $month);
-            $absences = $this->absenceService->findByEmployeeAndMonth($employeeId, $year, $month);
-            $holidays = $this->holidayService->findByMonth($year, $month, $employee->getFederalState());
+            $job = new ArchiveQueue();
+            $job->setEmployeeId($employeeId);
+            $job->setYear($year);
+            $job->setMonth($month);
+            $job->setApproverId($approverEmployee?->getId());
+            $job->setApprovedAt(new DateTime());
+            $job->setStatus(ArchiveQueue::STATUS_PENDING);
+            $job->setAttempts(0);
+            $job->setCreatedAt(new DateTime());
 
-            $stats = $this->calculateMonthlyStats($employee, $year, $month, $timeEntries, $absences, $holidays);
+            $this->archiveQueueMapper->insert($job);
 
-            // Find the approval timestamp from one of the approved entries
-            $approvedAt = new DateTime();
-            foreach ($timeEntries as $entry) {
-                if ($entry->getApprovedAt() !== null) {
-                    $approvedAt = $entry->getApprovedAt();
-                    break;
-                }
-            }
-
-            $approvalInfo = [
-                'approvedBy' => $approver,
-                'approvedAt' => $approvedAt,
-            ];
-
-            $pdfContent = $this->pdfService->generateMonthlyReport(
-                $employee,
-                $year,
-                $month,
-                $timeEntries,
-                $absences,
-                $holidays,
-                $stats,
-                $approvalInfo
-            );
-
-            return $this->pdfService->archiveMonthlyReport(
-                $this->userId,
-                $employee,
-                $year,
-                $month,
-                $pdfContent
-            );
-        } catch (NotFoundException $e) {
-            $this->logger->error('Employee not found for archiving: ' . $e->getMessage());
-            return null;
+            $this->logger->info('Archive job queued for employee ' . $employeeId . ', ' . $year . '-' . $month);
+            return true;
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to queue archive job: ' . $e->getMessage());
+            return false;
         }
-    }
-
-    /**
-     * Calculate monthly statistics (copied from ReportController)
-     */
-    private function calculateMonthlyStats(
-        Employee $employee,
-        int $year,
-        int $month,
-        array $timeEntries,
-        array $absences,
-        array $holidays
-    ): array {
-        $startDate = new DateTime("$year-$month-01");
-        $monthEndDate = (clone $startDate)->modify('last day of this month');
-        $today = new DateTime('today');
-
-        // For current month: calculate only up to today
-        // For past months: calculate entire month
-        if ($year === (int)$today->format('Y') && $month === (int)$today->format('n') && $today < $monthEndDate) {
-            $endDate = $today;
-        } else {
-            $endDate = $monthEndDate;
-        }
-
-        // Count working days in the period
-        $workingDays = $this->countWorkingDays($startDate, $endDate, $holidays);
-
-        // Calculate target minutes based on weekly hours
-        $dailyMinutes = ((float)$employee->getWeeklyHours() / 5) * 60;
-        $targetMinutes = (int)round($workingDays * $dailyMinutes);
-
-        // Count absence days that reduce target
-        // Only count absences that have started (startDate <= endDate)
-        $absenceDays = 0;
-        foreach ($absences as $absence) {
-            if ($absence->isApproved() && $absence->getStartDate() <= $endDate) {
-                // Calculate actual days within the period
-                $absenceStart = $absence->getStartDate();
-                $absenceEnd = $absence->getEndDate();
-
-                // If absence extends beyond endDate, limit to endDate
-                if ($absenceEnd > $endDate) {
-                    $absenceEnd = $endDate;
-                }
-
-                // Calculate working days for this absence within the period
-                $absenceDays += $this->countWorkingDays($absenceStart, $absenceEnd, $holidays);
-            }
-        }
-
-        // Reduce target by absence days
-        $adjustedTargetMinutes = (int)round($targetMinutes - ($absenceDays * $dailyMinutes));
-
-        // Sum actual work minutes
-        $actualMinutes = 0;
-        foreach ($timeEntries as $entry) {
-            $actualMinutes += $entry->getWorkMinutes();
-        }
-
-        // Calculate overtime
-        $overtimeMinutes = $actualMinutes - $adjustedTargetMinutes;
-
-        return [
-            'workingDays' => $workingDays,
-            'holidayCount' => count($holidays),
-            'absenceDays' => $absenceDays,
-            'dailyMinutes' => (int)$dailyMinutes,
-            'targetMinutes' => $targetMinutes,
-            'adjustedTargetMinutes' => $adjustedTargetMinutes,
-            'actualMinutes' => $actualMinutes,
-            'actualHours' => round($actualMinutes / 60, 2),
-            'overtimeMinutes' => $overtimeMinutes,
-            'overtimeHours' => round($overtimeMinutes / 60, 2),
-            'entryCount' => count($timeEntries),
-        ];
-    }
-
-    /**
-     * Count working days (Mon-Fri) excluding holidays
-     */
-    private function countWorkingDays(DateTime $startDate, DateTime $endDate, array $holidays): int {
-        $holidayDates = [];
-        foreach ($holidays as $holiday) {
-            $holidayDates[] = $holiday->getDate()->format('Y-m-d');
-        }
-
-        $workingDays = 0;
-        $current = clone $startDate;
-
-        while ($current <= $endDate) {
-            $dayOfWeek = (int)$current->format('N');
-            $dateStr = $current->format('Y-m-d');
-
-            // Count if Monday-Friday and not a holiday
-            if ($dayOfWeek < 6 && !in_array($dateStr, $holidayDates)) {
-                $workingDays++;
-            }
-
-            $current->modify('+1 day');
-        }
-
-        return $workingDays;
     }
 
     #[NoAdminRequired]

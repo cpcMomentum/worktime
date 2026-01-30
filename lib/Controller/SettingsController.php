@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Controller;
 
 use OCA\WorkTime\AppInfo\Application;
+use OCA\WorkTime\Db\CompanySetting;
 use OCA\WorkTime\Service\CompanySettingsService;
 use OCA\WorkTime\Service\PermissionService;
 use OCP\AppFramework\Http;
@@ -58,6 +59,16 @@ class SettingsController extends OCSController {
 
         if (!$this->permissionService->canManageSettings($this->userId)) {
             return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+        }
+
+        // When setting the archive path, also save the user who configured it
+        // This user's folder will be used for storing archived PDFs
+        if ($key === CompanySetting::KEY_PDF_ARCHIVE_PATH) {
+            $this->settingsService->set(
+                CompanySetting::KEY_PDF_ARCHIVE_USER,
+                $this->userId,
+                $this->userId
+            );
         }
 
         $setting = $this->settingsService->set($key, $value, $this->userId);

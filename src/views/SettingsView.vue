@@ -177,18 +177,26 @@
             <section v-if="canManageSettings" class="settings-section">
                 <h3>{{ t('worktime', 'PDF-Archivierung') }}</h3>
                 <p class="section-description">
-                    {{ t('worktime', 'Genehmigte Monatsberichte werden automatisch als PDF in diesem Ordner archiviert.') }}
+                    {{ t('worktime', 'Genehmigte Monatsberichte werden automatisch als PDF archiviert.') }}
                 </p>
                 <div class="form-group">
-                    <label for="pdfArchivePath">{{ t('worktime', 'Archiv-Ordner') }}</label>
-                    <input id="pdfArchivePath"
-                        v-model="settings.pdf_archive_path"
-                        type="text"
-                        class="input-field"
-                        :placeholder="'/WorkTime/Archiv'"
-                        @change="saveSetting('pdf_archive_path')">
+                    <label>{{ t('worktime', 'Archiv-Ordner') }}</label>
+                    <div class="folder-picker">
+                        <NcButton type="secondary" @click="openFolderPicker">
+                            <template #icon>
+                                <Folder :size="20" />
+                            </template>
+                            {{ t('worktime', 'Ordner auswählen') }}
+                        </NcButton>
+                        <span class="selected-path">
+                            {{ settings.pdf_archive_path || t('worktime', 'Nicht konfiguriert') }}
+                        </span>
+                    </div>
                     <p class="help-text">
-                        {{ t('worktime', 'Ordnerstruktur: {path}/{Jahr}/{Nachname_Vorname}/Arbeitszeitnachweis_YYYY-MM.pdf', { path: settings.pdf_archive_path || '/WorkTime/Archiv' }) }}
+                        {{ t('worktime', 'PDFs werden in Ihrem persönlichen Ordner gespeichert. Nur Sie haben Zugriff.') }}
+                    </p>
+                    <p class="help-text">
+                        {{ t('worktime', 'Struktur: {path}/{Jahr}/{Nachname_Vorname}/Arbeitszeitnachweis_YYYY-MM.pdf', { path: settings.pdf_archive_path || '...' }) }}
                     </p>
                 </div>
             </section>
@@ -248,6 +256,8 @@ import NcModal from '@nextcloud/vue/dist/Components/NcModal.js'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import Account from 'vue-material-design-icons/Account.vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
+import Folder from 'vue-material-design-icons/Folder.vue'
+import { getFilePickerBuilder, FilePickerType } from '@nextcloud/dialogs'
 import { mapGetters, mapActions } from 'vuex'
 import SettingsService from '../services/SettingsService.js'
 import HolidayService from '../services/HolidayService.js'
@@ -267,6 +277,7 @@ export default {
         Plus,
         Account,
         AccountGroup,
+        Folder,
         EmployeeForm,
         EmployeeList,
     },
@@ -426,6 +437,26 @@ export default {
                 showErrorMessage(error.message)
             }
         },
+        async openFolderPicker() {
+            try {
+                const picker = getFilePickerBuilder(this.t('worktime', 'Archiv-Ordner auswählen'))
+                    .setMultiSelect(false)
+                    .setType(FilePickerType.Choose)
+                    .allowDirectories(true)
+                    .build()
+
+                const path = await picker.pick()
+                if (path) {
+                    this.settings.pdf_archive_path = path
+                    await this.saveSetting('pdf_archive_path')
+                }
+            } catch (error) {
+                // User cancelled the picker - this is not an error
+                if (error?.message !== 'User cancelled') {
+                    console.error('Folder picker error:', error)
+                }
+            }
+        },
     },
 }
 </script>
@@ -516,5 +547,20 @@ export default {
     margin-top: 4px;
     font-size: 0.85em;
     color: var(--color-text-maxcontrast);
+}
+
+.folder-picker {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.selected-path {
+    font-family: monospace;
+    color: var(--color-text-maxcontrast);
+    padding: 4px 8px;
+    background: var(--color-background-hover);
+    border-radius: var(--border-radius);
 }
 </style>
