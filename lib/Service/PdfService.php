@@ -440,7 +440,7 @@ class PdfService {
         int $month,
         string $pdfContent
     ): string {
-        $archivePath = $this->settingsService->getValue(CompanySetting::KEY_PDF_ARCHIVE_PATH);
+        $archivePath = $this->settingsService->get(CompanySetting::KEY_PDF_ARCHIVE_PATH);
 
         // Build folder path: {archivePath}/{Jahr}/{Nachname_Vorname}/
         $folderPath = sprintf(

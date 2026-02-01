@@ -112,7 +112,7 @@ class ArchiveQueueMapper extends QBMapper {
         $qb = $this->db->getQueryBuilder();
         $qb->delete($this->getTableName())
             ->where($qb->expr()->eq('status', $qb->createNamedParameter(ArchiveQueue::STATUS_COMPLETED)))
-            ->andWhere($qb->expr()->lt('processed_at', $qb->createNamedParameter($cutoff, IQueryBuilder::PARAM_DATETIME)));
+            ->andWhere($qb->expr()->lt('processed_at', $qb->createNamedParameter($cutoff, IQueryBuilder::PARAM_DATETIME_MUTABLE)));
 
         return $qb->executeStatement();
     }
