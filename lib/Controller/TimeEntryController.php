@@ -5,45 +5,39 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Controller;
 
 use DateTime;
-use OCA\WorkTime\AppInfo\Application;
 use OCA\WorkTime\Db\ArchiveQueue;
 use OCA\WorkTime\Db\ArchiveQueueMapper;
 use OCA\WorkTime\Db\CompanySetting;
 use OCA\WorkTime\Service\CompanySettingsService;
-use OCA\WorkTime\Service\ForbiddenException;
-use OCA\WorkTime\Service\NotFoundException;
 use OCA\WorkTime\Service\PermissionService;
 use OCA\WorkTime\Service\TimeEntryService;
-use OCA\WorkTime\Service\ValidationException;
-use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\OCSController;
 use OCP\IRequest;
 use Psr\Log\LoggerInterface;
 
-class TimeEntryController extends OCSController {
+class TimeEntryController extends BaseController {
 
     public function __construct(
         IRequest $request,
-        private ?string $userId,
+        ?string $userId,
         private TimeEntryService $timeEntryService,
         private PermissionService $permissionService,
         private ArchiveQueueMapper $archiveQueueMapper,
         private CompanySettingsService $settingsService,
         private LoggerInterface $logger,
     ) {
-        parent::__construct(Application::APP_ID, $request);
+        parent::__construct($request, $userId);
     }
 
     #[NoAdminRequired]
     public function index(int $employeeId, ?int $year = null, ?int $month = null): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canViewEmployee($this->userId, $employeeId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         if ($year && $month) {
@@ -52,25 +46,25 @@ class TimeEntryController extends OCSController {
             $entries = $this->timeEntryService->findByEmployee($employeeId);
         }
 
-        return new JSONResponse($entries);
+        return $this->successResponse($entries);
     }
 
     #[NoAdminRequired]
     public function show(int $id): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         try {
             $entry = $this->timeEntryService->find($id);
 
             if (!$this->permissionService->canViewEmployee($this->userId, $entry->getEmployeeId())) {
-                return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+                return $this->forbiddenResponse();
             }
 
-            return new JSONResponse($entry);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+            return $this->successResponse($entry);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
@@ -84,12 +78,12 @@ class TimeEntryController extends OCSController {
         ?int $projectId = null,
         ?string $description = null
     ): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canEditTimeEntry($this->userId, $employeeId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         try {
@@ -104,9 +98,9 @@ class TimeEntryController extends OCSController {
                 $this->userId
             );
 
-            return new JSONResponse($entry, Http::STATUS_CREATED);
-        } catch (ValidationException $e) {
-            return new JSONResponse(['error' => $e->getMessage(), 'errors' => $e->getErrors()], Http::STATUS_BAD_REQUEST);
+            return $this->createdResponse($entry);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
@@ -120,15 +114,15 @@ class TimeEntryController extends OCSController {
         ?int $projectId = null,
         ?string $description = null
     ): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         try {
             $entry = $this->timeEntryService->find($id);
 
             if (!$this->permissionService->canEditTimeEntry($this->userId, $entry->getEmployeeId())) {
-                return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+                return $this->forbiddenResponse();
             }
 
             $entry = $this->timeEntryService->update(
@@ -142,119 +136,109 @@ class TimeEntryController extends OCSController {
                 $this->userId
             );
 
-            return new JSONResponse($entry);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
-        } catch (ValidationException $e) {
-            return new JSONResponse(['error' => $e->getMessage(), 'errors' => $e->getErrors()], Http::STATUS_BAD_REQUEST);
+            return $this->successResponse($entry);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     #[NoAdminRequired]
     public function destroy(int $id): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         try {
             $entry = $this->timeEntryService->find($id);
 
             if (!$this->permissionService->canEditTimeEntry($this->userId, $entry->getEmployeeId())) {
-                return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+                return $this->forbiddenResponse();
             }
 
             $this->timeEntryService->delete($id, $this->userId);
 
-            return new JSONResponse(['status' => 'deleted']);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
-        } catch (ForbiddenException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_FORBIDDEN);
+            return $this->deletedResponse();
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     #[NoAdminRequired]
     public function submit(int $id): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         try {
             $entry = $this->timeEntryService->find($id);
 
             if (!$this->permissionService->canEditTimeEntry($this->userId, $entry->getEmployeeId())) {
-                return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+                return $this->forbiddenResponse();
             }
 
             $entry = $this->timeEntryService->submit($id, $this->userId);
 
-            return new JSONResponse($entry);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
-        } catch (ForbiddenException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_FORBIDDEN);
+            return $this->successResponse($entry);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     #[NoAdminRequired]
     public function approve(int $id): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         try {
             $entry = $this->timeEntryService->find($id);
 
             if (!$this->permissionService->canApprove($this->userId, $entry->getEmployeeId())) {
-                return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+                return $this->forbiddenResponse();
             }
 
             $entry = $this->timeEntryService->approve($id, $this->userId);
 
-            return new JSONResponse($entry);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
-        } catch (ForbiddenException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_FORBIDDEN);
+            return $this->successResponse($entry);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     #[NoAdminRequired]
     public function reject(int $id): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         try {
             $entry = $this->timeEntryService->find($id);
 
             if (!$this->permissionService->canApprove($this->userId, $entry->getEmployeeId())) {
-                return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+                return $this->forbiddenResponse();
             }
 
             $entry = $this->timeEntryService->reject($id, $this->userId);
 
-            return new JSONResponse($entry);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
-        } catch (ForbiddenException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_FORBIDDEN);
+            return $this->successResponse($entry);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     #[NoAdminRequired]
     public function submitMonth(int $employeeId, int $year, int $month): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canEditTimeEntry($this->userId, $employeeId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         $result = $this->timeEntryService->submitMonth($employeeId, $year, $month, $this->userId);
 
-        return new JSONResponse([
+        return $this->successResponse([
             'status' => 'success',
             'submitted' => $result['submitted'],
             'skipped' => $result['skipped'],
@@ -263,12 +247,12 @@ class TimeEntryController extends OCSController {
 
     #[NoAdminRequired]
     public function approveMonth(int $employeeId, int $year, int $month): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canApprove($this->userId, $employeeId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         $result = $this->timeEntryService->approveMonth($employeeId, $year, $month, $this->userId);
@@ -279,7 +263,7 @@ class TimeEntryController extends OCSController {
             $archiveQueued = $this->queueArchiveJob($employeeId, $year, $month);
         }
 
-        return new JSONResponse([
+        return $this->successResponse([
             'status' => 'success',
             'approved' => $result['approved'],
             'skipped' => $result['skipped'],
@@ -342,21 +326,21 @@ class TimeEntryController extends OCSController {
     public function suggestBreak(string $startTime, string $endTime): JSONResponse {
         $breakMinutes = $this->timeEntryService->suggestBreak($startTime, $endTime);
 
-        return new JSONResponse(['breakMinutes' => $breakMinutes]);
+        return $this->successResponse(['breakMinutes' => $breakMinutes]);
     }
 
     #[NoAdminRequired]
     public function monthlyStats(int $employeeId, int $year, int $month): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canViewEmployee($this->userId, $employeeId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         $stats = $this->timeEntryService->getMonthlyStats($employeeId, $year, $month);
 
-        return new JSONResponse($stats);
+        return $this->successResponse($stats);
     }
 }

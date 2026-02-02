@@ -20,6 +20,7 @@ use OCP\AppFramework\Db\Entity;
  * @method int getIsHalfDay()
  * @method int getYear()
  * @method void setYear(int $year)
+ * @method int getIsManual()
  * @method DateTime getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
  */
@@ -30,6 +31,7 @@ class Holiday extends Entity implements JsonSerializable {
     protected string $federalState = '';
     protected int $isHalfDay = 0;
     protected int $year = 0;
+    protected int $isManual = 0;
     protected ?DateTime $createdAt = null;
 
     public function __construct() {
@@ -37,6 +39,7 @@ class Holiday extends Entity implements JsonSerializable {
         $this->addType('date', 'datetime');
         $this->addType('isHalfDay', 'integer');
         $this->addType('year', 'integer');
+        $this->addType('isManual', 'integer');
         $this->addType('createdAt', 'datetime');
     }
 
@@ -44,6 +47,12 @@ class Holiday extends Entity implements JsonSerializable {
         $value = is_bool($isHalfDay) ? ($isHalfDay ? 1 : 0) : $isHalfDay;
         $this->isHalfDay = $value;
         $this->markFieldUpdated('isHalfDay');
+    }
+
+    public function setIsManual(bool|int $isManual): void {
+        $value = is_bool($isManual) ? ($isManual ? 1 : 0) : $isManual;
+        $this->isManual = $value;
+        $this->markFieldUpdated('isManual');
     }
 
     public function getWorkDayValue(): float {
@@ -57,6 +66,7 @@ class Holiday extends Entity implements JsonSerializable {
             'name' => $this->name,
             'federalState' => $this->federalState,
             'isHalfDay' => (bool)$this->isHalfDay,
+            'isManual' => (bool)$this->isManual,
             'year' => $this->year,
             'createdAt' => $this->createdAt?->format('c'),
         ];

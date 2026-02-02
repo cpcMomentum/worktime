@@ -4,40 +4,34 @@ declare(strict_types=1);
 
 namespace OCA\WorkTime\Controller;
 
-use OCA\WorkTime\AppInfo\Application;
 use OCA\WorkTime\Db\Absence;
 use OCA\WorkTime\Service\AbsenceService;
 use OCA\WorkTime\Service\EmployeeService;
-use OCA\WorkTime\Service\ForbiddenException;
-use OCA\WorkTime\Service\NotFoundException;
 use OCA\WorkTime\Service\PermissionService;
-use OCA\WorkTime\Service\ValidationException;
-use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\OCSController;
 use OCP\IRequest;
 
-class AbsenceController extends OCSController {
+class AbsenceController extends BaseController {
 
     public function __construct(
         IRequest $request,
-        private ?string $userId,
+        ?string $userId,
         private AbsenceService $absenceService,
         private EmployeeService $employeeService,
         private PermissionService $permissionService,
     ) {
-        parent::__construct(Application::APP_ID, $request);
+        parent::__construct($request, $userId);
     }
 
     #[NoAdminRequired]
     public function index(int $employeeId, ?int $year = null, ?int $month = null): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canViewEmployee($this->userId, $employeeId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         if ($year && $month) {
@@ -48,31 +42,31 @@ class AbsenceController extends OCSController {
             $absences = $this->absenceService->findByEmployee($employeeId);
         }
 
-        return new JSONResponse($absences);
+        return $this->successResponse($absences);
     }
 
     #[NoAdminRequired]
     public function show(mixed $id): JSONResponse {
         // Handle route conflict: if $id is not numeric, this might be a misrouted request
         if (!is_numeric($id)) {
-            return new JSONResponse(['error' => 'Invalid ID'], Http::STATUS_BAD_REQUEST);
+            return $this->successResponse(['error' => 'Invalid ID'], 400);
         }
         $id = (int) $id;
 
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         try {
             $absence = $this->absenceService->find($id);
 
             if (!$this->permissionService->canViewEmployee($this->userId, $absence->getEmployeeId())) {
-                return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+                return $this->forbiddenResponse();
             }
 
-            return new JSONResponse($absence);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+            return $this->successResponse($absence);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
@@ -85,12 +79,12 @@ class AbsenceController extends OCSController {
         ?string $note = null,
         bool $isHalfDay = false
     ): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canEditTimeEntry($this->userId, $employeeId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         try {
@@ -109,11 +103,9 @@ class AbsenceController extends OCSController {
                 $isHalfDay
             );
 
-            return new JSONResponse($absence, Http::STATUS_CREATED);
-        } catch (ValidationException $e) {
-            return new JSONResponse(['error' => $e->getMessage(), 'errors' => $e->getErrors()], Http::STATUS_BAD_REQUEST);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+            return $this->createdResponse($absence);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
@@ -126,15 +118,15 @@ class AbsenceController extends OCSController {
         ?string $note = null,
         bool $isHalfDay = false
     ): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         try {
             $absence = $this->absenceService->find($id);
 
             if (!$this->permissionService->canEditTimeEntry($this->userId, $absence->getEmployeeId())) {
-                return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+                return $this->forbiddenResponse();
             }
 
             // Get employee's federal state
@@ -152,94 +144,84 @@ class AbsenceController extends OCSController {
                 $isHalfDay
             );
 
-            return new JSONResponse($absence);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
-        } catch (ValidationException $e) {
-            return new JSONResponse(['error' => $e->getMessage(), 'errors' => $e->getErrors()], Http::STATUS_BAD_REQUEST);
-        } catch (ForbiddenException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_FORBIDDEN);
+            return $this->successResponse($absence);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     #[NoAdminRequired]
     public function destroy(int $id): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         try {
             $absence = $this->absenceService->find($id);
 
             if (!$this->permissionService->canEditTimeEntry($this->userId, $absence->getEmployeeId())) {
-                return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+                return $this->forbiddenResponse();
             }
 
             $this->absenceService->delete($id, $this->userId);
 
-            return new JSONResponse(['status' => 'deleted']);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
-        } catch (ForbiddenException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_FORBIDDEN);
+            return $this->deletedResponse();
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     #[NoAdminRequired]
     public function approve(int $id): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         try {
             $absence = $this->absenceService->find($id);
 
             if (!$this->permissionService->canApprove($this->userId, $absence->getEmployeeId())) {
-                return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+                return $this->forbiddenResponse();
             }
 
             $approverEmployee = $this->permissionService->getEmployeeForUser($this->userId);
             if (!$approverEmployee) {
-                return new JSONResponse(['error' => 'Approver not found'], Http::STATUS_BAD_REQUEST);
+                return $this->successResponse(['error' => 'Approver not found'], 400);
             }
 
             $absence = $this->absenceService->approve($id, $approverEmployee->getId(), $this->userId);
 
-            return new JSONResponse($absence);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
-        } catch (ForbiddenException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_FORBIDDEN);
+            return $this->successResponse($absence);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     #[NoAdminRequired]
     public function reject(int $id): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         try {
             $absence = $this->absenceService->find($id);
 
             if (!$this->permissionService->canApprove($this->userId, $absence->getEmployeeId())) {
-                return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+                return $this->forbiddenResponse();
             }
 
             $absence = $this->absenceService->reject($id, $this->userId);
 
-            return new JSONResponse($absence);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
-        } catch (ForbiddenException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_FORBIDDEN);
+            return $this->successResponse($absence);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     #[NoAdminRequired]
     public function cancel(int $id): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         try {
@@ -248,52 +230,52 @@ class AbsenceController extends OCSController {
             // User can cancel their own absences, or admins/HR can cancel any
             if (!$this->permissionService->canEditTimeEntry($this->userId, $absence->getEmployeeId()) &&
                 !$this->permissionService->canManageEmployees($this->userId)) {
-                return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+                return $this->forbiddenResponse();
             }
 
             $absence = $this->absenceService->cancel($id, $this->userId);
 
-            return new JSONResponse($absence);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+            return $this->successResponse($absence);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     #[NoAdminRequired]
     public function vacationStats(int $employeeId, int $year): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canViewEmployee($this->userId, $employeeId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         try {
             $employee = $this->employeeService->find($employeeId);
             $stats = $this->absenceService->getVacationStats($employeeId, $year, $employee->getVacationDays());
 
-            return new JSONResponse($stats);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+            return $this->successResponse($stats);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     #[NoAdminRequired]
     public function types(): JSONResponse {
-        return new JSONResponse(Absence::TYPES);
+        return $this->successResponse(Absence::TYPES);
     }
 
     #[NoAdminRequired]
     public function pending(): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         $employee = $this->permissionService->getEmployeeForUser($this->userId);
 
         if (!$employee && !$this->permissionService->canManageEmployees($this->userId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         if ($this->permissionService->canManageEmployees($this->userId)) {
@@ -321,6 +303,6 @@ class AbsenceController extends OCSController {
             $result[] = $absenceData;
         }
 
-        return new JSONResponse($result);
+        return $this->successResponse($result);
     }
 }

@@ -51,8 +51,12 @@ return [
         ['name' => 'holiday#check', 'url' => '/api/holidays/check', 'verb' => 'GET'],
         ['name' => 'holiday#federalStates', 'url' => '/api/holidays/federal-states', 'verb' => 'GET'],
         ['name' => 'holiday#easter', 'url' => '/api/holidays/easter', 'verb' => 'GET'],
+        ['name' => 'holiday#byYear', 'url' => '/api/holidays/by-year', 'verb' => 'GET'],
+        ['name' => 'holiday#create', 'url' => '/api/holidays', 'verb' => 'POST'],
         ['name' => 'holiday#index', 'url' => '/api/holidays', 'verb' => 'GET'],
-        ['name' => 'holiday#show', 'url' => '/api/holidays/{id}', 'verb' => 'GET'],
+        ['name' => 'holiday#show', 'url' => '/api/holidays/{id}', 'verb' => 'GET', 'requirements' => ['id' => '\d+']],
+        ['name' => 'holiday#update', 'url' => '/api/holidays/{id}', 'verb' => 'PUT', 'requirements' => ['id' => '\d+']],
+        ['name' => 'holiday#destroy', 'url' => '/api/holidays/{id}', 'verb' => 'DELETE', 'requirements' => ['id' => '\d+']],
 
         // Projects API (specific routes before {id})
         ['name' => 'project#indexAll', 'url' => '/api/projects/all', 'verb' => 'GET'],

@@ -4,78 +4,79 @@ declare(strict_types=1);
 
 namespace OCA\WorkTime\Controller;
 
-use OCA\WorkTime\AppInfo\Application;
 use OCA\WorkTime\Service\HolidayService;
-use OCA\WorkTime\Service\NotFoundException;
 use OCA\WorkTime\Service\PermissionService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\OCSController;
 use OCP\IRequest;
 
-class HolidayController extends OCSController {
+class HolidayController extends BaseController {
 
     public function __construct(
         IRequest $request,
-        private ?string $userId,
+        ?string $userId,
         private HolidayService $holidayService,
         private PermissionService $permissionService,
     ) {
-        parent::__construct(Application::APP_ID, $request);
+        parent::__construct($request, $userId);
     }
 
     #[NoAdminRequired]
-    public function index(int $year, string $federalState): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+    public function index(int $year, string $federalState = ''): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
-        $holidays = $this->holidayService->findByYearAndState($year, $federalState);
+        if ($federalState === '') {
+            $holidays = $this->holidayService->findByYear($year);
+        } else {
+            $holidays = $this->holidayService->findByYearAndState($year, $federalState);
+        }
 
-        return new JSONResponse($holidays);
+        return $this->successResponse($holidays);
     }
 
     #[NoAdminRequired]
     public function show(int $id): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         try {
             $holiday = $this->holidayService->find($id);
-            return new JSONResponse($holiday);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+            return $this->successResponse($holiday);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     #[NoAdminRequired]
     public function generate(int $year, string $federalState): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canManageHolidays($this->userId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         $holidays = $this->holidayService->generateHolidays($year, $federalState, $this->userId);
 
-        return new JSONResponse([
+        return $this->createdResponse([
             'count' => count($holidays),
             'holidays' => $holidays,
-        ], Http::STATUS_CREATED);
+        ]);
     }
 
     #[NoAdminRequired]
     public function generateAll(int $year): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canManageHolidays($this->userId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         $federalStates = $this->holidayService->getFederalStates();
@@ -86,36 +87,127 @@ class HolidayController extends OCSController {
             $totalCount += count($holidays);
         }
 
-        return new JSONResponse([
+        return $this->createdResponse([
             'year' => $year,
             'statesCount' => count($federalStates),
             'totalHolidays' => $totalCount,
-        ], Http::STATUS_CREATED);
+        ]);
     }
 
     #[NoAdminRequired]
     public function check(int $year, string $federalState): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         $exists = $this->holidayService->existsForYearAndState($year, $federalState);
 
-        return new JSONResponse(['exists' => $exists]);
+        return $this->successResponse(['exists' => $exists]);
     }
 
     #[NoAdminRequired]
     public function federalStates(): JSONResponse {
-        return new JSONResponse($this->holidayService->getFederalStates());
+        return $this->successResponse($this->holidayService->getFederalStates());
     }
 
     #[NoAdminRequired]
     public function easter(int $year): JSONResponse {
         $easterSunday = $this->holidayService->calculateEasterSunday($year);
 
-        return new JSONResponse([
+        return $this->successResponse([
             'year' => $year,
             'date' => $easterSunday->format('Y-m-d'),
         ]);
+    }
+
+    #[NoAdminRequired]
+    public function byYear(int $year): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+
+        try {
+            $holidays = $this->holidayService->findByYear($year);
+            return $this->successResponse($holidays);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    #[NoAdminRequired]
+    public function create(): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+
+        if (!$this->permissionService->canManageHolidays($this->userId)) {
+            return $this->forbiddenResponse();
+        }
+
+        $date = $this->request->getParam('date');
+        $name = $this->request->getParam('name');
+        $federalStates = $this->request->getParam('federalStates', []);
+        $isHalfDay = (bool)$this->request->getParam('isHalfDay', false);
+
+        if (!$date || !$name || empty($federalStates)) {
+            return new JSONResponse(['error' => 'Missing required parameters: date, name, federalStates'], Http::STATUS_BAD_REQUEST);
+        }
+
+        try {
+            $holidays = $this->holidayService->createManual($date, $name, $federalStates, $isHalfDay, $this->userId);
+
+            return $this->createdResponse([
+                'count' => count($holidays),
+                'holidays' => $holidays,
+            ]);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    #[NoAdminRequired]
+    public function update(int $id): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+
+        if (!$this->permissionService->canManageHolidays($this->userId)) {
+            return $this->forbiddenResponse();
+        }
+
+        $date = $this->request->getParam('date');
+        $name = $this->request->getParam('name');
+        $isHalfDay = (bool)$this->request->getParam('isHalfDay', false);
+
+        if (!$date || !$name) {
+            return new JSONResponse(['error' => 'Missing required parameters: date, name'], Http::STATUS_BAD_REQUEST);
+        }
+
+        try {
+            $holiday = $this->holidayService->update($id, $date, $name, $isHalfDay, $this->userId);
+
+            return $this->successResponse($holiday);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    #[NoAdminRequired]
+    public function destroy(int $id): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+
+        if (!$this->permissionService->canManageHolidays($this->userId)) {
+            return $this->forbiddenResponse();
+        }
+
+        try {
+            $this->holidayService->delete($id, $this->userId);
+
+            return $this->successResponse(['deleted' => true]);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
     }
 }

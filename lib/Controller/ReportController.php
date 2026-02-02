@@ -5,29 +5,25 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Controller;
 
 use DateTime;
-use OCA\WorkTime\AppInfo\Application;
 use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\TimeEntryMapper;
 use OCA\WorkTime\Service\AbsenceService;
 use OCA\WorkTime\Service\EmployeeService;
 use OCA\WorkTime\Service\HolidayService;
-use OCA\WorkTime\Service\NotFoundException;
 use OCA\WorkTime\Service\PdfService;
 use OCA\WorkTime\Service\PermissionService;
 use OCA\WorkTime\Service\TimeEntryService;
-use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\OCSController;
 use OCP\IRequest;
 
-class ReportController extends OCSController {
+class ReportController extends BaseController {
 
     public function __construct(
         IRequest $request,
-        private ?string $userId,
+        ?string $userId,
         private TimeEntryService $timeEntryService,
         private TimeEntryMapper $timeEntryMapper,
         private AbsenceService $absenceService,
@@ -36,17 +32,17 @@ class ReportController extends OCSController {
         private PermissionService $permissionService,
         private PdfService $pdfService,
     ) {
-        parent::__construct(Application::APP_ID, $request);
+        parent::__construct($request, $userId);
     }
 
     #[NoAdminRequired]
     public function monthly(int $employeeId, int $year, int $month): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canViewEmployee($this->userId, $employeeId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         try {
@@ -58,7 +54,7 @@ class ReportController extends OCSController {
             // Calculate statistics
             $stats = $this->calculateMonthlyStats($employee, $year, $month, $timeEntries, $absences, $holidays);
 
-            return new JSONResponse([
+            return $this->successResponse([
                 'employee' => $employee,
                 'year' => $year,
                 'month' => $month,
@@ -67,20 +63,20 @@ class ReportController extends OCSController {
                 'holidays' => $holidays,
                 'statistics' => $stats,
             ]);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     #[NoAdminRequired]
     #[NoCSRFRequired]
     public function pdf(int $employeeId, int $year, int $month): DataDownloadResponse|JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canViewEmployee($this->userId, $employeeId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         try {
@@ -110,21 +106,21 @@ class ReportController extends OCSController {
             );
 
             return new DataDownloadResponse($pdfContent, $filename, 'application/pdf');
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     #[NoAdminRequired]
     public function team(int $year, int $month): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         $teamMembers = $this->permissionService->getTeamMembers($this->userId);
 
         if (empty($teamMembers)) {
-            return new JSONResponse([]);
+            return $this->successResponse([]);
         }
 
         $report = [];
@@ -152,17 +148,17 @@ class ReportController extends OCSController {
             ];
         }
 
-        return new JSONResponse($report);
+        return $this->successResponse($report);
     }
 
     #[NoAdminRequired]
     public function overtime(int $employeeId, int $year): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canViewEmployee($this->userId, $employeeId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         try {
@@ -172,7 +168,6 @@ class ReportController extends OCSController {
 
             for ($month = 1; $month <= 12; $month++) {
                 $startDate = new DateTime("$year-$month-01");
-                $endDate = (clone $startDate)->modify('last day of this month');
 
                 // Skip future months
                 if ($startDate > new DateTime()) {
@@ -195,27 +190,27 @@ class ReportController extends OCSController {
                 $totalOvertime += $stats['overtimeMinutes'];
             }
 
-            return new JSONResponse([
+            return $this->successResponse([
                 'employee' => $employee,
                 'year' => $year,
                 'monthly' => $monthlyData,
                 'totalOvertimeMinutes' => $totalOvertime,
                 'totalOvertimeHours' => round($totalOvertime / 60, 2),
             ]);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     #[NoAdminRequired]
     public function allEmployeesStatus(int $year, int $month): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         // Only Admin and HR Manager can see all employees
         if (!$this->permissionService->isAdmin($this->userId) && !$this->permissionService->isHrManager($this->userId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         $allEmployees = $this->employeeService->findAllActive();
@@ -240,7 +235,7 @@ class ReportController extends OCSController {
             ];
         }
 
-        return new JSONResponse($report);
+        return $this->successResponse($report);
     }
 
     /**

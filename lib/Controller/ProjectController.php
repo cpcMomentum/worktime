@@ -4,67 +4,62 @@ declare(strict_types=1);
 
 namespace OCA\WorkTime\Controller;
 
-use OCA\WorkTime\AppInfo\Application;
-use OCA\WorkTime\Service\NotFoundException;
 use OCA\WorkTime\Service\PermissionService;
 use OCA\WorkTime\Service\ProjectService;
-use OCA\WorkTime\Service\ValidationException;
-use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\OCSController;
 use OCP\IRequest;
 
-class ProjectController extends OCSController {
+class ProjectController extends BaseController {
 
     public function __construct(
         IRequest $request,
-        private ?string $userId,
+        ?string $userId,
         private ProjectService $projectService,
         private PermissionService $permissionService,
     ) {
-        parent::__construct(Application::APP_ID, $request);
+        parent::__construct($request, $userId);
     }
 
     #[NoAdminRequired]
     public function index(): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         // All users can see active projects
         $projects = $this->projectService->findAllActive();
 
-        return new JSONResponse($projects);
+        return $this->successResponse($projects);
     }
 
     #[NoAdminRequired]
     public function indexAll(): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canManageProjects($this->userId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         // Admin/HR can see all projects including inactive
         $projects = $this->projectService->findAll();
 
-        return new JSONResponse($projects);
+        return $this->successResponse($projects);
     }
 
     #[NoAdminRequired]
     public function show(int $id): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         try {
             $project = $this->projectService->find($id);
-            return new JSONResponse($project);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+            return $this->successResponse($project);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
@@ -77,12 +72,12 @@ class ProjectController extends OCSController {
         bool $isActive = true,
         bool $isBillable = true
     ): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canManageProjects($this->userId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         try {
@@ -96,9 +91,9 @@ class ProjectController extends OCSController {
                 $this->userId
             );
 
-            return new JSONResponse($project, Http::STATUS_CREATED);
-        } catch (ValidationException $e) {
-            return new JSONResponse(['error' => $e->getMessage(), 'errors' => $e->getErrors()], Http::STATUS_BAD_REQUEST);
+            return $this->createdResponse($project);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
@@ -112,12 +107,12 @@ class ProjectController extends OCSController {
         bool $isActive = true,
         bool $isBillable = true
     ): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canManageProjects($this->userId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         try {
@@ -132,29 +127,27 @@ class ProjectController extends OCSController {
                 $this->userId
             );
 
-            return new JSONResponse($project);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
-        } catch (ValidationException $e) {
-            return new JSONResponse(['error' => $e->getMessage(), 'errors' => $e->getErrors()], Http::STATUS_BAD_REQUEST);
+            return $this->successResponse($project);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     #[NoAdminRequired]
     public function destroy(int $id): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canManageProjects($this->userId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         try {
             $this->projectService->delete($id, $this->userId);
-            return new JSONResponse(['status' => 'deleted']);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+            return $this->deletedResponse();
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 }

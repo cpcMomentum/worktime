@@ -58,4 +58,42 @@ export default {
             handleApiError(error)
         }
     },
+
+    async getByYear(year) {
+        try {
+            const response = await api.get('/holidays', {
+                params: { year },
+            })
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
+    async create(data) {
+        try {
+            const response = await api.post('/holidays', data)
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
+    async update(id, data) {
+        try {
+            const response = await api.put(`/holidays/${id}`, data)
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
+    async delete(id) {
+        try {
+            const response = await api.delete(`/holidays/${id}`)
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
 }
