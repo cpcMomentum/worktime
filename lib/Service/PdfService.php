@@ -347,22 +347,28 @@ class PdfService {
         $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_SMALL);
         $pdf->Cell(0, 5, 'Ich bestätige die Richtigkeit der oben aufgeführten Arbeitszeiten.', 0, 1);
 
-        $pdf->Ln(15);
+        $pdf->Ln(10);
+
+        $lineWidth = 70;
+        $gap = 40;
+
+        // "Ort, Datum" labels above signature lines
+        $pdf->Cell($lineWidth, 5, 'Ort, Datum', 0, 0, 'L');
+        $pdf->Cell($gap, 5, '', 0, 0);
+        $pdf->Cell($lineWidth, 5, 'Ort, Datum', 0, 1, 'L');
+
+        $pdf->Ln(10);
 
         // Signature lines
-        $lineWidth = 60;
         $pdf->Cell($lineWidth, 6, '', 'B', 0);
-        $pdf->Cell(20, 6, '', 0, 0);
-        $pdf->Cell($lineWidth, 6, '', 'B', 0);
-        $pdf->Cell(20, 6, '', 0, 0);
-        $pdf->Cell(40, 6, '', 'B', 1);
+        $pdf->Cell($gap, 6, '', 0, 0);
+        $pdf->Cell($lineWidth, 6, '', 'B', 1);
 
+        // Labels below signature lines
         $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_SMALL);
         $pdf->Cell($lineWidth, 5, 'Mitarbeiter', 0, 0, 'C');
-        $pdf->Cell(20, 5, '', 0, 0);
-        $pdf->Cell($lineWidth, 5, 'Vorgesetzter', 0, 0, 'C');
-        $pdf->Cell(20, 5, '', 0, 0);
-        $pdf->Cell(40, 5, 'Datum', 0, 1, 'C');
+        $pdf->Cell($gap, 5, '', 0, 0);
+        $pdf->Cell($lineWidth, 5, 'Vorgesetzter', 0, 1, 'C');
     }
 
     /**
@@ -398,27 +404,41 @@ class PdfService {
     }
 
     /**
-     * Add approval info section to PDF
+     * Add approval info section to PDF (two columns: submitted / approved)
      */
     private function addApprovalInfoSection(TCPDF $pdf, array $approvalInfo): void {
         $pdf->Ln(10);
 
+        // Extract data
+        $submittedBy = $approvalInfo['submittedBy'] ?? null;
+        $submittedAt = $approvalInfo['submittedAt'] ?? null;
+        $approvedBy = $approvalInfo['approvedBy'] ?? null;
+        $approvedAt = $approvalInfo['approvedAt'] ?? null;
+
+        $submitterName = $submittedBy instanceof Employee ? $submittedBy->getFullName() : 'Unbekannt';
+        $submissionDate = $submittedAt instanceof DateTime ? $submittedAt->format('d.m.Y H:i') : 'Unbekannt';
+        $approverName = $approvedBy instanceof Employee ? $approvedBy->getFullName() : 'Unbekannt';
+        $approvalDate = $approvedAt instanceof DateTime ? $approvedAt->format('d.m.Y H:i') : 'Unbekannt';
+
+        // Header
         $pdf->SetFillColor(240, 248, 255);
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_NORMAL);
         $pdf->Cell(0, 8, 'Genehmigungsvermerk', 1, 1, 'L', true);
 
         $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_SMALL);
 
-        $approvedBy = $approvalInfo['approvedBy'] ?? null;
-        $approvedAt = $approvalInfo['approvedAt'] ?? null;
+        $colWidth = 90;
 
-        $approverName = $approvedBy instanceof Employee ? $approvedBy->getFullName() : 'Unbekannt';
-        $approvalDate = $approvedAt instanceof DateTime ? $approvedAt->format('d.m.Y H:i') : 'Unbekannt';
-
-        $pdf->Cell(40, 6, 'Genehmigt von:', 1, 0, 'L');
+        // Row 1: Von labels and values
+        $pdf->Cell(30, 6, 'Eingereicht von:', 1, 0, 'L');
+        $pdf->Cell($colWidth - 30, 6, $submitterName, 1, 0, 'L');
+        $pdf->Cell(30, 6, 'Genehmigt von:', 1, 0, 'L');
         $pdf->Cell(0, 6, $approverName, 1, 1, 'L');
 
-        $pdf->Cell(40, 6, 'Genehmigt am:', 1, 0, 'L');
+        // Row 2: Am labels and values
+        $pdf->Cell(30, 6, 'Eingereicht am:', 1, 0, 'L');
+        $pdf->Cell($colWidth - 30, 6, $submissionDate . ' Uhr', 1, 0, 'L');
+        $pdf->Cell(30, 6, 'Genehmigt am:', 1, 0, 'L');
         $pdf->Cell(0, 6, $approvalDate . ' Uhr', 1, 1, 'L');
     }
 

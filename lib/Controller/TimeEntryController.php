@@ -307,12 +307,23 @@ class TimeEntryController extends OCSController {
         try {
             $approverEmployee = $this->permissionService->getEmployeeForUser($this->userId);
 
+            // Get submittedAt from time entries
+            $timeEntries = $this->timeEntryService->findByEmployeeAndMonth($employeeId, $year, $month);
+            $submittedAt = null;
+            foreach ($timeEntries as $entry) {
+                if ($entry->getSubmittedAt() !== null) {
+                    $submittedAt = $entry->getSubmittedAt();
+                    break;
+                }
+            }
+
             $job = new ArchiveQueue();
             $job->setEmployeeId($employeeId);
             $job->setYear($year);
             $job->setMonth($month);
             $job->setApproverId($approverEmployee?->getId());
             $job->setApprovedAt(new DateTime());
+            $job->setSubmittedAt($submittedAt);
             $job->setStatus(ArchiveQueue::STATUS_PENDING);
             $job->setAttempts(0);
             $job->setCreatedAt(new DateTime());

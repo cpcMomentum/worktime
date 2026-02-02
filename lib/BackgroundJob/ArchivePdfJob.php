@@ -97,15 +97,18 @@ class ArchivePdfJob extends TimedJob {
                 $holidays
             );
 
-            // Build approval info
-            $approvalInfo = null;
+            // Build approval info (includes submission and approval data)
+            $approvalInfo = [
+                'submittedBy' => $employee,
+                'submittedAt' => $job->getSubmittedAt(),
+                'approvedBy' => null,
+                'approvedAt' => $job->getApprovedAt(),
+            ];
+
             if ($job->getApproverId()) {
                 try {
                     $approver = $this->employeeService->find($job->getApproverId());
-                    $approvalInfo = [
-                        'approvedBy' => $approver,
-                        'approvedAt' => $job->getApprovedAt(),
-                    ];
+                    $approvalInfo['approvedBy'] = $approver;
                 } catch (NotFoundException) {
                     // Approver not found, continue without
                 }

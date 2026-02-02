@@ -31,6 +31,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setCreatedAt(DateTime $createdAt)
  * @method DateTime|null getProcessedAt()
  * @method void setProcessedAt(?DateTime $processedAt)
+ * @method DateTime|null getSubmittedAt()
+ * @method void setSubmittedAt(?DateTime $submittedAt)
  */
 class ArchiveQueue extends Entity implements JsonSerializable {
 
@@ -51,6 +53,7 @@ class ArchiveQueue extends Entity implements JsonSerializable {
     protected ?string $lastError = null;
     protected ?DateTime $createdAt = null;
     protected ?DateTime $processedAt = null;
+    protected ?DateTime $submittedAt = null;
 
     public function __construct() {
         $this->addType('id', 'integer');
@@ -62,6 +65,7 @@ class ArchiveQueue extends Entity implements JsonSerializable {
         $this->addType('attempts', 'integer');
         $this->addType('createdAt', 'datetime');
         $this->addType('processedAt', 'datetime');
+        $this->addType('submittedAt', 'datetime');
     }
 
     public function canRetry(): bool {
@@ -81,6 +85,7 @@ class ArchiveQueue extends Entity implements JsonSerializable {
             'lastError' => $this->lastError,
             'createdAt' => $this->createdAt?->format('c'),
             'processedAt' => $this->processedAt?->format('c'),
+            'submittedAt' => $this->submittedAt?->format('c'),
         ];
     }
 }
