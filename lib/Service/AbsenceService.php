@@ -9,6 +9,7 @@ use OCA\WorkTime\Db\Absence;
 use OCA\WorkTime\Db\AbsenceMapper;
 use OCA\WorkTime\Db\HolidayMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use Psr\Log\LoggerInterface;
 
 class AbsenceService {
 
@@ -16,6 +17,7 @@ class AbsenceService {
         private AbsenceMapper $absenceMapper,
         private HolidayMapper $holidayMapper,
         private AuditLogService $auditLogService,
+        private LoggerInterface $logger,
     ) {
     }
 

@@ -9,6 +9,7 @@ use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\EmployeeMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IUserManager;
+use Psr\Log\LoggerInterface;
 
 class EmployeeService {
 
@@ -16,6 +17,7 @@ class EmployeeService {
         private EmployeeMapper $employeeMapper,
         private AuditLogService $auditLogService,
         private IUserManager $userManager,
+        private LoggerInterface $logger,
     ) {
     }
 

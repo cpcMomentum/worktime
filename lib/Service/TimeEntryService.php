@@ -13,6 +13,7 @@ use OCA\WorkTime\Db\EmployeeMapper;
 use OCA\WorkTime\Db\TimeEntry;
 use OCA\WorkTime\Db\TimeEntryMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use Psr\Log\LoggerInterface;
 
 class TimeEntryService {
 
@@ -22,6 +23,7 @@ class TimeEntryService {
         private EmployeeMapper $employeeMapper,
         private AbsenceMapper $absenceMapper,
         private AuditLogService $auditLogService,
+        private LoggerInterface $logger,
     ) {
     }
 
