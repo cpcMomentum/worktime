@@ -36,6 +36,7 @@ return [
 
         // Employees API (specific routes before {id})
         ['name' => 'employee#me', 'url' => '/api/employees/me', 'verb' => 'GET'],
+        ['name' => 'employee#updateMyDefaults', 'url' => '/api/employees/me/defaults', 'verb' => 'PUT'],
         ['name' => 'employee#team', 'url' => '/api/employees/team', 'verb' => 'GET'],
         ['name' => 'employee#federalStates', 'url' => '/api/employees/federal-states', 'verb' => 'GET'],
         ['name' => 'employee#availableUsers', 'url' => '/api/employees/available-users', 'verb' => 'GET'],

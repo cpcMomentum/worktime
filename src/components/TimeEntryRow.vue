@@ -119,6 +119,7 @@ import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import DeleteIcon from 'vue-material-design-icons/Delete.vue'
 import ContentSaveIcon from 'vue-material-design-icons/ContentSave.vue'
 import CloseIcon from 'vue-material-design-icons/Close.vue'
+import { mapGetters } from 'vuex'
 import { formatDateWithWeekday, formatDateISO, isWeekend } from '../utils/dateUtils.js'
 import { formatMinutesWithUnit, calculateWorkMinutes, suggestBreak } from '../utils/timeUtils.js'
 
@@ -170,6 +171,7 @@ export default {
         }
     },
     computed: {
+        ...mapGetters('employees', ['currentEmployee']),
         rowClasses() {
             return {
                 'editing': this.mode !== 'view',
@@ -287,14 +289,20 @@ export default {
             }
         },
         resetForm() {
+            const defaultStart = this.currentEmployee?.defaultStartTime || '08:00'
+            const defaultEnd = this.currentEmployee?.defaultEndTime || '17:00'
             this.form = {
                 date: new Date(),
-                startTime: '08:00',
-                endTime: '17:00',
+                startTime: defaultStart,
+                endTime: defaultEnd,
                 breakMinutes: 30,
                 projectId: null,
                 description: '',
             }
+            // Recalculate break based on default times
+            this.$nextTick(() => {
+                this.onTimeChange()
+            })
         },
         onTimeChange() {
             // Automatisch die gesetzlich vorgeschriebene Pause eintragen

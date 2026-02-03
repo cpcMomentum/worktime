@@ -116,6 +116,12 @@ const actions = {
         await EmployeeService.delete(id)
         commit('REMOVE_EMPLOYEE', id)
     },
+
+    async updateMyDefaults({ commit }, data) {
+        const employee = await EmployeeService.updateMyDefaults(data)
+        commit('SET_CURRENT_EMPLOYEE', employee)
+        return employee
+    },
 }
 
 export default {

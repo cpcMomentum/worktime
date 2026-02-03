@@ -193,6 +193,25 @@ class EmployeeController extends BaseController {
     }
 
     #[NoAdminRequired]
+    public function updateMyDefaults(?string $defaultStartTime = null, ?string $defaultEndTime = null): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+
+        try {
+            $employee = $this->employeeService->updateMyDefaults(
+                $this->userId,
+                $defaultStartTime,
+                $defaultEndTime
+            );
+
+            return $this->successResponse($employee);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    #[NoAdminRequired]
     public function availableUsers(): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;

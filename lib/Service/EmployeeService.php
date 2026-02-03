@@ -218,6 +218,39 @@ class EmployeeService {
     }
 
     /**
+     * Update the current user's default working times.
+     *
+     * @throws NotFoundException
+     */
+    public function updateMyDefaults(
+        string $userId,
+        ?string $defaultStartTime = null,
+        ?string $defaultEndTime = null
+    ): Employee {
+        $employee = $this->findByUserId($userId);
+        $oldValues = $employee->jsonSerialize();
+
+        // Validate time format (HH:MM)
+        if ($defaultStartTime !== null && !preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $defaultStartTime)) {
+            throw ValidationException::fromSingleError('defaultStartTime', 'Invalid time format. Use HH:MM.');
+        }
+        if ($defaultEndTime !== null && !preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $defaultEndTime)) {
+            throw ValidationException::fromSingleError('defaultEndTime', 'Invalid time format. Use HH:MM.');
+        }
+
+        $employee->setDefaultStartTime($defaultStartTime ? new DateTime($defaultStartTime) : null);
+        $employee->setDefaultEndTime($defaultEndTime ? new DateTime($defaultEndTime) : null);
+        $employee->setUpdatedAt(new DateTime());
+
+        $employee = $this->employeeMapper->update($employee);
+
+        // Audit log
+        $this->auditLogService->logUpdate($userId, 'employee', $employee->getId(), $oldValues, $employee->jsonSerialize());
+
+        return $employee;
+    }
+
+    /**
      * Get all Nextcloud users that don't have an employee profile yet.
      *
      * @return array<array{user: string, displayName: string, subname: string}>

@@ -110,6 +110,7 @@ export default {
     },
     computed: {
         ...mapGetters('projects', ['activeProjects']),
+        ...mapGetters('employees', ['currentEmployee']),
         requiredBreak() {
             if (!this.form.startTime || !this.form.endTime) return 0
             const grossMinutes = calculateWorkMinutes(this.form.startTime, this.form.endTime, 0)
@@ -158,6 +159,15 @@ export default {
                 }
             },
         },
+        // Update form defaults when employee data is loaded
+        currentEmployee: {
+            handler(employee) {
+                // Only update if we're creating a new entry (not editing)
+                if (!this.entry && employee) {
+                    this.resetForm()
+                }
+            },
+        },
     },
     created() {
         this.$store.dispatch('projects/fetchProjects')
@@ -168,14 +178,20 @@ export default {
             return formatMinutesWithUnit(minutes)
         },
         resetForm() {
+            const defaultStart = this.currentEmployee?.defaultStartTime || '08:00'
+            const defaultEnd = this.currentEmployee?.defaultEndTime || '17:00'
             this.form = {
                 date: new Date(),
-                startTime: '08:00',
-                endTime: '17:00',
+                startTime: defaultStart,
+                endTime: defaultEnd,
                 breakMinutes: 30,
                 projectId: null,
                 description: '',
             }
+            // Recalculate break based on default times
+            this.$nextTick(() => {
+                this.onTimeChange()
+            })
         },
         onTimeChange() {
             // Automatisch die gesetzlich vorgeschriebene Pause eintragen

@@ -52,6 +52,14 @@
             </NcAppNavigationItem>
 
             <template #footer>
+                <NcAppNavigationItem v-if="isEmployee"
+                    :name="t('worktime', 'Meine Einstellungen')"
+                    :class="{ active: currentView === 'my-settings' }"
+                    @click="currentView = 'my-settings'">
+                    <template #icon>
+                        <AccountCogIcon :size="20" />
+                    </template>
+                </NcAppNavigationItem>
                 <NcAppNavigationItem v-if="canManageSettings"
                     :name="t('worktime', 'Einstellungen')"
                     :class="{ active: currentView === 'settings' }"
@@ -81,6 +89,7 @@
             <AbsenceView v-else-if="currentView === 'absences'" />
             <TeamView v-else-if="currentView === 'team'" />
             <ApprovalOverviewView v-else-if="currentView === 'approvals'" />
+            <MySettingsView v-else-if="currentView === 'my-settings'" />
             <SettingsView v-else-if="currentView === 'settings'" />
         </NcAppContent>
     </NcContent>
@@ -99,6 +108,7 @@ import CalendarIcon from 'vue-material-design-icons/Calendar.vue'
 import AccountGroupIcon from 'vue-material-design-icons/AccountGroup.vue'
 import CheckDecagramIcon from 'vue-material-design-icons/CheckDecagram.vue'
 import CogIcon from 'vue-material-design-icons/Cog.vue'
+import AccountCogIcon from 'vue-material-design-icons/AccountCog.vue'
 import AlertIcon from 'vue-material-design-icons/Alert.vue'
 import { mapGetters, mapActions } from 'vuex'
 import DashboardView from './views/DashboardView.vue'
@@ -108,6 +118,7 @@ import AbsenceView from './views/AbsenceView.vue'
 import TeamView from './views/TeamView.vue'
 import ApprovalOverviewView from './views/ApprovalOverviewView.vue'
 import SettingsView from './views/SettingsView.vue'
+import MySettingsView from './views/MySettingsView.vue'
 
 export default {
     name: 'App',
@@ -124,6 +135,7 @@ export default {
         AccountGroupIcon,
         CheckDecagramIcon,
         CogIcon,
+        AccountCogIcon,
         AlertIcon,
         DashboardView,
         TimeTrackingView,
@@ -132,6 +144,7 @@ export default {
         TeamView,
         ApprovalOverviewView,
         SettingsView,
+        MySettingsView,
     },
     data() {
         return {
