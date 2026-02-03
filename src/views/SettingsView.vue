@@ -895,7 +895,7 @@ export default {
 }
 
 .input-small {
-    width: 120px;
+    width: 8rem;
 }
 
 .principal-option {

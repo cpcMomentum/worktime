@@ -83,7 +83,7 @@ export default {
 .month-picker__label {
     font-size: 1.1em;
     font-weight: 500;
-    min-width: 150px;
+    min-width: 10rem;
     text-align: center;
 }
 </style>

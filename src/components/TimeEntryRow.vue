@@ -382,23 +382,23 @@ tr.holiday {
 }
 
 .time-input {
-    width: 90px;
+    width: 6rem;
 }
 
 .break-input {
-    width: 70px;
+    width: 4.5rem;
 }
 
 .description-input {
-    min-width: 150px;
+    min-width: 10rem;
 }
 
 .inline-picker {
-    width: 120px;
+    width: 8rem;
 }
 
 .inline-select {
-    min-width: 120px;
+    min-width: 8rem;
 }
 
 .work-minutes-cell {

@@ -172,7 +172,7 @@ export default {
 }
 
 .time-input {
-    width: 120px;
+    width: 8rem;
     padding: 8px;
     border: 1px solid var(--color-border);
     border-radius: var(--border-radius);

@@ -268,7 +268,7 @@ export default {
 }
 
 .break-input {
-    width: 100px;
+    width: 6.5rem;
 }
 
 .break-hint {

@@ -154,7 +154,7 @@ export default {
 }
 
 th.actions-col {
-    width: 100px;
+    width: 6.5rem;
     text-align: center;
 }
 

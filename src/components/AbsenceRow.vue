@@ -344,13 +344,13 @@ tr.creating {
 }
 
 .date-cells {
-    min-width: 250px;
+    min-width: 16rem;
 }
 
 .date-row {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 0.5rem;
 }
 
 .date-separator {
@@ -359,40 +359,40 @@ tr.creating {
 
 .inline-input {
     width: 100%;
-    padding: 6px 8px;
+    padding: 0.375rem 0.5rem;
     border: 1px solid var(--color-border);
     border-radius: var(--border-radius);
     background: var(--color-main-background);
 }
 
 .note-input {
-    min-width: 150px;
+    min-width: 10rem;
 }
 
 .inline-picker {
-    width: 120px;
+    width: 8rem;
 }
 
 .inline-select {
-    min-width: 120px;
+    min-width: 8rem;
 }
 
 .type-select {
-    min-width: 100px;
+    min-width: 6.5rem;
 }
 
 .days-cell {
-    min-width: 180px;
+    min-width: 11rem;
 }
 
 .scope-row {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 0.5rem;
 }
 
 .scope-select {
-    min-width: 110px;
+    min-width: 7rem;
 }
 
 .days-value {
