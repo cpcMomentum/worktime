@@ -1,6 +1,6 @@
 <template>
     <div class="time-entry-list">
-        <table class="time-entry-table" v-if="entries.length > 0">
+        <table class="time-entry-table" v-if="entries.length > 0 || isCreating">
             <thead>
                 <tr>
                     <th>{{ t('worktime', 'Datum') }}</th>
@@ -9,44 +9,34 @@
                     <th>{{ t('worktime', 'Pause') }}</th>
                     <th>{{ t('worktime', 'Arbeitszeit') }}</th>
                     <th>{{ t('worktime', 'Projekt') }}</th>
-                    <th>{{ t('worktime', 'Status') }}</th>
+                    <th v-if="!isEditing">{{ t('worktime', 'Status') }}</th>
+                    <th v-else>{{ t('worktime', 'Beschreibung') }}</th>
                     <th v-if="!readonly">{{ t('worktime', 'Aktionen') }}</th>
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="entry in sortedEntries"
+                <!-- Create Row -->
+                <TimeEntryRow
+                    v-if="isCreating"
+                    :entry="null"
+                    mode="create"
+                    :projects="projects"
+                    @save="onCreate"
+                    @cancel="cancelCreate" />
+
+                <!-- Existing Entries -->
+                <TimeEntryRow
+                    v-for="entry in sortedEntries"
                     :key="entry.id"
-                    :class="{ weekend: isWeekend(entry.date), holiday: isHoliday(entry.date) }">
-                    <td>{{ formatDate(entry.date) }}</td>
-                    <td>{{ entry.startTime }}</td>
-                    <td>{{ entry.endTime }}</td>
-                    <td>{{ entry.breakMinutes }} min</td>
-                    <td>{{ formatMinutes(entry.workMinutes) }}</td>
-                    <td>{{ getProjectName(entry.projectId) }}</td>
-                    <td>
-                        <span class="status-badge" :class="entry.status">
-                            {{ getStatusLabel(entry.status) }}
-                        </span>
-                    </td>
-                    <td v-if="!readonly" class="actions">
-                        <NcButton type="tertiary"
-                            v-if="canEdit(entry)"
-                            :aria-label="t('worktime', 'Bearbeiten')"
-                            @click="edit(entry)">
-                            <template #icon>
-                                <PencilIcon :size="20" />
-                            </template>
-                        </NcButton>
-                        <NcButton type="tertiary"
-                            v-if="canDelete(entry)"
-                            :aria-label="t('worktime', 'Löschen')"
-                            @click="confirmDelete(entry)">
-                            <template #icon>
-                                <DeleteIcon :size="20" />
-                            </template>
-                        </NcButton>
-                    </td>
-                </tr>
+                    :entry="entry"
+                    :mode="editingId === entry.id ? 'edit' : 'view'"
+                    :projects="projects"
+                    :readonly="readonly"
+                    :is-holiday="checkIsHoliday(entry.date)"
+                    @edit="startEdit(entry.id)"
+                    @save="onUpdate"
+                    @cancel="cancelEdit"
+                    @delete="confirmDelete" />
             </tbody>
         </table>
 
@@ -63,24 +53,18 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
-import PencilIcon from 'vue-material-design-icons/Pencil.vue'
-import DeleteIcon from 'vue-material-design-icons/Delete.vue'
 import ClockIcon from 'vue-material-design-icons/Clock.vue'
 import { mapGetters, mapActions } from 'vuex'
-import { formatDateWithWeekday, isWeekend } from '../utils/dateUtils.js'
-import { formatMinutesWithUnit } from '../utils/timeUtils.js'
-import { confirmAction } from '../utils/errorHandler.js'
+import TimeEntryRow from './TimeEntryRow.vue'
+import { confirmAction, showErrorMessage, showSuccessMessage } from '../utils/errorHandler.js'
 
 export default {
     name: 'TimeEntryList',
     components: {
-        NcButton,
         NcEmptyContent,
-        PencilIcon,
-        DeleteIcon,
         ClockIcon,
+        TimeEntryRow,
     },
     props: {
         entries: {
@@ -92,50 +76,70 @@ export default {
             default: false,
         },
     },
+    emits: ['refresh'],
+    data() {
+        return {
+            editingId: null,
+            isCreating: false,
+        }
+    },
     computed: {
-        ...mapGetters('projects', ['getProjectById']),
+        ...mapGetters('projects', ['activeProjects']),
         ...mapGetters('holidays', ['isHoliday']),
+        projects() {
+            return this.activeProjects
+        },
         sortedEntries() {
             return [...this.entries].sort((a, b) => {
-                const dateCompare = a.date.localeCompare(b.date)
+                const dateCompare = b.date.localeCompare(a.date)
                 if (dateCompare !== 0) return dateCompare
-                return a.startTime.localeCompare(b.startTime)
+                return b.startTime.localeCompare(a.startTime)
             })
+        },
+        isEditing() {
+            return this.isCreating || this.editingId !== null
         },
     },
     methods: {
-        ...mapActions('timeEntries', ['deleteTimeEntry']),
-        formatDate(date) {
-            return formatDateWithWeekday(date)
+        ...mapActions('timeEntries', ['createTimeEntry', 'updateTimeEntry', 'deleteTimeEntry']),
+        checkIsHoliday(date) {
+            return this.isHoliday(date)
         },
-        formatMinutes(minutes) {
-            return formatMinutesWithUnit(minutes)
+        startCreate() {
+            this.editingId = null
+            this.isCreating = true
         },
-        isWeekend(date) {
-            return isWeekend(date)
+        cancelCreate() {
+            this.isCreating = false
         },
-        getProjectName(projectId) {
-            if (!projectId) return '-'
-            const project = this.getProjectById(projectId)
-            return project?.name || '-'
+        startEdit(id) {
+            this.isCreating = false
+            this.editingId = id
         },
-        getStatusLabel(status) {
-            const labels = {
-                draft: this.t('worktime', 'Entwurf'),
-                submitted: this.t('worktime', 'Eingereicht'),
-                approved: this.t('worktime', 'Genehmigt'),
-                rejected: this.t('worktime', 'Abgelehnt'),
+        cancelEdit() {
+            this.editingId = null
+        },
+        async onCreate({ data }) {
+            try {
+                await this.createTimeEntry(data)
+                this.isCreating = false
+                showSuccessMessage(this.t('worktime', 'Eintrag erstellt'))
+                this.$emit('refresh')
+            } catch (error) {
+                console.error('Failed to create entry:', error)
+                showErrorMessage(error.message || this.t('worktime', 'Fehler beim Erstellen'))
             }
-            return labels[status] || status
         },
-        canEdit(entry) {
-            return entry.status === 'draft' || entry.status === 'rejected'
-        },
-        canDelete(entry) {
-            return entry.status !== 'approved'
-        },
-        edit(entry) {
-            this.$emit('edit', entry)
+        async onUpdate({ id, data }) {
+            try {
+                await this.updateTimeEntry({ id, data })
+                this.editingId = null
+                showSuccessMessage(this.t('worktime', 'Eintrag aktualisiert'))
+                this.$emit('refresh')
+            } catch (error) {
+                console.error('Failed to update entry:', error)
+                showErrorMessage(error.message || this.t('worktime', 'Fehler beim Speichern'))
+            }
         },
         async confirmDelete(entry) {
             const confirmed = await confirmAction(
@@ -147,9 +151,11 @@ export default {
             if (confirmed) {
                 try {
                     await this.deleteTimeEntry(entry.id)
-                    this.$emit('deleted')
+                    showSuccessMessage(this.t('worktime', 'Eintrag gelöscht'))
+                    this.$emit('refresh')
                 } catch (error) {
                     console.error('Failed to delete entry:', error)
+                    showErrorMessage(error.message || this.t('worktime', 'Fehler beim Löschen'))
                 }
             }
         },
@@ -173,46 +179,5 @@ export default {
 .time-entry-table th {
     font-weight: 600;
     background: var(--color-background-dark);
-}
-
-.time-entry-table tr.weekend {
-    background: var(--color-background-hover);
-}
-
-.time-entry-table tr.holiday {
-    background: var(--color-primary-element-light);
-}
-
-.status-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.85em;
-}
-
-.status-badge.draft {
-    background: var(--color-background-dark);
-    color: var(--color-text-maxcontrast);
-}
-
-.status-badge.submitted {
-    background: var(--color-warning-hover);
-    color: var(--color-warning-text);
-}
-
-.status-badge.approved {
-    background: var(--color-success-hover);
-    color: var(--color-success-text);
-}
-
-.status-badge.rejected {
-    background: var(--color-error-hover);
-    color: var(--color-error-text);
-}
-
-.actions {
-    display: flex;
-    justify-content: center;
-    gap: 4px;
 }
 </style>

@@ -2,7 +2,7 @@
     <div class="absence-view">
         <div class="view-header">
             <h2>{{ t('worktime', 'Abwesenheiten') }}</h2>
-            <NcButton type="primary" @click="showForm = true">
+            <NcButton type="primary" @click="startCreate">
                 <template #icon>
                     <PlusIcon :size="20" />
                 </template>
@@ -34,7 +34,7 @@
 
         <NcLoadingIcon v-if="loading" :size="44" />
 
-        <table v-else-if="absences.length > 0" class="absence-table">
+        <table v-else-if="absences.length > 0 || isCreating" class="absence-table">
             <thead>
                 <tr>
                     <th>{{ t('worktime', 'Zeitraum') }}</th>
@@ -46,43 +46,27 @@
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="absence in sortedAbsences" :key="absence.id">
-                    <td>{{ formatDate(absence.startDate) }} - {{ formatDate(absence.endDate) }}</td>
-                    <td>{{ absence.typeName }}</td>
-                    <td>{{ absence.days }}</td>
-                    <td>{{ absence.note || '-' }}</td>
-                    <td>
-                        <span class="status-badge" :class="absence.status">
-                            {{ getStatusLabel(absence.status) }}
-                        </span>
-                    </td>
-                    <td class="actions">
-                        <NcButton v-if="canEdit(absence)"
-                            type="tertiary"
-                            :aria-label="t('worktime', 'Bearbeiten')"
-                            @click="editAbsence(absence)">
-                            <template #icon>
-                                <PencilIcon :size="20" />
-                            </template>
-                        </NcButton>
-                        <NcButton v-if="canCancel(absence)"
-                            type="tertiary"
-                            :aria-label="t('worktime', 'Stornieren')"
-                            @click="confirmCancel(absence)">
-                            <template #icon>
-                                <CancelIcon :size="20" />
-                            </template>
-                        </NcButton>
-                        <NcButton v-if="canDelete(absence)"
-                            type="tertiary"
-                            :aria-label="t('worktime', 'Löschen')"
-                            @click="confirmDelete(absence)">
-                            <template #icon>
-                                <DeleteIcon :size="20" />
-                            </template>
-                        </NcButton>
-                    </td>
-                </tr>
+                <!-- Create Row -->
+                <AbsenceRow
+                    v-if="isCreating"
+                    :absence="null"
+                    mode="create"
+                    :absence-types="absenceTypes"
+                    @save="onCreate"
+                    @cancel="cancelCreate" />
+
+                <!-- Existing Absences -->
+                <AbsenceRow
+                    v-for="absence in sortedAbsences"
+                    :key="absence.id"
+                    :absence="absence"
+                    :mode="editingId === absence.id ? 'edit' : 'view'"
+                    :absence-types="absenceTypes"
+                    @edit="startEdit(absence.id)"
+                    @save="onUpdate"
+                    @cancel="cancelEdit"
+                    @delete="confirmDelete"
+                    @cancel-absence="confirmCancel" />
             </tbody>
         </table>
 
@@ -95,55 +79,39 @@
                 {{ t('worktime', 'Sie haben noch keine Abwesenheiten eingetragen.') }}
             </template>
         </NcEmptyContent>
-
-        <NcModal v-if="showForm"
-            :name="editingAbsence ? t('worktime', 'Abwesenheit bearbeiten') : t('worktime', 'Neue Abwesenheit')"
-            @close="closeForm">
-            <AbsenceForm :absence="editingAbsence"
-                @saved="onSaved"
-                @cancel="closeForm" />
-        </NcModal>
     </div>
 </template>
 
 <script>
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcModal from '@nextcloud/vue/dist/Components/NcModal.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import PlusIcon from 'vue-material-design-icons/Plus.vue'
-import PencilIcon from 'vue-material-design-icons/Pencil.vue'
-import DeleteIcon from 'vue-material-design-icons/Delete.vue'
-import CancelIcon from 'vue-material-design-icons/Cancel.vue'
 import CalendarIcon from 'vue-material-design-icons/Calendar.vue'
 import { mapGetters, mapActions } from 'vuex'
-import AbsenceForm from '../components/AbsenceForm.vue'
-import { formatDate, getCurrentYear } from '../utils/dateUtils.js'
-import { confirmAction } from '../utils/errorHandler.js'
+import AbsenceRow from '../components/AbsenceRow.vue'
+import { getCurrentYear } from '../utils/dateUtils.js'
+import { confirmAction, showErrorMessage, showSuccessMessage } from '../utils/errorHandler.js'
 
 export default {
     name: 'AbsenceView',
     components: {
         NcButton,
-        NcModal,
         NcLoadingIcon,
         NcEmptyContent,
         PlusIcon,
-        PencilIcon,
-        DeleteIcon,
-        CancelIcon,
         CalendarIcon,
-        AbsenceForm,
+        AbsenceRow,
     },
     data() {
         return {
-            showForm: false,
-            editingAbsence: null,
             currentYear: getCurrentYear(),
+            editingId: null,
+            isCreating: false,
         }
     },
     computed: {
-        ...mapGetters('absences', ['absences', 'vacationStats', 'loading']),
+        ...mapGetters('absences', ['absences', 'absenceTypes', 'vacationStats', 'loading']),
         ...mapGetters('permissions', ['employeeId']),
         sortedAbsences() {
             return [...this.absences].sort((a, b) => b.startDate.localeCompare(a.startDate))
@@ -160,66 +128,60 @@ export default {
         },
     },
     mounted() {
-        // Daten bei jedem View-Wechsel neu laden
         if (this.employeeId) {
             this.loadData()
         }
+        this.$store.dispatch('absences/fetchAbsenceTypes')
     },
     methods: {
-        ...mapActions('absences', ['fetchAbsences', 'fetchVacationStats', 'deleteAbsence', 'cancelAbsence']),
+        ...mapActions('absences', [
+            'fetchAbsences',
+            'fetchVacationStats',
+            'createAbsence',
+            'updateAbsence',
+            'deleteAbsence',
+            'cancelAbsence',
+        ]),
         async loadData() {
             await Promise.all([
                 this.fetchAbsences(this.currentYear),
                 this.fetchVacationStats(this.currentYear),
             ])
         },
-        formatDate(date) {
-            return formatDate(date)
+        startCreate() {
+            this.editingId = null
+            this.isCreating = true
         },
-        getStatusLabel(status) {
-            const labels = {
-                pending: this.t('worktime', 'Ausstehend'),
-                approved: this.t('worktime', 'Genehmigt'),
-                rejected: this.t('worktime', 'Abgelehnt'),
-                cancelled: this.t('worktime', 'Storniert'),
+        cancelCreate() {
+            this.isCreating = false
+        },
+        startEdit(id) {
+            this.isCreating = false
+            this.editingId = id
+        },
+        cancelEdit() {
+            this.editingId = null
+        },
+        async onCreate({ data }) {
+            try {
+                await this.createAbsence(data)
+                this.isCreating = false
+                showSuccessMessage(this.t('worktime', 'Abwesenheit erstellt'))
+                this.loadData()
+            } catch (error) {
+                console.error('Failed to create absence:', error)
+                showErrorMessage(error.message || this.t('worktime', 'Fehler beim Erstellen'))
             }
-            return labels[status] || status
         },
-        canEdit(absence) {
-            return absence.status === 'pending' || absence.status === 'rejected'
-        },
-        canCancel(absence) {
-            return absence.status === 'approved'
-        },
-        canDelete(absence) {
-            return absence.status === 'pending' || absence.status === 'rejected'
-        },
-        editAbsence(absence) {
-            this.editingAbsence = absence
-            this.showForm = true
-        },
-        closeForm() {
-            this.showForm = false
-            this.editingAbsence = null
-        },
-        onSaved() {
-            this.closeForm()
-            this.loadData()
-        },
-        async confirmCancel(absence) {
-            const confirmed = await confirmAction(
-                this.t('worktime', 'Möchten Sie diese Abwesenheit wirklich stornieren?'),
-                this.t('worktime', 'Abwesenheit stornieren'),
-                this.t('worktime', 'Stornieren'),
-                true
-            )
-            if (confirmed) {
-                try {
-                    await this.cancelAbsence(absence.id)
-                    this.loadData()
-                } catch (error) {
-                    console.error('Failed to cancel absence:', error)
-                }
+        async onUpdate({ id, data }) {
+            try {
+                await this.updateAbsence({ id, data })
+                this.editingId = null
+                showSuccessMessage(this.t('worktime', 'Abwesenheit aktualisiert'))
+                this.loadData()
+            } catch (error) {
+                console.error('Failed to update absence:', error)
+                showErrorMessage(error.message || this.t('worktime', 'Fehler beim Speichern'))
             }
         },
         async confirmDelete(absence) {
@@ -232,9 +194,29 @@ export default {
             if (confirmed) {
                 try {
                     await this.deleteAbsence(absence.id)
+                    showSuccessMessage(this.t('worktime', 'Abwesenheit gelöscht'))
                     this.loadData()
                 } catch (error) {
                     console.error('Failed to delete absence:', error)
+                    showErrorMessage(error.message || this.t('worktime', 'Fehler beim Löschen'))
+                }
+            }
+        },
+        async confirmCancel(absence) {
+            const confirmed = await confirmAction(
+                this.t('worktime', 'Möchten Sie diese Abwesenheit wirklich stornieren?'),
+                this.t('worktime', 'Abwesenheit stornieren'),
+                this.t('worktime', 'Stornieren'),
+                true
+            )
+            if (confirmed) {
+                try {
+                    await this.cancelAbsence(absence.id)
+                    showSuccessMessage(this.t('worktime', 'Abwesenheit storniert'))
+                    this.loadData()
+                } catch (error) {
+                    console.error('Failed to cancel absence:', error)
+                    showErrorMessage(error.message || this.t('worktime', 'Fehler beim Stornieren'))
                 }
             }
         },
@@ -315,36 +297,5 @@ export default {
 .absence-table th {
     font-weight: 600;
     background: var(--color-background-dark);
-}
-
-.status-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.85em;
-}
-
-.status-badge.pending {
-    background: var(--color-warning-hover);
-    color: var(--color-warning-text);
-}
-
-.status-badge.approved {
-    background: var(--color-success-hover);
-    color: var(--color-success-text);
-}
-
-.status-badge.rejected {
-    background: var(--color-error-hover);
-    color: var(--color-error-text);
-}
-
-.status-badge.cancelled {
-    background: var(--color-background-dark);
-    color: var(--color-text-maxcontrast);
-}
-
-.actions {
-    white-space: nowrap;
 }
 </style>

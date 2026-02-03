@@ -6,7 +6,7 @@
                 <MonthPicker :year="selectedMonth.year"
                     :month="selectedMonth.month"
                     @update="onMonthChange" />
-                <NcButton type="primary" @click="showForm = true">
+                <NcButton type="primary" @click="startCreate">
                     <template #icon>
                         <PlusIcon :size="20" />
                     </template>
@@ -23,29 +23,19 @@
         <NcLoadingIcon v-if="loading" :size="44" />
 
         <TimeEntryList v-else
+            ref="entryList"
             :entries="timeEntries"
-            @edit="editEntry"
-            @deleted="loadStatistics" />
-
-        <NcModal v-if="showForm"
-            :name="editingEntry ? t('worktime', 'Eintrag bearbeiten') : t('worktime', 'Neuer Eintrag')"
-            @close="closeForm">
-            <TimeEntryForm :entry="editingEntry"
-                @saved="onSaved"
-                @cancel="closeForm" />
-        </NcModal>
+            @refresh="loadData" />
     </div>
 </template>
 
 <script>
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcModal from '@nextcloud/vue/dist/Components/NcModal.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import PlusIcon from 'vue-material-design-icons/Plus.vue'
 import { mapGetters, mapActions, mapState } from 'vuex'
 import MonthPicker from '../components/MonthPicker.vue'
 import OvertimeSummary from '../components/OvertimeSummary.vue'
-import TimeEntryForm from '../components/TimeEntryForm.vue'
 import TimeEntryList from '../components/TimeEntryList.vue'
 import ReportService from '../services/ReportService.js'
 
@@ -53,18 +43,14 @@ export default {
     name: 'TimeTrackingView',
     components: {
         NcButton,
-        NcModal,
         NcLoadingIcon,
         PlusIcon,
         MonthPicker,
         OvertimeSummary,
-        TimeEntryForm,
         TimeEntryList,
     },
     data() {
         return {
-            showForm: false,
-            editingEntry: null,
             statistics: null,
         }
     },
@@ -90,10 +76,10 @@ export default {
         },
     },
     mounted() {
-        // Daten bei jedem View-Wechsel neu laden
         if (this.employeeId) {
             this.loadData()
         }
+        this.$store.dispatch('projects/fetchProjects')
     },
     methods: {
         ...mapActions('timeEntries', ['fetchTimeEntries', 'setSelectedMonth']),
@@ -118,17 +104,8 @@ export default {
         onMonthChange({ year, month }) {
             this.setSelectedMonth({ year, month })
         },
-        editEntry(entry) {
-            this.editingEntry = entry
-            this.showForm = true
-        },
-        closeForm() {
-            this.showForm = false
-            this.editingEntry = null
-        },
-        onSaved() {
-            this.closeForm()
-            this.loadData()
+        startCreate() {
+            this.$refs.entryList?.startCreate()
         },
     },
 }
