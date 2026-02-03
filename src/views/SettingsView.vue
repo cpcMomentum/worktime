@@ -7,14 +7,14 @@
         <div v-else class="settings-content">
             <NcSettingsSection v-if="canManageEmployees"
                 :name="t('worktime', 'Mitarbeiterverwaltung')">
-                <template #actions>
+                <div class="section-header-actions">
                     <NcButton type="primary" @click="openNewEmployeeForm">
                         <template #icon>
                             <Plus :size="20" />
                         </template>
                         {{ t('worktime', 'Neuer Mitarbeiter') }}
                     </NcButton>
-                </template>
+                </div>
 
                 <EmployeeList
                     :employees="employees"
@@ -864,6 +864,10 @@ export default {
 
 .settings-view h2 {
     margin: 0 0 20px 0;
+}
+
+.section-header-actions {
+    margin-bottom: 16px;
 }
 
 .form-group {

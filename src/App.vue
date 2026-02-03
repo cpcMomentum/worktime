@@ -151,11 +151,15 @@ export default {
         async initializeApp() {
             // Load initial data
             await Promise.all([
-                this.fetchCurrentEmployee(),
                 this.fetchFederalStates(),
                 this.fetchProjects(),
                 this.fetchAbsenceTypes(),
             ])
+
+            // Only fetch employee data if user has an employee profile
+            if (this.isEmployee) {
+                await this.fetchCurrentEmployee()
+            }
         },
     },
 }
