@@ -954,6 +954,8 @@ export default {
 }
 
 .holiday-table td.actions {
+    display: flex;
+    gap: 4px;
     white-space: nowrap;
 }
 
