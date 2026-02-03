@@ -77,7 +77,7 @@ class AbsenceController extends BaseController {
         string $startDate,
         string $endDate,
         ?string $note = null,
-        bool $isHalfDay = false
+        float $scope = 1.0
     ): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
@@ -85,6 +85,11 @@ class AbsenceController extends BaseController {
 
         if (!$this->permissionService->canEditTimeEntry($this->userId, $employeeId)) {
             return $this->forbiddenResponse();
+        }
+
+        // Validate scope
+        if ($scope < 0 || $scope > 1) {
+            return $this->successResponse(['error' => 'Scope must be between 0 and 1'], 400);
         }
 
         try {
@@ -100,7 +105,7 @@ class AbsenceController extends BaseController {
                 $note,
                 $federalState,
                 $this->userId,
-                $isHalfDay
+                $scope
             );
 
             return $this->createdResponse($absence);
@@ -116,10 +121,15 @@ class AbsenceController extends BaseController {
         string $startDate,
         string $endDate,
         ?string $note = null,
-        bool $isHalfDay = false
+        float $scope = 1.0
     ): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
+        }
+
+        // Validate scope
+        if ($scope < 0 || $scope > 1) {
+            return $this->successResponse(['error' => 'Scope must be between 0 and 1'], 400);
         }
 
         try {
@@ -141,7 +151,7 @@ class AbsenceController extends BaseController {
                 $note,
                 $federalState,
                 $this->userId,
-                $isHalfDay
+                $scope
             );
 
             return $this->successResponse($absence);

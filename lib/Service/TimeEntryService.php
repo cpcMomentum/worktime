@@ -544,20 +544,10 @@ class TimeEntryService {
                 continue;
             }
 
-            if ($absence->isHalfDayAbsence()) {
-                // Half-day absence: allow max half of daily hours
-                try {
-                    $employee = $this->employeeMapper->find($employeeId);
-                    $dailyMinutes = ((float)$employee->getWeeklyHours() / 5) * 60;
-                    $maxMinutes = (int)($dailyMinutes / 2);
-
-                    if ($workMinutes > $maxMinutes) {
-                        $maxHours = round($maxMinutes / 60, 1);
-                        return "An diesem Tag haben Sie einen halben {$absence->getTypeName()}. Maximal {$maxHours} Stunden Arbeitszeit möglich.";
-                    }
-                } catch (DoesNotExistException) {
-                    // Employee not found, skip check
-                }
+            if ($absence->isHalfDay()) {
+                // Half-day absence: allow time entry without restriction
+                // The overtime calculation handles the reduced target time correctly
+                continue;
             } else {
                 // Full-day absence: block entry completely
                 return "An diesem Tag haben Sie {$absence->getTypeName()}. Bitte stornieren Sie zuerst die Abwesenheit.";

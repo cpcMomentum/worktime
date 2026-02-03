@@ -147,14 +147,18 @@ class HolidayController extends BaseController {
         $date = $this->request->getParam('date');
         $name = $this->request->getParam('name');
         $federalStates = $this->request->getParam('federalStates', []);
-        $isHalfDay = (bool)$this->request->getParam('isHalfDay', false);
+        $scope = (float)$this->request->getParam('scope', 1.0);
 
         if (!$date || !$name || empty($federalStates)) {
             return new JSONResponse(['error' => 'Missing required parameters: date, name, federalStates'], Http::STATUS_BAD_REQUEST);
         }
 
+        if ($scope < 0 || $scope > 1) {
+            return new JSONResponse(['error' => 'Scope must be between 0 and 1'], Http::STATUS_BAD_REQUEST);
+        }
+
         try {
-            $holidays = $this->holidayService->createManual($date, $name, $federalStates, $isHalfDay, $this->userId);
+            $holidays = $this->holidayService->createManual($date, $name, $federalStates, $scope, $this->userId);
 
             return $this->createdResponse([
                 'count' => count($holidays),
@@ -177,14 +181,18 @@ class HolidayController extends BaseController {
 
         $date = $this->request->getParam('date');
         $name = $this->request->getParam('name');
-        $isHalfDay = (bool)$this->request->getParam('isHalfDay', false);
+        $scope = (float)$this->request->getParam('scope', 1.0);
 
         if (!$date || !$name) {
             return new JSONResponse(['error' => 'Missing required parameters: date, name'], Http::STATUS_BAD_REQUEST);
         }
 
+        if ($scope < 0 || $scope > 1) {
+            return new JSONResponse(['error' => 'Scope must be between 0 and 1'], Http::STATUS_BAD_REQUEST);
+        }
+
         try {
-            $holiday = $this->holidayService->update($id, $date, $name, $isHalfDay, $this->userId);
+            $holiday = $this->holidayService->update($id, $date, $name, $scope, $this->userId);
 
             return $this->successResponse($holiday);
         } catch (\Exception $e) {

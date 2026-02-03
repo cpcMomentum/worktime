@@ -256,7 +256,7 @@
                             <th>{{ t('worktime', 'Datum') }}</th>
                             <th>{{ t('worktime', 'Name') }}</th>
                             <th>{{ t('worktime', 'Bundesländer') }}</th>
-                            <th>{{ t('worktime', '½ Tag') }}</th>
+                            <th>{{ t('worktime', 'Umfang') }}</th>
                             <th>{{ t('worktime', 'Typ') }}</th>
                             <th>{{ t('worktime', 'Aktionen') }}</th>
                         </tr>
@@ -273,7 +273,7 @@
                                 <td>
                                     <span class="state-count">{{ group.states.length }} {{ t('worktime', 'Bundesländer') }}</span>
                                 </td>
-                                <td>{{ group.isHalfDay ? t('worktime', 'Ja') : t('worktime', 'Nein') }}</td>
+                                <td>{{ group.scope < 1.0 ? t('worktime', '½ Tag') : t('worktime', '1 Tag') }}</td>
                                 <td>
                                     <span :class="['holiday-type', group.isManual ? 'manual' : 'auto']">
                                         {{ group.isManual ? t('worktime', 'Manuell') : t('worktime', 'Auto') }}
@@ -365,9 +365,11 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <NcCheckboxRadioSwitch :checked.sync="holidayFormData.isHalfDay">
-                                {{ t('worktime', 'Halber Arbeitstag') }}
-                            </NcCheckboxRadioSwitch>
+                            <label>{{ t('worktime', 'Umfang') }}</label>
+                            <NcSelect
+                                v-model="selectedHolidayScope"
+                                :options="scopeOptions"
+                                :clearable="false" />
                         </div>
                         <div class="form-actions">
                             <NcButton type="tertiary" @click="closeHolidayForm">
@@ -456,8 +458,12 @@ export default {
                 date: null,
                 name: '',
                 federalStates: [],
-                isHalfDay: false,
+                scope: 1.0,
             },
+            scopeOptions: [
+                { id: 1.0, label: 'Ganzer Tag' },
+                { id: 0.5, label: 'Halber Tag' },
+            ],
             // Grouped holiday view
             expandedGroups: [],
         }
@@ -516,6 +522,14 @@ export default {
             }
             return true
         },
+        selectedHolidayScope: {
+            get() {
+                return this.scopeOptions.find(s => s.id === this.holidayFormData.scope) || this.scopeOptions[0]
+            },
+            set(value) {
+                this.holidayFormData.scope = value?.id ?? 1.0
+            },
+        },
         groupedHolidays() {
             const groups = {}
             for (const holiday of this.filteredHolidays) {
@@ -525,7 +539,7 @@ export default {
                         key,
                         date: holiday.date,
                         name: holiday.name,
-                        isHalfDay: holiday.isHalfDay,
+                        scope: holiday.scope ?? 1.0,
                         isManual: holiday.isManual,
                         states: [],
                         holidays: [],
@@ -703,14 +717,14 @@ export default {
                     date: new Date(holiday.date),
                     name: holiday.name,
                     federalStates: [holiday.federalState],
-                    isHalfDay: holiday.isHalfDay,
+                    scope: holiday.scope ?? 1.0,
                 }
             } else {
                 this.holidayFormData = {
                     date: null,
                     name: '',
                     federalStates: Object.keys(this.federalStates),
-                    isHalfDay: false,
+                    scope: 1.0,
                 }
             }
             this.showHolidayForm = true
@@ -747,7 +761,7 @@ export default {
                         await HolidayService.update(id, {
                             date: dateStr,
                             name: this.holidayFormData.name,
-                            isHalfDay: this.holidayFormData.isHalfDay,
+                            scope: this.holidayFormData.scope,
                         })
                     }
                     showSuccessMessage(
@@ -758,7 +772,7 @@ export default {
                         date: dateStr,
                         name: this.holidayFormData.name,
                         federalStates: this.holidayFormData.federalStates,
-                        isHalfDay: this.holidayFormData.isHalfDay,
+                        scope: this.holidayFormData.scope,
                     })
                     showSuccessMessage(this.t('worktime', 'Feiertag erstellt'))
                 }
@@ -778,7 +792,7 @@ export default {
         },
         openHolidayGroupForm(group) {
             // For editing a group, we edit the first holiday as representative
-            // User can only change date, name, isHalfDay (applied to all holidays in group)
+            // User can only change date, name, scope (applied to all holidays in group)
             const firstHoliday = group.holidays[0]
             this.editingHoliday = {
                 ...firstHoliday,
@@ -789,7 +803,7 @@ export default {
                 date: new Date(firstHoliday.date),
                 name: firstHoliday.name,
                 federalStates: group.states,
-                isHalfDay: firstHoliday.isHalfDay,
+                scope: firstHoliday.scope ?? 1.0,
             }
             this.showHolidayForm = true
         },

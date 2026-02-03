@@ -325,31 +325,43 @@ class ReportController extends BaseController {
         $monthlyTargetMinutes = (int)round($workingDaysMonth * $dailyMinutes);
         $proportionalTargetMinutes = (int)round($workingDaysUntilToday * $dailyMinutes);
 
-        // Process absences: separate paid vs unpaid
+        // Process absences: separate paid vs unpaid/compensatory
+        // - Paid absences (vacation, sick, child_sick, special, training): Add to Ist (credited work time)
+        // - Unpaid and Compensatory: Reduce Soll (target time), not added to Ist
+        //   Compensatory (Freizeitausgleich) uses overtime - it should reduce target, not credit work time
         $paidAbsenceMinutesMonth = 0;
         $paidAbsenceDaysMonth = 0;
-        $unpaidAbsenceDaysMonth = 0;
+        $targetReductionDaysMonth = 0;  // For unpaid + compensatory
 
         $paidAbsenceMinutesUntilToday = 0;
         $paidAbsenceDaysUntilToday = 0;
-        $unpaidAbsenceDaysUntilToday = 0;
+        $targetReductionDaysUntilToday = 0;
+
+        // Types that reduce target (Soll) instead of crediting work time (Ist)
+        $targetReductionTypes = [
+            \OCA\WorkTime\Db\Absence::TYPE_UNPAID,
+            \OCA\WorkTime\Db\Absence::TYPE_COMPENSATORY,
+        ];
 
         foreach ($absences as $absence) {
             if ($absence->isApproved()) {
                 $absenceStart = $absence->getStartDate();
                 $absenceEnd = $absence->getEndDate();
+                $absenceScope = $absence->getScopeValue();
 
                 // For full month display: count all absences in the month
                 if ($absenceStart <= $monthEndDate) {
                     $monthAbsenceStart = $absenceStart < $startDate ? $startDate : $absenceStart;
                     $monthAbsenceEnd = $absenceEnd > $monthEndDate ? $monthEndDate : $absenceEnd;
                     $daysInMonth = $this->countWorkingDays($monthAbsenceStart, $monthAbsenceEnd, $holidays);
+                    // Apply scope: e.g., 5 days * 0.5 scope = 2.5 effective days
+                    $effectiveDays = $daysInMonth * $absenceScope;
 
-                    if ($absence->getType() === \OCA\WorkTime\Db\Absence::TYPE_UNPAID) {
-                        $unpaidAbsenceDaysMonth += $daysInMonth;
+                    if (in_array($absence->getType(), $targetReductionTypes, true)) {
+                        $targetReductionDaysMonth += $effectiveDays;
                     } else {
-                        $paidAbsenceDaysMonth += $daysInMonth;
-                        $paidAbsenceMinutesMonth += (int)round($daysInMonth * $dailyMinutes);
+                        $paidAbsenceDaysMonth += $effectiveDays;
+                        $paidAbsenceMinutesMonth += (int)round($effectiveDays * $dailyMinutes);
                     }
                 }
 
@@ -358,20 +370,21 @@ class ReportController extends BaseController {
                     $actualAbsenceStart = $absenceStart < $startDate ? $startDate : $absenceStart;
                     $actualAbsenceEnd = $absenceEnd > $endDateForActual ? $endDateForActual : $absenceEnd;
                     $daysUntilToday = $this->countWorkingDays($actualAbsenceStart, $actualAbsenceEnd, $holidays);
+                    $effectiveDaysUntilToday = $daysUntilToday * $absenceScope;
 
-                    if ($absence->getType() === \OCA\WorkTime\Db\Absence::TYPE_UNPAID) {
-                        $unpaidAbsenceDaysUntilToday += $daysUntilToday;
+                    if (in_array($absence->getType(), $targetReductionTypes, true)) {
+                        $targetReductionDaysUntilToday += $effectiveDaysUntilToday;
                     } else {
-                        $paidAbsenceDaysUntilToday += $daysUntilToday;
-                        $paidAbsenceMinutesUntilToday += (int)round($daysUntilToday * $dailyMinutes);
+                        $paidAbsenceDaysUntilToday += $effectiveDaysUntilToday;
+                        $paidAbsenceMinutesUntilToday += (int)round($effectiveDaysUntilToday * $dailyMinutes);
                     }
                 }
             }
         }
 
-        // Adjust targets for unpaid leave
-        $adjustedMonthlyTargetMinutes = (int)round($monthlyTargetMinutes - ($unpaidAbsenceDaysMonth * $dailyMinutes));
-        $adjustedProportionalTargetMinutes = (int)round($proportionalTargetMinutes - ($unpaidAbsenceDaysUntilToday * $dailyMinutes));
+        // Adjust targets for unpaid leave and compensatory time
+        $adjustedMonthlyTargetMinutes = (int)round($monthlyTargetMinutes - ($targetReductionDaysMonth * $dailyMinutes));
+        $adjustedProportionalTargetMinutes = (int)round($proportionalTargetMinutes - ($targetReductionDaysUntilToday * $dailyMinutes));
 
         // Sum actual work minutes from time entries
         $workedMinutes = 0;
@@ -392,8 +405,8 @@ class ReportController extends BaseController {
             'workingDaysUntilToday' => $workingDaysUntilToday,
             'holidayCount' => count($holidays),
             'paidAbsenceDays' => $paidAbsenceDaysMonth,
-            'unpaidAbsenceDays' => $unpaidAbsenceDaysMonth,
-            'absenceDays' => $paidAbsenceDaysMonth + $unpaidAbsenceDaysMonth,
+            'targetReductionDays' => $targetReductionDaysMonth,  // Unpaid + Compensatory
+            'absenceDays' => $paidAbsenceDaysMonth + $targetReductionDaysMonth,
             'dailyMinutes' => (int)$dailyMinutes,
 
             // Target values
@@ -420,7 +433,9 @@ class ReportController extends BaseController {
 
     /**
      * Count working days (Mon-Fri) excluding holidays
-     * Half-day holidays count as 0.5 working days
+     * Holiday scope determines how much of the day is free:
+     * - scope = 1.0: full holiday = 0 working days
+     * - scope = 0.5: half holiday = 0.5 working days remaining
      */
     private function countWorkingDays(DateTime $startDate, DateTime $endDate, array $holidays): float {
         // Build holiday lookup: date => Holiday object
@@ -439,13 +454,11 @@ class ReportController extends BaseController {
             // Only count Monday-Friday
             if ($dayOfWeek < 6) {
                 if (isset($holidayMap[$dateStr])) {
-                    // Holiday exists - check if half day
+                    // Holiday exists - add remaining working portion
+                    // scope = 1.0 (full holiday) → 0 working days
+                    // scope = 0.5 (half holiday) → 0.5 working days
                     $holiday = $holidayMap[$dateStr];
-                    if ($holiday->getIsHalfDay()) {
-                        // Half-day holiday = 0.5 working days
-                        $workingDays += 0.5;
-                    }
-                    // Full holiday = 0 working days (nothing added)
+                    $workingDays += (1.0 - $holiday->getScopeValue());
                 } else {
                     // Regular working day
                     $workingDays += 1.0;

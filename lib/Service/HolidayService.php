@@ -144,16 +144,16 @@ class HolidayService {
     private function generateSpecialDays(int $year, string $federalState): array {
         $holidays = [];
 
-        // Christmas Eve (24.12.)
+        // Christmas Eve (24.12.) - half day (scope = 0.5)
         $christmasEveHalfDay = $this->settingsMapper->getValueAsBool(CompanySetting::KEY_CHRISTMAS_EVE_HALF_DAY);
         if ($christmasEveHalfDay) {
-            $holidays[] = $this->createHoliday($year, 12, 24, 'Heiligabend', $federalState, true);
+            $holidays[] = $this->createHoliday($year, 12, 24, 'Heiligabend', $federalState, 0.5);
         }
 
-        // New Year's Eve (31.12.)
+        // New Year's Eve (31.12.) - half day (scope = 0.5)
         $newYearsEveHalfDay = $this->settingsMapper->getValueAsBool(CompanySetting::KEY_NEW_YEARS_EVE_HALF_DAY);
         if ($newYearsEveHalfDay) {
-            $holidays[] = $this->createHoliday($year, 12, 31, 'Silvester', $federalState, true);
+            $holidays[] = $this->createHoliday($year, 12, 31, 'Silvester', $federalState, 0.5);
         }
 
         return $holidays;
@@ -193,13 +193,15 @@ class HolidayService {
 
     /**
      * Create and save a holiday
+     *
+     * @param float $scope 1.0 = full day, 0.5 = half day
      */
-    private function createHoliday(int $year, int $month, int $day, string $name, string $federalState, bool $isHalfDay = false): Holiday {
+    private function createHoliday(int $year, int $month, int $day, string $name, string $federalState, float $scope = 1.0): Holiday {
         $holiday = new Holiday();
         $holiday->setDate(new DateTime("$year-$month-$day"));
         $holiday->setName($name);
         $holiday->setFederalState($federalState);
-        $holiday->setIsHalfDay($isHalfDay);
+        $holiday->setScopeValue($scope);
         $holiday->setYear($year);
         $holiday->setCreatedAt(new DateTime());
 
@@ -254,10 +256,11 @@ class HolidayService {
     /**
      * Create a manual holiday for multiple federal states
      *
+     * @param float $scope 1.0 = full day, 0.5 = half day
      * @return Holiday[]
      * @throws \Exception if holiday already exists for any state
      */
-    public function createManual(string $date, string $name, array $federalStates, bool $isHalfDay, string $currentUserId): array {
+    public function createManual(string $date, string $name, array $federalStates, float $scope, string $currentUserId): array {
         $dateObj = new DateTime($date);
         $year = (int)$dateObj->format('Y');
         $holidays = [];
@@ -286,7 +289,7 @@ class HolidayService {
             $holiday->setDate($dateObj);
             $holiday->setName($name);
             $holiday->setFederalState($federalState);
-            $holiday->setIsHalfDay($isHalfDay);
+            $holiday->setScopeValue($scope);
             $holiday->setYear($year);
             $holiday->setIsManual(true);
             $holiday->setCreatedAt(new DateTime());
@@ -298,7 +301,7 @@ class HolidayService {
             'date' => $date,
             'name' => $name,
             'federalStates' => $federalStates,
-            'isHalfDay' => $isHalfDay,
+            'scope' => $scope,
             'isManual' => true,
         ]);
 
@@ -307,15 +310,17 @@ class HolidayService {
 
     /**
      * Update an existing holiday
+     *
+     * @param float $scope 1.0 = full day, 0.5 = half day
      */
-    public function update(int $id, string $date, string $name, bool $isHalfDay, string $currentUserId): Holiday {
+    public function update(int $id, string $date, string $name, float $scope, string $currentUserId): Holiday {
         $holiday = $this->holidayMapper->find($id);
         $oldData = $holiday->jsonSerialize();
 
         $dateObj = new DateTime($date);
         $holiday->setDate($dateObj);
         $holiday->setName($name);
-        $holiday->setIsHalfDay($isHalfDay);
+        $holiday->setScopeValue($scope);
         $holiday->setYear((int)$dateObj->format('Y'));
 
         $updated = $this->holidayMapper->update($holiday);

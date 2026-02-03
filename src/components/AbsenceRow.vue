@@ -55,7 +55,7 @@
                         type="date"
                         :format="'DD.MM.YYYY'"
                         class="inline-picker"
-                        :disabled="form.isHalfDay" />
+                        :disabled="form.scope < 1.0" />
                 </div>
             </td>
             <td>
@@ -66,12 +66,12 @@
                     class="inline-select type-select" />
             </td>
             <td class="days-cell">
-                <div class="half-day-row">
-                    <NcCheckboxRadioSwitch
-                        :checked="form.isHalfDay"
-                        @update:checked="onHalfDayChange">
-                        {{ t('worktime', '½') }}
-                    </NcCheckboxRadioSwitch>
+                <div class="scope-row">
+                    <NcSelect
+                        v-model="selectedScope"
+                        :options="scopeOptions"
+                        :clearable="false"
+                        class="scope-select" />
                     <span class="days-value">{{ calculatedDays }}</span>
                 </div>
             </td>
@@ -111,14 +111,13 @@
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
 import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import DeleteIcon from 'vue-material-design-icons/Delete.vue'
 import CancelIcon from 'vue-material-design-icons/Cancel.vue'
 import ContentSaveIcon from 'vue-material-design-icons/ContentSave.vue'
 import CloseIcon from 'vue-material-design-icons/Close.vue'
 import { formatDateISO } from '../utils/dateUtils.js'
-import { formatDate } from '../utils/formatters.js'
+import { formatDateWithWeekday } from '../utils/formatters.js'
 
 export default {
     name: 'AbsenceRow',
@@ -126,7 +125,6 @@ export default {
         NcButton,
         NcSelect,
         NcDateTimePicker,
-        NcCheckboxRadioSwitch,
         PencilIcon,
         DeleteIcon,
         CancelIcon,
@@ -160,8 +158,12 @@ export default {
                 startDate: new Date(),
                 endDate: new Date(),
                 note: '',
-                isHalfDay: false,
+                scope: 1.0,
             },
+            scopeOptions: [
+                { id: 1.0, label: this.t('worktime', 'Ganzer Tag') },
+                { id: 0.5, label: this.t('worktime', 'Halber Tag') },
+            ],
         }
     },
     computed: {
@@ -173,8 +175,8 @@ export default {
         },
         formatDateRange() {
             if (!this.absence) return ''
-            const start = formatDate(this.absence.startDate)
-            const end = formatDate(this.absence.endDate)
+            const start = formatDateWithWeekday(this.absence.startDate)
+            const end = formatDateWithWeekday(this.absence.endDate)
             return start === end ? start : `${start} - ${end}`
         },
         typeOptions() {
@@ -191,22 +193,36 @@ export default {
                 this.form.type = value?.id || 'vacation'
             },
         },
+        selectedScope: {
+            get() {
+                return this.scopeOptions.find(s => s.id === this.form.scope) || this.scopeOptions[0]
+            },
+            set(value) {
+                const newScope = value?.id ?? 1.0
+                this.form.scope = newScope
+                // Half day (scope < 1) must be single day
+                if (newScope < 1.0) {
+                    this.form.endDate = new Date(this.form.startDate)
+                }
+            },
+        },
         calculatedDays() {
-            if (this.form.isHalfDay) return '0,5'
             if (!this.form.startDate || !this.form.endDate) return '-'
 
             const start = new Date(this.form.startDate)
             const end = new Date(this.form.endDate)
-            let days = 0
+            let workingDays = 0
 
             for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
                 const dayOfWeek = d.getDay()
                 if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-                    days++
+                    workingDays++
                 }
             }
 
-            return days.toString()
+            // Apply scope: e.g., 5 days * 0.5 = 2.5
+            const effectiveDays = workingDays * this.form.scope
+            return effectiveDays.toLocaleString('de-DE', { maximumFractionDigits: 1 })
         },
         isValid() {
             if (!this.form.type || !this.form.startDate || !this.form.endDate) return false
@@ -260,7 +276,7 @@ export default {
                 startDate: new Date(absence.startDate),
                 endDate: new Date(absence.endDate),
                 note: absence.note || '',
-                isHalfDay: absence.isHalfDay || false,
+                scope: absence.scope ?? 1.0,
             }
         },
         resetForm() {
@@ -269,17 +285,12 @@ export default {
                 startDate: new Date(),
                 endDate: new Date(),
                 note: '',
-                isHalfDay: false,
-            }
-        },
-        onHalfDayChange(isHalfDay) {
-            this.form.isHalfDay = isHalfDay
-            if (isHalfDay) {
-                this.form.endDate = new Date(this.form.startDate)
+                scope: 1.0,
             }
         },
         onStartDateChange() {
-            if (this.form.isHalfDay) {
+            // Half day (scope < 1) must be single day
+            if (this.form.scope < 1.0) {
                 this.form.endDate = new Date(this.form.startDate)
             }
         },
@@ -300,7 +311,7 @@ export default {
                 startDate: formatDateISO(this.form.startDate),
                 endDate: formatDateISO(this.form.endDate),
                 note: this.form.note || null,
-                isHalfDay: this.form.isHalfDay,
+                scope: this.form.scope,
             }
 
             this.$emit('save', {
@@ -367,17 +378,21 @@ tr.creating {
 }
 
 .type-select {
-    min-width: 140px;
-}
-
-.days-cell {
     min-width: 100px;
 }
 
-.half-day-row {
+.days-cell {
+    min-width: 180px;
+}
+
+.scope-row {
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+.scope-select {
+    min-width: 110px;
 }
 
 .days-value {
