@@ -314,6 +314,16 @@ export default {
 </script>
 
 <style scoped>
+tr {
+    border-bottom: 1px solid var(--color-border);
+}
+
+tr td {
+    padding: 14px 12px;
+    font-size: 16px;
+    border-bottom: 1px solid var(--color-border);
+}
+
 tr.editing {
     background: var(--color-primary-element-light) !important;
 }

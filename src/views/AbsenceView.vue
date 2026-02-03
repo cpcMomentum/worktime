@@ -285,11 +285,12 @@ export default {
 .absence-table {
     width: 100%;
     border-collapse: collapse;
+    font-size: 16px;
 }
 
 .absence-table th,
 .absence-table td {
-    padding: 12px 8px;
+    padding: 14px 12px;
     text-align: left;
     border-bottom: 1px solid var(--color-border);
 }
