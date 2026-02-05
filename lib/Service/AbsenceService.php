@@ -16,6 +16,7 @@ class AbsenceService {
     public function __construct(
         private AbsenceMapper $absenceMapper,
         private HolidayMapper $holidayMapper,
+        private TimeEntryService $timeEntryService,
         private AuditLogService $auditLogService,
         private LoggerInterface $logger,
     ) {
@@ -112,6 +113,7 @@ class AbsenceService {
     /**
      * @throws NotFoundException
      * @throws ValidationException
+     * @throws ForbiddenException
      */
     public function update(
         int $id,
@@ -126,16 +128,25 @@ class AbsenceService {
         $absence = $this->find($id);
         $oldValues = $absence->jsonSerialize();
 
-        // Cannot edit approved/cancelled absences
-        if ($absence->getStatus() === Absence::STATUS_APPROVED || $absence->getStatus() === Absence::STATUS_CANCELLED) {
-            throw new ForbiddenException('Cannot edit approved or cancelled absences');
+        // Cannot edit cancelled absences
+        if ($absence->getStatus() === Absence::STATUS_CANCELLED) {
+            throw new ForbiddenException('Cannot edit cancelled absences');
         }
 
         $startDateObj = new DateTime($startDate);
         $endDateObj = new DateTime($endDate);
 
-        // Validate
+        // Validate basic rules
         $errors = $this->validate($absence->getEmployeeId(), $type, $startDateObj, $endDateObj, $id, $scope);
+
+        // Validate modification if this is an approved absence being edited
+        if ($absence->getStatus() === Absence::STATUS_APPROVED) {
+            $modificationErrors = $this->validateModification($absence, $startDateObj, $endDateObj);
+            if (!empty($modificationErrors)) {
+                $errors['modification'] = $modificationErrors;
+            }
+        }
+
         if (!empty($errors)) {
             throw new ValidationException($errors);
         }
@@ -152,6 +163,9 @@ class AbsenceService {
         $absence->setNote($note);
         $absence->setStatus(Absence::STATUS_PENDING);
         $absence->setUpdatedAt(new DateTime());
+        // Clear approval data since re-approval is required
+        $absence->setApprovedBy(null);
+        $absence->setApprovedAt(null);
 
         $absence = $this->absenceMapper->update($absence);
 
@@ -333,5 +347,60 @@ class AbsenceService {
         }
 
         return $errors;
+    }
+
+    /**
+     * Validate that no days from approved months are being removed
+     *
+     * @return string[] Error messages
+     */
+    private function validateModification(Absence $absence, DateTime $newStart, DateTime $newEnd): array {
+        $errors = [];
+        $today = new DateTime('today');
+
+        // Get all days from original range
+        $originalDays = $this->getDaysInRange($absence->getStartDate(), $absence->getEndDate());
+        $newDays = $this->getDaysInRange($newStart, $newEnd);
+
+        // Convert new days to string array for comparison
+        $newDayStrings = array_map(fn(DateTime $d) => $d->format('Y-m-d'), $newDays);
+
+        // Find days being removed
+        foreach ($originalDays as $day) {
+            $dayString = $day->format('Y-m-d');
+            if (!in_array($dayString, $newDayStrings)) {
+                // Day is being removed - check if allowed
+                if ($day < $today) {
+                    // Day in past - check if month is approved
+                    $year = (int)$day->format('Y');
+                    $month = (int)$day->format('n');
+                    if ($this->timeEntryService->isMonthApproved($absence->getEmployeeId(), $year, $month)) {
+                        $errors[] = sprintf(
+                            'Tag %s kann nicht entfernt werden (Monat %02d/%d ist genehmigt)',
+                            $day->format('d.m.Y'),
+                            $month,
+                            $year
+                        );
+                    }
+                }
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Get all days in a date range
+     *
+     * @return DateTime[]
+     */
+    private function getDaysInRange(DateTime $start, DateTime $end): array {
+        $days = [];
+        $current = clone $start;
+        while ($current <= $end) {
+            $days[] = clone $current;
+            $current->modify('+1 day');
+        }
+        return $days;
     }
 }

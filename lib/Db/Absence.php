@@ -85,6 +85,7 @@ class Absence extends Entity implements JsonSerializable {
         $this->addType('approvedAt', 'datetime');
         $this->addType('createdAt', 'datetime');
         $this->addType('updatedAt', 'datetime');
+        $this->addType('isHalfDay', 'integer');
     }
 
     public function getScopeValue(): float {

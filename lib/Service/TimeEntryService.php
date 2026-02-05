@@ -459,6 +459,15 @@ class TimeEntryService {
     }
 
     /**
+     * Check if a month is fully approved (all time entries approved)
+     */
+    public function isMonthApproved(int $employeeId, int $year, int $month): bool {
+        $summary = $this->timeEntryMapper->getMonthlyStatusSummary($employeeId, $year, $month);
+        $total = $summary['draft'] + $summary['submitted'] + $summary['approved'] + $summary['rejected'];
+        return $total > 0 && $summary['approved'] === $total;
+    }
+
+    /**
      * Calculate work minutes from start/end time and break
      */
     private function calculateWorkMinutes(DateTime $startTime, DateTime $endTime, int $breakMinutes): int {

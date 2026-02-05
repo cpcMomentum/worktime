@@ -84,7 +84,9 @@
                     @keydown="onKeydown">
             </td>
             <td>
-                <!-- Placeholder for status column in edit mode -->
+                <span v-if="absence && absence.status === 'approved'" class="edit-hint">
+                    {{ t('worktime', 'Erneute Genehmigung erforderlich') }}
+                </span>
             </td>
             <td class="actions">
                 <NcButton type="primary"
@@ -231,7 +233,9 @@ export default {
             return start <= end
         },
         canEdit() {
-            return this.absence && (this.absence.status === 'pending' || this.absence.status === 'rejected')
+            // Auch genehmigte Abwesenheiten können bearbeitet werden
+            // (Backend validiert welche Tage geändert werden dürfen)
+            return this.absence && this.absence.status !== 'cancelled'
         },
         canCancel() {
             return this.absence && this.absence.status === 'approved'
@@ -431,5 +435,11 @@ tr.creating {
 .status-badge.cancelled {
     background: var(--color-background-dark);
     color: var(--color-text-maxcontrast);
+}
+
+.edit-hint {
+    font-size: 0.85em;
+    color: var(--color-warning);
+    font-style: italic;
 }
 </style>
