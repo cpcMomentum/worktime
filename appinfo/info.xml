@@ -26,7 +26,7 @@ Gesetzeskonforme Arbeitszeiterfassung für kleine Unternehmen in Deutschland.
 Behalten Sie den Überblick über Arbeitszeiten, Überstunden und Urlaub.
     ]]></description>
 
-    <version>1.0.7</version>
+    <version>0.1.0</version>
     <licence>AGPL-3.0-or-later</licence>
 
     <author homepage="https://github.com/cpcMomentum">Axel Deffner</author>
