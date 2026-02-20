@@ -48,7 +48,7 @@ Behalten Sie den Überblick über Arbeitszeiten, Überstunden und Urlaub.
     <screenshot>https://raw.githubusercontent.com/cpcMomentum/worktime/main/screenshots/screenshot-settings.png</screenshot>
 
     <dependencies>
-        <nextcloud min-version="32" max-version="32"/>
+        <nextcloud min-version="32" max-version="33"/>
         <php min-version="8.2"/>
     </dependencies>
 
