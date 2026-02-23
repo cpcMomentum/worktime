@@ -5,29 +5,25 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Controller;
 
 use DateTime;
-use OCA\WorkTime\AppInfo\Application;
 use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\TimeEntryMapper;
 use OCA\WorkTime\Service\AbsenceService;
 use OCA\WorkTime\Service\EmployeeService;
 use OCA\WorkTime\Service\HolidayService;
-use OCA\WorkTime\Service\NotFoundException;
 use OCA\WorkTime\Service\PdfService;
 use OCA\WorkTime\Service\PermissionService;
 use OCA\WorkTime\Service\TimeEntryService;
-use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\OCSController;
 use OCP\IRequest;
 
-class ReportController extends OCSController {
+class ReportController extends BaseController {
 
     public function __construct(
         IRequest $request,
-        private ?string $userId,
+        ?string $userId,
         private TimeEntryService $timeEntryService,
         private TimeEntryMapper $timeEntryMapper,
         private AbsenceService $absenceService,
@@ -36,17 +32,17 @@ class ReportController extends OCSController {
         private PermissionService $permissionService,
         private PdfService $pdfService,
     ) {
-        parent::__construct(Application::APP_ID, $request);
+        parent::__construct($request, $userId);
     }
 
     #[NoAdminRequired]
     public function monthly(int $employeeId, int $year, int $month): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canViewEmployee($this->userId, $employeeId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         try {
@@ -58,7 +54,7 @@ class ReportController extends OCSController {
             // Calculate statistics
             $stats = $this->calculateMonthlyStats($employee, $year, $month, $timeEntries, $absences, $holidays);
 
-            return new JSONResponse([
+            return $this->successResponse([
                 'employee' => $employee,
                 'year' => $year,
                 'month' => $month,
@@ -67,20 +63,20 @@ class ReportController extends OCSController {
                 'holidays' => $holidays,
                 'statistics' => $stats,
             ]);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     #[NoAdminRequired]
     #[NoCSRFRequired]
     public function pdf(int $employeeId, int $year, int $month): DataDownloadResponse|JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canViewEmployee($this->userId, $employeeId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         try {
@@ -110,21 +106,21 @@ class ReportController extends OCSController {
             );
 
             return new DataDownloadResponse($pdfContent, $filename, 'application/pdf');
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     #[NoAdminRequired]
     public function team(int $year, int $month): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         $teamMembers = $this->permissionService->getTeamMembers($this->userId);
 
         if (empty($teamMembers)) {
-            return new JSONResponse([]);
+            return $this->successResponse([]);
         }
 
         $report = [];
@@ -152,17 +148,17 @@ class ReportController extends OCSController {
             ];
         }
 
-        return new JSONResponse($report);
+        return $this->successResponse($report);
     }
 
     #[NoAdminRequired]
     public function overtime(int $employeeId, int $year): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canViewEmployee($this->userId, $employeeId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         try {
@@ -172,7 +168,6 @@ class ReportController extends OCSController {
 
             for ($month = 1; $month <= 12; $month++) {
                 $startDate = new DateTime("$year-$month-01");
-                $endDate = (clone $startDate)->modify('last day of this month');
 
                 // Skip future months
                 if ($startDate > new DateTime()) {
@@ -195,27 +190,27 @@ class ReportController extends OCSController {
                 $totalOvertime += $stats['overtimeMinutes'];
             }
 
-            return new JSONResponse([
+            return $this->successResponse([
                 'employee' => $employee,
                 'year' => $year,
                 'monthly' => $monthlyData,
                 'totalOvertimeMinutes' => $totalOvertime,
                 'totalOvertimeHours' => round($totalOvertime / 60, 2),
             ]);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     #[NoAdminRequired]
     public function allEmployeesStatus(int $year, int $month): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         // Only Admin and HR Manager can see all employees
         if (!$this->permissionService->isAdmin($this->userId) && !$this->permissionService->isHrManager($this->userId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         $allEmployees = $this->employeeService->findAllActive();
@@ -240,7 +235,7 @@ class ReportController extends OCSController {
             ];
         }
 
-        return new JSONResponse($report);
+        return $this->successResponse($report);
     }
 
     /**
@@ -330,31 +325,43 @@ class ReportController extends OCSController {
         $monthlyTargetMinutes = (int)round($workingDaysMonth * $dailyMinutes);
         $proportionalTargetMinutes = (int)round($workingDaysUntilToday * $dailyMinutes);
 
-        // Process absences: separate paid vs unpaid
+        // Process absences: separate paid vs unpaid/compensatory
+        // - Paid absences (vacation, sick, child_sick, special, training): Add to Ist (credited work time)
+        // - Unpaid and Compensatory: Reduce Soll (target time), not added to Ist
+        //   Compensatory (Freizeitausgleich) uses overtime - it should reduce target, not credit work time
         $paidAbsenceMinutesMonth = 0;
         $paidAbsenceDaysMonth = 0;
-        $unpaidAbsenceDaysMonth = 0;
+        $targetReductionDaysMonth = 0;  // For unpaid + compensatory
 
         $paidAbsenceMinutesUntilToday = 0;
         $paidAbsenceDaysUntilToday = 0;
-        $unpaidAbsenceDaysUntilToday = 0;
+        $targetReductionDaysUntilToday = 0;
+
+        // Types that reduce target (Soll) instead of crediting work time (Ist)
+        $targetReductionTypes = [
+            \OCA\WorkTime\Db\Absence::TYPE_UNPAID,
+            \OCA\WorkTime\Db\Absence::TYPE_COMPENSATORY,
+        ];
 
         foreach ($absences as $absence) {
             if ($absence->isApproved()) {
                 $absenceStart = $absence->getStartDate();
                 $absenceEnd = $absence->getEndDate();
+                $absenceScope = $absence->getScopeValue();
 
                 // For full month display: count all absences in the month
                 if ($absenceStart <= $monthEndDate) {
                     $monthAbsenceStart = $absenceStart < $startDate ? $startDate : $absenceStart;
                     $monthAbsenceEnd = $absenceEnd > $monthEndDate ? $monthEndDate : $absenceEnd;
                     $daysInMonth = $this->countWorkingDays($monthAbsenceStart, $monthAbsenceEnd, $holidays);
+                    // Apply scope: e.g., 5 days * 0.5 scope = 2.5 effective days
+                    $effectiveDays = $daysInMonth * $absenceScope;
 
-                    if ($absence->getType() === \OCA\WorkTime\Db\Absence::TYPE_UNPAID) {
-                        $unpaidAbsenceDaysMonth += $daysInMonth;
+                    if (in_array($absence->getType(), $targetReductionTypes, true)) {
+                        $targetReductionDaysMonth += $effectiveDays;
                     } else {
-                        $paidAbsenceDaysMonth += $daysInMonth;
-                        $paidAbsenceMinutesMonth += (int)round($daysInMonth * $dailyMinutes);
+                        $paidAbsenceDaysMonth += $effectiveDays;
+                        $paidAbsenceMinutesMonth += (int)round($effectiveDays * $dailyMinutes);
                     }
                 }
 
@@ -363,20 +370,21 @@ class ReportController extends OCSController {
                     $actualAbsenceStart = $absenceStart < $startDate ? $startDate : $absenceStart;
                     $actualAbsenceEnd = $absenceEnd > $endDateForActual ? $endDateForActual : $absenceEnd;
                     $daysUntilToday = $this->countWorkingDays($actualAbsenceStart, $actualAbsenceEnd, $holidays);
+                    $effectiveDaysUntilToday = $daysUntilToday * $absenceScope;
 
-                    if ($absence->getType() === \OCA\WorkTime\Db\Absence::TYPE_UNPAID) {
-                        $unpaidAbsenceDaysUntilToday += $daysUntilToday;
+                    if (in_array($absence->getType(), $targetReductionTypes, true)) {
+                        $targetReductionDaysUntilToday += $effectiveDaysUntilToday;
                     } else {
-                        $paidAbsenceDaysUntilToday += $daysUntilToday;
-                        $paidAbsenceMinutesUntilToday += (int)round($daysUntilToday * $dailyMinutes);
+                        $paidAbsenceDaysUntilToday += $effectiveDaysUntilToday;
+                        $paidAbsenceMinutesUntilToday += (int)round($effectiveDaysUntilToday * $dailyMinutes);
                     }
                 }
             }
         }
 
-        // Adjust targets for unpaid leave
-        $adjustedMonthlyTargetMinutes = (int)round($monthlyTargetMinutes - ($unpaidAbsenceDaysMonth * $dailyMinutes));
-        $adjustedProportionalTargetMinutes = (int)round($proportionalTargetMinutes - ($unpaidAbsenceDaysUntilToday * $dailyMinutes));
+        // Adjust targets for unpaid leave and compensatory time
+        $adjustedMonthlyTargetMinutes = (int)round($monthlyTargetMinutes - ($targetReductionDaysMonth * $dailyMinutes));
+        $adjustedProportionalTargetMinutes = (int)round($proportionalTargetMinutes - ($targetReductionDaysUntilToday * $dailyMinutes));
 
         // Sum actual work minutes from time entries
         $workedMinutes = 0;
@@ -397,8 +405,8 @@ class ReportController extends OCSController {
             'workingDaysUntilToday' => $workingDaysUntilToday,
             'holidayCount' => count($holidays),
             'paidAbsenceDays' => $paidAbsenceDaysMonth,
-            'unpaidAbsenceDays' => $unpaidAbsenceDaysMonth,
-            'absenceDays' => $paidAbsenceDaysMonth + $unpaidAbsenceDaysMonth,
+            'targetReductionDays' => $targetReductionDaysMonth,  // Unpaid + Compensatory
+            'absenceDays' => $paidAbsenceDaysMonth + $targetReductionDaysMonth,
             'dailyMinutes' => (int)$dailyMinutes,
 
             // Target values
@@ -425,7 +433,9 @@ class ReportController extends OCSController {
 
     /**
      * Count working days (Mon-Fri) excluding holidays
-     * Half-day holidays count as 0.5 working days
+     * Holiday scope determines how much of the day is free:
+     * - scope = 1.0: full holiday = 0 working days
+     * - scope = 0.5: half holiday = 0.5 working days remaining
      */
     private function countWorkingDays(DateTime $startDate, DateTime $endDate, array $holidays): float {
         // Build holiday lookup: date => Holiday object
@@ -444,13 +454,11 @@ class ReportController extends OCSController {
             // Only count Monday-Friday
             if ($dayOfWeek < 6) {
                 if (isset($holidayMap[$dateStr])) {
-                    // Holiday exists - check if half day
+                    // Holiday exists - add remaining working portion
+                    // scope = 1.0 (full holiday) → 0 working days
+                    // scope = 0.5 (half holiday) → 0.5 working days
                     $holiday = $holidayMap[$dateStr];
-                    if ($holiday->getIsHalfDay()) {
-                        // Half-day holiday = 0.5 working days
-                        $workingDays += 0.5;
-                    }
-                    // Full holiday = 0 working days (nothing added)
+                    $workingDays += (1.0 - $holiday->getScopeValue());
                 } else {
                     // Regular working day
                     $workingDays += 1.0;

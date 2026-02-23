@@ -26,7 +26,7 @@ Gesetzeskonforme Arbeitszeiterfassung für kleine Unternehmen in Deutschland.
 Behalten Sie den Überblick über Arbeitszeiten, Überstunden und Urlaub.
     ]]></description>
 
-    <version>1.0.0</version>
+    <version>0.1.0</version>
     <licence>AGPL-3.0-or-later</licence>
 
     <author homepage="https://github.com/cpcMomentum">Axel Deffner</author>
@@ -38,14 +38,17 @@ Behalten Sie den Überblick über Arbeitszeiten, Überstunden und Urlaub.
 
     <bugs>https://github.com/cpcMomentum/worktime/issues</bugs>
     <repository type="git">https://github.com/cpcMomentum/worktime.git</repository>
+    <donation>https://ko-fi.com/AxDe888</donation>
 
+    <screenshot>https://raw.githubusercontent.com/cpcMomentum/worktime/main/screenshots/screenshot-overview.png</screenshot>
     <screenshot>https://raw.githubusercontent.com/cpcMomentum/worktime/main/screenshots/screenshot-time-tracking.png</screenshot>
     <screenshot>https://raw.githubusercontent.com/cpcMomentum/worktime/main/screenshots/screenshot-monthly-report.png</screenshot>
     <screenshot>https://raw.githubusercontent.com/cpcMomentum/worktime/main/screenshots/screenshot-absences.png</screenshot>
+    <screenshot>https://raw.githubusercontent.com/cpcMomentum/worktime/main/screenshots/screenshot-approval-workflow.png</screenshot>
     <screenshot>https://raw.githubusercontent.com/cpcMomentum/worktime/main/screenshots/screenshot-settings.png</screenshot>
 
     <dependencies>
-        <nextcloud min-version="32" max-version="32"/>
+        <nextcloud min-version="32" max-version="33"/>
         <php min-version="8.2"/>
     </dependencies>
 

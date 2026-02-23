@@ -4,33 +4,28 @@ declare(strict_types=1);
 
 namespace OCA\WorkTime\Controller;
 
-use OCA\WorkTime\AppInfo\Application;
 use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Service\EmployeeService;
-use OCA\WorkTime\Service\NotFoundException;
 use OCA\WorkTime\Service\PermissionService;
-use OCA\WorkTime\Service\ValidationException;
-use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\OCSController;
 use OCP\IRequest;
 
-class EmployeeController extends OCSController {
+class EmployeeController extends BaseController {
 
     public function __construct(
         IRequest $request,
-        private ?string $userId,
+        ?string $userId,
         private EmployeeService $employeeService,
         private PermissionService $permissionService,
     ) {
-        parent::__construct(Application::APP_ID, $request);
+        parent::__construct($request, $userId);
     }
 
     #[NoAdminRequired]
     public function index(): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if ($this->permissionService->canManageEmployees($this->userId)) {
@@ -40,38 +35,38 @@ class EmployeeController extends OCSController {
             $employees = $this->permissionService->getTeamMembers($this->userId);
         }
 
-        return new JSONResponse($employees);
+        return $this->successResponse($employees);
     }
 
     #[NoAdminRequired]
     public function show(int $id): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canViewEmployee($this->userId, $id)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         try {
             $employee = $this->employeeService->find($id);
-            return new JSONResponse($employee);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+            return $this->successResponse($employee);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     #[NoAdminRequired]
     public function me(): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         try {
             $employee = $this->employeeService->findByUserId($this->userId);
-            return new JSONResponse($employee);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => 'Employee profile not found'], Http::STATUS_NOT_FOUND);
+            return $this->successResponse($employee);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
@@ -88,12 +83,12 @@ class EmployeeController extends OCSController {
         string $federalState = 'BY',
         ?string $entryDate = null
     ): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canManageEmployees($this->userId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         try {
@@ -111,9 +106,9 @@ class EmployeeController extends OCSController {
                 $this->userId
             );
 
-            return new JSONResponse($employee, Http::STATUS_CREATED);
-        } catch (ValidationException $e) {
-            return new JSONResponse(['error' => $e->getMessage(), 'errors' => $e->getErrors()], Http::STATUS_BAD_REQUEST);
+            return $this->createdResponse($employee);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
@@ -132,12 +127,12 @@ class EmployeeController extends OCSController {
         ?string $exitDate = null,
         bool $isActive = true
     ): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canManageEmployees($this->userId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         try {
@@ -157,59 +152,76 @@ class EmployeeController extends OCSController {
                 $this->userId
             );
 
-            return new JSONResponse($employee);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
-        } catch (ValidationException $e) {
-            return new JSONResponse(['error' => $e->getMessage(), 'errors' => $e->getErrors()], Http::STATUS_BAD_REQUEST);
+            return $this->successResponse($employee);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     #[NoAdminRequired]
     public function destroy(int $id): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canManageEmployees($this->userId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         try {
             $this->employeeService->delete($id, $this->userId);
-            return new JSONResponse(['status' => 'deleted']);
-        } catch (NotFoundException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+            return $this->deletedResponse();
+        } catch (\Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     #[NoAdminRequired]
     public function team(): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         $teamMembers = $this->permissionService->getTeamMembers($this->userId);
 
-        return new JSONResponse($teamMembers);
+        return $this->successResponse($teamMembers);
     }
 
     #[NoAdminRequired]
     public function federalStates(): JSONResponse {
-        return new JSONResponse(Employee::FEDERAL_STATES);
+        return $this->successResponse(Employee::FEDERAL_STATES);
+    }
+
+    #[NoAdminRequired]
+    public function updateMyDefaults(?string $defaultStartTime = null, ?string $defaultEndTime = null): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+
+        try {
+            $employee = $this->employeeService->updateMyDefaults(
+                $this->userId,
+                $defaultStartTime,
+                $defaultEndTime
+            );
+
+            return $this->successResponse($employee);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
     }
 
     #[NoAdminRequired]
     public function availableUsers(): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canManageEmployees($this->userId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         $users = $this->employeeService->getAvailableUsers();
-        return new JSONResponse($users);
+        return $this->successResponse($users);
     }
 }

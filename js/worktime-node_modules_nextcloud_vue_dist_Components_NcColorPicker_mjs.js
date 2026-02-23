@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkworktime=self.webpackChunkworktime||[]).push([["node_modules_nextcloud_vue_dist_Components_NcColorPicker_mjs"],{6798(e,o,s){s.r(o),s.d(o,{default:()=>t.N});var t=s(7596)}}]);

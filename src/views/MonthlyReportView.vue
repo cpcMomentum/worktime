@@ -117,7 +117,8 @@ import OvertimeSummary from '../components/OvertimeSummary.vue'
 import TimeEntryList from '../components/TimeEntryList.vue'
 import ReportService from '../services/ReportService.js'
 import TimeEntryService from '../services/TimeEntryService.js'
-import { formatDate, getCurrentYear, getCurrentMonth } from '../utils/dateUtils.js'
+import { getCurrentYear, getCurrentMonth } from '../utils/dateUtils.js'
+import { formatDate, getStatusLabel } from '../utils/formatters.js'
 
 export default {
     name: 'MonthlyReportView',
@@ -189,13 +190,7 @@ export default {
             return formatDate(date)
         },
         getStatusLabel(status) {
-            const labels = {
-                pending: this.t('worktime', 'Ausstehend'),
-                approved: this.t('worktime', 'Genehmigt'),
-                rejected: this.t('worktime', 'Abgelehnt'),
-                cancelled: this.t('worktime', 'Storniert'),
-            }
-            return labels[status] || status
+            return getStatusLabel(status)
         },
         downloadPdf() {
             if (!this.employeeId) return

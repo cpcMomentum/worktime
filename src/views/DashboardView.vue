@@ -91,13 +91,13 @@
                     <h3>{{ t('worktime', 'Schnellaktionen') }}</h3>
                 </div>
                 <div class="card-content actions-content">
-                    <NcButton type="primary" @click="$emit('navigate', 'tracking')">
+                    <NcButton type="primary" @click="$router.push('/tracking')">
                         <template #icon>
                             <PlusIcon :size="20" />
                         </template>
                         {{ t('worktime', 'Zeit erfassen') }}
                     </NcButton>
-                    <NcButton type="secondary" @click="$emit('navigate', 'absences')">
+                    <NcButton type="secondary" @click="$router.push('/absences')">
                         <template #icon>
                             <CalendarPlusIcon :size="20" />
                         </template>

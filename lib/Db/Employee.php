@@ -38,6 +38,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setCreatedAt(DateTime $createdAt)
  * @method DateTime getUpdatedAt()
  * @method void setUpdatedAt(DateTime $updatedAt)
+ * @method DateTime|null getDefaultStartTime()
+ * @method void setDefaultStartTime(?DateTime $defaultStartTime)
+ * @method DateTime|null getDefaultEndTime()
+ * @method void setDefaultEndTime(?DateTime $defaultEndTime)
  */
 class Employee extends Entity implements JsonSerializable {
 
@@ -74,6 +78,8 @@ class Employee extends Entity implements JsonSerializable {
     protected int $isActive = 1;
     protected ?DateTime $createdAt = null;
     protected ?DateTime $updatedAt = null;
+    protected ?DateTime $defaultStartTime = null;
+    protected ?DateTime $defaultEndTime = null;
 
     public function __construct() {
         $this->addType('id', 'integer');
@@ -84,6 +90,8 @@ class Employee extends Entity implements JsonSerializable {
         $this->addType('isActive', 'integer');
         $this->addType('createdAt', 'datetime');
         $this->addType('updatedAt', 'datetime');
+        $this->addType('defaultStartTime', 'time');
+        $this->addType('defaultEndTime', 'time');
     }
 
     public function setIsActive(bool|int $isActive): void {
@@ -119,6 +127,8 @@ class Employee extends Entity implements JsonSerializable {
             'isActive' => (bool)$this->isActive,
             'createdAt' => $this->createdAt?->format('c'),
             'updatedAt' => $this->updatedAt?->format('c'),
+            'defaultStartTime' => $this->defaultStartTime?->format('H:i'),
+            'defaultEndTime' => $this->defaultEndTime?->format('H:i'),
         ];
     }
 }

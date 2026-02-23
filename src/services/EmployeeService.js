@@ -80,4 +80,13 @@ export default {
             handleApiError(error)
         }
     },
+
+    async updateMyDefaults(data) {
+        try {
+            const response = await api.put('/employees/me/defaults', data)
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
 }

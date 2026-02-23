@@ -13,6 +13,7 @@ use OCA\WorkTime\Db\EmployeeMapper;
 use OCA\WorkTime\Db\TimeEntry;
 use OCA\WorkTime\Db\TimeEntryMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use Psr\Log\LoggerInterface;
 
 class TimeEntryService {
 
@@ -22,6 +23,7 @@ class TimeEntryService {
         private EmployeeMapper $employeeMapper,
         private AbsenceMapper $absenceMapper,
         private AuditLogService $auditLogService,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -457,6 +459,15 @@ class TimeEntryService {
     }
 
     /**
+     * Check if a month is fully approved (all time entries approved)
+     */
+    public function isMonthApproved(int $employeeId, int $year, int $month): bool {
+        $summary = $this->timeEntryMapper->getMonthlyStatusSummary($employeeId, $year, $month);
+        $total = $summary['draft'] + $summary['submitted'] + $summary['approved'] + $summary['rejected'];
+        return $total > 0 && $summary['approved'] === $total;
+    }
+
+    /**
      * Calculate work minutes from start/end time and break
      */
     private function calculateWorkMinutes(DateTime $startTime, DateTime $endTime, int $breakMinutes): int {
@@ -542,20 +553,10 @@ class TimeEntryService {
                 continue;
             }
 
-            if ($absence->isHalfDayAbsence()) {
-                // Half-day absence: allow max half of daily hours
-                try {
-                    $employee = $this->employeeMapper->find($employeeId);
-                    $dailyMinutes = ((float)$employee->getWeeklyHours() / 5) * 60;
-                    $maxMinutes = (int)($dailyMinutes / 2);
-
-                    if ($workMinutes > $maxMinutes) {
-                        $maxHours = round($maxMinutes / 60, 1);
-                        return "An diesem Tag haben Sie einen halben {$absence->getTypeName()}. Maximal {$maxHours} Stunden Arbeitszeit möglich.";
-                    }
-                } catch (DoesNotExistException) {
-                    // Employee not found, skip check
-                }
+            if ($absence->isHalfDay()) {
+                // Half-day absence: allow time entry without restriction
+                // The overtime calculation handles the reduced target time correctly
+                continue;
             } else {
                 // Full-day absence: block entry completely
                 return "An diesem Tag haben Sie {$absence->getTypeName()}. Bitte stornieren Sie zuerst die Abwesenheit.";

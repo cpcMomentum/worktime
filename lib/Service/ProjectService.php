@@ -8,12 +8,14 @@ use DateTime;
 use OCA\WorkTime\Db\Project;
 use OCA\WorkTime\Db\ProjectMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use Psr\Log\LoggerInterface;
 
 class ProjectService {
 
     public function __construct(
         private ProjectMapper $projectMapper,
         private AuditLogService $auditLogService,
+        private LoggerInterface $logger,
     ) {
     }
 

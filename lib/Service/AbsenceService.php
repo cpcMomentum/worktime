@@ -9,13 +9,16 @@ use OCA\WorkTime\Db\Absence;
 use OCA\WorkTime\Db\AbsenceMapper;
 use OCA\WorkTime\Db\HolidayMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use Psr\Log\LoggerInterface;
 
 class AbsenceService {
 
     public function __construct(
         private AbsenceMapper $absenceMapper,
         private HolidayMapper $holidayMapper,
+        private TimeEntryService $timeEntryService,
         private AuditLogService $auditLogService,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -69,23 +72,21 @@ class AbsenceService {
         ?string $note = null,
         string $federalState = 'BY',
         string $currentUserId = '',
-        bool $isHalfDay = false
+        float $scope = 1.0
     ): Absence {
         $startDateObj = new DateTime($startDate);
         $endDateObj = new DateTime($endDate);
 
         // Validate
-        $errors = $this->validate($employeeId, $type, $startDateObj, $endDateObj, null, $isHalfDay);
+        $errors = $this->validate($employeeId, $type, $startDateObj, $endDateObj, null, $scope);
         if (!empty($errors)) {
             throw new ValidationException($errors);
         }
 
-        // Calculate working days (half day = 0.5, otherwise calculate)
-        if ($isHalfDay) {
-            $days = 0.5;
-        } else {
-            $days = $this->calculateWorkingDays($startDateObj, $endDateObj, $federalState);
-        }
+        // Calculate working days and apply scope
+        // e.g., 5 working days * 0.5 scope = 2.5 effective days
+        $workingDays = $this->calculateWorkingDays($startDateObj, $endDateObj, $federalState);
+        $days = $workingDays * $scope;
 
         $absence = new Absence();
         $absence->setEmployeeId($employeeId);
@@ -93,7 +94,7 @@ class AbsenceService {
         $absence->setStartDate($startDateObj);
         $absence->setEndDate($endDateObj);
         $absence->setDays((string)$days);
-        $absence->setIsHalfDay($isHalfDay);
+        $absence->setScopeValue($scope);
         $absence->setNote($note);
         $absence->setStatus(Absence::STATUS_PENDING);
         $absence->setCreatedAt(new DateTime());
@@ -112,6 +113,7 @@ class AbsenceService {
     /**
      * @throws NotFoundException
      * @throws ValidationException
+     * @throws ForbiddenException
      */
     public function update(
         int $id,
@@ -121,40 +123,49 @@ class AbsenceService {
         ?string $note = null,
         string $federalState = 'BY',
         string $currentUserId = '',
-        bool $isHalfDay = false
+        float $scope = 1.0
     ): Absence {
         $absence = $this->find($id);
         $oldValues = $absence->jsonSerialize();
 
-        // Cannot edit approved/cancelled absences
-        if ($absence->getStatus() === Absence::STATUS_APPROVED || $absence->getStatus() === Absence::STATUS_CANCELLED) {
-            throw new ForbiddenException('Cannot edit approved or cancelled absences');
+        // Cannot edit cancelled absences
+        if ($absence->getStatus() === Absence::STATUS_CANCELLED) {
+            throw new ForbiddenException('Cannot edit cancelled absences');
         }
 
         $startDateObj = new DateTime($startDate);
         $endDateObj = new DateTime($endDate);
 
-        // Validate
-        $errors = $this->validate($absence->getEmployeeId(), $type, $startDateObj, $endDateObj, $id, $isHalfDay);
+        // Validate basic rules
+        $errors = $this->validate($absence->getEmployeeId(), $type, $startDateObj, $endDateObj, $id, $scope);
+
+        // Validate modification if this is an approved absence being edited
+        if ($absence->getStatus() === Absence::STATUS_APPROVED) {
+            $modificationErrors = $this->validateModification($absence, $startDateObj, $endDateObj);
+            if (!empty($modificationErrors)) {
+                $errors['modification'] = $modificationErrors;
+            }
+        }
+
         if (!empty($errors)) {
             throw new ValidationException($errors);
         }
 
-        // Calculate working days (half day = 0.5, otherwise calculate)
-        if ($isHalfDay) {
-            $days = 0.5;
-        } else {
-            $days = $this->calculateWorkingDays($startDateObj, $endDateObj, $federalState);
-        }
+        // Calculate working days and apply scope
+        $workingDays = $this->calculateWorkingDays($startDateObj, $endDateObj, $federalState);
+        $days = $workingDays * $scope;
 
         $absence->setType($type);
         $absence->setStartDate($startDateObj);
         $absence->setEndDate($endDateObj);
         $absence->setDays((string)$days);
-        $absence->setIsHalfDay($isHalfDay);
+        $absence->setScopeValue($scope);
         $absence->setNote($note);
         $absence->setStatus(Absence::STATUS_PENDING);
         $absence->setUpdatedAt(new DateTime());
+        // Clear approval data since re-approval is required
+        $absence->setApprovedBy(null);
+        $absence->setApprovedAt(null);
 
         $absence = $this->absenceMapper->update($absence);
 
@@ -308,7 +319,7 @@ class AbsenceService {
     /**
      * @return array<string, string[]>
      */
-    private function validate(int $employeeId, string $type, DateTime $startDate, DateTime $endDate, ?int $excludeId = null, bool $isHalfDay = false): array {
+    private function validate(int $employeeId, string $type, DateTime $startDate, DateTime $endDate, ?int $excludeId = null, float $scope = 1.0): array {
         $errors = [];
 
         if (!array_key_exists($type, Absence::TYPES)) {
@@ -319,9 +330,14 @@ class AbsenceService {
             $errors['endDate'] = ['End date must be after start date'];
         }
 
-        // Half day must be single day
-        if ($isHalfDay && $startDate->format('Y-m-d') !== $endDate->format('Y-m-d')) {
-            $errors['isHalfDay'] = ['Halber Tag ist nur für einen einzelnen Tag möglich'];
+        // Scope must be between 0 and 1
+        if ($scope < 0 || $scope > 1) {
+            $errors['scope'] = ['Scope muss zwischen 0 und 1 liegen'];
+        }
+
+        // Half day (scope < 1) must be single day
+        if ($scope < 1.0 && $startDate->format('Y-m-d') !== $endDate->format('Y-m-d')) {
+            $errors['scope'] = ['Halber Tag ist nur für einen einzelnen Tag möglich'];
         }
 
         // Check for overlapping absences
@@ -331,5 +347,60 @@ class AbsenceService {
         }
 
         return $errors;
+    }
+
+    /**
+     * Validate that no days from approved months are being removed
+     *
+     * @return string[] Error messages
+     */
+    private function validateModification(Absence $absence, DateTime $newStart, DateTime $newEnd): array {
+        $errors = [];
+        $today = new DateTime('today');
+
+        // Get all days from original range
+        $originalDays = $this->getDaysInRange($absence->getStartDate(), $absence->getEndDate());
+        $newDays = $this->getDaysInRange($newStart, $newEnd);
+
+        // Convert new days to string array for comparison
+        $newDayStrings = array_map(fn(DateTime $d) => $d->format('Y-m-d'), $newDays);
+
+        // Find days being removed
+        foreach ($originalDays as $day) {
+            $dayString = $day->format('Y-m-d');
+            if (!in_array($dayString, $newDayStrings)) {
+                // Day is being removed - check if allowed
+                if ($day < $today) {
+                    // Day in past - check if month is approved
+                    $year = (int)$day->format('Y');
+                    $month = (int)$day->format('n');
+                    if ($this->timeEntryService->isMonthApproved($absence->getEmployeeId(), $year, $month)) {
+                        $errors[] = sprintf(
+                            'Tag %s kann nicht entfernt werden (Monat %02d/%d ist genehmigt)',
+                            $day->format('d.m.Y'),
+                            $month,
+                            $year
+                        );
+                    }
+                }
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Get all days in a date range
+     *
+     * @return DateTime[]
+     */
+    private function getDaysInRange(DateTime $start, DateTime $end): array {
+        $days = [];
+        $current = clone $start;
+        while ($current <= $end) {
+            $days[] = clone $current;
+            $current->modify('+1 day');
+        }
+        return $days;
     }
 }

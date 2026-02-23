@@ -9,6 +9,7 @@ use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\EmployeeMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IUserManager;
+use Psr\Log\LoggerInterface;
 
 class EmployeeService {
 
@@ -16,6 +17,7 @@ class EmployeeService {
         private EmployeeMapper $employeeMapper,
         private AuditLogService $auditLogService,
         private IUserManager $userManager,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -213,6 +215,39 @@ class EmployeeService {
         }
 
         return $errors;
+    }
+
+    /**
+     * Update the current user's default working times.
+     *
+     * @throws NotFoundException
+     */
+    public function updateMyDefaults(
+        string $userId,
+        ?string $defaultStartTime = null,
+        ?string $defaultEndTime = null
+    ): Employee {
+        $employee = $this->findByUserId($userId);
+        $oldValues = $employee->jsonSerialize();
+
+        // Validate time format (HH:MM)
+        if ($defaultStartTime !== null && !preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $defaultStartTime)) {
+            throw ValidationException::fromSingleError('defaultStartTime', 'Invalid time format. Use HH:MM.');
+        }
+        if ($defaultEndTime !== null && !preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $defaultEndTime)) {
+            throw ValidationException::fromSingleError('defaultEndTime', 'Invalid time format. Use HH:MM.');
+        }
+
+        $employee->setDefaultStartTime($defaultStartTime ? new DateTime($defaultStartTime) : null);
+        $employee->setDefaultEndTime($defaultEndTime ? new DateTime($defaultEndTime) : null);
+        $employee->setUpdatedAt(new DateTime());
+
+        $employee = $this->employeeMapper->update($employee);
+
+        // Audit log
+        $this->auditLogService->logUpdate($userId, 'employee', $employee->getId(), $oldValues, $employee->jsonSerialize());
+
+        return $employee;
     }
 
     /**

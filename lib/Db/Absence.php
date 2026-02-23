@@ -33,7 +33,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setCreatedAt(DateTime $createdAt)
  * @method DateTime getUpdatedAt()
  * @method void setUpdatedAt(DateTime $updatedAt)
- * @method int getIsHalfDay()
+ * @method string getScope()
+ * @method void setScope(string $scope)
  */
 class Absence extends Entity implements JsonSerializable {
 
@@ -71,6 +72,8 @@ class Absence extends Entity implements JsonSerializable {
     protected ?DateTime $approvedAt = null;
     protected ?DateTime $createdAt = null;
     protected ?DateTime $updatedAt = null;
+    protected string $scope = '1.00';
+    /** @deprecated Use scope instead - kept for DB compatibility during migration */
     protected int $isHalfDay = 0;
 
     public function __construct() {
@@ -85,14 +88,17 @@ class Absence extends Entity implements JsonSerializable {
         $this->addType('isHalfDay', 'integer');
     }
 
-    public function setIsHalfDay(bool|int $isHalfDay): void {
-        $value = is_bool($isHalfDay) ? ($isHalfDay ? 1 : 0) : $isHalfDay;
-        $this->isHalfDay = $value;
-        $this->markFieldUpdated('isHalfDay');
+    public function getScopeValue(): float {
+        return (float) $this->scope;
     }
 
-    public function isHalfDayAbsence(): bool {
-        return $this->isHalfDay === 1;
+    public function setScopeValue(float $scope): void {
+        $this->scope = number_format($scope, 2, '.', '');
+        $this->markFieldUpdated('scope');
+    }
+
+    public function isHalfDay(): bool {
+        return $this->getScopeValue() < 1.0;
     }
 
     public function getTypeName(): string {
@@ -120,7 +126,7 @@ class Absence extends Entity implements JsonSerializable {
             'startDate' => $this->startDate?->format('Y-m-d'),
             'endDate' => $this->endDate?->format('Y-m-d'),
             'days' => (float)$this->days,
-            'isHalfDay' => (bool)$this->isHalfDay,
+            'scope' => $this->getScopeValue(),
             'note' => $this->note,
             'status' => $this->status,
             'approvedBy' => $this->approvedBy,

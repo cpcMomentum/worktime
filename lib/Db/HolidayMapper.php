@@ -140,4 +140,33 @@ class HolidayMapper extends QBMapper {
 
         return $this->findEntities($qb);
     }
+
+    /**
+     * Find all holidays for a year (across all federal states)
+     *
+     * @return Holiday[]
+     */
+    public function findByYear(int $year): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('year', $qb->createNamedParameter($year, IQueryBuilder::PARAM_INT)))
+            ->orderBy('date', 'ASC')
+            ->addOrderBy('federal_state', 'ASC');
+
+        return $this->findEntities($qb);
+    }
+
+    /**
+     * Delete only auto-generated (non-manual) holidays for a year and state
+     */
+    public function deleteAutoByYearAndState(int $year, string $federalState): int {
+        $qb = $this->db->getQueryBuilder();
+        $qb->delete($this->getTableName())
+            ->where($qb->expr()->eq('year', $qb->createNamedParameter($year, IQueryBuilder::PARAM_INT)))
+            ->andWhere($qb->expr()->eq('federal_state', $qb->createNamedParameter($federalState)))
+            ->andWhere($qb->expr()->eq('is_manual', $qb->createNamedParameter(0, IQueryBuilder::PARAM_INT)));
+
+        return $qb->executeStatement();
+    }
 }

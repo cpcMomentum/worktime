@@ -4,61 +4,59 @@ declare(strict_types=1);
 
 namespace OCA\WorkTime\Controller;
 
-use OCA\WorkTime\AppInfo\Application;
 use OCA\WorkTime\Db\CompanySetting;
 use OCA\WorkTime\Service\CompanySettingsService;
 use OCA\WorkTime\Service\PermissionService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\OCSController;
 use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserManager;
 
-class SettingsController extends OCSController {
+class SettingsController extends BaseController {
 
     public function __construct(
         IRequest $request,
-        private ?string $userId,
+        ?string $userId,
         private CompanySettingsService $settingsService,
         private PermissionService $permissionService,
         private IUserManager $userManager,
         private IGroupManager $groupManager,
     ) {
-        parent::__construct(Application::APP_ID, $request);
+        parent::__construct($request, $userId);
     }
 
     #[NoAdminRequired]
     public function index(): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         $settings = $this->settingsService->getAll();
 
-        return new JSONResponse($settings);
+        return $this->successResponse($settings);
     }
 
     #[NoAdminRequired]
     public function show(string $key): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         $value = $this->settingsService->get($key);
 
-        return new JSONResponse(['key' => $key, 'value' => $value]);
+        return $this->successResponse(['key' => $key, 'value' => $value]);
     }
 
     #[NoAdminRequired]
     public function update(string $key, ?string $value): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canManageSettings($this->userId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         // When setting the archive path, also save the user who configured it
@@ -73,107 +71,107 @@ class SettingsController extends OCSController {
 
         $setting = $this->settingsService->set($key, $value, $this->userId);
 
-        return new JSONResponse($setting);
+        return $this->successResponse($setting);
     }
 
     #[NoAdminRequired]
     public function updateMultiple(array $settings): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canManageSettings($this->userId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         $this->settingsService->setMultiple($settings, $this->userId);
 
-        return new JSONResponse($this->settingsService->getAll());
+        return $this->successResponse($this->settingsService->getAll());
     }
 
     #[NoAdminRequired]
     public function reset(string $key): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canManageSettings($this->userId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         $setting = $this->settingsService->reset($key, $this->userId);
 
         if ($setting) {
-            return new JSONResponse($setting);
+            return $this->successResponse($setting);
         }
 
-        return new JSONResponse(['error' => 'Setting not found'], Http::STATUS_NOT_FOUND);
+        return $this->successResponse(['error' => 'Setting not found'], Http::STATUS_NOT_FOUND);
     }
 
     #[NoAdminRequired]
     public function resetAll(): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canManageSettings($this->userId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         $this->settingsService->resetAll($this->userId);
 
-        return new JSONResponse($this->settingsService->getAll());
+        return $this->successResponse($this->settingsService->getAll());
     }
 
     #[NoAdminRequired]
     public function permissions(): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         $permissions = $this->permissionService->getPermissionInfo($this->userId);
 
-        return new JSONResponse($permissions);
+        return $this->successResponse($permissions);
     }
 
     #[NoAdminRequired]
     public function hrManagers(): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canManageSettings($this->userId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         $hrManagers = $this->permissionService->getHrManagers();
 
-        return new JSONResponse($hrManagers);
+        return $this->successResponse($hrManagers);
     }
 
     #[NoAdminRequired]
     public function setHrManagers(array $entries): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canManageSettings($this->userId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         $this->permissionService->setHrManagers($entries);
 
-        return new JSONResponse($this->permissionService->getHrManagers());
+        return $this->successResponse($this->permissionService->getHrManagers());
     }
 
     #[NoAdminRequired]
     public function availablePrincipals(): JSONResponse {
-        if (!$this->userId) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        if ($authError = $this->requireAuth()) {
+            return $authError;
         }
 
         if (!$this->permissionService->canManageSettings($this->userId)) {
-            return new JSONResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+            return $this->forbiddenResponse();
         }
 
         $principals = [];
@@ -202,6 +200,6 @@ class SettingsController extends OCSController {
         // Sort by label
         usort($principals, fn($a, $b) => strcasecmp($a['label'], $b['label']));
 
-        return new JSONResponse($principals);
+        return $this->successResponse($principals);
     }
 }

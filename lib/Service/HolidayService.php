@@ -11,6 +11,7 @@ use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\Holiday;
 use OCA\WorkTime\Db\HolidayMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use Psr\Log\LoggerInterface;
 
 class HolidayService {
 
@@ -39,6 +40,7 @@ class HolidayService {
         private HolidayMapper $holidayMapper,
         private CompanySettingMapper $settingsMapper,
         private AuditLogService $auditLogService,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -80,8 +82,8 @@ class HolidayService {
      * @return Holiday[]
      */
     public function generateHolidays(int $year, string $federalState, string $currentUserId = ''): array {
-        // Delete existing holidays for this year/state
-        $this->holidayMapper->deleteByYearAndState($year, $federalState);
+        // Delete only auto-generated holidays for this year/state (keep manual ones)
+        $this->holidayMapper->deleteAutoByYearAndState($year, $federalState);
 
         $holidays = [];
 
@@ -142,16 +144,16 @@ class HolidayService {
     private function generateSpecialDays(int $year, string $federalState): array {
         $holidays = [];
 
-        // Christmas Eve (24.12.)
+        // Christmas Eve (24.12.) - half day (scope = 0.5)
         $christmasEveHalfDay = $this->settingsMapper->getValueAsBool(CompanySetting::KEY_CHRISTMAS_EVE_HALF_DAY);
         if ($christmasEveHalfDay) {
-            $holidays[] = $this->createHoliday($year, 12, 24, 'Heiligabend', $federalState, true);
+            $holidays[] = $this->createHoliday($year, 12, 24, 'Heiligabend', $federalState, 0.5);
         }
 
-        // New Year's Eve (31.12.)
+        // New Year's Eve (31.12.) - half day (scope = 0.5)
         $newYearsEveHalfDay = $this->settingsMapper->getValueAsBool(CompanySetting::KEY_NEW_YEARS_EVE_HALF_DAY);
         if ($newYearsEveHalfDay) {
-            $holidays[] = $this->createHoliday($year, 12, 31, 'Silvester', $federalState, true);
+            $holidays[] = $this->createHoliday($year, 12, 31, 'Silvester', $federalState, 0.5);
         }
 
         return $holidays;
@@ -191,13 +193,15 @@ class HolidayService {
 
     /**
      * Create and save a holiday
+     *
+     * @param float $scope 1.0 = full day, 0.5 = half day
      */
-    private function createHoliday(int $year, int $month, int $day, string $name, string $federalState, bool $isHalfDay = false): Holiday {
+    private function createHoliday(int $year, int $month, int $day, string $name, string $federalState, float $scope = 1.0): Holiday {
         $holiday = new Holiday();
         $holiday->setDate(new DateTime("$year-$month-$day"));
         $holiday->setName($name);
         $holiday->setFederalState($federalState);
-        $holiday->setIsHalfDay($isHalfDay);
+        $holiday->setScopeValue($scope);
         $holiday->setYear($year);
         $holiday->setCreatedAt(new DateTime());
 
@@ -247,5 +251,103 @@ class HolidayService {
      */
     public function getFederalStates(): array {
         return Employee::FEDERAL_STATES;
+    }
+
+    /**
+     * Create a manual holiday for multiple federal states
+     *
+     * @param float $scope 1.0 = full day, 0.5 = half day
+     * @return Holiday[]
+     * @throws \Exception if holiday already exists for any state
+     */
+    public function createManual(string $date, string $name, array $federalStates, float $scope, string $currentUserId): array {
+        $dateObj = new DateTime($date);
+        $year = (int)$dateObj->format('Y');
+        $holidays = [];
+
+        // Check for existing holidays first
+        $existingStates = [];
+        foreach ($federalStates as $federalState) {
+            if ($this->holidayMapper->isHoliday($dateObj, $federalState)) {
+                $existingStates[] = $federalState;
+            }
+        }
+
+        if (!empty($existingStates)) {
+            $stateNames = array_map(fn($s) => Employee::FEDERAL_STATES[$s] ?? $s, $existingStates);
+            throw new \Exception(
+                sprintf(
+                    'Für das Datum %s existiert bereits ein Feiertag in: %s',
+                    $dateObj->format('d.m.Y'),
+                    implode(', ', $stateNames)
+                )
+            );
+        }
+
+        foreach ($federalStates as $federalState) {
+            $holiday = new Holiday();
+            $holiday->setDate($dateObj);
+            $holiday->setName($name);
+            $holiday->setFederalState($federalState);
+            $holiday->setScopeValue($scope);
+            $holiday->setYear($year);
+            $holiday->setIsManual(true);
+            $holiday->setCreatedAt(new DateTime());
+
+            $holidays[] = $this->holidayMapper->insert($holiday);
+        }
+
+        $this->auditLogService->logCreate($currentUserId, 'holiday', null, [
+            'date' => $date,
+            'name' => $name,
+            'federalStates' => $federalStates,
+            'scope' => $scope,
+            'isManual' => true,
+        ]);
+
+        return $holidays;
+    }
+
+    /**
+     * Update an existing holiday
+     *
+     * @param float $scope 1.0 = full day, 0.5 = half day
+     */
+    public function update(int $id, string $date, string $name, float $scope, string $currentUserId): Holiday {
+        $holiday = $this->holidayMapper->find($id);
+        $oldData = $holiday->jsonSerialize();
+
+        $dateObj = new DateTime($date);
+        $holiday->setDate($dateObj);
+        $holiday->setName($name);
+        $holiday->setScopeValue($scope);
+        $holiday->setYear((int)$dateObj->format('Y'));
+
+        $updated = $this->holidayMapper->update($holiday);
+
+        $this->auditLogService->logUpdate($currentUserId, 'holiday', $id, $oldData, $updated->jsonSerialize());
+
+        return $updated;
+    }
+
+    /**
+     * Delete a holiday
+     */
+    public function delete(int $id, string $currentUserId): void {
+        $holiday = $this->holidayMapper->find($id);
+        $oldData = $holiday->jsonSerialize();
+
+        $this->holidayMapper->delete($holiday);
+
+        $this->auditLogService->logDelete($currentUserId, 'holiday', $id, $oldData);
+    }
+
+    /**
+     * Find all holidays for a year (across all federal states)
+     *
+     * @return Holiday[]
+     */
+    public function findByYear(int $year): array {
+        return $this->holidayMapper->findByYear($year);
     }
 }
