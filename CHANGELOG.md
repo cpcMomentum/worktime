@@ -7,24 +7,23 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-02-23
+
 ### Added
-- Initiale MVP-Implementierung der WorkTime App
 - Zeiterfassung mit Start, Ende, Pause
-- Automatischer Pausenvorschlag gemäß §4 ArbZG (deutsches Arbeitszeitgesetz)
+- Automatischer Pausenvorschlag gemaess §4 ArbZG
 - Projektbezogene Zeiterfassung
-- Monatsübersicht mit Soll/Ist/Überstunden-Berechnung
-- PDF-Export für Monatsberichte (TCPDF)
+- Monatsuebersicht mit Soll/Ist/Ueberstunden-Berechnung
+- PDF-Export fuer Monatsberichte (TCPDF)
 - Abwesenheitsverwaltung (Urlaub, Krankheit, Sonderurlaub, etc.)
 - Urlaubskonto mit automatischer Berechnung verbleibender Tage
-- Deutsche Feiertage pro Bundesland (Gauss-Algorithmus für Ostern)
-- Team-Übersicht für Vorgesetzte
-- Genehmigungsworkflow für Zeiteinträge und Abwesenheiten
+- Deutsche Feiertage pro Bundesland (Gauss-Algorithmus fuer Ostern)
+- Team-Uebersicht fuer Vorgesetzte
+- Genehmigungsworkflow fuer Zeiteintraege und Abwesenheiten
 - Berechtigungssystem (Admin, HR Manager, Supervisor, Employee)
-- Vollständige deutsche und englische Lokalisierung
-- Unit-Tests für kritische Business-Logik
+- Vollstaendige deutsche und englische Lokalisierung
+- E-Mail-Prefill aus Nextcloud-Profil bei Mitarbeiteranlage
+- Nextcloud 32 und 33 Kompatibilitaet
 
-### Technical
-- 7 Datenbank-Tabellen (wt_employees, wt_time_entries, wt_absences, wt_holidays, wt_projects, wt_audit_logs, wt_company_settings)
-- RESTful API mit ~25 Endpoints
-- Vue.js 2 Frontend mit Vuex Store
-- PHP 8.2+ Backend mit Nextcloud 32 Kompatibilität
+### Fixed
+- Webpack chunk filenames shortened to avoid hosting provider issues
