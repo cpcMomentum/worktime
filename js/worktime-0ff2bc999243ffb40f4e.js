@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunkworktime=self.webpackChunkworktime||[]).push([["node_modules_nextcloud_dialogs_dist_chunks_index-Kg2hZgGF_mjs"],{8066(e,s,d){d.d(s,{FilePickerVue:()=>n});const n=(0,d(5471).$V)(()=>d.e("vendors-node_modules_nextcloud_dialogs_dist_chunks_FilePicker-ajWx2Snh_mjs").then(d.bind(d,4815)))}}]);
+//# sourceMappingURL=worktime-0ff2bc999243ffb40f4e.js.map
