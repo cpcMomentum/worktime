@@ -12,6 +12,7 @@ use OCA\WorkTime\Db\CompanySetting;
 use OCA\WorkTime\Db\EmployeeMapper;
 use OCA\WorkTime\Db\TimeEntry;
 use OCA\WorkTime\Db\TimeEntryMapper;
+use OCA\WorkTime\Notification\NotificationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
 
@@ -23,6 +24,7 @@ class TimeEntryService {
         private EmployeeMapper $employeeMapper,
         private AbsenceMapper $absenceMapper,
         private AuditLogService $auditLogService,
+        private NotificationService $notificationService,
         private LoggerInterface $logger,
     ) {
     }
@@ -286,6 +288,14 @@ class TimeEntryService {
             }
         }
 
+        if ($submitted > 0) {
+            try {
+                $this->notificationService->notifyTimeEntriesSubmitted($employeeId, $year, $month);
+            } catch (\Throwable $e) {
+                $this->logger->error('Failed to send time entries submitted notification', ['exception' => $e]);
+            }
+        }
+
         return [
             'submitted' => $submitted,
             'skipped' => $skipped,
@@ -317,6 +327,17 @@ class TimeEntryService {
             $this->auditLogService->log($currentUserId, 'approve', 'time_entry', $entry->getId(), $oldValues, $entry->jsonSerialize());
         }
 
+        try {
+            $date = $entry->getDate();
+            $this->notificationService->notifyTimeEntriesApproved(
+                $entry->getEmployeeId(),
+                (int)$date->format('Y'),
+                (int)$date->format('n')
+            );
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to send time entry approval notification', ['exception' => $e]);
+        }
+
         return $entry;
     }
 
@@ -344,6 +365,17 @@ class TimeEntryService {
         // Audit log
         if ($currentUserId) {
             $this->auditLogService->log($currentUserId, 'reject', 'time_entry', $entry->getId(), $oldValues, $entry->jsonSerialize());
+        }
+
+        try {
+            $date = $entry->getDate();
+            $this->notificationService->notifyTimeEntriesRejected(
+                $entry->getEmployeeId(),
+                (int)$date->format('Y'),
+                (int)$date->format('n')
+            );
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to send time entry rejection notification', ['exception' => $e]);
         }
 
         return $entry;
@@ -379,6 +411,14 @@ class TimeEntryService {
                 $approved++;
             } else {
                 $skipped++;
+            }
+        }
+
+        if ($approved > 0) {
+            try {
+                $this->notificationService->notifyTimeEntriesApproved($employeeId, $year, $month);
+            } catch (\Throwable $e) {
+                $this->logger->error('Failed to send time entries approved notification', ['exception' => $e]);
             }
         }
 

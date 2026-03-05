@@ -7,6 +7,7 @@ namespace OCA\WorkTime\AppInfo;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
+use OCA\WorkTime\Notification\Notifier;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 class Application extends App implements IBootstrap {
@@ -19,6 +20,8 @@ class Application extends App implements IBootstrap {
     public function register(IRegistrationContext $context): void {
         // Load Composer autoloader for TCPDF (must be in register(), not global scope)
         include_once __DIR__ . '/../../vendor/autoload.php';
+
+        $context->registerNotifierService(Notifier::class);
     }
 
     public function boot(IBootContext $context): void {

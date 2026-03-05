@@ -8,6 +8,7 @@ use DateTime;
 use OCA\WorkTime\Db\Absence;
 use OCA\WorkTime\Db\AbsenceMapper;
 use OCA\WorkTime\Db\HolidayMapper;
+use OCA\WorkTime\Notification\NotificationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
 
@@ -18,6 +19,7 @@ class AbsenceService {
         private HolidayMapper $holidayMapper,
         private TimeEntryService $timeEntryService,
         private AuditLogService $auditLogService,
+        private NotificationService $notificationService,
         private LoggerInterface $logger,
     ) {
     }
@@ -105,6 +107,12 @@ class AbsenceService {
         // Audit log
         if ($currentUserId) {
             $this->auditLogService->logCreate($currentUserId, 'absence', $absence->getId(), $absence->jsonSerialize());
+        }
+
+        try {
+            $this->notificationService->notifyAbsenceSubmitted($absence);
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to send absence notification', ['exception' => $e]);
         }
 
         return $absence;
@@ -219,6 +227,12 @@ class AbsenceService {
             $this->auditLogService->log($currentUserId, 'approve', 'absence', $absence->getId(), $oldValues, $absence->jsonSerialize());
         }
 
+        try {
+            $this->notificationService->notifyAbsenceApproved($absence);
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to send absence approval notification', ['exception' => $e]);
+        }
+
         return $absence;
     }
 
@@ -241,6 +255,12 @@ class AbsenceService {
         // Audit log
         if ($currentUserId) {
             $this->auditLogService->log($currentUserId, 'reject', 'absence', $absence->getId(), $oldValues, $absence->jsonSerialize());
+        }
+
+        try {
+            $this->notificationService->notifyAbsenceRejected($absence);
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to send absence rejection notification', ['exception' => $e]);
         }
 
         return $absence;
