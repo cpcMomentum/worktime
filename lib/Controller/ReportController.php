@@ -36,9 +36,13 @@ class ReportController extends BaseController {
     }
 
     #[NoAdminRequired]
-    public function monthly(int $employeeId, int $year, int $month): JSONResponse {
+    public function monthly(?int $employeeId = null, int $year = 0, int $month = 0): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
+        }
+
+        if ($error = $this->requireEmployeeId($employeeId)) {
+            return $error;
         }
 
         if (!$this->permissionService->canViewEmployee($this->userId, $employeeId)) {
@@ -70,9 +74,13 @@ class ReportController extends BaseController {
 
     #[NoAdminRequired]
     #[NoCSRFRequired]
-    public function pdf(int $employeeId, int $year, int $month): DataDownloadResponse|JSONResponse {
+    public function pdf(?int $employeeId = null, int $year = 0, int $month = 0): DataDownloadResponse|JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
+        }
+
+        if ($error = $this->requireEmployeeId($employeeId)) {
+            return $error;
         }
 
         if (!$this->permissionService->canViewEmployee($this->userId, $employeeId)) {
@@ -152,9 +160,13 @@ class ReportController extends BaseController {
     }
 
     #[NoAdminRequired]
-    public function overtime(int $employeeId, int $year): JSONResponse {
+    public function overtime(?int $employeeId = null, int $year = 0): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
+        }
+
+        if ($error = $this->requireEmployeeId($employeeId)) {
+            return $error;
         }
 
         if (!$this->permissionService->canViewEmployee($this->userId, $employeeId)) {

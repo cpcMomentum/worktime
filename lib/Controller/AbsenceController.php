@@ -25,9 +25,13 @@ class AbsenceController extends BaseController {
     }
 
     #[NoAdminRequired]
-    public function index(int $employeeId, ?int $year = null, ?int $month = null): JSONResponse {
+    public function index(?int $employeeId = null, ?int $year = null, ?int $month = null): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
+        }
+
+        if ($error = $this->requireEmployeeId($employeeId)) {
+            return $error;
         }
 
         if (!$this->permissionService->canViewEmployee($this->userId, $employeeId)) {
@@ -72,15 +76,19 @@ class AbsenceController extends BaseController {
 
     #[NoAdminRequired]
     public function create(
-        int $employeeId,
-        string $type,
-        string $startDate,
-        string $endDate,
+        ?int $employeeId = null,
+        string $type = '',
+        string $startDate = '',
+        string $endDate = '',
         ?string $note = null,
         float $scope = 1.0
     ): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
+        }
+
+        if ($error = $this->requireEmployeeId($employeeId)) {
+            return $error;
         }
 
         if (!$this->permissionService->canEditTimeEntry($this->userId, $employeeId)) {
@@ -252,9 +260,13 @@ class AbsenceController extends BaseController {
     }
 
     #[NoAdminRequired]
-    public function vacationStats(int $employeeId, int $year): JSONResponse {
+    public function vacationStats(?int $employeeId = null, int $year = 0): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
+        }
+
+        if ($error = $this->requireEmployeeId($employeeId)) {
+            return $error;
         }
 
         if (!$this->permissionService->canViewEmployee($this->userId, $employeeId)) {

@@ -45,6 +45,21 @@ abstract class BaseController extends OCSController {
     }
 
     /**
+     * Check if employeeId is set and return error response if not.
+     *
+     * @return JSONResponse|null Returns error response if employeeId is null, null otherwise
+     */
+    protected function requireEmployeeId(?int $employeeId): ?JSONResponse {
+        if ($employeeId === null) {
+            return new JSONResponse(
+                ['error' => 'No employee profile configured. Please contact your administrator.'],
+                Http::STATUS_BAD_REQUEST
+            );
+        }
+        return null;
+    }
+
+    /**
      * Handle exceptions and convert them to appropriate JSON responses.
      *
      * @param \Exception $e The exception to handle
