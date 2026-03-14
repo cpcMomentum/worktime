@@ -1,6 +1,6 @@
 # Dependencies
 node_modules/
-# vendor/ wird NICHT ignoriert - für einfache Nextcloud-Installation benötigt
+vendor/
 
 # Build output (js/ is committed for easy installation)
 # js/
@@ -35,11 +35,16 @@ composer.lock
 # Test coverage
 coverage/
 .phpunit.result.cache
+.phpunit.cache/
 
 # Nextcloud
 appinfo/signature.json
 
+# Release artifacts
+*.tar.gz
+*.zip
+
 # Internal documentation
 CLAUDE.md
-docs/archiv/
+docs/
 sessions/
