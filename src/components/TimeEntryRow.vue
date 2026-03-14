@@ -8,6 +8,7 @@
             <td>{{ entry.breakMinutes }} min</td>
             <td>{{ formatMinutes(entry.workMinutes) }}</td>
             <td>{{ getProjectName(entry.projectId) }}</td>
+            <td class="description-cell">{{ entry.description || '-' }}</td>
             <td>
                 <span class="status-badge" :class="entry.status">
                     {{ getStatusLabel(entry.status) }}
@@ -90,6 +91,7 @@
                     :placeholder="t('worktime', 'Beschreibung')"
                     @keydown="onKeydown">
             </td>
+            <td></td>
             <td class="actions">
                 <NcButton type="primary"
                     :disabled="!isValid"
@@ -387,6 +389,14 @@ tr.holiday {
 
 .break-input {
     width: 4.5rem;
+}
+
+.description-cell {
+    color: var(--color-text-maxcontrast);
+    max-width: 15rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .description-input {
