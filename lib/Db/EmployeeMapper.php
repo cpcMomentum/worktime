@@ -46,6 +46,21 @@ class EmployeeMapper extends QBMapper {
     }
 
     /**
+     * Check if any employees exist
+     */
+    public function hasAny(): bool {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select($qb->func()->count('*', 'count'))
+            ->from($this->getTableName());
+
+        $result = $qb->executeQuery();
+        $count = (int) $result->fetchOne();
+        $result->closeCursor();
+
+        return $count > 0;
+    }
+
+    /**
      * @return Employee[]
      */
     public function findAll(): array {

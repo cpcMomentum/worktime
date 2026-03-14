@@ -31,9 +31,13 @@ class TimeEntryController extends BaseController {
     }
 
     #[NoAdminRequired]
-    public function index(int $employeeId, ?int $year = null, ?int $month = null): JSONResponse {
+    public function index(?int $employeeId = null, ?int $year = null, ?int $month = null): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
+        }
+
+        if ($error = $this->requireEmployeeId($employeeId)) {
+            return $error;
         }
 
         if (!$this->permissionService->canViewEmployee($this->userId, $employeeId)) {
@@ -70,16 +74,20 @@ class TimeEntryController extends BaseController {
 
     #[NoAdminRequired]
     public function create(
-        int $employeeId,
-        string $date,
-        string $startTime,
-        string $endTime,
-        int $breakMinutes,
+        ?int $employeeId = null,
+        string $date = '',
+        string $startTime = '',
+        string $endTime = '',
+        int $breakMinutes = 0,
         ?int $projectId = null,
         ?string $description = null
     ): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
+        }
+
+        if ($error = $this->requireEmployeeId($employeeId)) {
+            return $error;
         }
 
         if (!$this->permissionService->canEditTimeEntry($this->userId, $employeeId)) {
@@ -227,9 +235,13 @@ class TimeEntryController extends BaseController {
     }
 
     #[NoAdminRequired]
-    public function submitMonth(int $employeeId, int $year, int $month): JSONResponse {
+    public function submitMonth(?int $employeeId = null, int $year = 0, int $month = 0): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
+        }
+
+        if ($error = $this->requireEmployeeId($employeeId)) {
+            return $error;
         }
 
         if (!$this->permissionService->canEditTimeEntry($this->userId, $employeeId)) {
@@ -330,9 +342,13 @@ class TimeEntryController extends BaseController {
     }
 
     #[NoAdminRequired]
-    public function monthlyStats(int $employeeId, int $year, int $month): JSONResponse {
+    public function monthlyStats(?int $employeeId = null, int $year = 0, int $month = 0): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
+        }
+
+        if ($error = $this->requireEmployeeId($employeeId)) {
+            return $error;
         }
 
         if (!$this->permissionService->canViewEmployee($this->userId, $employeeId)) {
