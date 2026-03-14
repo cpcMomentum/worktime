@@ -636,6 +636,7 @@ export default {
         async onEmployeeSaved() {
             this.closeEmployeeForm()
             await this.$store.dispatch('employees/fetchEmployees')
+            await this.$store.dispatch('permissions/fetchPermissions')
             showSuccessMessage(
                 this.editingEmployee
                     ? this.t('worktime', 'Mitarbeiter aktualisiert')

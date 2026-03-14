@@ -39,7 +39,7 @@
 			</NcAppNavigationItem>
 
 			<NcAppNavigationItem
-				v-if="canApprove"
+				v-if="canApprove && hasEmployees"
 				:name="t('worktime', 'Team')"
 				to="/team">
 				<template #icon>
@@ -48,7 +48,7 @@
 			</NcAppNavigationItem>
 
 			<NcAppNavigationItem
-				v-if="isAdmin || isHrManager"
+				v-if="(isAdmin || isHrManager) && hasEmployees"
 				:name="t('worktime', 'Genehmigungen')"
 				to="/approvals">
 				<template #icon>
@@ -77,8 +77,8 @@
 		</NcAppNavigation>
 
 		<NcAppContent>
-			<!-- Admin/HR ohne Employee: Willkommen + Link zu Einstellungen -->
-			<div v-if="!isEmployee && canManageSettings" class="no-employee-warning">
+			<!-- Frische Installation: Keine Employees vorhanden, Admin sieht Willkommen (ausser auf /settings) -->
+			<div v-if="!hasEmployees && canManageSettings && $route.path !== '/settings'" class="no-employee-warning">
 				<NcEmptyContent :name="t('worktime', 'Willkommen bei WorkTime')">
 					<template #icon>
 						<AccountGroupIcon />
@@ -93,18 +93,19 @@
 				</NcEmptyContent>
 			</div>
 
-			<!-- Normaler User ohne Employee: Hinweis an Admin wenden -->
-			<div v-else-if="!isEmployee" class="no-employee-warning">
+			<!-- Normaler User ohne Employee: Hinweis an Admin/HR wenden -->
+			<div v-else-if="!isEmployee && !canManageSettings && !canApprove" class="no-employee-warning">
 				<NcEmptyContent :name="t('worktime', 'Kein Mitarbeiterprofil')">
 					<template #icon>
 						<AlertIcon />
 					</template>
 					<template #description>
-						{{ t('worktime', 'Sie haben noch kein Mitarbeiterprofil. Bitte wenden Sie sich an Ihren Administrator.') }}
+						{{ t('worktime', 'Sie haben noch kein Mitarbeiterprofil. Bitte wenden Sie sich an Ihren Administrator oder HR-Manager, um freigeschaltet zu werden.') }}
 					</template>
 				</NcEmptyContent>
 			</div>
 
+			<!-- Alle anderen: normale Ansicht -->
 			<router-view v-else />
 		</NcAppContent>
 	</NcContent>
@@ -148,7 +149,7 @@ export default {
 		AlertIcon,
 	},
 	computed: {
-		...mapGetters('permissions', ['isEmployee', 'isAdmin', 'isHrManager', 'canManageSettings', 'canApprove']),
+		...mapGetters('permissions', ['isEmployee', 'isAdmin', 'isHrManager', 'hasEmployees', 'canManageSettings', 'canApprove']),
 	},
 	created() {
 		this.initializeApp()
