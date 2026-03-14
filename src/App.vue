@@ -2,6 +2,7 @@
 	<NcContent app-name="worktime">
 		<NcAppNavigation>
 			<NcAppNavigationItem
+				v-if="isEmployee"
 				:name="t('worktime', 'Übersicht')"
 				to="/"
 				:exact="true">
@@ -11,6 +12,7 @@
 			</NcAppNavigationItem>
 
 			<NcAppNavigationItem
+				v-if="isEmployee"
 				:name="t('worktime', 'Zeiterfassung')"
 				to="/tracking">
 				<template #icon>
@@ -19,6 +21,7 @@
 			</NcAppNavigationItem>
 
 			<NcAppNavigationItem
+				v-if="isEmployee"
 				:name="t('worktime', 'Abwesenheiten')"
 				to="/absences">
 				<template #icon>
@@ -27,6 +30,7 @@
 			</NcAppNavigationItem>
 
 			<NcAppNavigationItem
+				v-if="isEmployee"
 				:name="t('worktime', 'Monatsübersicht')"
 				to="/report">
 				<template #icon>
@@ -35,7 +39,7 @@
 			</NcAppNavigationItem>
 
 			<NcAppNavigationItem
-				v-if="canApprove"
+				v-if="canApprove && hasEmployees"
 				:name="t('worktime', 'Team')"
 				to="/team">
 				<template #icon>
@@ -44,7 +48,7 @@
 			</NcAppNavigationItem>
 
 			<NcAppNavigationItem
-				v-if="isAdmin || isHrManager"
+				v-if="(isAdmin || isHrManager) && hasEmployees"
 				:name="t('worktime', 'Genehmigungen')"
 				to="/approvals">
 				<template #icon>
@@ -73,17 +77,35 @@
 		</NcAppNavigation>
 
 		<NcAppContent>
-			<div v-if="!isEmployee && !canManageSettings" class="no-employee-warning">
+			<!-- Frische Installation: Keine Employees vorhanden, Admin sieht Willkommen (ausser auf /settings) -->
+			<div v-if="!hasEmployees && canManageSettings && $route.path !== '/settings'" class="no-employee-warning">
+				<NcEmptyContent :name="t('worktime', 'Willkommen bei WorkTime')">
+					<template #icon>
+						<AccountGroupIcon />
+					</template>
+					<template #description>
+						<p>{{ t('worktime', 'Es sind noch keine Mitarbeiter eingerichtet. Legen Sie unter Einstellungen Mitarbeiter an, um zu starten.') }}</p>
+						<NcButton type="primary"
+							@click="$router.push('/settings')">
+							{{ t('worktime', 'Zu den Einstellungen') }}
+						</NcButton>
+					</template>
+				</NcEmptyContent>
+			</div>
+
+			<!-- Normaler User ohne Employee: Hinweis an Admin/HR wenden -->
+			<div v-else-if="!isEmployee && !canManageSettings && !canApprove" class="no-employee-warning">
 				<NcEmptyContent :name="t('worktime', 'Kein Mitarbeiterprofil')">
 					<template #icon>
 						<AlertIcon />
 					</template>
 					<template #description>
-						{{ t('worktime', 'Sie haben noch kein Mitarbeiterprofil. Bitte wenden Sie sich an Ihren Administrator.') }}
+						{{ t('worktime', 'Sie haben noch kein Mitarbeiterprofil. Bitte wenden Sie sich an Ihren Administrator oder HR-Manager, um freigeschaltet zu werden.') }}
 					</template>
 				</NcEmptyContent>
 			</div>
 
+			<!-- Alle anderen: normale Ansicht -->
 			<router-view v-else />
 		</NcAppContent>
 	</NcContent>
@@ -94,6 +116,7 @@ import NcContent from '@nextcloud/vue/dist/Components/NcContent.js'
 import NcAppNavigation from '@nextcloud/vue/dist/Components/NcAppNavigation.js'
 import NcAppNavigationItem from '@nextcloud/vue/dist/Components/NcAppNavigationItem.js'
 import NcAppContent from '@nextcloud/vue/dist/Components/NcAppContent.js'
+import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import ViewDashboardIcon from 'vue-material-design-icons/ViewDashboard.vue'
 import ClockIcon from 'vue-material-design-icons/Clock.vue'
@@ -113,6 +136,7 @@ export default {
 		NcAppNavigation,
 		NcAppNavigationItem,
 		NcAppContent,
+		NcButton,
 		NcEmptyContent,
 		ViewDashboardIcon,
 		ClockIcon,
@@ -125,7 +149,7 @@ export default {
 		AlertIcon,
 	},
 	computed: {
-		...mapGetters('permissions', ['isEmployee', 'isAdmin', 'isHrManager', 'canManageSettings', 'canApprove']),
+		...mapGetters('permissions', ['isEmployee', 'isAdmin', 'isHrManager', 'hasEmployees', 'canManageSettings', 'canApprove']),
 	},
 	created() {
 		this.initializeApp()

@@ -175,6 +175,7 @@ export default {
             return this.availableUsers.map(u => ({
                 id: u.user,
                 label: u.displayName + (u.subname ? ` (${u.subname})` : ''),
+                email: u.subname || '',
             }))
         },
         selectedUser: {
@@ -196,6 +197,10 @@ export default {
                         this.form.firstName = parts[0]
                         this.form.lastName = parts.slice(1).join(' ').replace(/\s*\(.*\)$/, '')
                     }
+                }
+                // Pre-fill email from NC profile if empty
+                if (value?.email && !this.form.email) {
+                    this.form.email = value.email
                 }
             },
         },

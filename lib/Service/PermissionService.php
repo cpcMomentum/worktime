@@ -211,6 +211,7 @@ class PermissionService {
             'isSupervisor' => $isSupervisor,
             'isEmployee' => $isEmployee,
             'employeeId' => $employee?->getId(),
+            'hasEmployees' => $this->employeeMapper->hasAny(),
             'canManageEmployees' => $isAdmin || $isHrManager,
             'canManageSettings' => $isAdmin,
             'canManageProjects' => $isAdmin || $isHrManager,
