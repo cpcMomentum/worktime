@@ -9,8 +9,8 @@
                     <th>{{ t('worktime', 'Pause') }}</th>
                     <th>{{ t('worktime', 'Arbeitszeit') }}</th>
                     <th>{{ t('worktime', 'Projekt') }}</th>
-                    <th v-if="!isEditing">{{ t('worktime', 'Status') }}</th>
-                    <th v-else>{{ t('worktime', 'Beschreibung') }}</th>
+                    <th>{{ t('worktime', 'Beschreibung') }}</th>
+                    <th>{{ t('worktime', 'Status') }}</th>
                     <th v-if="!readonly">{{ t('worktime', 'Aktionen') }}</th>
                 </tr>
             </thead>
