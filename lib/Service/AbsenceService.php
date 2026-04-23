@@ -12,6 +12,7 @@ use OCA\WorkTime\Db\EmployeeMapper;
 use OCA\WorkTime\Db\HolidayMapper;
 use OCA\WorkTime\Notification\NotificationService;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\IL10N;
 use Psr\Log\LoggerInterface;
 
 class AbsenceService {
@@ -25,6 +26,7 @@ class AbsenceService {
         private NotificationService $notificationService,
         private WorkScheduleService $workScheduleService,
         private LoggerInterface $logger,
+        private IL10N $l,
     ) {
     }
 
@@ -402,12 +404,12 @@ class AbsenceService {
 
         // Scope must be between 0 and 1
         if ($scope < 0 || $scope > 1) {
-            $errors['scope'] = ['Scope muss zwischen 0 und 1 liegen'];
+            $errors['scope'] = [$this->l->t('Scope muss zwischen 0 und 1 liegen')];
         }
 
         // Half day (scope < 1) must be single day
         if ($scope < 1.0 && $startDate->format('Y-m-d') !== $endDate->format('Y-m-d')) {
-            $errors['scope'] = ['Halber Tag ist nur für einen einzelnen Tag möglich'];
+            $errors['scope'] = [$this->l->t('Halber Tag ist nur für einen einzelnen Tag möglich')];
         }
 
         // Check for overlapping absences
@@ -445,11 +447,13 @@ class AbsenceService {
                     $year = (int)$day->format('Y');
                     $month = (int)$day->format('n');
                     if ($this->timeEntryService->isMonthApproved($absence->getEmployeeId(), $year, $month)) {
-                        $errors[] = sprintf(
-                            'Tag %s kann nicht entfernt werden (Monat %02d/%d ist genehmigt)',
-                            $day->format('d.m.Y'),
-                            $month,
-                            $year
+                        $errors[] = $this->l->t(
+                            'Tag %1$s kann nicht entfernt werden (Monat %2$02d/%3$d ist genehmigt)',
+                            [
+                                $day->format('d.m.Y'),
+                                $month,
+                                $year,
+                            ]
                         );
                     }
                 }

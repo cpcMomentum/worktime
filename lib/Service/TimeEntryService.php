@@ -14,6 +14,7 @@ use OCA\WorkTime\Db\TimeEntry;
 use OCA\WorkTime\Db\TimeEntryMapper;
 use OCA\WorkTime\Notification\NotificationService;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\IL10N;
 use Psr\Log\LoggerInterface;
 
 class TimeEntryService {
@@ -26,6 +27,7 @@ class TimeEntryService {
         private AuditLogService $auditLogService,
         private NotificationService $notificationService,
         private LoggerInterface $logger,
+        private IL10N $l,
     ) {
     }
 
@@ -530,15 +532,15 @@ class TimeEntryService {
         // Check future dates
         $allowFuture = $this->settingsMapper->getValueAsBool(CompanySetting::KEY_ALLOW_FUTURE_ENTRIES);
         if (!$allowFuture && $date > new DateTime('today')) {
-            $errors['date'] = ['Zukünftige Einträge sind nicht erlaubt'];
+            $errors['date'] = [$this->l->t('Zukünftige Einträge sind nicht erlaubt')];
         }
 
         if (!$startTime) {
-            $errors['startTime'] = ['Ungültiges Zeitformat'];
+            $errors['startTime'] = [$this->l->t('Ungültiges Zeitformat')];
         }
 
         if (!$endTime) {
-            $errors['endTime'] = ['Ungültiges Zeitformat'];
+            $errors['endTime'] = [$this->l->t('Ungültiges Zeitformat')];
         }
 
         if ($startTime && $endTime) {
@@ -550,7 +552,7 @@ class TimeEntryService {
             // Check max daily hours
             $maxHours = $this->settingsMapper->getValueAsFloat(CompanySetting::KEY_MAX_DAILY_HOURS);
             if ($grossMinutes / 60 > $maxHours) {
-                $errors['endTime'] = ["Maximale tägliche Arbeitszeit ({$maxHours} Std.) überschritten"];
+                $errors['endTime'] = [$this->l->t('Maximale tägliche Arbeitszeit (%s Std.) überschritten', [(string)$maxHours])];
             }
 
             // Validate break
@@ -558,7 +560,7 @@ class TimeEntryService {
                 $break6h = $this->settingsMapper->getValueAsInt(CompanySetting::KEY_MIN_BREAK_MINUTES_6H);
                 $break9h = $this->settingsMapper->getValueAsInt(CompanySetting::KEY_MIN_BREAK_MINUTES_9H);
                 $minBreak = $grossMinutes > 9 * 60 ? $break9h : $break6h;
-                $errors['breakMinutes'] = ["Mindestpause von {$minBreak} Minuten erforderlich"];
+                $errors['breakMinutes'] = [$this->l->t('Mindestpause von %d Minuten erforderlich', [$minBreak])];
             }
 
             // Check for absence conflict
@@ -571,7 +573,7 @@ class TimeEntryService {
         }
 
         if ($breakMinutes < 0) {
-            $errors['breakMinutes'] = ['Pause kann nicht negativ sein'];
+            $errors['breakMinutes'] = [$this->l->t('Pause kann nicht negativ sein')];
         }
 
         return $errors;
@@ -601,7 +603,7 @@ class TimeEntryService {
                 continue;
             } else {
                 // Full-day absence: block entry completely
-                return "An diesem Tag haben Sie {$absence->getTypeName()}. Bitte stornieren Sie zuerst die Abwesenheit.";
+                return $this->l->t('An diesem Tag haben Sie %s. Bitte stornieren Sie zuerst die Abwesenheit.', [$absence->getTypeName()]);
             }
         }
 
@@ -648,7 +650,7 @@ class TimeEntryService {
             if ($newStart < $existingEnd && $newEnd > $existingStart) {
                 $existingStartStr = $entry->getStartTime()->format('H:i');
                 $existingEndStr = $entry->getEndTime()->format('H:i');
-                return "Überlappung mit bestehendem Eintrag ({$existingStartStr} - {$existingEndStr})";
+                return $this->l->t('Überlappung mit bestehendem Eintrag (%1$s - %2$s)', [$existingStartStr, $existingEndStr]);
             }
         }
 

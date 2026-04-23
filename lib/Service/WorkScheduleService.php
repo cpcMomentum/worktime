@@ -11,6 +11,7 @@ use OCA\WorkTime\Db\EmployeeMapper;
 use OCA\WorkTime\Db\WorkSchedule;
 use OCA\WorkTime\Db\WorkScheduleMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\IL10N;
 use Psr\Log\LoggerInterface;
 
 class WorkScheduleService {
@@ -21,6 +22,7 @@ class WorkScheduleService {
         private CompanySettingsService $companySettingsService,
         private AuditLogService $auditLogService,
         private LoggerInterface $logger,
+        private IL10N $l,
     ) {
     }
 
@@ -83,7 +85,7 @@ class WorkScheduleService {
         $firstOfCurrentMonth = new DateTime('first day of this month');
         $firstOfCurrentMonth->setTime(0, 0, 0);
         if ($validFromDate < $firstOfCurrentMonth) {
-            $errors['validFrom'] = ['Gültig-ab darf frühestens der 1. des aktuellen Monats sein'];
+            $errors['validFrom'] = [$this->l->t('Gültig-ab darf frühestens der 1. des aktuellen Monats sein')];
         }
 
         // Check for duplicate valid_from date
@@ -91,7 +93,7 @@ class WorkScheduleService {
             $existingSchedules = $this->mapper->findByEmployeeId($employeeId);
             foreach ($existingSchedules as $existing) {
                 if ($existing->getValidFrom()->format('Y-m-d') === $validFrom) {
-                    $errors['validFrom'] = ['Ein Profil mit diesem Gültig-ab Datum existiert bereits'];
+                    $errors['validFrom'] = [$this->l->t('Ein Profil mit diesem Gültig-ab Datum existiert bereits')];
                     break;
                 }
             }
@@ -119,7 +121,7 @@ class WorkScheduleService {
             $schedule = $this->mapper->insert($schedule);
         } catch (\Exception $e) {
             if (str_contains($e->getMessage(), 'wt_ws_emp_valid_idx') || str_contains($e->getMessage(), 'Unique violation')) {
-                throw new ValidationException(['validFrom' => ['Ein Profil mit diesem Gültig-ab Datum existiert bereits']]);
+                throw new ValidationException(['validFrom' => [$this->l->t('Ein Profil mit diesem Gültig-ab Datum existiert bereits')]]);
             }
             throw $e;
         }
@@ -439,7 +441,7 @@ class WorkScheduleService {
         foreach ($days as $day) {
             $value = (float)($dayHours[$day] ?? 0);
             if ($value < 0 || $value > $maxDailyHours) {
-                $errors[$day] = ["Maximale tägliche Arbeitszeit ist $maxDailyHours Stunden (siehe Einstellungen)"];
+                $errors[$day] = [$this->l->t('Maximale tägliche Arbeitszeit ist %s Stunden (siehe Einstellungen)', [(string)$maxDailyHours])];
             }
         }
 

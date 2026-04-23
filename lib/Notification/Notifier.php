@@ -6,6 +6,7 @@ namespace OCA\WorkTime\Notification;
 
 use OCA\WorkTime\AppInfo\Application;
 use OCP\IURLGenerator;
+use OCP\L10N\IFactory;
 use OCP\Notification\INotification;
 use OCP\Notification\INotifier;
 use OCP\Notification\UnknownNotificationException;
@@ -14,6 +15,7 @@ class Notifier implements INotifier {
 
 	public function __construct(
 		private IURLGenerator $urlGenerator,
+		private IFactory $l10nFactory,
 	) {
 	}
 
@@ -30,91 +32,104 @@ class Notifier implements INotifier {
 			throw new UnknownNotificationException();
 		}
 
+		$l = $this->l10nFactory->get(Application::APP_ID, $languageCode);
 		$params = $notification->getSubjectParameters();
 
 		switch ($notification->getSubject()) {
 			case 'absence_submitted':
 				$notification->setParsedSubject(
-					sprintf(
-						'%s hat eine Abwesenheit (%s, %s - %s) zur Genehmigung eingereicht',
-						$params['employeeName'],
-						$params['typeName'],
-						$params['startDate'],
-						$params['endDate']
+					$l->t(
+						'%1$s hat eine Abwesenheit (%2$s, %3$s - %4$s) zur Genehmigung eingereicht',
+						[
+							$params['employeeName'],
+							$params['typeName'],
+							$params['startDate'],
+							$params['endDate'],
+						]
 					)
 				);
 				break;
 
 			case 'absence_approved':
 				$notification->setParsedSubject(
-					sprintf(
-						'Deine Abwesenheit (%s, %s - %s) wurde genehmigt',
-						$params['typeName'],
-						$params['startDate'],
-						$params['endDate']
+					$l->t(
+						'Deine Abwesenheit (%1$s, %2$s - %3$s) wurde genehmigt',
+						[
+							$params['typeName'],
+							$params['startDate'],
+							$params['endDate'],
+						]
 					)
 				);
 				break;
 
 			case 'absence_rejected':
 				$notification->setParsedSubject(
-					sprintf(
-						'Deine Abwesenheit (%s, %s - %s) wurde abgelehnt',
-						$params['typeName'],
-						$params['startDate'],
-						$params['endDate']
+					$l->t(
+						'Deine Abwesenheit (%1$s, %2$s - %3$s) wurde abgelehnt',
+						[
+							$params['typeName'],
+							$params['startDate'],
+							$params['endDate'],
+						]
 					)
 				);
 				break;
 
 			case 'absence_informational':
 				$notification->setParsedSubject(
-					sprintf(
-						'Information: %s ist abwesend (%s, %s - %s)',
-						$params['employeeName'],
-						$params['typeName'],
-						$params['startDate'],
-						$params['endDate']
+					$l->t(
+						'Information: %1$s ist abwesend (%2$s, %3$s - %4$s)',
+						[
+							$params['employeeName'],
+							$params['typeName'],
+							$params['startDate'],
+							$params['endDate'],
+						]
 					)
 				);
 				break;
 
 			case 'absence_cancelled':
 				$notification->setParsedSubject(
-					sprintf(
-						'%s hat Abwesenheit (%s, %s - %s) storniert',
-						$params['employeeName'],
-						$params['typeName'],
-						$params['startDate'],
-						$params['endDate']
+					$l->t(
+						'%1$s hat Abwesenheit (%2$s, %3$s - %4$s) storniert',
+						[
+							$params['employeeName'],
+							$params['typeName'],
+							$params['startDate'],
+							$params['endDate'],
+						]
 					)
 				);
 				break;
 
 			case 'time_entries_submitted':
 				$notification->setParsedSubject(
-					sprintf(
-						'%s hat Zeiteinträge für %s zur Genehmigung eingereicht',
-						$params['employeeName'],
-						$params['monthYear']
+					$l->t(
+						'%1$s hat Zeiteinträge für %2$s zur Genehmigung eingereicht',
+						[
+							$params['employeeName'],
+							$params['monthYear'],
+						]
 					)
 				);
 				break;
 
 			case 'time_entries_approved':
 				$notification->setParsedSubject(
-					sprintf(
+					$l->t(
 						'Deine Zeiteinträge für %s wurden genehmigt',
-						$params['monthYear']
+						[$params['monthYear']]
 					)
 				);
 				break;
 
 			case 'time_entries_rejected':
 				$notification->setParsedSubject(
-					sprintf(
+					$l->t(
 						'Deine Zeiteinträge für %s wurden abgelehnt',
-						$params['monthYear']
+						[$params['monthYear']]
 					)
 				);
 				break;

@@ -373,7 +373,32 @@
         "Thüringen": "Thuringia",
 
         "HR-Manager können Mitarbeiter verwalten und Anträge genehmigen.": "HR managers can manage employees and approve requests.",
-        "{count} Einträge wurden genehmigt.": "{count} entries have been approved."
+        "{count} Einträge wurden genehmigt.": "{count} entries have been approved.",
+
+        "%1$s hat eine Abwesenheit (%2$s, %3$s - %4$s) zur Genehmigung eingereicht": "%1$s submitted an absence (%2$s, %3$s - %4$s) for approval",
+        "Deine Abwesenheit (%1$s, %2$s - %3$s) wurde genehmigt": "Your absence (%1$s, %2$s - %3$s) has been approved",
+        "Deine Abwesenheit (%1$s, %2$s - %3$s) wurde abgelehnt": "Your absence (%1$s, %2$s - %3$s) has been rejected",
+        "Information: %1$s ist abwesend (%2$s, %3$s - %4$s)": "Information: %1$s is absent (%2$s, %3$s - %4$s)",
+        "%1$s hat Abwesenheit (%2$s, %3$s - %4$s) storniert": "%1$s cancelled absence (%2$s, %3$s - %4$s)",
+        "%1$s hat Zeiteinträge für %2$s zur Genehmigung eingereicht": "%1$s submitted time entries for %2$s for approval",
+        "Deine Zeiteinträge für %s wurden genehmigt": "Your time entries for %s have been approved",
+        "Deine Zeiteinträge für %s wurden abgelehnt": "Your time entries for %s have been rejected",
+
+        "Zukünftige Einträge sind nicht erlaubt": "Future entries are not allowed",
+        "Ungültiges Zeitformat": "Invalid time format",
+        "Maximale tägliche Arbeitszeit (%s Std.) überschritten": "Maximum daily working time (%s hours) exceeded",
+        "Mindestpause von %d Minuten erforderlich": "Minimum break of %d minutes required",
+        "Pause kann nicht negativ sein": "Break cannot be negative",
+        "An diesem Tag haben Sie %s. Bitte stornieren Sie zuerst die Abwesenheit.": "You have %s on this day. Please cancel the absence first.",
+        "Überlappung mit bestehendem Eintrag (%1$s - %2$s)": "Overlap with existing entry (%1$s - %2$s)",
+
+        "Scope muss zwischen 0 und 1 liegen": "Scope must be between 0 and 1",
+        "Halber Tag ist nur für einen einzelnen Tag möglich": "Half day is only possible for a single day",
+        "Tag %1$s kann nicht entfernt werden (Monat %2$02d/%3$d ist genehmigt)": "Day %1$s cannot be removed (month %2$02d/%3$d is approved)",
+
+        "Gültig-ab darf frühestens der 1. des aktuellen Monats sein": "Valid-from must be no earlier than the 1st of the current month",
+        "Ein Profil mit diesem Gültig-ab Datum existiert bereits": "A profile with this valid-from date already exists",
+        "Maximale tägliche Arbeitszeit ist %s Stunden (siehe Einstellungen)": "Maximum daily working time is %s hours (see settings)"
     },
     "pluralForm": "nplurals=2; plural=(n != 1);"
 }
