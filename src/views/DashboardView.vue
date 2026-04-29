@@ -38,7 +38,7 @@
                     </div>
                     <div class="stat-row">
                         <span class="stat-label">{{ t('worktime', 'Soll') }}</span>
-                        <span class="stat-value">{{ formatMinutesWithUnit(monthlyStats.monthlyTargetMinutes) }}</span>
+                        <span class="stat-value">{{ formatMinutesWithUnit(displayTargetMinutes) }}</span>
                     </div>
                     <div class="stat-row">
                         <span class="stat-label">{{ t('worktime', 'Ist') }}</span>
@@ -96,6 +96,7 @@ export default {
             yearlyMonths: [],
             monthlyStats: {
                 monthlyTargetMinutes: 0,
+                proportionalTargetMinutes: 0,
                 actualMinutes: 0,
                 overtimeMinutes: 0,
             },
@@ -116,13 +117,23 @@ export default {
         maxYear() {
             return getCurrentYear() + 1
         },
+        isCurrentMonth() {
+            return this.year === getCurrentYear() && this.month === getCurrentMonth()
+        },
+        displayTargetMinutes() {
+            // Current month: show proportional target (up to today)
+            // Past/future months: show full month target
+            return this.isCurrentMonth
+                ? this.monthlyStats.proportionalTargetMinutes
+                : this.monthlyStats.monthlyTargetMinutes
+        },
         progressPercent() {
-            if (!this.monthlyStats.monthlyTargetMinutes) return 0
-            const percent = Math.round((this.monthlyStats.actualMinutes / this.monthlyStats.monthlyTargetMinutes) * 100)
+            if (!this.displayTargetMinutes) return 0
+            const percent = Math.round((this.monthlyStats.actualMinutes / this.displayTargetMinutes) * 100)
             return Math.min(percent, 100)
         },
         remainingMinutes() {
-            return Math.max(0, this.monthlyStats.monthlyTargetMinutes - this.monthlyStats.actualMinutes)
+            return Math.max(0, this.displayTargetMinutes - this.monthlyStats.actualMinutes)
         },
     },
     watch: {
@@ -163,6 +174,7 @@ export default {
                 if (monthlyReport?.statistics) {
                     this.monthlyStats = {
                         monthlyTargetMinutes: monthlyReport.statistics.adjustedMonthlyTargetMinutes || 0,
+                        proportionalTargetMinutes: monthlyReport.statistics.adjustedTargetMinutes || 0,
                         actualMinutes: monthlyReport.statistics.actualMinutes || 0,
                         overtimeMinutes: monthlyReport.statistics.overtimeMinutes || 0,
                     }
