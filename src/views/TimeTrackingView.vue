@@ -104,7 +104,7 @@ export default {
                     this.selectedMonth.month
                 )
                 this.statistics = report.statistics
-                this.reportAbsences = report.absences || []
+                this.reportAbsences = (report.absences || []).filter(a => a.status !== 'cancelled')
                 this.reportHolidays = report.holidays || []
             } catch (error) {
                 console.error('Failed to load statistics:', error)
