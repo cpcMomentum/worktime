@@ -390,7 +390,15 @@
         "Entfernen": "Remove",
         "Fehler beim Entfernen": "Error removing",
         "Zur Kenntnisnahme": "For information",
-        "Weiterbildung": "Training"
+        "Weiterbildung": "Training",
+        "Abwesenheitstypen": "Absence Types",
+        "Bezahlter Erholungsurlaub. Wird vom Urlaubskonto abgezogen.": "Paid vacation. Deducted from your vacation allowance.",
+        "Krankmeldung. Arbeitszeit gilt als geleistet, keine Urlaubstage.": "Sick note. Counts as hours worked, no vacation days deducted.",
+        "Ihr Kind ist krank. Wie Krankheit, keine Urlaubstage.": "Your child is sick. Same as sickness, no vacation days.",
+        "Bezahlte Freistellung, z.B. Hochzeit, Umzug oder Trauerfall.": "Paid leave, e.g. wedding, moving or bereavement.",
+        "Schulung, Seminar oder Konferenz. Zählt als Arbeitszeit.": "Training, seminar or conference. Counts as working hours.",
+        "Freistellung ohne Gehalt. Reduziert die Soll-Stunden.": "Leave without pay. Reduces your target hours.",
+        "Überstunden als Freizeit nehmen. Reduziert die Soll-Stunden.": "Use overtime as time off. Reduces your target hours."
     },
     "pluralForm": "nplurals=2; plural=(n != 1);"
 }

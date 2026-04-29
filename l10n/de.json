@@ -390,7 +390,15 @@
         "Entfernen": "Entfernen",
         "Fehler beim Entfernen": "Fehler beim Entfernen",
         "Zur Kenntnisnahme": "Zur Kenntnisnahme",
-        "Weiterbildung": "Weiterbildung"
+        "Weiterbildung": "Weiterbildung",
+        "Abwesenheitstypen": "Abwesenheitstypen",
+        "Bezahlter Erholungsurlaub. Wird vom Urlaubskonto abgezogen.": "Bezahlter Erholungsurlaub. Wird vom Urlaubskonto abgezogen.",
+        "Krankmeldung. Arbeitszeit gilt als geleistet, keine Urlaubstage.": "Krankmeldung. Arbeitszeit gilt als geleistet, keine Urlaubstage.",
+        "Ihr Kind ist krank. Wie Krankheit, keine Urlaubstage.": "Ihr Kind ist krank. Wie Krankheit, keine Urlaubstage.",
+        "Bezahlte Freistellung, z.B. Hochzeit, Umzug oder Trauerfall.": "Bezahlte Freistellung, z.B. Hochzeit, Umzug oder Trauerfall.",
+        "Schulung, Seminar oder Konferenz. Zählt als Arbeitszeit.": "Schulung, Seminar oder Konferenz. Zählt als Arbeitszeit.",
+        "Freistellung ohne Gehalt. Reduziert die Soll-Stunden.": "Freistellung ohne Gehalt. Reduziert die Soll-Stunden.",
+        "Überstunden als Freizeit nehmen. Reduziert die Soll-Stunden.": "Überstunden als Freizeit nehmen. Reduziert die Soll-Stunden."
     },
     "pluralForm": "nplurals=2; plural=(n != 1);"
 }
