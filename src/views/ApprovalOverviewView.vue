@@ -37,7 +37,7 @@
                                 :size="32" />
                             <span class="employee-name">{{ absence.employeeName }}</span>
                         </td>
-                        <td>{{ absence.typeName }}</td>
+                        <td>{{ getAbsenceTypeLabel(absence.type) }}</td>
                         <td>{{ formatDate(absence.startDate) }} - {{ formatDate(absence.endDate) }}</td>
                         <td class="center">{{ absence.days }}</td>
                         <td>{{ absence.note || '-' }}</td>
@@ -68,7 +68,7 @@
                                 :size="32" />
                             <span class="employee-name">{{ absence.employeeName }}</span>
                         </td>
-                        <td>{{ absence.typeName }}</td>
+                        <td>{{ getAbsenceTypeLabel(absence.type) }}</td>
                         <td>{{ formatDate(absence.startDate) }} - {{ formatDate(absence.endDate) }}</td>
                         <td class="center">{{ absence.days }}</td>
                         <td>{{ absence.note || '-' }}</td>
@@ -271,6 +271,7 @@ import ReportService from '../services/ReportService.js'
 import TimeEntryService from '../services/TimeEntryService.js'
 import AbsenceService from '../services/AbsenceService.js'
 import { getCurrentYear, getCurrentMonth, formatDate } from '../utils/dateUtils.js'
+import { getAbsenceTypeLabel } from '../utils/formatters.js'
 import { formatMinutes } from '../utils/timeUtils.js'
 import { showSuccess, showError } from '@nextcloud/dialogs'
 
@@ -340,6 +341,7 @@ export default {
         this.loadData()
     },
     methods: {
+        getAbsenceTypeLabel,
         async loadData() {
             this.loading = true
             const results = await Promise.allSettled([

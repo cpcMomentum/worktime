@@ -82,6 +82,7 @@ import { mapGetters, mapActions } from 'vuex'
 import TimeEntryRow from './TimeEntryRow.vue'
 import { confirmAction, showErrorMessage, showSuccessMessage } from '../utils/errorHandler.js'
 import { formatDateWithWeekday } from '../utils/dateUtils.js'
+import { getAbsenceTypeLabel } from '../utils/formatters.js'
 
 export default {
     name: 'TimeEntryList',
@@ -167,7 +168,7 @@ export default {
                         _date: dateStr,
                         _key: 'absence-' + absence.id + '-' + dateStr,
                         date: dateStr,
-                        typeName: absence.typeName,
+                        typeName: getAbsenceTypeLabel(absence.type),
                         absenceType: absence.type || '',
                         scope: absence.scope || 1,
                     })

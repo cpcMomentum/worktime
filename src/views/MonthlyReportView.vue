@@ -76,7 +76,7 @@
                     <tbody>
                         <tr v-for="absence in report.absences" :key="absence.id">
                             <td>{{ formatDate(absence.startDate) }} - {{ formatDate(absence.endDate) }}</td>
-                            <td>{{ absence.typeName }}</td>
+                            <td>{{ getAbsenceTypeLabel(absence.type) }}</td>
                             <td>{{ absence.days }}</td>
                             <td>{{ getStatusLabel(absence.status) }}</td>
                         </tr>
@@ -119,7 +119,7 @@ import TimeEntryList from '../components/TimeEntryList.vue'
 import ReportService from '../services/ReportService.js'
 import TimeEntryService from '../services/TimeEntryService.js'
 import { getCurrentYear, getCurrentMonth } from '../utils/dateUtils.js'
-import { formatDate, getStatusLabel } from '../utils/formatters.js'
+import { formatDate, getStatusLabel, getAbsenceTypeLabel } from '../utils/formatters.js'
 
 export default {
     name: 'MonthlyReportView',
@@ -170,6 +170,7 @@ export default {
         }
     },
     methods: {
+        getAbsenceTypeLabel,
         async loadReport() {
             if (!this.employeeId) return
             this.loading = true
@@ -198,7 +199,8 @@ export default {
             ReportService.downloadPdf(this.employeeId, this.year, this.month)
         },
         async confirmSubmitMonth() {
-            const monthName = new Date(this.year, this.month - 1).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })
+            const locale = document.documentElement.lang || navigator.language || 'de-DE'
+            const monthName = new Date(this.year, this.month - 1).toLocaleDateString(locale, { month: 'long', year: 'numeric' })
 
             const confirmed = await confirmAction(
                 this.t('worktime', 'Möchten Sie die Zeiteinträge für {month} einreichen? Die eingereichten Einträge werden zur Genehmigung übermittelt.', { month: monthName }),

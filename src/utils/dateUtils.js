@@ -1,12 +1,22 @@
+import { translate as t } from '@nextcloud/l10n'
+
 /**
- * Format a date string to German locale format
+ * Get the user's locale from Nextcloud (falls back to navigator or 'de-DE')
+ * @returns {string}
+ */
+function getLocale() {
+    return document.documentElement.lang || navigator.language || 'de-DE'
+}
+
+/**
+ * Format a date string to locale format
  * @param {string|Date} date
  * @returns {string}
  */
 export function formatDate(date) {
     if (!date) return ''
     const d = typeof date === 'string' ? new Date(date) : date
-    return d.toLocaleDateString('de-DE', {
+    return d.toLocaleDateString(getLocale(), {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
@@ -21,9 +31,8 @@ export function formatDate(date) {
 export function formatDateWithWeekday(date) {
     if (!date) return ''
     const d = typeof date === 'string' ? new Date(date) : date
-    const days = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']
-    const weekday = days[d.getDay()]
-    const dateStr = d.toLocaleDateString('de-DE', {
+    const weekday = getDayName(d.getDay())
+    const dateStr = d.toLocaleDateString(getLocale(), {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
@@ -39,7 +48,7 @@ export function formatDateWithWeekday(date) {
 export function formatDateShort(date) {
     if (!date) return ''
     const d = typeof date === 'string' ? new Date(date) : date
-    return d.toLocaleDateString('de-DE', {
+    return d.toLocaleDateString(getLocale(), {
         day: '2-digit',
         month: '2-digit',
     })
@@ -61,38 +70,46 @@ export function formatDateISO(date) {
 }
 
 /**
- * Get German month name
+ * Get translated month name
  * @param {number} month (1-12)
  * @returns {string}
  */
 export function getMonthName(month) {
     const months = [
-        'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
-        'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember',
+        t('worktime', 'Januar'), t('worktime', 'Februar'), t('worktime', 'März'),
+        t('worktime', 'April'), t('worktime', 'Mai'), t('worktime', 'Juni'),
+        t('worktime', 'Juli'), t('worktime', 'August'), t('worktime', 'September'),
+        t('worktime', 'Oktober'), t('worktime', 'November'), t('worktime', 'Dezember'),
     ]
     return months[month - 1] || ''
 }
 
 /**
- * Get short German month name (3 chars)
+ * Get short translated month name (3 chars)
  * @param {number} month (1-12)
  * @returns {string}
  */
 export function getMonthNameShort(month) {
     const months = [
-        'Jan', 'Feb', 'Mrz', 'Apr', 'Mai', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez',
+        t('worktime', 'Jan'), t('worktime', 'Feb'), t('worktime', 'Mrz'),
+        t('worktime', 'Apr'), t('worktime', 'Mai'), t('worktime', 'Jun'),
+        t('worktime', 'Jul'), t('worktime', 'Aug'), t('worktime', 'Sep'),
+        t('worktime', 'Okt'), t('worktime', 'Nov'), t('worktime', 'Dez'),
     ]
     return months[month - 1] || ''
 }
 
 /**
- * Get German day name
+ * Get translated day name
  * @param {number} dayOfWeek (0-6, 0 = Sunday)
  * @returns {string}
  */
 export function getDayName(dayOfWeek) {
-    const days = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']
+    const days = [
+        t('worktime', 'So'), t('worktime', 'Mo'), t('worktime', 'Di'),
+        t('worktime', 'Mi'), t('worktime', 'Do'), t('worktime', 'Fr'),
+        t('worktime', 'Sa'),
+    ]
     return days[dayOfWeek] || ''
 }
 

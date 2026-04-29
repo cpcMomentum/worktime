@@ -2,7 +2,6 @@
     "translations": {
         "WorkTime": "WorkTime",
         "Time tracking for employees": "Time tracking for employees",
-
         "Zeiterfassung": "Time Tracking",
         "Monatsübersicht": "Monthly Report",
         "Abwesenheiten": "Absences",
@@ -13,14 +12,12 @@
         "Meine Einstellungen": "My Settings",
         "Genehmigungen": "Approvals",
         "Zeiteinträge": "Time Entries",
-
         "Willkommen bei WorkTime": "Welcome to WorkTime",
         "Es sind noch keine Mitarbeiter eingerichtet. Legen Sie unter Einstellungen Mitarbeiter an, um zu starten.": "No employees have been set up yet. Go to Settings to add employees and get started.",
         "Zu den Einstellungen": "Go to Settings",
         "Kein Mitarbeiterprofil": "No Employee Profile",
         "Sie haben noch kein Mitarbeiterprofil. Bitte wenden Sie sich an Ihren Administrator.": "You don't have an employee profile yet. Please contact your administrator.",
         "Sie haben noch kein Mitarbeiterprofil. Bitte wenden Sie sich an Ihren Administrator oder HR-Manager, um freigeschaltet zu werden.": "You don't have an employee profile yet. Please contact your administrator or HR manager to get activated.",
-
         "Neuer Eintrag": "New Entry",
         "Eintrag bearbeiten": "Edit Entry",
         "Neuer Zeiteintrag": "New Time Entry",
@@ -61,27 +58,22 @@
         "Bearbeiten": "Edit",
         "Erstellen": "Create",
         "Zurücksetzen": "Reset",
-
         "Standard-Arbeitszeiten": "Default Working Hours",
         "Diese Zeiten werden beim Anlegen neuer Zeiteinträge vorausgefüllt.": "These times will be pre-filled when creating new time entries.",
         "Leer lassen für Standardwerte (08:00 - 17:00).": "Leave empty for defaults (08:00 - 17:00).",
         "z.B. 08:00": "e.g. 08:00",
         "z.B. 17:00": "e.g. 17:00",
-
         "Schnellaktionen": "Quick Actions",
         "Dieser Monat": "This Month",
         "Urlaub beantragen": "Request Vacation",
-
         "Pausenvorschlag": "Break Suggestion",
         "Vorgeschlagene Pause nach Arbeitsrecht: {minutes} min": "Suggested break according to labour law: {minutes} min",
         "Mindestpause: {minutes} min (§4 ArbZG)": "Minimum break: {minutes} min (§4 German Working Hours Act)",
         "Übernehmen": "Apply",
-
         "Maximale tägliche Arbeitszeit (Stunden)": "Maximum daily working time (hours)",
         "Max. {hours} Std./Tag": "Max. {hours} hrs/day",
         "Min: {min}": "Min: {min}",
         "Nach §3 ArbZG sind maximal 10 Stunden erlaubt (Ausnahmen möglich).": "According to §3 of the German Working Hours Act, a maximum of 10 hours is permitted (exceptions possible).",
-
         "Keine Einträge": "No Entries",
         "Für diesen Monat sind noch keine Zeiteinträge vorhanden.": "There are no time entries for this month yet.",
         "Für diesen Monat sind keine Zeiteinträge vorhanden.": "There are no time entries for this month.",
@@ -90,7 +82,6 @@
         "Eintrag gelöscht": "Entry deleted",
         "Eintrag löschen": "Delete entry",
         "Möchten Sie diesen Eintrag wirklich löschen?": "Do you really want to delete this entry?",
-
         "Status": "Status",
         "Entwurf": "Draft",
         "Eingereicht": "Submitted",
@@ -104,26 +95,22 @@
         "Vollständig genehmigt": "Fully Approved",
         "Ausstehend (zur Genehmigung)": "Pending (awaiting approval)",
         "Erneute Genehmigung erforderlich": "Re-approval required",
-
         "Einreichen": "Submit",
         "Genehmigen": "Approve",
         "Ablehnen": "Reject",
         "Stornieren": "Cancel",
         "genehmigen?": "approve?",
         "Klicken zum Genehmigen": "Click to approve",
-
         "Monat einreichen": "Submit Month",
         "Monat genehmigen": "Approve Month",
         "Möchten Sie alle Einträge für {month} einreichen? Nach dem Einreichen können Sie keine Änderungen mehr vornehmen.": "Do you want to submit all entries for {month}? After submission, you can no longer make changes.",
         "{count} Einträge wurden eingereicht.": "{count} entries have been submitted.",
         "{count} Einträge genehmigt": "{count} entries approved",
-
         "Zusammenfassung": "Summary",
         "Arbeitstage": "Working Days",
         "Feiertage": "Public Holidays",
         "Abwesenheitstage": "Absence Days",
         "Einträge": "Entries",
-
         "Soll": "Target",
         "Ist": "Actual",
         "Differenz": "Difference",
@@ -135,11 +122,9 @@
         "Jahresübersicht": "Yearly Overview",
         "Monat": "Month",
         "Keine Daten für dieses Jahr vorhanden.": "No data available for this year.",
-
         "PDF herunterladen": "Download PDF",
         "Keine Daten": "No Data",
         "Für diesen Monat liegen keine Daten vor.": "No data available for this month.",
-
         "Neue Abwesenheit": "New Absence",
         "Abwesenheit bearbeiten": "Edit Absence",
         "Abwesenheit löschen": "Delete absence",
@@ -172,7 +157,6 @@
         "Von": "From",
         "Bis": "To",
         "Aktionen": "Actions",
-
         "Urlaub": "Vacation",
         "Krankheit": "Sick Leave",
         "Kind krank": "Child Sick",
@@ -182,19 +166,16 @@
         "Fortbildung": "Training",
         "Andere": "Other",
         "Art auswählen": "Select type",
-
         "Keine Abwesenheiten": "No Absences",
         "Sie haben noch keine Abwesenheiten eingetragen.": "You haven't recorded any absences yet.",
         "Möchten Sie diese Abwesenheit wirklich stornieren?": "Do you really want to cancel this absence?",
         "Möchten Sie diese Abwesenheit wirklich löschen?": "Do you really want to delete this absence?",
         "Möchten Sie diesen Zeiteintrag wirklich löschen?": "Do you really want to delete this time entry?",
-
         "Kein Team": "No Team",
         "Sie haben keine Teammitglieder.": "You have no team members.",
         "Std./Woche": "hrs/week",
         "Woche": "Week",
         "Stunden": "Hours",
-
         "Mitarbeiterverwaltung": "Employee Management",
         "Neuer Mitarbeiter": "New Employee",
         "Mitarbeiter bearbeiten": "Edit Employee",
@@ -228,7 +209,6 @@
         "Möchten Sie den Mitarbeiter \"{name}\" wirklich löschen?": "Do you really want to delete the employee \"{name}\"?",
         "Diese Aktion kann nicht rückgängig gemacht werden.": "This action cannot be undone.",
         "Keine Mitarbeiter mit dem gewählten Filter gefunden.": "No employees found with the selected filter.",
-
         "Arbeitszeitprofile": "Work Schedules",
         "Neues Profil": "New Schedule",
         "Neues Profil anlegen": "Create New Schedule",
@@ -243,7 +223,6 @@
         "Fr": "Fri",
         "Sa": "Sat",
         "So": "Sun",
-
         "Berechtigungen": "Permissions",
         "HR-Manager": "HR Manager",
         "Rollen-Info anzeigen": "Show role info",
@@ -263,29 +242,23 @@
         "Automatisch für alle angelegten Mitarbeiter.": "Automatic for all registered employees.",
         "Benutzer oder Gruppen auswählen": "Select users or groups",
         "HR-Manager gespeichert": "HR managers saved",
-
         "Firmendaten": "Company Data",
         "Firmenname": "Company Name",
         "Standard-Bundesland": "Default Federal State",
-
         "Standardwerte": "Defaults",
-
         "Arbeitszeit-Regeln": "Working Time Rules",
         "Projekt erforderlich": "Project Required",
         "Beschreibung erforderlich": "Description Required",
         "Zukünftige Einträge erlauben": "Allow Future Entries",
         "Genehmigung erforderlich": "Approval Required",
-
         "Pausenregelung (§4 ArbZG)": "Break Rules (§4 German Working Hours Act)",
         "Mindestpause gemäß deutschem Arbeitszeitgesetz": "Minimum break according to the German Working Hours Act",
         "Bei >6h Arbeitszeit (min)": "For >6h working time (min)",
         "Bei >9h Arbeitszeit (min)": "For >9h working time (min)",
-
         "Sondertage": "Special Days",
         "Heiligabend (24.12.) als halber Arbeitstag": "Christmas Eve (Dec 24) as half working day",
         "Silvester (31.12.) als halber Arbeitstag": "New Year's Eve (Dec 31) as half working day",
         "Definieren Sie, ob Heiligabend und Silvester als halbe Arbeitstage gelten.": "Define whether Christmas Eve and New Year's Eve count as half working days.",
-
         "Feiertage verwalten": "Manage Public Holidays",
         "Feiertage anzeigen, hinzufügen, bearbeiten und löschen.": "View, add, edit and delete public holidays.",
         "Feiertage generieren": "Generate Public Holidays",
@@ -312,11 +285,9 @@
         "Auto-Generieren": "Auto-Generate",
         "Manuell": "Manual",
         "{count} Feiertage für {year} generiert": "{count} public holidays generated for {year}",
-
         "Alle Status": "All Statuses",
         "für": "for",
         "Noch offen:": "Still open:",
-
         "PDF-Archivierung": "PDF Archiving",
         "Genehmigte Monatsberichte werden automatisch als PDF archiviert.": "Approved monthly reports are automatically archived as PDF.",
         "Archiv-Ordner": "Archive Folder",
@@ -326,13 +297,11 @@
         "PDFs werden in Ihrem persönlichen Ordner gespeichert. Nur Sie haben Zugriff.": "PDFs are saved in your personal folder. Only you have access.",
         "Struktur: {path}/{Jahr}/{Nachname_Vorname}/Arbeitszeitnachweis_YYYY-MM.pdf": "Structure: {path}/{Year}/{Lastname_Firstname}/Timesheet_YYYY-MM.pdf",
         "Ordnerstruktur: {path}/{Jahr}/{Nachname_Vorname}/Arbeitszeitnachweis_YYYY-MM.pdf": "Folder structure: {path}/{Year}/{Lastname_Firstname}/Timesheet_YYYY-MM.pdf",
-
         "Einstellung gespeichert": "Setting saved",
         "Einstellungen gespeichert": "Settings saved",
         "Zeiteintrag gespeichert": "Time entry saved",
         "Zeiteintrag gelöscht": "Time entry deleted",
         "Abwesenheit gespeichert": "Absence saved",
-
         "Fehler beim Speichern": "Error saving",
         "Fehler beim Speichern der Einstellungen": "Error saving settings",
         "Fehler beim Speichern des Profils": "Error saving schedule",
@@ -349,12 +318,10 @@
         "Bestätigung": "Confirmation",
         "Ja": "Yes",
         "Nein": "No",
-
         "Vorheriger Monat": "Previous month",
         "Nächster Monat": "Next month",
         "Vorheriges Jahr": "Previous year",
         "Nächstes Jahr": "Next year",
-
         "Bayern": "Bavaria",
         "Baden-Württemberg": "Baden-Württemberg",
         "Berlin": "Berlin",
@@ -371,9 +338,59 @@
         "Sachsen-Anhalt": "Saxony-Anhalt",
         "Schleswig-Holstein": "Schleswig-Holstein",
         "Thüringen": "Thuringia",
-
         "HR-Manager können Mitarbeiter verwalten und Anträge genehmigen.": "HR managers can manage employees and approve requests.",
-        "{count} Einträge wurden genehmigt.": "{count} entries have been approved."
+        "{count} Einträge wurden genehmigt.": "{count} entries have been approved.",
+        "Januar": "January",
+        "Februar": "February",
+        "März": "March",
+        "April": "April",
+        "Mai": "May",
+        "Juni": "June",
+        "Juli": "July",
+        "August": "August",
+        "September": "September",
+        "Oktober": "October",
+        "November": "November",
+        "Dezember": "December",
+        "Jan": "Jan",
+        "Feb": "Feb",
+        "Mrz": "Mar",
+        "Apr": "Apr",
+        "Jun": "Jun",
+        "Jul": "Jul",
+        "Aug": "Aug",
+        "Sep": "Sep",
+        "Okt": "Oct",
+        "Nov": "Nov",
+        "Dez": "Dec",
+        "Std.": "hrs",
+        "Abwesenheitsübersicht": "Absence Overview",
+        "Abwesend": "Absent",
+        "Krank": "Sick",
+        "Unbezahlt": "Unpaid",
+        "Freizeitausgleich": "Compensatory Leave",
+        "Noch offen": "Still open",
+        "Alle Mitarbeiter": "All Employees",
+        "Mein Team": "My Team",
+        "Keine Mitarbeiter sichtbar": "No employees visible",
+        "Detailgrad": "Detail Level",
+        "Grund anzeigen (Urlaub, Fortbildung, ...)": "Show reason (vacation, training, ...)",
+        "Nur \\\"Abwesend\\\" anzeigen": "Only show \\\"Absent\\\"",
+        "Abwesenheiten sichtbar für": "Absences visible for",
+        "Niemand": "Nobody",
+        "Datenschutz": "Privacy",
+        "Legen Sie fest, wer Ihre Abwesenheiten in der Abwesenheitsübersicht sehen kann. Vorgesetzte und HR sehen Ihre Abwesenheiten immer.": "Define who can see your absences in the absence overview. Supervisors and HR can always see your absences.",
+        "Monatsbericht als PDF": "Monthly Report as PDF",
+        "Zeiteinträge im Zeitraum": "Time entries in period",
+        "Keine Zeiteinträge in diesem Monat.": "No time entries in this month.",
+        "Fehler beim Laden der Zeiteinträge": "Error loading time entries",
+        "Diese Abwesenheit löschen?": "Delete this absence?",
+        "Diese Abwesenheit stornieren? Sie bleibt mit Status \"Storniert\" sichtbar.": "Cancel this absence? It will remain visible with status \"Cancelled\".",
+        "Gespeichert": "Saved",
+        "Entfernen": "Remove",
+        "Fehler beim Entfernen": "Error removing",
+        "Zur Kenntnisnahme": "For information",
+        "Weiterbildung": "Training"
     },
     "pluralForm": "nplurals=2; plural=(n != 1);"
 }

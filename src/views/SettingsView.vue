@@ -512,8 +512,8 @@ export default {
                 scope: 1.0,
             },
             scopeOptions: [
-                { id: 1.0, label: 'Ganzer Tag' },
-                { id: 0.5, label: 'Halber Tag' },
+                { id: 1.0, label: this.t('worktime', 'Ganzer Tag') },
+                { id: 0.5, label: this.t('worktime', 'Halber Tag') },
             ],
             // Grouped holiday view
             expandedGroups: [],
@@ -789,7 +789,8 @@ export default {
         formatDate(dateStr) {
             if (!dateStr) return ''
             const date = new Date(dateStr)
-            return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+            const locale = document.documentElement.lang || navigator.language || 'de-DE'
+            return date.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' })
         },
         openHolidayForm(holiday) {
             this.editingHoliday = holiday

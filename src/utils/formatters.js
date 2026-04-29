@@ -4,6 +4,7 @@
  * Consolidates formatting functions used across multiple components.
  */
 
+import { translate as t } from '@nextcloud/l10n'
 import { STATUS_LABELS, ABSENCE_TYPE_LABELS, ENTRY_STATUS, ABSENCE_STATUS } from '../constants.js'
 import { formatDate as formatDateFromDateUtils } from './dateUtils.js'
 import { formatMinutes, formatMinutesWithUnit, formatHoursDecimal } from './timeUtils.js'
@@ -12,14 +13,23 @@ import { formatMinutes, formatMinutesWithUnit, formatHoursDecimal } from './time
 export { formatMinutes, formatMinutesWithUnit, formatHoursDecimal }
 
 /**
- * Format minutes to hours as decimal with comma separator
+ * Get the user's locale from Nextcloud
+ * @returns {string}
+ */
+function getLocale() {
+    return document.documentElement.lang || navigator.language || 'de-DE'
+}
+
+/**
+ * Format minutes to hours as decimal with locale-aware separator
  * @param {number} minutes
- * @returns {string} e.g., "8,5 Std."
+ * @returns {string} e.g., "8,5 Std." or "8.5 hrs"
  */
 export function formatMinutesToHours(minutes) {
-    if (minutes === null || minutes === undefined) return '0 Std.'
+    if (minutes === null || minutes === undefined) return `0 ${t('worktime', 'Std.')}`
     const hours = minutes / 60
-    return `${hours.toFixed(1).replace('.', ',')} Std.`
+    const formatted = hours.toLocaleString(getLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+    return `${formatted} ${t('worktime', 'Std.')}`
 }
 
 /**
@@ -28,7 +38,8 @@ export function formatMinutesToHours(minutes) {
  * @returns {string} Localized label
  */
 export function getStatusLabel(status) {
-    return STATUS_LABELS[status] || status
+    const labels = STATUS_LABELS()
+    return labels[status] || status
 }
 
 /**
@@ -37,7 +48,8 @@ export function getStatusLabel(status) {
  * @returns {string} Localized label
  */
 export function getAbsenceTypeLabel(type) {
-    return ABSENCE_TYPE_LABELS[type] || type
+    const labels = ABSENCE_TYPE_LABELS()
+    return labels[type] || type
 }
 
 /**
@@ -49,12 +61,13 @@ export function getAbsenceTypeLabel(type) {
 export function formatDate(date, format = 'medium') {
     if (!date) return ''
     const d = typeof date === 'string' ? new Date(date) : date
+    const locale = getLocale()
 
     switch (format) {
         case 'short':
-            return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })
+            return d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' })
         case 'long':
-            return d.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })
+            return d.toLocaleDateString(locale, { day: '2-digit', month: 'long', year: 'numeric' })
         case 'medium':
         default:
             return formatDateFromDateUtils(date)
@@ -69,8 +82,9 @@ export function formatDate(date, format = 'medium') {
 export function formatDateWithWeekday(date) {
     if (!date) return ''
     const d = typeof date === 'string' ? new Date(date) : date
-    const weekday = d.toLocaleDateString('de-DE', { weekday: 'short' })
-    const dateStr = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    const locale = getLocale()
+    const weekday = d.toLocaleDateString(locale, { weekday: 'short' })
+    const dateStr = d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' })
     return `${weekday}, ${dateStr}`
 }
 
@@ -129,14 +143,14 @@ export function formatEmployeeName(employee) {
 }
 
 /**
- * Format a number as German locale
+ * Format a number with locale-aware separator
  * @param {number} value
  * @param {number} decimals
  * @returns {string}
  */
 export function formatNumber(value, decimals = 0) {
     if (value === null || value === undefined) return '0'
-    return value.toLocaleString('de-DE', {
+    return value.toLocaleString(getLocale(), {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
     })

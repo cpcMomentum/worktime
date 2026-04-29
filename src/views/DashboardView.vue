@@ -74,7 +74,7 @@ import AbsenceService from '../services/AbsenceService.js'
 import ReportService from '../services/ReportService.js'
 import YearOverviewTable from '../components/YearOverviewTable.vue'
 import { getCurrentYear, getCurrentMonth, getMonthName } from '../utils/dateUtils.js'
-import { formatMinutes } from '../utils/timeUtils.js'
+import { formatMinutesWithUnit as formatMinutesWithUnitUtil } from '../utils/timeUtils.js'
 
 export default {
     name: 'DashboardView',
@@ -178,7 +178,7 @@ export default {
             }
         },
         formatMinutesWithUnit(minutes) {
-            return `${formatMinutes(minutes)} Std.`
+            return formatMinutesWithUnitUtil(minutes)
         },
         async changeYear(delta) {
             this.year += delta

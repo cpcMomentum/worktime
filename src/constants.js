@@ -6,6 +6,8 @@
  * für Konsistenz zwischen Frontend und Backend.
  */
 
+import { translate as t } from '@nextcloud/l10n'
+
 /**
  * Time Entry Status Values
  * Entspricht TimeEntry::STATUS_* in PHP
@@ -43,54 +45,63 @@ export const ABSENCE_STATUS = {
 }
 
 /**
- * Status Labels (German)
- * Für die Anzeige in der UI
+ * Status Labels (translated)
+ * Returns translated labels — must be a function because t() resolves at runtime
+ * @returns {Object}
  */
-export const STATUS_LABELS = {
-    // Time Entry Status
-    [ENTRY_STATUS.DRAFT]: 'Entwurf',
-    [ENTRY_STATUS.SUBMITTED]: 'Eingereicht',
-    [ENTRY_STATUS.APPROVED]: 'Genehmigt',
-    [ENTRY_STATUS.REJECTED]: 'Abgelehnt',
-    // Absence Status (same values but different semantics)
-    [ABSENCE_STATUS.PENDING]: 'Ausstehend',
-    [ABSENCE_STATUS.CANCELLED]: 'Storniert',
+export function STATUS_LABELS() {
+    return {
+        // Time Entry Status
+        [ENTRY_STATUS.DRAFT]: t('worktime', 'Entwurf'),
+        [ENTRY_STATUS.SUBMITTED]: t('worktime', 'Eingereicht'),
+        [ENTRY_STATUS.APPROVED]: t('worktime', 'Genehmigt'),
+        [ENTRY_STATUS.REJECTED]: t('worktime', 'Abgelehnt'),
+        // Absence Status (same values but different semantics)
+        [ABSENCE_STATUS.PENDING]: t('worktime', 'Ausstehend'),
+        [ABSENCE_STATUS.CANCELLED]: t('worktime', 'Storniert'),
+    }
 }
 
 /**
- * Absence Type Labels (German)
+ * Absence Type Labels (translated)
+ * @returns {Object}
  */
-export const ABSENCE_TYPE_LABELS = {
-    [ABSENCE_TYPES.VACATION]: 'Urlaub',
-    [ABSENCE_TYPES.SICK]: 'Krankheit',
-    [ABSENCE_TYPES.CHILD_SICK]: 'Kind krank',
-    [ABSENCE_TYPES.SPECIAL]: 'Sonderurlaub',
-    [ABSENCE_TYPES.TRAINING]: 'Weiterbildung',
-    [ABSENCE_TYPES.COMPENSATORY]: 'Freizeitausgleich',
-    [ABSENCE_TYPES.UNPAID]: 'Unbezahlter Urlaub',
+export function ABSENCE_TYPE_LABELS() {
+    return {
+        [ABSENCE_TYPES.VACATION]: t('worktime', 'Urlaub'),
+        [ABSENCE_TYPES.SICK]: t('worktime', 'Krankheit'),
+        [ABSENCE_TYPES.CHILD_SICK]: t('worktime', 'Kind krank'),
+        [ABSENCE_TYPES.SPECIAL]: t('worktime', 'Sonderurlaub'),
+        [ABSENCE_TYPES.TRAINING]: t('worktime', 'Fortbildung'),
+        [ABSENCE_TYPES.COMPENSATORY]: t('worktime', 'Freizeitausgleich'),
+        [ABSENCE_TYPES.UNPAID]: t('worktime', 'Unbezahlter Urlaub'),
+    }
 }
 
 /**
- * Federal States (German Bundesländer)
+ * Federal States (German Bundesländer, translated)
  * Entspricht Employee::FEDERAL_STATES in PHP
+ * @returns {Object}
  */
-export const FEDERAL_STATES = {
-    BW: 'Baden-Württemberg',
-    BY: 'Bayern',
-    BE: 'Berlin',
-    BB: 'Brandenburg',
-    HB: 'Bremen',
-    HH: 'Hamburg',
-    HE: 'Hessen',
-    MV: 'Mecklenburg-Vorpommern',
-    NI: 'Niedersachsen',
-    NW: 'Nordrhein-Westfalen',
-    RP: 'Rheinland-Pfalz',
-    SL: 'Saarland',
-    SN: 'Sachsen',
-    ST: 'Sachsen-Anhalt',
-    SH: 'Schleswig-Holstein',
-    TH: 'Thüringen',
+export function FEDERAL_STATES() {
+    return {
+        BW: t('worktime', 'Baden-Württemberg'),
+        BY: t('worktime', 'Bayern'),
+        BE: t('worktime', 'Berlin'),
+        BB: t('worktime', 'Brandenburg'),
+        HB: t('worktime', 'Bremen'),
+        HH: t('worktime', 'Hamburg'),
+        HE: t('worktime', 'Hessen'),
+        MV: t('worktime', 'Mecklenburg-Vorpommern'),
+        NI: t('worktime', 'Niedersachsen'),
+        NW: t('worktime', 'Nordrhein-Westfalen'),
+        RP: t('worktime', 'Rheinland-Pfalz'),
+        SL: t('worktime', 'Saarland'),
+        SN: t('worktime', 'Sachsen'),
+        ST: t('worktime', 'Sachsen-Anhalt'),
+        SH: t('worktime', 'Schleswig-Holstein'),
+        TH: t('worktime', 'Thüringen'),
+    }
 }
 
 /**

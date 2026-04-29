@@ -1,3 +1,5 @@
+import { translate as t } from '@nextcloud/l10n'
+
 /**
  * Format minutes to hours:minutes string
  * @param {number} minutes
@@ -18,7 +20,7 @@ export function formatMinutes(minutes) {
  * @returns {string}
  */
 export function formatMinutesWithUnit(minutes) {
-    return `${formatMinutes(minutes)} Std.`
+    return `${formatMinutes(minutes)} ${t('worktime', 'Std.')}`
 }
 
 /**
@@ -29,7 +31,8 @@ export function formatMinutesWithUnit(minutes) {
 export function formatHoursDecimal(minutes) {
     if (minutes === null || minutes === undefined) return '0,00'
     const hours = minutes / 60
-    return hours.toFixed(2).replace('.', ',')
+    const locale = document.documentElement.lang || navigator.language || 'de-DE'
+    return hours.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 /**

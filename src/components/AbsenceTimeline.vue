@@ -1,7 +1,7 @@
 <template>
 	<div class="absence-timeline">
 		<div class="timeline-header">
-			<div class="timeline-name-col">Mitarbeiter</div>
+			<div class="timeline-name-col">{{ t('worktime', 'Mitarbeiter') }}</div>
 			<div class="timeline-days">
 				<div v-for="day in daysInMonth"
 					:key="day.date"
@@ -103,7 +103,11 @@ export default {
 		daysInMonth() {
 			const days = []
 			const date = new Date(this.year, this.month - 1, 1)
-			const weekdays = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']
+			const weekdays = [
+					t('worktime', 'So'), t('worktime', 'Mo'), t('worktime', 'Di'),
+					t('worktime', 'Mi'), t('worktime', 'Do'), t('worktime', 'Fr'),
+					t('worktime', 'Sa'),
+				]
 
 			while (date.getMonth() === this.month - 1) {
 				const dateStr = this.formatDate(date)
@@ -139,7 +143,17 @@ export default {
 			if (!absence) return ''
 			const start = this.formatDisplayDate(absence.startDate)
 			const end = this.formatDisplayDate(absence.endDate)
-			return `${absence.typeName}: ${start} - ${end}`
+			const typeLabels = {
+					vacation: t('worktime', 'Urlaub'),
+					sick: t('worktime', 'Krankheit'),
+					child_sick: t('worktime', 'Kind krank'),
+					special: t('worktime', 'Sonderurlaub'),
+					training: t('worktime', 'Fortbildung'),
+					compensatory: t('worktime', 'Freizeitausgleich'),
+					unpaid: t('worktime', 'Unbezahlter Urlaub'),
+				}
+			const typeLabel = typeLabels[absence.type] || absence.typeName
+			return `${typeLabel}: ${start} - ${end}`
 		},
 		formatDisplayDate(dateStr) {
 			const parts = dateStr.split('-')

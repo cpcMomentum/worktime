@@ -3,7 +3,7 @@
         <!-- View Mode -->
         <template v-if="mode === 'view'">
             <td>{{ formatDateRange }}</td>
-            <td>{{ absence.typeName }}</td>
+            <td>{{ translatedTypeName }}</td>
             <td>{{ absence.days }}</td>
             <td>{{ absence.note || '-' }}</td>
             <td>
@@ -111,7 +111,7 @@ import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import CloseIcon from 'vue-material-design-icons/Close.vue'
 import ContentSaveIcon from 'vue-material-design-icons/ContentSave.vue'
 import { formatDateISO } from '../utils/dateUtils.js'
-import { formatDateWithWeekday } from '../utils/formatters.js'
+import { formatDateWithWeekday, getAbsenceTypeLabel } from '../utils/formatters.js'
 
 export default {
     name: 'AbsenceRow',
@@ -165,6 +165,10 @@ export default {
                 'creating': this.mode === 'create',
             }
         },
+        translatedTypeName() {
+            if (!this.absence) return ''
+            return getAbsenceTypeLabel(this.absence.type)
+        },
         formatDateRange() {
             if (!this.absence) return ''
             const start = formatDateWithWeekday(this.absence.startDate)
@@ -214,7 +218,8 @@ export default {
 
             // Apply scope: e.g., 5 days * 0.5 = 2.5
             const effectiveDays = workingDays * this.form.scope
-            return effectiveDays.toLocaleString('de-DE', { maximumFractionDigits: 1 })
+            const locale = document.documentElement.lang || navigator.language || 'de-DE'
+            return effectiveDays.toLocaleString(locale, { maximumFractionDigits: 1 })
         },
         isValid() {
             if (!this.form.type || !this.form.startDate || !this.form.endDate) return false

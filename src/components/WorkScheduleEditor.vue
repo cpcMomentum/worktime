@@ -236,7 +236,8 @@ export default {
         formatDate(dateStr) {
             if (!dateStr) return '-'
             const d = new Date(dateStr + 'T00:00:00')
-            return d.toLocaleDateString('de-DE')
+            const locale = document.documentElement.lang || navigator.language || 'de-DE'
+            return d.toLocaleDateString(locale)
         },
         startCreate() {
             this.editingSchedule = null

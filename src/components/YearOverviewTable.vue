@@ -159,7 +159,7 @@ export default {
             return formatMinutesWithUnit(minutes || 0)
         },
         formatOvertime(minutes) {
-            if (!minutes) return '0:00 Std.'
+            if (!minutes) return formatMinutesWithUnit(0)
             const sign = minutes > 0 ? '+' : ''
             return sign + formatMinutesWithUnit(minutes)
         },
