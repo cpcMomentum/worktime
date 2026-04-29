@@ -78,6 +78,61 @@
                 {{ t('worktime', 'Sie haben noch keine Abwesenheiten eingetragen.') }}
             </template>
         </NcEmptyContent>
+
+        <div class="absence-legend">
+            <h3>{{ t('worktime', 'Abwesenheitstypen') }}</h3>
+            <div class="legend-grid">
+                <div class="legend-item">
+                    <span class="legend-color type-vacation"></span>
+                    <div class="legend-text">
+                        <strong>{{ t('worktime', 'Urlaub') }}</strong>
+                        <span>{{ t('worktime', 'Bezahlter Erholungsurlaub. Wird vom Urlaubskonto abgezogen.') }}</span>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color type-sick"></span>
+                    <div class="legend-text">
+                        <strong>{{ t('worktime', 'Krankheit') }}</strong>
+                        <span>{{ t('worktime', 'Krankmeldung. Arbeitszeit gilt als geleistet, keine Urlaubstage.') }}</span>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color type-child_sick"></span>
+                    <div class="legend-text">
+                        <strong>{{ t('worktime', 'Kind krank') }}</strong>
+                        <span>{{ t('worktime', 'Ihr Kind ist krank. Wie Krankheit, keine Urlaubstage.') }}</span>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color type-special"></span>
+                    <div class="legend-text">
+                        <strong>{{ t('worktime', 'Sonderurlaub') }}</strong>
+                        <span>{{ t('worktime', 'Bezahlte Freistellung, z.B. Hochzeit, Umzug oder Trauerfall.') }}</span>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color type-training"></span>
+                    <div class="legend-text">
+                        <strong>{{ t('worktime', 'Fortbildung') }}</strong>
+                        <span>{{ t('worktime', 'Schulung, Seminar oder Konferenz. Zählt als Arbeitszeit.') }}</span>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color type-unpaid"></span>
+                    <div class="legend-text">
+                        <strong>{{ t('worktime', 'Unbezahlter Urlaub') }}</strong>
+                        <span>{{ t('worktime', 'Freistellung ohne Gehalt. Reduziert die Soll-Stunden.') }}</span>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color type-compensatory"></span>
+                    <div class="legend-text">
+                        <strong>{{ t('worktime', 'Freizeitausgleich') }}</strong>
+                        <span>{{ t('worktime', 'Überstunden als Freizeit nehmen. Reduziert die Soll-Stunden.') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -301,5 +356,62 @@ export default {
 .absence-table td {
     font-variant-numeric: tabular-nums;
     border-bottom: 1px solid var(--color-border);
+}
+
+.absence-legend {
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border);
+}
+
+.absence-legend h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.legend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 12px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    min-width: 12px;
+    border-radius: 50%;
+    margin-top: 3px;
+}
+
+.type-vacation { background-color: #0082c9; }
+.type-sick { background-color: #e74c3c; }
+.type-child_sick { background-color: #f39c12; }
+.type-special { background-color: #9b59b6; }
+.type-training { background-color: #2ecc71; }
+.type-unpaid { background-color: #34495e; }
+.type-compensatory { background-color: #1abc9c; }
+
+.legend-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.legend-text strong {
+    font-weight: 600;
+    color: var(--color-main-text);
+}
+
+.legend-text span {
+    color: var(--color-text-maxcontrast);
 }
 </style>

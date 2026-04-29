@@ -3,7 +3,10 @@
         <!-- View Mode -->
         <template v-if="mode === 'view'">
             <td>{{ formatDateRange }}</td>
-            <td>{{ translatedTypeName }}</td>
+            <td class="type-cell">
+                <span class="type-dot" :class="'type-' + absence.type"></span>
+                {{ translatedTypeName }}
+            </td>
             <td>{{ absence.days }}</td>
             <td>{{ absence.note || '-' }}</td>
             <td>
@@ -448,4 +451,27 @@ tr.creating {
     color: var(--color-warning);
     font-style: italic;
 }
+
+.type-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.type-dot {
+    width: 10px;
+    height: 10px;
+    min-width: 10px;
+    border-radius: 50%;
+}
+
+.type-dot.type-vacation { background-color: #0082c9; }
+.type-dot.type-sick { background-color: #e74c3c; }
+.type-dot.type-child_sick { background-color: #f39c12; }
+.type-dot.type-special { background-color: #9b59b6; }
+.type-dot.type-training { background-color: #2ecc71; }
+.type-dot.type-unpaid { background-color: #34495e; }
+.type-dot.type-compensatory { background-color: #1abc9c; }
+
 </style>
+
