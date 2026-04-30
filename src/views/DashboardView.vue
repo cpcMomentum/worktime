@@ -37,7 +37,7 @@
                         <span class="progress-percent">{{ progressPercent }}%</span>
                     </div>
                     <div class="stat-row">
-                        <span class="stat-label">{{ t('worktime', 'Soll') }}</span>
+                        <span class="stat-label">{{ t('worktime', 'Soll') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Arbeitstage × Tagesstunden, abzüglich Feiertage und Abwesenheiten. Im laufenden Monat anteilig bis heute.') }}</div></NcPopover></span>
                         <span class="stat-value">{{ formatMinutesWithUnit(displayTargetMinutes) }}</span>
                     </div>
                     <div class="stat-row">
@@ -45,7 +45,7 @@
                         <span class="stat-value">{{ formatMinutesWithUnit(monthlyStats.actualMinutes) }}</span>
                     </div>
                     <div class="stat-row stat-row--total">
-                        <span class="stat-label">{{ t('worktime', 'Noch offen') }}</span>
+                        <span class="stat-label">{{ t('worktime', 'Noch offen') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Verbleibende Stunden bis zum Monatssoll. Aktualisiert sich mit jedem neuen Zeiteintrag.') }}</div></NcPopover></span>
                         <span v-if="remainingMinutes > 0" class="stat-value">
                             {{ formatMinutesWithUnit(remainingMinutes) }}
                         </span>
@@ -69,6 +69,8 @@
 
 <script>
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
+import NcPopover from '@nextcloud/vue/dist/Components/NcPopover.js'
+import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
 import { mapGetters } from 'vuex'
 import AbsenceService from '../services/AbsenceService.js'
 import ReportService from '../services/ReportService.js'
@@ -80,6 +82,8 @@ export default {
     name: 'DashboardView',
     components: {
         NcLoadingIcon,
+        NcPopover,
+        InformationOutline,
         YearOverviewTable,
     },
     data() {
@@ -275,6 +279,30 @@ export default {
 
 .stat-value.negative {
     color: var(--color-error-text);
+}
+
+.stat-label :deep(.v-popper),
+.stat-label :deep(.trigger) {
+    display: inline !important;
+}
+
+.info-icon {
+    display: inline;
+    vertical-align: middle;
+    margin-left: 2px;
+    cursor: help;
+    color: var(--color-text-maxcontrast);
+}
+
+.info-icon:hover {
+    color: var(--color-primary-element);
+}
+
+.info-popup {
+    padding: 8px 12px;
+    max-width: 280px;
+    font-size: 13px;
+    line-height: 1.4;
 }
 
 .progress-row {

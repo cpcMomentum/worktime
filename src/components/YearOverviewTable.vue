@@ -30,7 +30,7 @@
                     <th>{{ t('worktime', 'Monat') }}</th>
                     <th class="text-right">{{ t('worktime', 'Soll') }}</th>
                     <th class="text-right">{{ t('worktime', 'Ist') }}</th>
-                    <th class="text-right">{{ t('worktime', 'Überstunden') }}</th>
+                    <th class="text-right">{{ t('worktime', 'Überstunden') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Differenz zwischen Soll und Ist. Im laufenden Monat kann sich der Wert noch ändern.') }}</div></NcPopover></th>
                 </tr>
             </thead>
             <tbody>
@@ -81,8 +81,10 @@
 
 <script>
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
+import NcPopover from '@nextcloud/vue/dist/Components/NcPopover.js'
 import ChevronLeft from 'vue-material-design-icons/ChevronLeft.vue'
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue'
+import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
 import { getMonthName, getCurrentYear, getCurrentMonth } from '../utils/dateUtils.js'
 import { formatMinutesWithUnit } from '../utils/timeUtils.js'
 
@@ -90,8 +92,10 @@ export default {
     name: 'YearOverviewTable',
     components: {
         NcButton,
+        NcPopover,
         ChevronLeft,
         ChevronRight,
+        InformationOutline,
     },
     props: {
         months: {
@@ -258,6 +262,30 @@ export default {
 
 .total-row td {
     border-bottom: none;
+}
+
+th :deep(.v-popper),
+th :deep(.trigger) {
+    display: inline !important;
+}
+
+.info-icon {
+    display: inline;
+    vertical-align: middle;
+    margin-left: 2px;
+    cursor: help;
+    color: var(--color-text-maxcontrast);
+}
+
+.info-icon:hover {
+    color: var(--color-primary-element);
+}
+
+.info-popup {
+    padding: 8px 12px;
+    max-width: 280px;
+    font-size: 13px;
+    line-height: 1.4;
 }
 
 .positive {

@@ -11,7 +11,7 @@
             </div>
             <div class="overtime-summary__item overtime-summary__item--highlight"
                 :class="{ positive: overtimeMinutes > 0, negative: overtimeMinutes < 0 }">
-                <span class="label">{{ overtimeMinutes >= 0 ? t('worktime', 'Überstunden') : t('worktime', 'Minusstunden') }}</span>
+                <span class="label">{{ overtimeMinutes >= 0 ? t('worktime', 'Überstunden') : t('worktime', 'Minusstunden') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Das Soll wird anteilig bis heute berechnet. Noch nicht erfasste Arbeitstage erscheinen als Minusstunden.') }}</div></NcPopover></span>
                 <span class="value">{{ formatMinutes(Math.abs(overtimeMinutes)) }}</span>
             </div>
             <NcButton v-if="statistics"
@@ -68,16 +68,20 @@
 
 <script>
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
+import NcPopover from '@nextcloud/vue/dist/Components/NcPopover.js'
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue'
 import ChevronUp from 'vue-material-design-icons/ChevronUp.vue'
+import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
 import { formatMinutesWithUnit } from '../utils/timeUtils.js'
 
 export default {
     name: 'OvertimeSummary',
     components: {
         NcButton,
+        NcPopover,
         ChevronDown,
         ChevronUp,
+        InformationOutline,
     },
     props: {
         targetMinutes: {
@@ -211,5 +215,29 @@ export default {
 
 .detail-value {
     font-variant-numeric: tabular-nums;
+}
+
+.label :deep(.v-popper),
+.label :deep(.trigger) {
+    display: inline !important;
+}
+
+.info-icon {
+    display: inline;
+    vertical-align: middle;
+    margin-left: 2px;
+    cursor: help;
+    color: var(--color-text-maxcontrast);
+}
+
+.info-icon:hover {
+    color: var(--color-primary-element);
+}
+
+.info-popup {
+    padding: 8px 12px;
+    max-width: 280px;
+    font-size: 13px;
+    line-height: 1.4;
 }
 </style>

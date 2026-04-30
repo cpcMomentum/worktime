@@ -399,6 +399,11 @@ OC.L10N.register(
     "Bezahlte Freistellung, z.B. Hochzeit, Umzug oder Trauerfall." : "Paid leave, e.g. wedding, moving or bereavement.",
     "Schulung, Seminar oder Konferenz. Zählt als Arbeitszeit." : "Training, seminar or conference. Counts as working hours.",
     "Freistellung ohne Gehalt. Reduziert die Soll-Stunden." : "Leave without pay. Reduces your target hours.",
-    "Überstunden als Freizeit nehmen. Reduziert die Soll-Stunden." : "Use overtime as time off. Reduces your target hours."
+    "Überstunden als Freizeit nehmen. Reduziert die Soll-Stunden." : "Use overtime as time off. Reduces your target hours.",
+    "Arbeitstage × Tagesstunden, abzüglich Feiertage und Abwesenheiten. Im laufenden Monat anteilig bis heute." : "Working days × daily hours, minus public holidays and absences. Proportional to today in the current month.",
+    "Verbleibende Stunden bis zum Monatssoll. Aktualisiert sich mit jedem neuen Zeiteintrag." : "Remaining hours until the monthly target. Updates with each new time entry.",
+    "Differenz zwischen Soll und Ist. Im laufenden Monat kann sich der Wert noch ändern." : "Difference between target and actual. May still change during the current month.",
+    "Das Soll wird anteilig bis heute berechnet. Noch nicht erfasste Arbeitstage erscheinen als Minusstunden." : "The target is calculated proportionally up to today. Working days not yet recorded appear as minus hours.",
+    "Gesetzliche Pausenregelung: Ab 6 Stunden Arbeitszeit mindestens 30 Minuten, ab 9 Stunden mindestens 45 Minuten Pause." : "Legal break regulation: At least 30 minutes break for more than 6 hours of work, at least 45 minutes for more than 9 hours."
 },
 "nplurals=2; plural=(n != 1);");
