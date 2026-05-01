@@ -114,7 +114,7 @@ import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import CloseIcon from 'vue-material-design-icons/Close.vue'
 import ContentSaveIcon from 'vue-material-design-icons/ContentSave.vue'
 import { formatDateISO } from '../utils/dateUtils.js'
-import { formatDateWithWeekday, getAbsenceTypeLabel } from '../utils/formatters.js'
+import { formatDateWithWeekday, getAbsenceTypeLabel, getStatusLabel } from '../utils/formatters.js'
 
 export default {
     name: 'AbsenceRow',
@@ -270,15 +270,7 @@ export default {
         },
     },
     methods: {
-        getStatusLabel(status) {
-            const labels = {
-                pending: this.t('worktime', 'Ausstehend'),
-                approved: this.t('worktime', 'Genehmigt'),
-                rejected: this.t('worktime', 'Abgelehnt'),
-                cancelled: this.t('worktime', 'Storniert'),
-            }
-            return labels[status] || status
-        },
+        getStatusLabel,
         loadAbsence(absence) {
             this.form = {
                 type: absence.type,

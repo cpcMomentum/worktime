@@ -123,6 +123,7 @@ import ContentSaveIcon from 'vue-material-design-icons/ContentSave.vue'
 import { mapGetters } from 'vuex'
 import { formatDateWithWeekday, formatDateISO, isWeekend } from '../utils/dateUtils.js'
 import { formatMinutesWithUnit, calculateWorkMinutes, suggestBreak } from '../utils/timeUtils.js'
+import { getStatusLabel } from '../utils/formatters.js'
 import SettingsService from '../services/SettingsService.js'
 
 export default {
@@ -286,15 +287,7 @@ export default {
             const project = this.projects.find(p => p.id === projectId)
             return project?.name || project?.displayName || '-'
         },
-        getStatusLabel(status) {
-            const labels = {
-                draft: this.t('worktime', 'Entwurf'),
-                submitted: this.t('worktime', 'Eingereicht'),
-                approved: this.t('worktime', 'Genehmigt'),
-                rejected: this.t('worktime', 'Abgelehnt'),
-            }
-            return labels[status] || status
-        },
+        getStatusLabel,
         loadEntry(entry) {
             this.form = {
                 date: new Date(entry.date),
