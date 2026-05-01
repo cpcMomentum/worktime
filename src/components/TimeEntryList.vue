@@ -152,6 +152,7 @@ export default {
             for (const absence of this.absences) {
                 const start = new Date(absence.startDate)
                 const end = new Date(absence.endDate)
+                const typeName = getAbsenceTypeLabel(absence.type)
                 for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
                     const dayOfWeek = d.getDay()
                     // Skip weekends
@@ -168,7 +169,7 @@ export default {
                         _date: dateStr,
                         _key: 'absence-' + absence.id + '-' + dateStr,
                         date: dateStr,
-                        typeName: getAbsenceTypeLabel(absence.type),
+                        typeName,
                         absenceType: absence.type || '',
                         scope: absence.scope || 1,
                     })
