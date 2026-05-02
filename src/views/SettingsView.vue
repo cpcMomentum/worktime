@@ -107,7 +107,7 @@
                         @change="saveSetting('company_name')">
                 </div>
                 <div class="form-group">
-                    <label for="defaultState">{{ t('worktime', 'Standard-Bundesland') }}</label>
+                    <label for="defaultState">{{ t('worktime', 'Standard-Bundesland') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Neue Mitarbeiter bekommen dieses Bundesland automatisch zugewiesen. Jeder Mitarbeiter kann ein eigenes Bundesland haben — das bestimmt, welche Feiertage für ihn gelten.') }}</div></NcPopover></label>
                     <NcSelect id="defaultState"
                         v-model="selectedFederalState"
                         :options="federalStateOptions"
@@ -119,7 +119,7 @@
                 :name="t('worktime', 'Standardwerte')">
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="weeklyHours">{{ t('worktime', 'Wochenstunden') }}</label>
+                        <label for="weeklyHours">{{ t('worktime', 'Wochenstunden') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Neue Mitarbeiter bekommen diese Wochenstunden voreingestellt. Sie können im Mitarbeiterprofil individuell angepasst werden.') }}</div></NcPopover></label>
                         <input id="weeklyHours"
                             v-model.number="settings.default_weekly_hours"
                             type="number"
@@ -129,7 +129,7 @@
                             @change="saveSetting('default_weekly_hours')">
                     </div>
                     <div class="form-group">
-                        <label for="vacationDays">{{ t('worktime', 'Urlaubstage') }}</label>
+                        <label for="vacationDays">{{ t('worktime', 'Urlaubstage') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Neue Mitarbeiter bekommen diesen Urlaubsanspruch voreingestellt. Der tatsächliche Anspruch wird im Mitarbeiterprofil festgelegt.') }}</div></NcPopover></label>
                         <input id="vacationDays"
                             v-model.number="settings.default_vacation_days"
                             type="number"
@@ -144,7 +144,7 @@
             <NcSettingsSection v-if="canManageSettings"
                 :name="t('worktime', 'Arbeitszeit-Regeln')">
                 <div class="form-group">
-                    <label for="maxDailyHours">{{ t('worktime', 'Maximale tägliche Arbeitszeit (Stunden)') }}</label>
+                    <label for="maxDailyHours">{{ t('worktime', 'Maximale tägliche Arbeitszeit (Stunden)') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Wenn ein Zeiteintrag diesen Wert überschreitet, wird eine Warnung angezeigt. Nach §3 ArbZG sind maximal 10 Stunden erlaubt.') }}</div></NcPopover></label>
                     <input id="maxDailyHours"
                         v-model.number="settings.max_daily_hours"
                         type="number"
@@ -160,25 +160,25 @@
                 <div class="form-group">
                     <NcCheckboxRadioSwitch :checked.sync="settings.require_project"
                         @update:checked="saveSettingBool('require_project')">
-                        {{ t('worktime', 'Projekt erforderlich') }}
+                        {{ t('worktime', 'Projekt erforderlich') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Wenn aktiv, muss bei jedem Zeiteintrag ein Projekt ausgewählt werden — sonst lässt sich der Eintrag nicht speichern.') }}</div></NcPopover>
                     </NcCheckboxRadioSwitch>
                 </div>
                 <div class="form-group">
                     <NcCheckboxRadioSwitch :checked.sync="settings.require_description"
                         @update:checked="saveSettingBool('require_description')">
-                        {{ t('worktime', 'Beschreibung erforderlich') }}
+                        {{ t('worktime', 'Beschreibung erforderlich') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Wenn aktiv, muss bei jedem Zeiteintrag eine Beschreibung eingetragen werden — sonst lässt sich der Eintrag nicht speichern.') }}</div></NcPopover>
                     </NcCheckboxRadioSwitch>
                 </div>
                 <div class="form-group">
                     <NcCheckboxRadioSwitch :checked.sync="settings.allow_future_entries"
                         @update:checked="saveSettingBool('allow_future_entries')">
-                        {{ t('worktime', 'Zukünftige Einträge erlauben') }}
+                        {{ t('worktime', 'Zukünftige Einträge erlauben') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Wenn deaktiviert, können Mitarbeiter nur für heute oder vergangene Tage Zeiten eintragen — nicht im Voraus.') }}</div></NcPopover>
                     </NcCheckboxRadioSwitch>
                 </div>
                 <div class="form-group">
                     <NcCheckboxRadioSwitch :checked.sync="settings.approval_required"
                         @update:checked="saveSettingBool('approval_required')">
-                        {{ t('worktime', 'Genehmigung erforderlich') }}
+                        {{ t('worktime', 'Genehmigung erforderlich') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Wenn aktiv, müssen Vorgesetzte die Zeiteinträge freigeben. Ohne Genehmigung fließen die Stunden nicht in die Überstundenberechnung ein.') }}</div></NcPopover>
                     </NcCheckboxRadioSwitch>
                 </div>
             </NcSettingsSection>
@@ -188,7 +188,7 @@
                 :description="t('worktime', 'Mindestpause gemäß deutschem Arbeitszeitgesetz')">
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="break6h">{{ t('worktime', 'Bei >6h Arbeitszeit (min)') }}</label>
+                        <label for="break6h">{{ t('worktime', 'Bei >6h Arbeitszeit (min)') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Gesetzliche Mindestpause bei mehr als 6 Stunden Arbeitszeit. Wird beim Anlegen eines Zeiteintrags automatisch als Vorschlag eingetragen.') }}</div></NcPopover></label>
                         <input id="break6h"
                             v-model.number="settings.min_break_minutes_6h"
                             type="number"
@@ -198,7 +198,7 @@
                             @change="saveSetting('min_break_minutes_6h')">
                     </div>
                     <div class="form-group">
-                        <label for="break9h">{{ t('worktime', 'Bei >9h Arbeitszeit (min)') }}</label>
+                        <label for="break9h">{{ t('worktime', 'Bei >9h Arbeitszeit (min)') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Gesetzliche Mindestpause bei mehr als 9 Stunden Arbeitszeit. Wird beim Anlegen eines Zeiteintrags automatisch als Vorschlag eingetragen.') }}</div></NcPopover></label>
                         <input id="break9h"
                             v-model.number="settings.min_break_minutes_9h"
                             type="number"
@@ -214,7 +214,7 @@
                 :name="t('worktime', 'PDF-Archivierung')"
                 :description="t('worktime', 'Genehmigte Monatsberichte werden automatisch als PDF archiviert.')">
                 <div class="form-group">
-                    <label>{{ t('worktime', 'Archiv-Ordner') }}</label>
+                    <label>{{ t('worktime', 'Archiv-Ordner') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Wenn ein Monat genehmigt wird, speichert WorkTime automatisch einen PDF-Bericht in diesem Ordner. Der Ordner liegt in Ihrem persönlichen Speicher — nur Sie als Admin haben Zugriff.') }}</div></NcPopover></label>
                     <div class="folder-picker">
                         <NcButton type="secondary" @click="openFolderPicker">
                             <template #icon>
@@ -241,13 +241,13 @@
                 <div class="form-group">
                     <NcCheckboxRadioSwitch :checked.sync="settings.christmas_eve_half_day"
                         @update:checked="saveSettingBool('christmas_eve_half_day')">
-                        {{ t('worktime', 'Heiligabend (24.12.) als halber Arbeitstag') }}
+                        {{ t('worktime', 'Heiligabend (24.12.) als halber Arbeitstag') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Wenn aktiviert, wird das Tagessoll am 24.12. halbiert. Beispiel: Bei 8 Std./Tag werden nur 4 Std. als Soll angerechnet.') }}</div></NcPopover>
                     </NcCheckboxRadioSwitch>
                 </div>
                 <div class="form-group">
                     <NcCheckboxRadioSwitch :checked.sync="settings.new_years_eve_half_day"
                         @update:checked="saveSettingBool('new_years_eve_half_day')">
-                        {{ t('worktime', 'Silvester (31.12.) als halber Arbeitstag') }}
+                        {{ t('worktime', 'Silvester (31.12.) als halber Arbeitstag') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Wenn aktiviert, wird das Tagessoll am 31.12. halbiert. Beispiel: Bei 8 Std./Tag werden nur 4 Std. als Soll angerechnet.') }}</div></NcPopover>
                     </NcCheckboxRadioSwitch>
                 </div>
                 <p class="help-text">
@@ -439,6 +439,7 @@ import NcSettingsSection from '@nextcloud/vue/dist/Components/NcSettingsSection.
 import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import NcNoteCard from '@nextcloud/vue/dist/Components/NcNoteCard.js'
+import NcPopover from '@nextcloud/vue/dist/Components/NcPopover.js'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import Account from 'vue-material-design-icons/Account.vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
@@ -482,6 +483,7 @@ export default {
         ChevronDown,
         InformationOutline,
         NcNoteCard,
+        NcPopover,
         EmployeeForm,
         EmployeeList,
         ProjectForm,
@@ -1170,5 +1172,31 @@ export default {
     color: var(--color-primary-element);
     border-radius: 12px;
     font-size: 0.85em;
+}
+
+label :deep(.v-popper),
+label :deep(.trigger),
+.form-group :deep(.v-popper),
+.form-group :deep(.trigger) {
+    display: inline !important;
+}
+
+.info-icon {
+    display: inline;
+    vertical-align: middle;
+    margin-left: 2px;
+    cursor: help;
+    color: var(--color-text-maxcontrast);
+}
+
+.info-icon:hover {
+    color: var(--color-primary-element);
+}
+
+.info-popup {
+    padding: 8px 12px;
+    max-width: 280px;
+    font-size: 13px;
+    line-height: 1.4;
 }
 </style>
