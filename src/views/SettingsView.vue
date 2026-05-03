@@ -59,23 +59,8 @@
 
             <NcSettingsSection v-if="canManageSettings"
                 :name="t('worktime', 'Berechtigungen')">
-                <NcNoteCard v-if="showPermissionInfo" type="info" class="permission-info">
-                    <p><strong>Admin</strong> – {{ t('worktime', 'Automatisch für alle Nextcloud-Administratoren. Volle Rechte.') }}</p>
-                    <p><strong>HR-Manager</strong> – {{ t('worktime', 'Manuell zuweisen (siehe unten). Kann Mitarbeiter verwalten und Anträge genehmigen.') }}</p>
-                    <p><strong>{{ t('worktime', 'Vorgesetzter') }}</strong> – {{ t('worktime', 'Automatisch, wenn als Vorgesetzter in einem Mitarbeiterprofil eingetragen.') }}</p>
-                    <p><strong>Mitarbeiter</strong> – {{ t('worktime', 'Automatisch für alle angelegten Mitarbeiter.') }}</p>
-                </NcNoteCard>
                 <div class="form-group">
-                    <div class="label-with-info">
-                        <label>{{ t('worktime', 'HR-Manager') }}</label>
-                        <NcButton type="tertiary"
-                            :aria-label="t('worktime', 'Rollen-Info anzeigen')"
-                            @click="showPermissionInfo = !showPermissionInfo">
-                            <template #icon>
-                                <InformationOutline :size="20" />
-                            </template>
-                        </NcButton>
-                    </div>
+                    <label>{{ t('worktime', 'HR-Manager') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Admin: Volle Rechte (automatisch). HR-Manager: Mitarbeiter verwalten und Anträge genehmigen (manuell zuweisen). Vorgesetzter: Genehmigt Zeiten seines Teams (automatisch). Mitarbeiter: Eigene Zeiten erfassen (automatisch).') }}</div></NcPopover></label>
                     <NcSelect
                         v-model="selectedHrManagers"
                         :options="principalOptions"
@@ -492,7 +477,6 @@ export default {
     data() {
         return {
             loading: false,
-            showPermissionInfo: false,
             settings: {},
             holidayYear: getCurrentYear(),
             showEmployeeForm: false,
@@ -964,25 +948,6 @@ export default {
     font-weight: 500;
 }
 
-.label-with-info {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-bottom: 4px;
-}
-
-.label-with-info label {
-    margin-bottom: 0;
-}
-
-.permission-info {
-    margin-bottom: 16px;
-}
-
-.permission-info p {
-    margin: 4px 0;
-}
-
 .form-row {
     display: flex;
     gap: 16px;
@@ -1185,7 +1150,7 @@ label :deep(.trigger),
     display: inline;
     vertical-align: middle;
     margin-left: 2px;
-    cursor: help;
+    cursor: pointer;
     color: var(--color-text-maxcontrast);
 }
 

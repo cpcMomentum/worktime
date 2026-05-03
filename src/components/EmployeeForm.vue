@@ -407,7 +407,7 @@ label :deep(.trigger),
     display: inline;
     vertical-align: middle;
     margin-left: 2px;
-    cursor: help;
+    cursor: pointer;
     color: var(--color-text-maxcontrast);
 }
 
