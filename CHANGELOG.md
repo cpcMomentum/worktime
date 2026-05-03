@@ -21,7 +21,6 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 - **getStatusLabel() zentralisiert (#117)**: Duplizierte Methode aus TimeEntryRow und AbsenceRow entfernt, zentrale Funktion aus formatters.js verwendet.
 - **ABSENCE_TYPE_LABELS() gecacht (#118)**: Label-Lookup wird einmal pro Abwesenheit aufgerufen statt einmal pro expandiertem Tag.
 
-=======
 ## [0.6.1] - 2026-04-29
 
 ### Fixed
