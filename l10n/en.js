@@ -367,6 +367,7 @@ OC.L10N.register(
     "Std." : "hrs",
     "Abwesenheitsübersicht" : "Absence Overview",
     "Abwesend" : "Absent",
+    "Mitarbeiter ist abwesend. Grund ist nur für Vorgesetzte sichtbar." : "Employee is absent. Reason is only visible to supervisors.",
     "Krank" : "Sick",
     "Unbezahlt" : "Unpaid",
     "Freizeitausgleich" : "Compensatory Leave",

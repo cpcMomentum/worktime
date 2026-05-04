@@ -367,6 +367,7 @@ OC.L10N.register(
     "Std." : "Std.",
     "Abwesenheitsübersicht" : "Abwesenheitsübersicht",
     "Abwesend" : "Abwesend",
+    "Mitarbeiter ist abwesend. Grund ist nur für Vorgesetzte sichtbar." : "Mitarbeiter ist abwesend. Grund ist nur für Vorgesetzte sichtbar.",
     "Krank" : "Krank",
     "Unbezahlt" : "Unbezahlt",
     "Freizeitausgleich" : "Freizeitausgleich",

@@ -38,13 +38,19 @@
 			</div>
 		</div>
 
-		<div class="timeline-legend">
-			<span v-for="item in activeLegendItems"
-				:key="item.type"
-				class="legend-item">
-				<span class="legend-color" :class="'type-' + item.type"></span>
-				{{ item.label }}
-			</span>
+		<div class="absence-legend">
+			<h3>{{ t('worktime', 'Abwesenheitstypen') }}</h3>
+			<div class="legend-grid">
+				<div v-for="item in activeLegendItems"
+					:key="item.type"
+					class="legend-item">
+					<span class="legend-color" :class="'type-' + item.type"></span>
+					<div class="legend-text">
+						<strong>{{ item.label }}</strong>
+						<span>{{ item.description }}</span>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </template>
@@ -76,29 +82,29 @@ export default {
 	},
 	computed: {
 		activeLegendItems() {
-			const typeLabels = {
-				vacation: t('worktime', 'Urlaub'),
-				absent: t('worktime', 'Abwesend'),
-				sick: t('worktime', 'Krank'),
-				child_sick: t('worktime', 'Kind krank'),
-				training: t('worktime', 'Fortbildung'),
-				special: t('worktime', 'Sonderurlaub'),
-				compensatory: t('worktime', 'Freizeitausgleich'),
-				unpaid: t('worktime', 'Unbezahlt'),
+			const typeInfo = {
+				vacation: { label: t('worktime', 'Urlaub'), description: t('worktime', 'Bezahlter Erholungsurlaub. Wird vom Urlaubskonto abgezogen.') },
+				absent: { label: t('worktime', 'Abwesend'), description: t('worktime', 'Mitarbeiter ist abwesend. Grund ist nur für Vorgesetzte sichtbar.') },
+				sick: { label: t('worktime', 'Krankheit'), description: t('worktime', 'Krankmeldung. Arbeitszeit gilt als geleistet, keine Urlaubstage.') },
+				child_sick: { label: t('worktime', 'Kind krank'), description: t('worktime', 'Ihr Kind ist krank. Wie Krankheit, keine Urlaubstage.') },
+				training: { label: t('worktime', 'Fortbildung'), description: t('worktime', 'Schulung, Seminar oder Konferenz. Zählt als Arbeitszeit.') },
+				special: { label: t('worktime', 'Sonderurlaub'), description: t('worktime', 'Bezahlte Freistellung, z.B. Hochzeit, Umzug oder Trauerfall.') },
+				compensatory: { label: t('worktime', 'Freizeitausgleich'), description: t('worktime', 'Überstunden als Freizeit nehmen. Reduziert die Soll-Stunden.') },
+				unpaid: { label: t('worktime', 'Unbezahlter Urlaub'), description: t('worktime', 'Freistellung ohne Gehalt. Reduziert die Soll-Stunden.') },
 			}
 			// Privilegierte User (Admin/HR/Supervisor) sehen immer die volle Legende
 			// ohne "Abwesend" (das ist nur die maskierte Anzeige für Kollegen)
 			if (this.showFullLegend) {
-				const types = ['vacation', 'sick', 'child_sick', 'training', 'special', 'compensatory', 'unpaid']
-				return types.map(type => ({ type, label: typeLabels[type] }))
+				const types = ['vacation', 'sick', 'child_sick', 'special', 'training', 'unpaid', 'compensatory']
+				return types.map(type => ({ type, ...typeInfo[type] }))
 			}
 			const usedTypes = new Set()
 			this.employees.forEach(emp => {
 				emp.absences.forEach(a => usedTypes.add(a.type))
 			})
 			return Array.from(usedTypes)
-				.filter(type => typeLabels[type])
-				.map(type => ({ type, label: typeLabels[type] }))
+				.filter(type => typeInfo[type])
+				.map(type => ({ type, ...typeInfo[type] }))
 		},
 		daysInMonth() {
 			const days = []
@@ -257,27 +263,52 @@ export default {
 	color: var(--color-text-maxcontrast);
 }
 
-.timeline-legend {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 16px;
-	padding: 12px 10px;
+.absence-legend {
+	margin-top: 24px;
+	padding-top: 16px;
 	border-top: 1px solid var(--color-border);
-	margin-top: 8px;
+}
+
+.absence-legend h3 {
+	font-size: 15px;
+	font-weight: 600;
+	margin-bottom: 12px;
+}
+
+.legend-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	gap: 12px;
 }
 
 .legend-item {
 	display: flex;
-	align-items: center;
-	gap: 6px;
-	font-size: 13px;
-	color: var(--color-text-maxcontrast);
+	align-items: flex-start;
+	gap: 10px;
 }
 
 .legend-color {
-	width: 14px;
-	height: 14px;
-	border-radius: 3px;
-	display: inline-block;
+	width: 12px;
+	height: 12px;
+	min-width: 12px;
+	border-radius: 50%;
+	margin-top: 3px;
+}
+
+.legend-text {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	font-size: 13px;
+	line-height: 1.4;
+}
+
+.legend-text strong {
+	font-weight: 600;
+	color: var(--color-main-text);
+}
+
+.legend-text span {
+	color: var(--color-text-maxcontrast);
 }
 </style>
