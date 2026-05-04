@@ -67,6 +67,117 @@ class TimeEntryMapper extends QBMapper {
     }
 
     /**
+     * Batch-load time entries for multiple employees in a single month.
+     *
+     * @param int[] $employeeIds
+     * @return array<int, TimeEntry[]> Indexed by employee_id
+     */
+    public function findByEmployeeIdsAndMonth(array $employeeIds, int $year, int $month): array {
+        if (empty($employeeIds)) {
+            return [];
+        }
+
+        $startDate = new DateTime("$year-$month-01");
+        $endDate = (clone $startDate)->modify('last day of this month');
+
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->in('employee_id', $qb->createNamedParameter($employeeIds, IQueryBuilder::PARAM_INT_ARRAY)))
+            ->andWhere($qb->expr()->gte('date', $qb->createNamedParameter($startDate, IQueryBuilder::PARAM_DATE)))
+            ->andWhere($qb->expr()->lte('date', $qb->createNamedParameter($endDate, IQueryBuilder::PARAM_DATE)))
+            ->orderBy('date', 'ASC')
+            ->addOrderBy('start_time', 'ASC');
+
+        $entries = $this->findEntities($qb);
+
+        // Group by employee_id
+        $grouped = array_fill_keys($employeeIds, []);
+        foreach ($entries as $entry) {
+            $grouped[$entry->getEmployeeId()][] = $entry;
+        }
+
+        return $grouped;
+    }
+
+    /**
+     * Batch-load time entries for multiple employees for an entire year.
+     *
+     * @param int[] $employeeIds
+     * @return array<int, TimeEntry[]> Indexed by employee_id
+     */
+    public function findByEmployeeIdsAndYear(array $employeeIds, int $year): array {
+        if (empty($employeeIds)) {
+            return [];
+        }
+
+        $startDate = new DateTime("$year-01-01");
+        $endDate = new DateTime("$year-12-31");
+
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->in('employee_id', $qb->createNamedParameter($employeeIds, IQueryBuilder::PARAM_INT_ARRAY)))
+            ->andWhere($qb->expr()->gte('date', $qb->createNamedParameter($startDate, IQueryBuilder::PARAM_DATE)))
+            ->andWhere($qb->expr()->lte('date', $qb->createNamedParameter($endDate, IQueryBuilder::PARAM_DATE)))
+            ->orderBy('date', 'ASC')
+            ->addOrderBy('start_time', 'ASC');
+
+        $entries = $this->findEntities($qb);
+
+        $grouped = array_fill_keys($employeeIds, []);
+        foreach ($entries as $entry) {
+            $grouped[$entry->getEmployeeId()][] = $entry;
+        }
+
+        return $grouped;
+    }
+
+    /**
+     * Batch-load monthly status summaries for multiple employees.
+     *
+     * @param int[] $employeeIds
+     * @return array<int, array{draft: int, submitted: int, approved: int, rejected: int}> Indexed by employee_id
+     */
+    public function getMonthlyStatusSummaryBatch(array $employeeIds, int $year, int $month): array {
+        $result = array_fill_keys($employeeIds, [
+            TimeEntry::STATUS_DRAFT => 0,
+            TimeEntry::STATUS_SUBMITTED => 0,
+            TimeEntry::STATUS_APPROVED => 0,
+            TimeEntry::STATUS_REJECTED => 0,
+        ]);
+
+        if (empty($employeeIds)) {
+            return $result;
+        }
+
+        $startDate = new DateTime("$year-$month-01");
+        $endDate = (clone $startDate)->modify('last day of this month');
+
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('employee_id', 'status', $qb->func()->count('id', 'count'))
+            ->from($this->getTableName())
+            ->where($qb->expr()->in('employee_id', $qb->createNamedParameter($employeeIds, IQueryBuilder::PARAM_INT_ARRAY)))
+            ->andWhere($qb->expr()->gte('date', $qb->createNamedParameter($startDate, IQueryBuilder::PARAM_DATE)))
+            ->andWhere($qb->expr()->lte('date', $qb->createNamedParameter($endDate, IQueryBuilder::PARAM_DATE)))
+            ->groupBy('employee_id', 'status');
+
+        $queryResult = $qb->executeQuery();
+        $rows = $queryResult->fetchAll();
+        $queryResult->closeCursor();
+
+        foreach ($rows as $row) {
+            $empId = (int)$row['employee_id'];
+            $status = $row['status'];
+            if (isset($result[$empId][$status])) {
+                $result[$empId][$status] = (int)$row['count'];
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * @return TimeEntry[]
      */
     public function findByEmployeeAndDateRange(int $employeeId, DateTime $startDate, DateTime $endDate): array {

@@ -100,6 +100,98 @@ class AbsenceMapper extends QBMapper {
     }
 
     /**
+     * Batch-load absences for multiple employees in a single month.
+     *
+     * @param int[] $employeeIds
+     * @return array<int, Absence[]> Indexed by employee_id
+     */
+    public function findByEmployeeIdsAndMonth(array $employeeIds, int $year, int $month): array {
+        if (empty($employeeIds)) {
+            return [];
+        }
+
+        $startDate = new DateTime("$year-$month-01");
+        $endDate = (clone $startDate)->modify('last day of this month');
+
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->in('employee_id', $qb->createNamedParameter($employeeIds, IQueryBuilder::PARAM_INT_ARRAY)))
+            ->andWhere(
+                $qb->expr()->orX(
+                    $qb->expr()->andX(
+                        $qb->expr()->gte('start_date', $qb->createNamedParameter($startDate, IQueryBuilder::PARAM_DATE)),
+                        $qb->expr()->lte('start_date', $qb->createNamedParameter($endDate, IQueryBuilder::PARAM_DATE))
+                    ),
+                    $qb->expr()->andX(
+                        $qb->expr()->gte('end_date', $qb->createNamedParameter($startDate, IQueryBuilder::PARAM_DATE)),
+                        $qb->expr()->lte('end_date', $qb->createNamedParameter($endDate, IQueryBuilder::PARAM_DATE))
+                    ),
+                    $qb->expr()->andX(
+                        $qb->expr()->lte('start_date', $qb->createNamedParameter($startDate, IQueryBuilder::PARAM_DATE)),
+                        $qb->expr()->gte('end_date', $qb->createNamedParameter($endDate, IQueryBuilder::PARAM_DATE))
+                    )
+                )
+            )
+            ->orderBy('start_date', 'ASC');
+
+        $absences = $this->findEntities($qb);
+
+        $grouped = array_fill_keys($employeeIds, []);
+        foreach ($absences as $absence) {
+            $grouped[$absence->getEmployeeId()][] = $absence;
+        }
+
+        return $grouped;
+    }
+
+    /**
+     * Batch-load absences for multiple employees for an entire year.
+     *
+     * @param int[] $employeeIds
+     * @return array<int, Absence[]> Indexed by employee_id
+     */
+    public function findByEmployeeIdsAndYear(array $employeeIds, int $year): array {
+        if (empty($employeeIds)) {
+            return [];
+        }
+
+        $startDate = new DateTime("$year-01-01");
+        $endDate = new DateTime("$year-12-31");
+
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->in('employee_id', $qb->createNamedParameter($employeeIds, IQueryBuilder::PARAM_INT_ARRAY)))
+            ->andWhere(
+                $qb->expr()->orX(
+                    $qb->expr()->andX(
+                        $qb->expr()->gte('start_date', $qb->createNamedParameter($startDate, IQueryBuilder::PARAM_DATE)),
+                        $qb->expr()->lte('start_date', $qb->createNamedParameter($endDate, IQueryBuilder::PARAM_DATE))
+                    ),
+                    $qb->expr()->andX(
+                        $qb->expr()->gte('end_date', $qb->createNamedParameter($startDate, IQueryBuilder::PARAM_DATE)),
+                        $qb->expr()->lte('end_date', $qb->createNamedParameter($endDate, IQueryBuilder::PARAM_DATE))
+                    ),
+                    $qb->expr()->andX(
+                        $qb->expr()->lte('start_date', $qb->createNamedParameter($startDate, IQueryBuilder::PARAM_DATE)),
+                        $qb->expr()->gte('end_date', $qb->createNamedParameter($endDate, IQueryBuilder::PARAM_DATE))
+                    )
+                )
+            )
+            ->orderBy('start_date', 'ASC');
+
+        $absences = $this->findEntities($qb);
+
+        $grouped = array_fill_keys($employeeIds, []);
+        foreach ($absences as $absence) {
+            $grouped[$absence->getEmployeeId()][] = $absence;
+        }
+
+        return $grouped;
+    }
+
+    /**
      * @return Absence[]
      */
     public function findByType(int $employeeId, string $type): array {
