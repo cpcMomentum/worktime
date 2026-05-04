@@ -67,7 +67,7 @@
                 </div>
 
                 <div v-if="form.absenceVisibility !== 'none'" class="form-group">
-                    <label for="absenceDetail">{{ t('worktime', 'Detailgrad') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Legt fest, ob Kollegen in der Abwesenheitsübersicht Ihren Abwesenheitsgrund sehen (z.B. Urlaub) oder nur Abwesend. Vorgesetzte und HR sehen immer den Grund.') }}</div></NcPopover></label>
+                    <label for="absenceDetail">{{ t('worktime', 'Detailgrad') }} <InfoIcon>{{ t('worktime', 'Legt fest, ob Kollegen in der Abwesenheitsübersicht Ihren Abwesenheitsgrund sehen (z.B. Urlaub) oder nur Abwesend. Vorgesetzte und HR sehen immer den Grund.') }}</InfoIcon></label>
                     <div class="visibility-row">
                         <select id="absenceDetail"
                             v-model="form.absenceDetail"
@@ -88,17 +88,15 @@
 
 <script>
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
-import NcPopover from '@nextcloud/vue/dist/Components/NcPopover.js'
-import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
 import { mapGetters, mapActions } from 'vuex'
 import { showError } from '@nextcloud/dialogs'
+import InfoIcon from '../components/InfoIcon.vue'
 
 export default {
     name: 'MySettingsView',
     components: {
+        InfoIcon,
         NcLoadingIcon,
-        NcPopover,
-        InformationOutline,
     },
     data() {
         return {
@@ -296,27 +294,5 @@ export default {
     font-size: 13px;
 }
 
-label :deep(.v-popper),
-label :deep(.trigger) {
-    display: inline !important;
-}
 
-.info-icon {
-    display: inline;
-    vertical-align: middle;
-    margin-left: 2px;
-    cursor: pointer;
-    color: var(--color-text-maxcontrast);
-}
-
-.info-icon:hover {
-    color: var(--color-primary-element);
-}
-
-.info-popup {
-    padding: 8px 12px;
-    max-width: 280px;
-    font-size: 13px;
-    line-height: 1.4;
-}
 </style>

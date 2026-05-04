@@ -18,7 +18,7 @@
 
         <!-- Zur Kenntnisnahme (Krankmeldungen) -->
         <div v-if="informationalAbsences.length > 0" class="report-section">
-            <h3>{{ t('worktime', 'Zur Kenntnisnahme') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Diese Abwesenheiten (z.B. Krankheit) werden nur gemeldet und brauchen keine Genehmigung. Sie werden automatisch in der Sollberechnung berücksichtigt.') }}</div></NcPopover> ({{ informationalAbsences.length }})</h3>
+            <h3>{{ t('worktime', 'Zur Kenntnisnahme') }} <InfoIcon>{{ t('worktime', 'Diese Abwesenheiten (z.B. Krankheit) werden nur gemeldet und brauchen keine Genehmigung. Sie werden automatisch in der Sollberechnung berücksichtigt.') }}</InfoIcon> ({{ informationalAbsences.length }})</h3>
             <table class="approval-table">
                 <thead>
                     <tr>
@@ -48,7 +48,7 @@
 
         <!-- Ausstehende Abwesenheiten -->
         <div v-if="pendingAbsences.length > 0" class="report-section">
-            <h3>{{ t('worktime', 'Ausstehende Urlaubsanträge') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Diese Anträge warten auf Ihre Genehmigung oder Ablehnung. Erst nach Genehmigung werden sie vom Urlaubskonto abgezogen.') }}</div></NcPopover> ({{ pendingAbsences.length }})</h3>
+            <h3>{{ t('worktime', 'Ausstehende Urlaubsanträge') }} <InfoIcon>{{ t('worktime', 'Diese Anträge warten auf Ihre Genehmigung oder Ablehnung. Erst nach Genehmigung werden sie vom Urlaubskonto abgezogen.') }}</InfoIcon> ({{ pendingAbsences.length }})</h3>
             <table class="approval-table">
                 <thead>
                     <tr>
@@ -258,8 +258,6 @@ import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import NcAvatar from '@nextcloud/vue/dist/Components/NcAvatar.js'
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcPopover from '@nextcloud/vue/dist/Components/NcPopover.js'
-import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
 import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import AccountGroupIcon from 'vue-material-design-icons/AccountGroup.vue'
 import CheckIcon from 'vue-material-design-icons/Check.vue'
@@ -276,17 +274,17 @@ import { getCurrentYear, getCurrentMonth, formatDate } from '../utils/dateUtils.
 import { getAbsenceTypeLabel } from '../utils/formatters.js'
 import { formatMinutes } from '../utils/timeUtils.js'
 import { showSuccess, showError } from '@nextcloud/dialogs'
+import InfoIcon from '../components/InfoIcon.vue'
 
 export default {
     name: 'ApprovalOverviewView',
     components: {
+        InfoIcon,
         NcLoadingIcon,
         NcEmptyContent,
         NcAvatar,
         NcButton,
-        NcPopover,
         NcSelect,
-        InformationOutline,
         AccountGroupIcon,
         CheckIcon,
         CloseIcon,
@@ -747,27 +745,5 @@ export default {
     font-style: italic;
 }
 
-h3 :deep(.v-popper),
-h3 :deep(.trigger) {
-    display: inline !important;
-}
 
-.info-icon {
-    display: inline;
-    vertical-align: middle;
-    margin-left: 2px;
-    cursor: pointer;
-    color: var(--color-text-maxcontrast);
-}
-
-.info-icon:hover {
-    color: var(--color-primary-element);
-}
-
-.info-popup {
-    padding: 8px 12px;
-    max-width: 280px;
-    font-size: 13px;
-    line-height: 1.4;
-}
 </style>

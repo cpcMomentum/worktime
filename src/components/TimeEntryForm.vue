@@ -38,7 +38,7 @@
                 min="0"
                 class="break-input">
             <p v-if="requiredBreak > 0" class="break-hint">
-                {{ t('worktime', 'Mindestpause: {minutes} min (§4 ArbZG)', { minutes: requiredBreak }) }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Gesetzliche Pausenregelung: Ab 6 Stunden Arbeitszeit mindestens 30 Minuten, ab 9 Stunden mindestens 45 Minuten Pause.') }}</div></NcPopover>
+                {{ t('worktime', 'Mindestpause: {minutes} min (§4 ArbZG)', { minutes: requiredBreak }) }} <InfoIcon>{{ t('worktime', 'Gesetzliche Pausenregelung: Ab 6 Stunden Arbeitszeit mindestens 30 Minuten, ab 9 Stunden mindestens 45 Minuten Pause.') }}</InfoIcon>
             </p>
         </div>
 
@@ -76,24 +76,22 @@
 
 <script>
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcPopover from '@nextcloud/vue/dist/Components/NcPopover.js'
 import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js'
-import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
 import { mapGetters, mapActions } from 'vuex'
 import { formatDateISO, getToday } from '../utils/dateUtils.js'
 import { formatMinutesWithUnit, calculateWorkMinutes, suggestBreak as suggestBreakUtil } from '../utils/timeUtils.js'
 import { showErrorMessage } from '../utils/errorHandler.js'
 import SettingsService from '../services/SettingsService.js'
+import InfoIcon from '../components/InfoIcon.vue'
 
 export default {
     name: 'TimeEntryForm',
     components: {
+        InfoIcon,
         NcButton,
-        NcPopover,
         NcSelect,
         NcDateTimePicker,
-        InformationOutline,
     },
     props: {
         entry: {
@@ -296,29 +294,7 @@ export default {
     color: var(--color-text-maxcontrast);
 }
 
-.break-hint :deep(.v-popper),
-.break-hint :deep(.trigger) {
-    display: inline !important;
-}
 
-.info-icon {
-    display: inline;
-    vertical-align: middle;
-    margin-left: 2px;
-    cursor: pointer;
-    color: var(--color-text-maxcontrast);
-}
-
-.info-icon:hover {
-    color: var(--color-primary-element);
-}
-
-.info-popup {
-    padding: 8px 12px;
-    max-width: 280px;
-    font-size: 13px;
-    line-height: 1.4;
-}
 
 .form-info {
     margin: 16px 0;

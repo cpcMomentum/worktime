@@ -42,7 +42,7 @@
                         <span class="stat-value">{{ report.statistics.holidayCount }}</span>
                     </div>
                     <div class="stat-card">
-                        <span class="stat-label">{{ t('worktime', 'Abwesenheitstage') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Tage mit genehmigten Abwesenheiten (Urlaub, Krankheit etc.). Bezahlte Abwesenheiten zählen als geleistete Arbeitszeit.') }}</div></NcPopover></span>
+                        <span class="stat-label">{{ t('worktime', 'Abwesenheitstage') }} <InfoIcon>{{ t('worktime', 'Tage mit genehmigten Abwesenheiten (Urlaub, Krankheit etc.). Bezahlte Abwesenheiten zählen als geleistete Arbeitszeit.') }}</InfoIcon></span>
                         <span class="stat-value">{{ report.statistics.absenceDays }}</span>
                     </div>
                     <div class="stat-card">
@@ -106,8 +106,6 @@
 <script>
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
-import NcPopover from '@nextcloud/vue/dist/Components/NcPopover.js'
-import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import DownloadIcon from 'vue-material-design-icons/Download.vue'
 import SendIcon from 'vue-material-design-icons/Send.vue'
@@ -122,15 +120,15 @@ import ReportService from '../services/ReportService.js'
 import TimeEntryService from '../services/TimeEntryService.js'
 import { getCurrentYear, getCurrentMonth } from '../utils/dateUtils.js'
 import { formatDate, getStatusLabel, getAbsenceTypeLabel } from '../utils/formatters.js'
+import InfoIcon from '../components/InfoIcon.vue'
 
 export default {
     name: 'MonthlyReportView',
     components: {
+        InfoIcon,
         NcButton,
         NcLoadingIcon,
-        NcPopover,
         NcEmptyContent,
-        InformationOutline,
         DownloadIcon,
         SendIcon,
         CheckIcon,
@@ -348,27 +346,5 @@ export default {
     font-weight: 500;
 }
 
-.stat-label :deep(.v-popper),
-.stat-label :deep(.trigger) {
-    display: inline !important;
-}
 
-.info-icon {
-    display: inline;
-    vertical-align: middle;
-    margin-left: 2px;
-    cursor: pointer;
-    color: var(--color-text-maxcontrast);
-}
-
-.info-icon:hover {
-    color: var(--color-primary-element);
-}
-
-.info-popup {
-    padding: 8px 12px;
-    max-width: 280px;
-    font-size: 13px;
-    line-height: 1.4;
-}
 </style>

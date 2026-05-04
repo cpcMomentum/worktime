@@ -51,7 +51,7 @@
 
         <div v-if="!isEdit" class="form-row">
             <div class="form-group">
-                <label for="weeklyHours">{{ t('worktime', 'Wochenstunden') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Vertraglich vereinbarte Arbeitszeit pro Woche. Daraus berechnet WorkTime das tägliche Soll (Wochenstunden ÷ Arbeitstage pro Woche).') }}</div></NcPopover> *</label>
+                <label for="weeklyHours">{{ t('worktime', 'Wochenstunden') }} <InfoIcon>{{ t('worktime', 'Vertraglich vereinbarte Arbeitszeit pro Woche. Daraus berechnet WorkTime das tägliche Soll (Wochenstunden ÷ Arbeitstage pro Woche).') }}</InfoIcon> *</label>
                 <input id="weeklyHours"
                     v-model.number="form.weeklyHours"
                     type="number"
@@ -62,7 +62,7 @@
                     required>
             </div>
             <div class="form-group">
-                <label for="vacationDays">{{ t('worktime', 'Urlaubstage') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Jährlicher Urlaubsanspruch. Jeder genommene Urlaubstag wird davon abgezogen. Der Restanspruch wird im Dashboard angezeigt.') }}</div></NcPopover> *</label>
+                <label for="vacationDays">{{ t('worktime', 'Urlaubstage') }} <InfoIcon>{{ t('worktime', 'Jährlicher Urlaubsanspruch. Jeder genommene Urlaubstag wird davon abgezogen. Der Restanspruch wird im Dashboard angezeigt.') }}</InfoIcon> *</label>
                 <input id="vacationDays"
                     v-model.number="form.vacationDays"
                     type="number"
@@ -75,7 +75,7 @@
 
         <div class="form-row">
             <div class="form-group">
-                <label for="workingDaysPerWeek">{{ t('worktime', 'Arbeitstage pro Woche') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'An wie vielen Tagen pro Woche wird gearbeitet? Daraus und aus den Wochenstunden ergibt sich das tägliche Soll. Beispiel: 40 Std. auf 5 Tage = 8 Std./Tag, 30 Std. auf 4 Tage = 7,5 Std./Tag.') }}</div></NcPopover></label>
+                <label for="workingDaysPerWeek">{{ t('worktime', 'Arbeitstage pro Woche') }} <InfoIcon>{{ t('worktime', 'An wie vielen Tagen pro Woche wird gearbeitet? Daraus und aus den Wochenstunden ergibt sich das tägliche Soll. Beispiel: 40 Std. auf 5 Tage = 8 Std./Tag, 30 Std. auf 4 Tage = 7,5 Std./Tag.') }}</InfoIcon></label>
                 <input id="workingDaysPerWeek"
                     v-model.number="form.workingDaysPerWeek"
                     type="number"
@@ -87,7 +87,7 @@
 
         <div class="form-row">
             <div class="form-group">
-                <label for="federalState">{{ t('worktime', 'Bundesland') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Legt fest, welche gesetzlichen Feiertage für diesen Mitarbeiter gelten. Bayern hat z.B. mehr Feiertage als Hamburg.') }}</div></NcPopover> *</label>
+                <label for="federalState">{{ t('worktime', 'Bundesland') }} <InfoIcon>{{ t('worktime', 'Legt fest, welche gesetzlichen Feiertage für diesen Mitarbeiter gelten. Bayern hat z.B. mehr Feiertage als Hamburg.') }}</InfoIcon> *</label>
                 <NcSelect id="federalState"
                     v-model="selectedFederalState"
                     :options="federalStateOptions"
@@ -95,7 +95,7 @@
                     label="label" />
             </div>
             <div class="form-group">
-                <label for="supervisor">{{ t('worktime', 'Vorgesetzter') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Diese Person kann die Zeiteinträge und Abwesenheitsanträge dieses Mitarbeiters einsehen und genehmigen.') }}</div></NcPopover></label>
+                <label for="supervisor">{{ t('worktime', 'Vorgesetzter') }} <InfoIcon>{{ t('worktime', 'Diese Person kann die Zeiteinträge und Abwesenheitsanträge dieses Mitarbeiters einsehen und genehmigen.') }}</InfoIcon></label>
                 <NcSelect id="supervisor"
                     v-model="selectedSupervisor"
                     :options="supervisorOptions"
@@ -106,14 +106,14 @@
 
         <div class="form-row">
             <div class="form-group">
-                <label for="entryDate">{{ t('worktime', 'Eintrittsdatum') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Ab diesem Datum erscheint der Mitarbeiter in der Zeiterfassung. Für Monate davor werden keine Sollstunden berechnet.') }}</div></NcPopover></label>
+                <label for="entryDate">{{ t('worktime', 'Eintrittsdatum') }} <InfoIcon>{{ t('worktime', 'Ab diesem Datum erscheint der Mitarbeiter in der Zeiterfassung. Für Monate davor werden keine Sollstunden berechnet.') }}</InfoIcon></label>
                 <NcDateTimePicker id="entryDate"
                     v-model="form.entryDate"
                     type="date"
                     :format="'DD.MM.YYYY'" />
             </div>
             <div v-if="isEdit" class="form-group">
-                <label for="exitDate">{{ t('worktime', 'Austrittsdatum') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Ab diesem Datum kann der Mitarbeiter keine neuen Einträge mehr erfassen. Alle bisherigen Daten bleiben erhalten.') }}</div></NcPopover></label>
+                <label for="exitDate">{{ t('worktime', 'Austrittsdatum') }} <InfoIcon>{{ t('worktime', 'Ab diesem Datum kann der Mitarbeiter keine neuen Einträge mehr erfassen. Alle bisherigen Daten bleiben erhalten.') }}</InfoIcon></label>
                 <NcDateTimePicker id="exitDate"
                     v-model="form.exitDate"
                     type="date"
@@ -123,7 +123,7 @@
 
         <div v-if="isEdit" class="form-group">
             <NcCheckboxRadioSwitch :checked.sync="form.isActive">
-                {{ t('worktime', 'Aktiv') }} <NcPopover popup-role="tooltip"><template #trigger><InformationOutline class="info-icon" :size="14" /></template><div class="info-popup">{{ t('worktime', 'Inaktive Mitarbeiter können keine Zeiten mehr erfassen und tauchen nicht in Auswahllisten auf. Ihre bisherigen Daten und Berichte bleiben erhalten.') }}</div></NcPopover>
+                {{ t('worktime', 'Aktiv') }} <InfoIcon>{{ t('worktime', 'Inaktive Mitarbeiter können keine Zeiten mehr erfassen und tauchen nicht in Auswahllisten auf. Ihre bisherigen Daten und Berichte bleiben erhalten.') }}</InfoIcon>
             </NcCheckboxRadioSwitch>
         </div>
 
@@ -144,24 +144,22 @@
 
 <script>
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcPopover from '@nextcloud/vue/dist/Components/NcPopover.js'
 import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
-import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
 import WorkScheduleEditor from './WorkScheduleEditor.vue'
 import { mapGetters, mapActions } from 'vuex'
 import { formatDateISO } from '../utils/dateUtils.js'
+import InfoIcon from '../components/InfoIcon.vue'
 
 export default {
     name: 'EmployeeForm',
     components: {
+        InfoIcon,
         NcButton,
-        NcPopover,
         NcSelect,
         NcDateTimePicker,
         NcCheckboxRadioSwitch,
-        InformationOutline,
         WorkScheduleEditor,
     },
     props: {
@@ -394,32 +392,6 @@ export default {
 
 .input-small {
     width: 8rem;
-}
-
-label :deep(.v-popper),
-label :deep(.trigger),
-.form-group :deep(.v-popper),
-.form-group :deep(.trigger) {
-    display: inline !important;
-}
-
-.info-icon {
-    display: inline;
-    vertical-align: middle;
-    margin-left: 2px;
-    cursor: pointer;
-    color: var(--color-text-maxcontrast);
-}
-
-.info-icon:hover {
-    color: var(--color-primary-element);
-}
-
-.info-popup {
-    padding: 8px 12px;
-    max-width: 280px;
-    font-size: 13px;
-    line-height: 1.4;
 }
 
 .form-actions {
