@@ -47,8 +47,8 @@ class SettingsController extends BaseController {
         // Non-admins only see public settings
         if (!$this->permissionService->canManageSettings($this->userId)) {
             $allSettings = $this->settingsService->getAll();
-            $filtered = array_filter($allSettings, fn($s) => in_array($s['key'], self::PUBLIC_SETTINGS, true));
-            return $this->successResponse(array_values($filtered));
+            $filtered = array_intersect_key($allSettings, array_flip(self::PUBLIC_SETTINGS));
+            return $this->successResponse($filtered);
         }
 
         return $this->successResponse($this->settingsService->getAll());
