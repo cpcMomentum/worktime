@@ -1,12 +1,14 @@
 <template>
-    <NcPopover popup-role="tooltip">
-        <template #trigger>
-            <InformationOutline class="info-icon" :size="14" />
-        </template>
-        <div class="info-popup">
-            <slot />
-        </div>
-    </NcPopover>
+    <span class="info-icon-wrapper">
+        <NcPopover popup-role="tooltip">
+            <template #trigger>
+                <InformationOutline class="info-icon" :size="14" />
+            </template>
+            <div class="info-popup">
+                <slot />
+            </div>
+        </NcPopover>
+    </span>
 </template>
 
 <script>
@@ -22,10 +24,17 @@ export default {
 }
 </script>
 
-<style scoped>
-:deep(.v-popper),
-:deep(.trigger) {
+<style>
+/* Unscoped: NcPopover's internal .v-popper div must be inline,
+   scoped :deep() doesn't reliably penetrate the component boundary */
+.info-icon-wrapper .v-popper {
     display: inline !important;
+}
+</style>
+
+<style scoped>
+.info-icon-wrapper {
+    display: inline;
 }
 
 .info-icon {
