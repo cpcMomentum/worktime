@@ -16,6 +16,17 @@ use OCP\IUserManager;
 
 class SettingsController extends BaseController {
 
+    /** Settings readable by any authenticated user (needed for validation in forms) */
+    private const PUBLIC_SETTINGS = [
+        CompanySetting::KEY_MIN_BREAK_MINUTES_6H,
+        CompanySetting::KEY_MIN_BREAK_MINUTES_9H,
+        CompanySetting::KEY_MAX_DAILY_HOURS,
+        CompanySetting::KEY_REQUIRE_PROJECT,
+        CompanySetting::KEY_REQUIRE_DESCRIPTION,
+        CompanySetting::KEY_ALLOW_FUTURE_ENTRIES,
+        CompanySetting::KEY_APPROVAL_REQUIRED,
+    ];
+
     public function __construct(
         IRequest $request,
         ?string $userId,
@@ -33,15 +44,25 @@ class SettingsController extends BaseController {
             return $authError;
         }
 
-        $settings = $this->settingsService->getAll();
+        // Non-admins only see public settings
+        if (!$this->permissionService->canManageSettings($this->userId)) {
+            $allSettings = $this->settingsService->getAll();
+            $filtered = array_filter($allSettings, fn($s) => in_array($s['key'], self::PUBLIC_SETTINGS, true));
+            return $this->successResponse(array_values($filtered));
+        }
 
-        return $this->successResponse($settings);
+        return $this->successResponse($this->settingsService->getAll());
     }
 
     #[NoAdminRequired]
     public function show(string $key): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
+        }
+
+        // Non-admins can only read public settings
+        if (!in_array($key, self::PUBLIC_SETTINGS, true) && !$this->permissionService->canManageSettings($this->userId)) {
+            return $this->forbiddenResponse();
         }
 
         $value = $this->settingsService->get($key);
