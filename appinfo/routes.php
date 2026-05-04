@@ -87,6 +87,11 @@ return [
         ['name' => 'work_schedule#update',  'url' => '/api/employees/{employeeId}/schedules/{id}', 'verb' => 'PUT', 'requirements' => ['id' => '\d+']],
         ['name' => 'work_schedule#destroy', 'url' => '/api/employees/{employeeId}/schedules/{id}', 'verb' => 'DELETE', 'requirements' => ['id' => '\d+']],
 
+        // Yearly Carryover API
+        ['name' => 'yearly_carryover#index', 'url' => '/api/carryover/{year}', 'verb' => 'GET', 'requirements' => ['year' => '\d+']],
+        ['name' => 'yearly_carryover#show', 'url' => '/api/carryover/{year}/{employeeId}', 'verb' => 'GET', 'requirements' => ['year' => '\d+', 'employeeId' => '\d+']],
+        ['name' => 'yearly_carryover#upsert', 'url' => '/api/carryover', 'verb' => 'PUT'],
+
         // Reports API
         ['name' => 'report#monthly', 'url' => '/api/reports/monthly', 'verb' => 'GET'],
         ['name' => 'report#pdf', 'url' => '/api/reports/pdf', 'verb' => 'GET'],

@@ -16,6 +16,7 @@ use OCA\WorkTime\Service\PdfService;
 use OCA\WorkTime\Service\PermissionService;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCA\WorkTime\Service\WorkScheduleService;
+use OCA\WorkTime\Service\YearlyCarryoverService;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -39,6 +40,7 @@ class ReportController extends BaseController {
         private PermissionService $permissionService,
         private PdfService $pdfService,
         private WorkScheduleService $workScheduleService,
+        private YearlyCarryoverService $carryoverService,
     ) {
         parent::__construct($request, $userId);
     }
@@ -291,13 +293,18 @@ class ReportController extends BaseController {
                 $totalOvertimeMinutes += $stats['overtimeMinutes'];
             }
 
-            // Vacation stats - use schedule-aware vacation days
+            // Vacation stats - use schedule-aware vacation days + carryover
             $vacationDaysForYear = $this->workScheduleService->getVacationDaysForYear($empId, $year);
+            $vacationCarryover = $this->carryoverService->getVacationCarryoverDays($empId, $year);
             $vacationStats = $this->absenceService->getVacationStats(
                 $empId,
                 $year,
-                $vacationDaysForYear
+                $vacationDaysForYear + (int)round($vacationCarryover)
             );
+            $vacationStats['carryover'] = $vacationCarryover;
+
+            // Overtime carryover
+            $overtimeCarryover = $this->carryoverService->getOvertimeCarryoverMinutes($empId, $year);
 
             $report[] = [
                 'employee' => [
@@ -308,7 +315,8 @@ class ReportController extends BaseController {
                 ],
                 'vacationStats' => $vacationStats,
                 'months' => $months,
-                'totalOvertimeMinutes' => $totalOvertimeMinutes,
+                'carryoverMinutes' => $overtimeCarryover,
+                'totalOvertimeMinutes' => $totalOvertimeMinutes + $overtimeCarryover,
             ];
         }
 
@@ -358,12 +366,15 @@ class ReportController extends BaseController {
                 $totalOvertime += $stats['overtimeMinutes'];
             }
 
+            $carryoverMinutes = $this->carryoverService->getOvertimeCarryoverMinutes($employeeId, $year);
+
             return $this->successResponse([
                 'employee' => $employee,
                 'year' => $year,
                 'monthly' => $monthlyData,
-                'totalOvertimeMinutes' => $totalOvertime,
-                'totalOvertimeHours' => round($totalOvertime / 60, 2),
+                'carryoverMinutes' => $carryoverMinutes,
+                'totalOvertimeMinutes' => $totalOvertime + $carryoverMinutes,
+                'totalOvertimeHours' => round(($totalOvertime + $carryoverMinutes) / 60, 2),
             ]);
         } catch (\Exception $e) {
             return $this->handleException($e);

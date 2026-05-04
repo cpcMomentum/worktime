@@ -430,7 +430,16 @@
 		"Diese Anträge warten auf Ihre Genehmigung oder Ablehnung. Erst nach Genehmigung werden sie vom Urlaubskonto abgezogen.": "Diese Anträge warten auf Ihre Genehmigung oder Ablehnung. Erst nach Genehmigung werden sie vom Urlaubskonto abgezogen.",
 		"Legt fest, ob Kollegen in der Abwesenheitsübersicht Ihren Abwesenheitsgrund sehen (z.B. Urlaub) oder nur Abwesend. Vorgesetzte und HR sehen immer den Grund.": "Legt fest, ob Kollegen in der Abwesenheitsübersicht Ihren Abwesenheitsgrund sehen (z.B. Urlaub) oder nur Abwesend. Vorgesetzte und HR sehen immer den Grund.",
 		"Tage mit genehmigten Abwesenheiten (Urlaub, Krankheit etc.). Bezahlte Abwesenheiten zählen als geleistete Arbeitszeit.": "Tage mit genehmigten Abwesenheiten (Urlaub, Krankheit etc.). Bezahlte Abwesenheiten zählen als geleistete Arbeitszeit.",
-		"Admin: Volle Rechte (automatisch). HR-Manager: Mitarbeiter verwalten und Anträge genehmigen (manuell zuweisen). Vorgesetzter: Genehmigt Zeiten seines Teams (automatisch). Mitarbeiter: Eigene Zeiten erfassen (automatisch).": "Admin: Volle Rechte (automatisch). HR-Manager: Mitarbeiter verwalten und Anträge genehmigen (manuell zuweisen). Vorgesetzter: Genehmigt Zeiten seines Teams (automatisch). Mitarbeiter: Eigene Zeiten erfassen (automatisch)."
+		"Admin: Volle Rechte (automatisch). HR-Manager: Mitarbeiter verwalten und Anträge genehmigen (manuell zuweisen). Vorgesetzter: Genehmigt Zeiten seines Teams (automatisch). Mitarbeiter: Eigene Zeiten erfassen (automatisch).": "Admin: Volle Rechte (automatisch). HR-Manager: Mitarbeiter verwalten und Anträge genehmigen (manuell zuweisen). Vorgesetzter: Genehmigt Zeiten seines Teams (automatisch). Mitarbeiter: Eigene Zeiten erfassen (automatisch).",
+		"Jahresübertrag": "Jahresübertrag",
+		"Überstunden und Resturlaub aus dem Vorjahr übertragen.": "Überstunden und Resturlaub aus dem Vorjahr übertragen.",
+		"Das Jahr, FÜR das der Übertrag gilt. Beispiel: Resturlaub aus 2025 wird als Übertrag für 2026 eingetragen.": "Das Jahr, FÜR das der Übertrag gilt. Beispiel: Resturlaub aus 2025 wird als Übertrag für 2026 eingetragen.",
+		"Überstunden (Std.)": "Überstunden (Std.)",
+		"Resturlaub (Tage)": "Resturlaub (Tage)",
+		"Bemerkung": "Bemerkung",
+		"z.B. 10h ausbezahlt": "z.B. 10h ausbezahlt",
+		"Übertrag gespeichert": "Übertrag gespeichert",
+		"Übertrag Vorjahr": "Übertrag Vorjahr"
 	},
 	"pluralForm": "nplurals=2; plural=(n != 1);"
 }

@@ -60,6 +60,7 @@
                     :year="year"
                     :min-year="minYear"
                     :max-year="maxYear"
+                    :carryover-minutes="carryoverMinutes"
                     @previous="changeYear(-1)"
                     @next="changeYear(1)" />
             </div>
@@ -89,6 +90,7 @@ export default {
             year: getCurrentYear(),
             month: getCurrentMonth(),
             loading: false,
+            carryoverMinutes: 0,
             vacationStats: {
                 entitlement: 0,
                 taken: 0,
@@ -184,6 +186,7 @@ export default {
 
                 if (overtimeReport) {
                     this.yearlyMonths = overtimeReport.monthly || []
+                    this.carryoverMinutes = overtimeReport.carryoverMinutes || 0
                 }
             } catch (error) {
                 console.error('Failed to load dashboard data:', error)

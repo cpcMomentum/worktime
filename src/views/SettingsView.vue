@@ -410,6 +410,71 @@
                 </NcModal>
 
                 </NcSettingsSection>
+
+            <NcSettingsSection v-if="canManageEmployees"
+                :name="t('worktime', 'Jahresübertrag')"
+                :description="t('worktime', 'Überstunden und Resturlaub aus dem Vorjahr übertragen.')">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="carryoverYear">{{ t('worktime', 'Jahr') }} <InfoIcon>{{ t('worktime', 'Das Jahr, FÜR das der Übertrag gilt. Beispiel: Resturlaub aus 2025 wird als Übertrag für 2026 eingetragen.') }}</InfoIcon></label>
+                        <input id="carryoverYear"
+                            v-model.number="carryoverYear"
+                            type="number"
+                            :min="2020"
+                            :max="2050"
+                            class="input-field input-small"
+                            @change="loadCarryovers">
+                    </div>
+                </div>
+                <table v-if="carryoverEmployees.length > 0" class="carryover-table">
+                    <thead>
+                        <tr>
+                            <th>{{ t('worktime', 'Mitarbeiter') }}</th>
+                            <th class="text-right">{{ t('worktime', 'Überstunden (Std.)') }}</th>
+                            <th class="text-right">{{ t('worktime', 'Resturlaub (Tage)') }}</th>
+                            <th>{{ t('worktime', 'Bemerkung') }}</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="emp in carryoverEmployees" :key="emp.employeeId">
+                            <td>{{ emp.fullName }}</td>
+                            <td class="text-right">
+                                <input v-model.number="emp.overtimeHours"
+                                    type="number"
+                                    step="0.5"
+                                    class="input-field input-small carryover-input"
+                                    @change="markCarryoverDirty(emp)">
+                            </td>
+                            <td class="text-right">
+                                <input v-model.number="emp.vacationDays"
+                                    type="number"
+                                    step="0.5"
+                                    min="0"
+                                    class="input-field input-small carryover-input"
+                                    @change="markCarryoverDirty(emp)">
+                            </td>
+                            <td>
+                                <input v-model="emp.note"
+                                    type="text"
+                                    :placeholder="t('worktime', 'z.B. 10h ausbezahlt')"
+                                    class="input-field carryover-note"
+                                    @change="markCarryoverDirty(emp)">
+                            </td>
+                            <td>
+                                <NcButton v-if="emp.dirty"
+                                    type="primary"
+                                    :aria-label="t('worktime', 'Speichern')"
+                                    @click="saveCarryover(emp)">
+                                    {{ t('worktime', 'Speichern') }}
+                                </NcButton>
+                                <span v-else-if="emp.saved" class="carryover-saved">✓</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </NcSettingsSection>
+
         </div>
     </div>
 </template>
@@ -442,6 +507,7 @@ import ProjectForm from '../components/ProjectForm.vue'
 import ProjectList from '../components/ProjectList.vue'
 import { showSuccessMessage, showErrorMessage } from '../utils/errorHandler.js'
 import { getCurrentYear } from '../utils/dateUtils.js'
+import YearlyCarryoverService from '../services/YearlyCarryoverService.js'
 import InfoIcon from '../components/InfoIcon.vue'
 
 export default {
@@ -499,6 +565,9 @@ export default {
             ],
             // Grouped holiday view
             expandedGroups: [],
+            // Yearly carryover
+            carryoverYear: getCurrentYear(),
+            carryoverEmployees: [],
         }
     },
     computed: {
@@ -603,6 +672,9 @@ export default {
         }
         if (this.canManageProjects) {
             this.fetchProjects(true)
+        }
+        if (this.canManageEmployees) {
+            this.loadCarryovers()
         }
     },
     methods: {
@@ -916,6 +988,50 @@ export default {
                 showErrorMessage(error.message)
             }
         },
+
+        // Yearly Carryover
+        async loadCarryovers() {
+            try {
+                const carryovers = await YearlyCarryoverService.getByYear(this.carryoverYear) || []
+                const carryoverMap = {}
+                carryovers.forEach(c => { carryoverMap[c.employeeId] = c })
+
+                this.carryoverEmployees = this.employees.map(emp => {
+                    const existing = carryoverMap[emp.id]
+                    return {
+                        employeeId: emp.id,
+                        fullName: `${emp.firstName} ${emp.lastName}`,
+                        overtimeHours: existing ? existing.overtimeHours : 0,
+                        vacationDays: existing ? existing.vacationDays : 0,
+                        note: existing ? (existing.note || '') : '',
+                        dirty: false,
+                        saved: !!existing,
+                    }
+                })
+            } catch (error) {
+                console.error('Failed to load carryovers:', error)
+            }
+        },
+        markCarryoverDirty(emp) {
+            emp.dirty = true
+            emp.saved = false
+        },
+        async saveCarryover(emp) {
+            try {
+                await YearlyCarryoverService.upsert(
+                    emp.employeeId,
+                    this.carryoverYear,
+                    Math.round(emp.overtimeHours * 60),
+                    emp.vacationDays,
+                    emp.note || null,
+                )
+                emp.dirty = false
+                emp.saved = true
+                showSuccessMessage(this.t('worktime', 'Übertrag gespeichert'))
+            } catch (error) {
+                showErrorMessage(error.message)
+            }
+        },
     },
 }
 </script>
@@ -1134,5 +1250,43 @@ export default {
     color: var(--color-primary-element);
     border-radius: 12px;
     font-size: 0.85em;
+}
+
+.carryover-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+}
+
+.carryover-table th,
+.carryover-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+    vertical-align: middle;
+}
+
+.carryover-table th {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--color-text-maxcontrast);
+}
+
+.carryover-input {
+    width: 80px !important;
+    text-align: right;
+}
+
+.carryover-note {
+    width: 100% !important;
+}
+
+.carryover-saved {
+    color: var(--color-success);
+    font-weight: 600;
+}
+
+.text-right {
+    text-align: right !important;
 }
 </style>

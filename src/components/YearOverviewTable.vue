@@ -64,13 +64,23 @@
                 </tr>
             </tbody>
             <tfoot>
+                <tr v-if="carryoverMinutes !== 0" class="carryover-row">
+                    <td>{{ t('worktime', 'Übertrag Vorjahr') }}</td>
+                    <td></td>
+                    <td></td>
+                    <td class="text-right">
+                        <span :class="overtimeClass(carryoverMinutes)">
+                            {{ formatOvertime(carryoverMinutes) }}
+                        </span>
+                    </td>
+                </tr>
                 <tr class="total-row">
                     <td>{{ t('worktime', 'Gesamt') }}</td>
                     <td class="text-right">{{ formatMin(totalTarget) }}</td>
                     <td class="text-right">{{ formatMin(totalActual) }}</td>
                     <td class="text-right">
-                        <span :class="overtimeClass(totalOvertime)">
-                            {{ formatOvertime(totalOvertime) }}
+                        <span :class="overtimeClass(totalOvertime + carryoverMinutes)">
+                            {{ formatOvertime(totalOvertime + carryoverMinutes) }}
                         </span>
                     </td>
                 </tr>
@@ -111,6 +121,10 @@ export default {
         maxYear: {
             type: Number,
             default: null,
+        },
+        carryoverMinutes: {
+            type: Number,
+            default: 0,
         },
     },
     computed: {
@@ -248,6 +262,12 @@ export default {
 .future-month {
     color: var(--color-text-maxcontrast);
     opacity: 0.5;
+}
+
+.carryover-row td {
+    font-style: italic;
+    color: var(--color-text-maxcontrast);
+    border-top: 1px solid var(--color-border);
 }
 
 .total-row {

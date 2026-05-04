@@ -431,6 +431,15 @@ OC.L10N.register(
     "Diese Anträge warten auf Ihre Genehmigung oder Ablehnung. Erst nach Genehmigung werden sie vom Urlaubskonto abgezogen." : "These requests are waiting for your approval or rejection. Only after approval are they deducted from the vacation balance.",
     "Legt fest, ob Kollegen in der Abwesenheitsübersicht Ihren Abwesenheitsgrund sehen (z.B. Urlaub) oder nur Abwesend. Vorgesetzte und HR sehen immer den Grund." : "Determines whether colleagues see your absence reason (e.g. vacation) or just 'absent' in the absence overview. Supervisors and HR always see the reason.",
     "Tage mit genehmigten Abwesenheiten (Urlaub, Krankheit etc.). Bezahlte Abwesenheiten zählen als geleistete Arbeitszeit." : "Days with approved absences (vacation, sick leave etc.). Paid absences count as hours worked.",
-    "Admin: Volle Rechte (automatisch). HR-Manager: Mitarbeiter verwalten und Anträge genehmigen (manuell zuweisen). Vorgesetzter: Genehmigt Zeiten seines Teams (automatisch). Mitarbeiter: Eigene Zeiten erfassen (automatisch)." : "Admin: Full rights (automatic). HR Manager: Manage employees and approve requests (assign manually). Supervisor: Approves their team's time entries (automatic). Employee: Track own time (automatic)."
+    "Admin: Volle Rechte (automatisch). HR-Manager: Mitarbeiter verwalten und Anträge genehmigen (manuell zuweisen). Vorgesetzter: Genehmigt Zeiten seines Teams (automatisch). Mitarbeiter: Eigene Zeiten erfassen (automatisch)." : "Admin: Full rights (automatic). HR Manager: Manage employees and approve requests (assign manually). Supervisor: Approves their team's time entries (automatic). Employee: Track own time (automatic).",
+    "Jahresübertrag" : "Yearly Carryover",
+    "Überstunden und Resturlaub aus dem Vorjahr übertragen." : "Transfer overtime and remaining vacation from the previous year.",
+    "Das Jahr, FÜR das der Übertrag gilt. Beispiel: Resturlaub aus 2025 wird als Übertrag für 2026 eingetragen." : "The year FOR which the carryover applies. Example: Remaining vacation from 2025 is entered as carryover for 2026.",
+    "Überstunden (Std.)" : "Overtime (hrs)",
+    "Resturlaub (Tage)" : "Remaining Vacation (days)",
+    "Bemerkung" : "Note",
+    "z.B. 10h ausbezahlt" : "e.g. 10h paid out",
+    "Übertrag gespeichert" : "Carryover saved",
+    "Übertrag Vorjahr" : "Previous Year Carryover"
 },
 "nplurals=2; plural=(n != 1);");
