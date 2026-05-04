@@ -1,4 +1,4 @@
-import { showError, showWarning, showSuccess } from '@nextcloud/dialogs'
+import { showError, showWarning, showSuccess, DialogSeverity, getDialogBuilder } from '@nextcloud/dialogs'
 
 /**
  * Handle and display API errors
@@ -63,23 +63,24 @@ export function extractValidationErrors(errors) {
  */
 export function confirmAction(message, title = 'Bestätigung', confirmLabel = 'OK', destructive = false) {
     return new Promise((resolve) => {
-        if (window.OC?.dialogs?.confirmDestructive) {
-            window.OC.dialogs.confirmDestructive(
-                message,
-                title,
+        const dialog = getDialogBuilder(title)
+            .setText(message)
+            .setButtons([
                 {
-                    type: window.OC.dialogs.YES_NO_BUTTONS,
-                    confirm: confirmLabel,
-                    confirmClasses: destructive ? 'error' : 'primary',
-                    cancel: 'Abbrechen',
+                    label: 'Abbrechen',
+                    type: 'secondary',
+                    callback: () => resolve(false),
                 },
-                (result) => resolve(result),
-                true
-            )
-        } else {
-            // Fallback to native confirm
-            resolve(window.confirm(message))
+                {
+                    label: confirmLabel,
+                    type: destructive ? 'error' : 'primary',
+                    callback: () => resolve(true),
+                },
+            ])
+        if (destructive) {
+            dialog.setSeverity(DialogSeverity.Warning)
         }
+        dialog.build().show()
     })
 }
 

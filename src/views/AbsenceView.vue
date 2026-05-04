@@ -182,9 +182,6 @@ export default {
         },
     },
     mounted() {
-        if (this.employeeId) {
-            this.loadData()
-        }
         this.$store.dispatch('absences/fetchAbsenceTypes')
     },
     methods: {

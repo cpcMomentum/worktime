@@ -165,12 +165,6 @@ export default {
             },
         },
     },
-    mounted() {
-        // Daten bei jedem View-Wechsel neu laden
-        if (this.employeeId) {
-            this.loadReport()
-        }
-    },
     methods: {
         getAbsenceTypeLabel,
         async loadReport() {

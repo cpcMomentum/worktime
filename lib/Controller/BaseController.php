@@ -8,9 +8,9 @@ use OCA\WorkTime\AppInfo\Application;
 use OCA\WorkTime\Service\ForbiddenException;
 use OCA\WorkTime\Service\NotFoundException;
 use OCA\WorkTime\Service\ValidationException;
+use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\OCSController;
 use OCP\IRequest;
 
 /**
@@ -20,7 +20,7 @@ use OCP\IRequest;
  * - Unified authentication checks
  * - Centralized exception handling
  */
-abstract class BaseController extends OCSController {
+abstract class BaseController extends Controller {
 
     protected ?string $userId;
 

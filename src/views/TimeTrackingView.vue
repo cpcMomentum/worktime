@@ -73,19 +73,13 @@ export default {
                 this.loadData()
             },
         },
-        employeeId: {
-            immediate: true,
-            handler() {
-                if (this.employeeId) {
-                    this.loadData()
-                }
-            },
+        employeeId(newVal, oldVal) {
+            if (newVal && newVal !== oldVal) {
+                this.loadData()
+            }
         },
     },
     mounted() {
-        if (this.employeeId) {
-            this.loadData()
-        }
         this.$store.dispatch('projects/fetchProjects')
     },
     methods: {

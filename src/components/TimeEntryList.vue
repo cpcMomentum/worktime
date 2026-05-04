@@ -150,8 +150,10 @@ export default {
 
             // Add absences (expand date range to individual days)
             for (const absence of this.absences) {
-                const start = new Date(absence.startDate)
-                const end = new Date(absence.endDate)
+                const [sy, sm, sd] = absence.startDate.split('-').map(Number)
+                const [ey, em, ed] = absence.endDate.split('-').map(Number)
+                const start = new Date(sy, sm - 1, sd)
+                const end = new Date(ey, em - 1, ed)
                 const typeName = getAbsenceTypeLabel(absence.type)
                 for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
                     const dayOfWeek = d.getDay()

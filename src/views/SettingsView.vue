@@ -672,11 +672,12 @@ export default {
             this.editingEmployee = null
         },
         async onEmployeeSaved() {
+            const wasEditing = !!this.editingEmployee
             this.closeEmployeeForm()
             await this.$store.dispatch('employees/fetchEmployees')
             await this.$store.dispatch('permissions/fetchPermissions')
             showSuccessMessage(
-                this.editingEmployee
+                wasEditing
                     ? this.t('worktime', 'Mitarbeiter aktualisiert')
                     : this.t('worktime', 'Mitarbeiter erstellt')
             )
