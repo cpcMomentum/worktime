@@ -29,7 +29,6 @@ class PageController extends Controller {
      */
     public function index(): TemplateResponse {
         Util::addScript(Application::APP_ID, 'worktime-main');
-        Util::addStyle(Application::APP_ID, 'main');
 
         // Provide permission info via Initial State API
         if ($this->userId !== null) {
