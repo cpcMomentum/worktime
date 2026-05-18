@@ -1,0 +1,111 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+
+jobs:
+  claude-review:
+    # Only review non-draft PRs
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: read
+      id-token: write
+      actions: read
+
+    steps:
+      - name: Check review cycle count
+        id: cycles
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Count previous Claude review comments
+          REVIEW_COUNT=$(gh api "/repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" \
+            --jq '[.[] | select(.user.login == "github-actions[bot]" or .user.login == "claude[bot]") | select(.body | test("APPROVED|NEEDS_FIX"))] | length')
+          echo "count=${REVIEW_COUNT}" >> $GITHUB_OUTPUT
+
+          # Check if last review was APPROVED
+          LAST_STATUS=$(gh api "/repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" \
+            --jq '[.[] | select(.user.login == "github-actions[bot]" or .user.login == "claude[bot]") | select(.body | test("APPROVED|NEEDS_FIX"))] | last // empty | .body // empty' \
+            | grep -oE 'APPROVED|NEEDS_FIX' | head -1 || echo "")
+          echo "last_status=${LAST_STATUS}" >> $GITHUB_OUTPUT
+
+          echo "Review cycles so far: ${REVIEW_COUNT}, Last status: ${LAST_STATUS}"
+
+      - name: Minimize outdated Claude reviews
+        if: steps.cycles.outputs.count < 3 && steps.cycles.outputs.last_status != 'APPROVED'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          COMMENTS=$(gh api "/repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" \
+            --jq '.[] | select(.user.login == "github-actions[bot]" or .user.login == "claude[bot]") | select(.body | test("Claude Code Review|APPROVED|NEEDS_FIX")) | .node_id')
+
+          for NODE_ID in $COMMENTS; do
+            gh api graphql -f query='
+              mutation {
+                minimizeComment(input: {subjectId: "'"$NODE_ID"'", classifier: OUTDATED}) {
+                  minimizedComment { isMinimized }
+                }
+              }'
+          done
+
+      - name: Checkout repository
+        if: steps.cycles.outputs.count < 3 && steps.cycles.outputs.last_status != 'APPROVED'
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          ref: ${{ github.head_ref }}
+
+      - name: Run Claude Code Review & Auto-Fix
+        if: steps.cycles.outputs.count < 3 && steps.cycles.outputs.last_status != 'APPROVED'
+        uses: anthropics/claude-code-action@v1
+        with:
+          # Auth: OAuth Token bevorzugt (claude_code_oauth_token).
+          # Alternative: anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Erlaubt Claude Bot als Trigger (wenn claude.yml PRs erstellt/pusht)
+          allowed_bots: "claude[bot],github-actions[bot]"
+          show_full_output: true
+          prompt: |
+            Du bist ein Code-Reviewer.
+            Dies ist Review-Zyklus ${{ steps.cycles.outputs.count }} von maximal 3.
+
+            ## Schritt 1: Review
+            Reviewe den KOMPLETTEN PR-Diff und pruefe:
+            - Code-Qualitaet und Best Practices
+            - Potenzielle Bugs oder Sicherheitsprobleme
+            - Performance-Aspekte
+            - Einhaltung der Standards aus CLAUDE.md und .claude/standards/
+            - Fehlende Error-Handling oder Edge-Cases
+            - Type-Safety und Linting
+
+            ## Schritt 2: Auto-Fix
+            Wenn du Probleme findest die du SICHER beheben kannst:
+            1. Editiere die betroffenen Dateien
+            2. Committe jede Aenderung einzeln:
+               git add <files> && git commit -m "fix(review): beschreibung" && git push
+
+            Fixe NUR klare, eindeutige Probleme. Bei architektonischen Fragen
+            oder unklaren Anforderungen NUR kommentieren.
+
+            ## Schritt 3: Zusammenfassung
+            Poste einen Review-Kommentar auf dem PR mit exakt diesem Format:
+
+            ### Claude Code Review - Zyklus ${{ steps.cycles.outputs.count }}
+            **Geprueft:** [Liste was geprueft wurde]
+            **Automatisch gefixt:** [Liste der Fixes, oder "Keine"]
+            **Manuell zu beheben:** [Liste, oder "Keine"]
+            **Status: APPROVED** oder **Status: NEEDS_FIX**
+
+            Nutze APPROVED wenn alles in Ordnung ist oder nur noch kosmetische Punkte offen sind.
+            Nutze NEEDS_FIX wenn es funktionale Probleme gibt die du nicht fixen konntest.
+
+          claude_args: |
+            --max-turns 50
+            --allowedTools "Edit,MultiEdit,Glob,Grep,LS,Read,Write,Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git rm:*),Bash(gh pr comment:*),Bash(gh pr review:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(npm run:*),Bash(npx:*),Bash(cd:*),Bash(ls:*),Bash(ruff:*),Bash(pip:*),Bash(python:*),mcp__github_comment__update_claude_comment"
