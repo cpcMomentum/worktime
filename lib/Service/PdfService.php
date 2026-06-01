@@ -218,34 +218,46 @@ class PdfService {
             if (isset($entriesByDate[$dateStr])) {
                 // Has time entries
                 foreach ($entriesByDate[$dateStr] as $entry) {
-                    $pdf->Cell(25, 6, $dateFormatted, 1, 0, 'C', $fill);
-                    $pdf->Cell(15, 6, $dayName, 1, 0, 'C', $fill);
-                    $pdf->Cell(20, 6, $entry->getStartTime()->format('H:i'), 1, 0, 'C', $fill);
-                    $pdf->Cell(20, 6, $entry->getEndTime()->format('H:i'), 1, 0, 'C', $fill);
-                    $pdf->Cell(20, 6, $this->formatMinutes($entry->getBreakMinutes()), 1, 0, 'C', $fill);
-                    $pdf->Cell(20, 6, $this->formatMinutes($entry->getWorkMinutes()), 1, 0, 'C', $fill);
-                    $pdf->Cell(0, 6, $entry->getDescription() ?? '', 1, 1, 'L', $fill);
+                    $this->renderTimeEntryRow(
+                        $pdf,
+                        $dateFormatted,
+                        $dayName,
+                        $entry->getStartTime()->format('H:i'),
+                        $entry->getEndTime()->format('H:i'),
+                        $this->formatMinutes($entry->getBreakMinutes()),
+                        $this->formatMinutes($entry->getWorkMinutes()),
+                        $entry->getDescription() ?? '',
+                        $fill
+                    );
                     $dateFormatted = ''; // Clear for subsequent entries on same day
                     $dayName = '';
                 }
             } elseif ($isHoliday) {
                 // Holiday
-                $pdf->Cell(25, 6, $dateFormatted, 1, 0, 'C', $fill);
-                $pdf->Cell(15, 6, $dayName, 1, 0, 'C', $fill);
-                $pdf->Cell(20, 6, '-', 1, 0, 'C', $fill);
-                $pdf->Cell(20, 6, '-', 1, 0, 'C', $fill);
-                $pdf->Cell(20, 6, '-', 1, 0, 'C', $fill);
-                $pdf->Cell(20, 6, '-', 1, 0, 'C', $fill);
-                $pdf->Cell(0, 6, 'Feiertag: ' . $holidayDates[$dateStr], 1, 1, 'L', $fill);
+                $this->renderTimeEntryRow(
+                    $pdf,
+                    $dateFormatted,
+                    $dayName,
+                    '-',
+                    '-',
+                    '-',
+                    '-',
+                    'Feiertag: ' . $holidayDates[$dateStr],
+                    $fill
+                );
             } elseif (!$isWeekend) {
                 // Regular workday without entry
-                $pdf->Cell(25, 6, $dateFormatted, 1, 0, 'C', $fill);
-                $pdf->Cell(15, 6, $dayName, 1, 0, 'C', $fill);
-                $pdf->Cell(20, 6, '', 1, 0, 'C', $fill);
-                $pdf->Cell(20, 6, '', 1, 0, 'C', $fill);
-                $pdf->Cell(20, 6, '', 1, 0, 'C', $fill);
-                $pdf->Cell(20, 6, '', 1, 0, 'C', $fill);
-                $pdf->Cell(0, 6, '', 1, 1, 'L', $fill);
+                $this->renderTimeEntryRow(
+                    $pdf,
+                    $dateFormatted,
+                    $dayName,
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    $fill
+                );
             }
 
             $current->modify('+1 day');
@@ -283,14 +295,76 @@ class PdfService {
             ];
             $status = $statusTranslation[$absence->getStatus()] ?? $absence->getStatus();
 
-            $pdf->Cell(30, 6, $period, 1, 0, 'C');
-            $pdf->Cell(20, 6, $days, 1, 0, 'C');
-            $pdf->Cell(30, 6, $absence->getTypeName(), 1, 0, 'L');
-            $pdf->Cell(25, 6, $status, 1, 0, 'C');
-            $pdf->Cell(0, 6, $absence->getNote() ?? '', 1, 1, 'L');
+            $this->renderAbsenceRow($pdf, $period, $days, $absence->getTypeName(), $status, $absence->getNote() ?? '');
         }
 
         $pdf->Ln(5);
+    }
+
+    /**
+     * Width of the note column = page width minus margins and the sum of the fixed columns.
+     */
+    private function getNoteCellWidth(TCPDF $pdf, float $fixedColumnsWidth): float {
+        $margins = $pdf->getMargins();
+        return $pdf->getPageWidth() - $margins['left'] - $margins['right'] - $fixedColumnsWidth;
+    }
+
+    /**
+     * Calculate the row height needed so a wrapping note fits, with $minHeight as the floor.
+     */
+    private function calculateRowHeight(TCPDF $pdf, string $note, float $noteWidth, float $minHeight = 6.0): float {
+        if ($note === '') {
+            return $minHeight;
+        }
+        return max($minHeight, $pdf->getStringHeight($noteWidth, $note));
+    }
+
+    /**
+     * Render one row of the time entries table; the note column wraps and dictates row height.
+     */
+    private function renderTimeEntryRow(
+        TCPDF $pdf,
+        string $date,
+        string $day,
+        string $start,
+        string $end,
+        string $break,
+        string $work,
+        string $note,
+        bool $fill
+    ): void {
+        $noteWidth = $this->getNoteCellWidth($pdf, 120.0);
+        $rowHeight = $this->calculateRowHeight($pdf, $note, $noteWidth);
+
+        $pdf->Cell(25, $rowHeight, $date, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
+        $pdf->Cell(15, $rowHeight, $day, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
+        $pdf->Cell(20, $rowHeight, $start, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
+        $pdf->Cell(20, $rowHeight, $end, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
+        $pdf->Cell(20, $rowHeight, $break, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
+        $pdf->Cell(20, $rowHeight, $work, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
+        $pdf->MultiCell($noteWidth, $rowHeight, $note, 1, 'L', $fill, 1, '', '', true, 0, false, true, 0, 'M');
+    }
+
+    /**
+     * Render one row of the absences table; the note column wraps and dictates row height.
+     */
+    private function renderAbsenceRow(
+        TCPDF $pdf,
+        string $period,
+        string $days,
+        string $type,
+        string $status,
+        string $note,
+        bool $fill = false
+    ): void {
+        $noteWidth = $this->getNoteCellWidth($pdf, 105.0);
+        $rowHeight = $this->calculateRowHeight($pdf, $note, $noteWidth);
+
+        $pdf->Cell(30, $rowHeight, $period, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
+        $pdf->Cell(20, $rowHeight, $days, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
+        $pdf->Cell(30, $rowHeight, $type, 1, 0, 'L', $fill, '', 0, false, 'T', 'M');
+        $pdf->Cell(25, $rowHeight, $status, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
+        $pdf->MultiCell($noteWidth, $rowHeight, $note, 1, 'L', $fill, 1, '', '', true, 0, false, true, 0, 'M');
     }
 
     /**
