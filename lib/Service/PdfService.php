@@ -310,13 +310,22 @@ class PdfService {
     }
 
     /**
-     * Calculate the row height needed so a wrapping note fits, with $minHeight as the floor.
+     * Calculate the row height needed so a wrapping note fits, with $lineHeight as the per-line floor.
+     *
+     * getStringHeight() returns the *total* height for all wrapped lines; we count lines from it
+     * so that the fixed Cell() siblings and MultiCell($h=$lineHeight) agree on the row height.
      */
-    private function calculateRowHeight(TCPDF $pdf, string $note, float $noteWidth, float $minHeight = 6.0): float {
+    private function calculateRowHeight(TCPDF $pdf, string $note, float $noteWidth, float $lineHeight = 6.0): float {
         if ($note === '') {
-            return $minHeight;
+            return $lineHeight;
         }
-        return max($minHeight, $pdf->getStringHeight($noteWidth, $note));
+        $singleLineHeight = $pdf->getStringHeight($noteWidth, 'A');
+        if ($singleLineHeight <= 0.0) {
+            return $lineHeight;
+        }
+        $totalNoteHeight = $pdf->getStringHeight($noteWidth, $note);
+        $numLines = max(1, (int)round($totalNoteHeight / $singleLineHeight));
+        return max($lineHeight, $numLines * $lineHeight);
     }
 
     /**
@@ -333,8 +342,9 @@ class PdfService {
         string $note,
         bool $fill
     ): void {
+        $lineHeight = 6.0;
         $noteWidth = $this->getNoteCellWidth($pdf, 120.0);
-        $rowHeight = $this->calculateRowHeight($pdf, $note, $noteWidth);
+        $rowHeight = $this->calculateRowHeight($pdf, $note, $noteWidth, $lineHeight);
 
         $pdf->Cell(25, $rowHeight, $date, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
         $pdf->Cell(15, $rowHeight, $day, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
@@ -342,7 +352,8 @@ class PdfService {
         $pdf->Cell(20, $rowHeight, $end, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
         $pdf->Cell(20, $rowHeight, $break, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
         $pdf->Cell(20, $rowHeight, $work, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
-        $pdf->MultiCell($noteWidth, $rowHeight, $note, 1, 'L', $fill, 1, '', '', true, 0, false, true, 0, 'M');
+        // $h must be the per-line height (not the total): MultiCell height = numLines × $lineHeight = $rowHeight
+        $pdf->MultiCell($noteWidth, $lineHeight, $note, 1, 'L', $fill, 1, '', '', true, 0, false, true, 0, 'M');
     }
 
     /**
@@ -357,14 +368,16 @@ class PdfService {
         string $note,
         bool $fill = false
     ): void {
+        $lineHeight = 6.0;
         $noteWidth = $this->getNoteCellWidth($pdf, 105.0);
-        $rowHeight = $this->calculateRowHeight($pdf, $note, $noteWidth);
+        $rowHeight = $this->calculateRowHeight($pdf, $note, $noteWidth, $lineHeight);
 
         $pdf->Cell(30, $rowHeight, $period, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
         $pdf->Cell(20, $rowHeight, $days, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
         $pdf->Cell(30, $rowHeight, $type, 1, 0, 'L', $fill, '', 0, false, 'T', 'M');
         $pdf->Cell(25, $rowHeight, $status, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
-        $pdf->MultiCell($noteWidth, $rowHeight, $note, 1, 'L', $fill, 1, '', '', true, 0, false, true, 0, 'M');
+        // $h must be the per-line height (not the total): MultiCell height = numLines × $lineHeight = $rowHeight
+        $pdf->MultiCell($noteWidth, $lineHeight, $note, 1, 'L', $fill, 1, '', '', true, 0, false, true, 0, 'M');
     }
 
     /**
