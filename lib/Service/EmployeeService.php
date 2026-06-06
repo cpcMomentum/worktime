@@ -205,7 +205,7 @@ class EmployeeService {
         $employee->setIsActive($isActive);
         $employee->setUpdatedAt(new DateTime());
 
-        $employee = $this->employeeMapper->update($employee);
+        $employee = $this->withActiveSchedule($this->employeeMapper->update($employee));
 
         // Audit log
         if ($currentUserId) {
