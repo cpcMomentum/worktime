@@ -505,7 +505,6 @@
 		"Weitere Aktionen": "Další akce",
 		"Liste": "List",
 		"Kalendar": "Calendar",
-		"Jahr": "Year",
 		"Abwesenheit": "Absence",
 		"Mein Konto": "My account",
 		"Team": "Team",
@@ -521,8 +520,6 @@
 		"{hours} h unter Plan": "{hours} h below plan",
 		"inkl. {days} Tage Übertrag": "incl. {days} days carried over",
 		"noch {hours} h bis Monatssoll": "{hours} h remaining to monthly target",
-		"noch {hours} h bis Jahressoll": "{hours} h remaining to yearly target",
-		"Soll / Ist · {year}": "Target / Actual · {year}",
 		"Soll / Ist · {month}": "Target / Actual · {month}",
 		"von {days} Tagen": "of {days} days",
 		"Erfasst": "Recorded",
@@ -537,7 +534,6 @@
 		"Stand heute": "As of today",
 		"Liste": "Seznam",
 		"Kalendar": "Kalendář",
-		"Jahr": "Rok",
 		"Abwesenheit": "Nepřítomnost",
 		"Mein Konto": "Můj účet",
 		"Team": "Tým",
@@ -566,8 +562,7 @@
 		"Eintrag hinzufügen": "Přidat záznam",
 		"Noch nichts erfasst.": "Zatím nic nezaznamenáno.",
 		"Tage übrig": "Zbývající dny",
-		"Stand heute": "Ke dnešnímu dni",
-		"Heute": "Dnes"
+		"Stand heute": "Ke dnešnímu dni"
 	},
 	"pluralForm": "nplurals=2; plural=(n != 1);"
 }
