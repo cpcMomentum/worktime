@@ -73,6 +73,26 @@
             </div>
         </div>
 
+        <div v-if="isEdit" class="form-row">
+            <div class="form-group">
+                <label>{{ t('worktime', 'Wochenstunden') }} <InfoIcon>{{ t('worktime', 'Aktuell gültiger Wert aus dem Arbeitszeitprofil. Zum Ändern unten das Profil bearbeiten oder ein neues anlegen.') }}</InfoIcon></label>
+                <input :value="form.weeklyHours"
+                    type="text"
+                    class="input-field input-small"
+                    disabled>
+            </div>
+            <div class="form-group">
+                <label>{{ t('worktime', 'Urlaubstage') }} <InfoIcon>{{ t('worktime', 'Aktuell gültiger Wert aus dem Arbeitszeitprofil. Zum Ändern unten das Profil bearbeiten oder ein neues anlegen.') }}</InfoIcon></label>
+                <input :value="form.vacationDays"
+                    type="text"
+                    class="input-field input-small"
+                    disabled>
+            </div>
+        </div>
+        <p v-if="isEdit" class="field-hint">
+            {{ t('worktime', 'Wochenstunden und Urlaubstage ergeben sich aus dem Arbeitszeitprofil unten und werden dort gepflegt.') }}
+        </p>
+
         <div class="form-row">
             <div class="form-group">
                 <label for="workingDaysPerWeek">{{ t('worktime', 'Arbeitstage pro Woche') }} <InfoIcon>{{ t('worktime', 'An wie vielen Tagen pro Woche wird gearbeitet? Daraus und aus den Wochenstunden ergibt sich das tägliche Soll. Beispiel: 40 Std. auf 5 Tage = 8 Std./Tag, 30 Std. auf 4 Tage = 7,5 Std./Tag.') }}</InfoIcon></label>
@@ -392,6 +412,12 @@ export default {
 
 .input-small {
     width: 8rem;
+}
+
+.field-hint {
+    margin: -8px 0 16px 0;
+    color: var(--color-text-maxcontrast);
+    font-size: 0.9em;
 }
 
 .form-actions {

@@ -22,6 +22,7 @@ class EmployeeService {
     public function __construct(
         private EmployeeMapper $employeeMapper,
         private WorkScheduleMapper $workScheduleMapper,
+        private WorkScheduleService $workScheduleService,
         private AuditLogService $auditLogService,
         private IUserManager $userManager,
         private LoggerInterface $logger,
@@ -29,17 +30,39 @@ class EmployeeService {
     }
 
     /**
+     * Surface the weeklyHours and vacationDays from the work schedule that is
+     * active today, so the employee overview always matches the currently
+     * valid profile (the work schedule is the single source of truth).
+     *
+     * The entity is mutated in memory only; it is never persisted here.
+     */
+    private function withActiveSchedule(Employee $employee): Employee {
+        $active = $this->workScheduleService->getScheduleForDate($employee->getId(), new DateTime());
+        $employee->setWeeklyHours((string)$active->getWeeklyHours());
+        $employee->setVacationDays($active->getVacationDays());
+        return $employee;
+    }
+
+    /**
+     * @param Employee[] $employees
+     * @return Employee[]
+     */
+    private function withActiveScheduleEach(array $employees): array {
+        return array_map(fn (Employee $e): Employee => $this->withActiveSchedule($e), $employees);
+    }
+
+    /**
      * @return Employee[]
      */
     public function findAll(): array {
-        return $this->employeeMapper->findAll();
+        return $this->withActiveScheduleEach($this->employeeMapper->findAll());
     }
 
     /**
      * @return Employee[]
      */
     public function findAllActive(): array {
-        return $this->employeeMapper->findAllActive();
+        return $this->withActiveScheduleEach($this->employeeMapper->findAllActive());
     }
 
     /**
@@ -47,7 +70,7 @@ class EmployeeService {
      */
     public function find(int $id): Employee {
         try {
-            return $this->employeeMapper->find($id);
+            return $this->withActiveSchedule($this->employeeMapper->find($id));
         } catch (DoesNotExistException $e) {
             throw new NotFoundException('Employee not found');
         }
@@ -58,7 +81,7 @@ class EmployeeService {
      */
     public function findByUserId(string $userId): Employee {
         try {
-            return $this->employeeMapper->findByUserId($userId);
+            return $this->withActiveSchedule($this->employeeMapper->findByUserId($userId));
         } catch (DoesNotExistException $e) {
             throw new NotFoundException('Employee not found for user');
         }
@@ -68,7 +91,7 @@ class EmployeeService {
      * @return Employee[]
      */
     public function findBySupervisor(int $supervisorId): array {
-        return $this->employeeMapper->findBySupervisor($supervisorId);
+        return $this->withActiveScheduleEach($this->employeeMapper->findBySupervisor($supervisorId));
     }
 
     /**

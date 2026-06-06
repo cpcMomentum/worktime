@@ -131,8 +131,8 @@ class WorkScheduleService {
             throw $e;
         }
 
-        // Sync employee if this is the latest schedule
-        $this->syncEmployeeIfLatest($employeeId, $schedule);
+        // Sync the employee's cached values from the schedule active today
+        $this->syncEmployeeFromActiveSchedule($employeeId);
 
         if ($currentUserId) {
             $this->auditLogService->logCreate($currentUserId, 'work_schedule', $schedule->getId(), $schedule->jsonSerialize());
@@ -176,7 +176,7 @@ class WorkScheduleService {
 
         $schedule = $this->mapper->update($schedule);
 
-        $this->syncEmployeeIfLatest($schedule->getEmployeeId(), $schedule);
+        $this->syncEmployeeFromActiveSchedule($schedule->getEmployeeId());
 
         if ($currentUserId) {
             $this->auditLogService->logUpdate($currentUserId, 'work_schedule', $schedule->getId(), $oldValues, $schedule->jsonSerialize());
@@ -208,11 +208,8 @@ class WorkScheduleService {
 
         $this->mapper->delete($schedule);
 
-        // Re-sync employee with the now-latest schedule
-        $remaining = $this->mapper->findByEmployeeId($schedule->getEmployeeId());
-        if (!empty($remaining)) {
-            $this->syncEmployeeIfLatest($schedule->getEmployeeId(), $remaining[0]);
-        }
+        // Re-sync employee from the schedule that is now active today
+        $this->syncEmployeeFromActiveSchedule($schedule->getEmployeeId());
     }
 
     /**
@@ -429,22 +426,22 @@ class WorkScheduleService {
     }
 
     /**
-     * If this schedule is the latest (newest valid_from) for the employee,
-     * sync the employee's weeklyHours and vacationDays.
+     * Sync the employee's cached weeklyHours and vacationDays from the
+     * schedule that is active today (newest valid_from <= today).
+     *
+     * A future-dated schedule must not overwrite the stored values, otherwise
+     * the employee overview would show a value that does not yet apply.
      */
-    private function syncEmployeeIfLatest(int $employeeId, WorkSchedule $schedule): void {
+    private function syncEmployeeFromActiveSchedule(int $employeeId): void {
         try {
-            $allSchedules = $this->mapper->findByEmployeeId($employeeId);
-            // findByEmployeeId returns DESC by valid_from, so [0] is latest
-            if (!empty($allSchedules) && $allSchedules[0]->getId() === $schedule->getId()) {
-                $employee = $this->employeeMapper->find($employeeId);
-                $employee->setWeeklyHours((string)$schedule->getWeeklyHours());
-                $employee->setVacationDays($schedule->getVacationDays());
-                $employee->setUpdatedAt(new DateTime());
-                $this->employeeMapper->update($employee);
-            }
+            $active = $this->getScheduleForDate($employeeId, new DateTime());
+            $employee = $this->employeeMapper->find($employeeId);
+            $employee->setWeeklyHours((string)$active->getWeeklyHours());
+            $employee->setVacationDays($active->getVacationDays());
+            $employee->setUpdatedAt(new DateTime());
+            $this->employeeMapper->update($employee);
         } catch (\Exception $e) {
-            $this->logger->warning('Failed to sync employee from schedule: ' . $e->getMessage());
+            $this->logger->warning('Failed to sync employee from active schedule: ' . $e->getMessage());
         }
     }
 
