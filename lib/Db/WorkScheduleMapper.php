@@ -88,7 +88,8 @@ class WorkScheduleMapper extends QBMapper {
             ->andWhere($qb->expr()->lte('valid_from', $qb->createNamedParameter($date->format('Y-m-d'))))
             ->orderBy('valid_from', 'ASC');
 
-        // ASC order means the last row written per employee is the newest one.
+        // ASC order: later rows have a higher valid_from, so each overwrite
+        // leaves the schedule with the highest valid_from (<= $date) in the map.
         $result = [];
         foreach ($this->findEntities($qb) as $schedule) {
             $result[$schedule->getEmployeeId()] = $schedule;
