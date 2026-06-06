@@ -12,6 +12,7 @@ namespace OCA\WorkTime\Service;
 use DateTime;
 use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\EmployeeMapper;
+use OCA\WorkTime\Db\WorkSchedule;
 use OCA\WorkTime\Db\WorkScheduleMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IUserManager;
@@ -30,25 +31,49 @@ class EmployeeService {
     }
 
     /**
-     * Surface the weeklyHours and vacationDays from the work schedule that is
-     * active today, so the employee overview always matches the currently
-     * valid profile (the work schedule is the single source of truth).
-     *
-     * The entity is mutated in memory only; it is never persisted here.
+     * Copy the weeklyHours and vacationDays from a work schedule onto the
+     * employee. The work schedule is the single source of truth for these
+     * values; the entity is mutated in memory only and never persisted here.
      */
-    private function withActiveSchedule(Employee $employee): Employee {
-        $active = $this->workScheduleService->getScheduleForDate($employee->getId(), new DateTime());
-        $employee->setWeeklyHours((string)$active->getWeeklyHours());
-        $employee->setVacationDays($active->getVacationDays());
+    private function applyScheduleValues(Employee $employee, WorkSchedule $schedule): Employee {
+        $employee->setWeeklyHours((string)$schedule->getWeeklyHours());
+        $employee->setVacationDays($schedule->getVacationDays());
         return $employee;
     }
 
     /**
+     * Surface the weeklyHours and vacationDays from the work schedule that is
+     * active today, so the employee overview always matches the currently
+     * valid profile.
+     */
+    private function withActiveSchedule(Employee $employee): Employee {
+        return $this->applyScheduleValues(
+            $employee,
+            $this->workScheduleService->getScheduleForDate($employee->getId(), new DateTime()),
+        );
+    }
+
+    /**
+     * Batch variant of {@see withActiveSchedule}: resolves the active schedule
+     * for all employees in a single query instead of one lookup per employee.
+     *
      * @param Employee[] $employees
      * @return Employee[]
      */
     private function withActiveScheduleEach(array $employees): array {
-        return array_map(fn (Employee $e): Employee => $this->withActiveSchedule($e), $employees);
+        if (empty($employees)) {
+            return [];
+        }
+
+        $ids = array_map(static fn (Employee $e): int => $e->getId(), $employees);
+        $active = $this->workScheduleMapper->findActiveForEmployees($ids, new DateTime());
+
+        return array_map(
+            fn (Employee $e): Employee => isset($active[$e->getId()])
+                ? $this->applyScheduleValues($e, $active[$e->getId()])
+                : $this->withActiveSchedule($e), // schedule-less employee: use default fallback
+            $employees,
+        );
     }
 
     /**
@@ -165,8 +190,6 @@ class EmployeeService {
         string $lastName,
         ?string $email = null,
         ?string $personnelNumber = null,
-        float $weeklyHours = 40.0,
-        int $vacationDays = 30,
         ?int $supervisorId = null,
         string $federalState = 'BY',
         ?string $entryDate = null,
@@ -189,12 +212,14 @@ class EmployeeService {
             throw ValidationException::fromSingleError('supervisorId', 'Employee cannot be their own supervisor');
         }
 
+        // weeklyHours and vacationDays are intentionally not set here: they are
+        // owned by the work schedule profile and synced via
+        // WorkScheduleService::syncEmployeeFromActiveSchedule. Surfacing them on
+        // read happens in withActiveSchedule().
         $employee->setFirstName($firstName);
         $employee->setLastName($lastName);
         $employee->setEmail($email);
         $employee->setPersonnelNumber($personnelNumber);
-        $employee->setWeeklyHours((string)$weeklyHours);
-        $employee->setVacationDays($vacationDays);
         $employee->setSupervisorId($supervisorId);
         $employee->setWorkingDaysPerWeek(max(1, min(7, $workingDaysPerWeek)));
         $employee->setFederalState($federalState);

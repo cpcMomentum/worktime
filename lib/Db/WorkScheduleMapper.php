@@ -70,6 +70,34 @@ class WorkScheduleMapper extends QBMapper {
     }
 
     /**
+     * Get the active schedule (highest valid_from <= $date) for each of the
+     * given employees in a single query, avoiding an N+1 lookup.
+     *
+     * @param int[] $employeeIds
+     * @return array<int, WorkSchedule> keyed by employee_id
+     */
+    public function findActiveForEmployees(array $employeeIds, DateTime $date): array {
+        if (empty($employeeIds)) {
+            return [];
+        }
+
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->in('employee_id', $qb->createNamedParameter($employeeIds, IQueryBuilder::PARAM_INT_ARRAY)))
+            ->andWhere($qb->expr()->lte('valid_from', $qb->createNamedParameter($date->format('Y-m-d'))))
+            ->orderBy('valid_from', 'ASC');
+
+        // ASC order means the last row written per employee is the newest one.
+        $result = [];
+        foreach ($this->findEntities($qb) as $schedule) {
+            $result[$schedule->getEmployeeId()] = $schedule;
+        }
+
+        return $result;
+    }
+
+    /**
      * Get all schedules that overlap with a date range.
      * Returns schedules where valid_from <= end, ordered by valid_from ASC.
      *
