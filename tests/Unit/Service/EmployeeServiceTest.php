@@ -119,4 +119,20 @@ class EmployeeServiceTest extends TestCase {
         $this->assertSame(40.0, (float)$employees[1]->getWeeklyHours());
         $this->assertSame(30, $employees[1]->getVacationDays());
     }
+
+    public function testApplyActiveSchedulesEnrichesExternallyFetchedEmployees(): void {
+        // Employees obtained via PermissionService (team view) must also be
+        // enriched with the active schedule values.
+        $this->workScheduleMapper->expects($this->once())
+            ->method('findActiveForEmployees')
+            ->with([3], $this->isInstanceOf(DateTime::class))
+            ->willReturn([3 => $this->makeSchedule(6.3, 28)]);
+
+        $result = $this->service->applyActiveSchedules([
+            $this->makeEmployee(3, '40.00', 30),
+        ]);
+
+        $this->assertSame(31.5, (float)$result[0]->getWeeklyHours());
+        $this->assertSame(28, $result[0]->getVacationDays());
+    }
 }

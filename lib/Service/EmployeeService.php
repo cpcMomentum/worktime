@@ -77,6 +77,18 @@ class EmployeeService {
     }
 
     /**
+     * Enrich a list of employees obtained elsewhere (e.g. via PermissionService)
+     * with the weeklyHours/vacationDays of their currently-active schedule, so
+     * callers that bypass the find* methods still get the live values.
+     *
+     * @param Employee[] $employees
+     * @return Employee[]
+     */
+    public function applyActiveSchedules(array $employees): array {
+        return $this->withActiveScheduleEach($employees);
+    }
+
+    /**
      * @return Employee[]
      */
     public function findAll(): array {
