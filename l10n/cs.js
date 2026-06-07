@@ -565,4 +565,4 @@ OC.L10N.register(
         "Tage übrig": "Zbývající dny",
         "Stand heute": "Ke dnešnímu dni"
 },
-"nplurals=2; plural=(n != 1);");
+"nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;");

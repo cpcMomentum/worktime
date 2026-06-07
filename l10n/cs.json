@@ -564,5 +564,5 @@
 		"Tage übrig": "Zbývající dny",
 		"Stand heute": "Ke dnešnímu dni"
 	},
-	"pluralForm": "nplurals=2; plural=(n != 1);"
+	"pluralForm": "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;"
 }
