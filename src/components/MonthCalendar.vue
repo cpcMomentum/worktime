@@ -34,7 +34,7 @@
 
 <script>
 import { getDaysInMonth } from '../utils/dateUtils.js'
-import { formatHoursDecimal } from '../utils/timeUtils.js'
+import { formatMinutes } from '../utils/timeUtils.js'
 import { getAbsenceColorClass } from '../utils/formatters.js'
 
 export default {
@@ -100,7 +100,7 @@ export default {
     },
     methods: {
         hoursLabel(day) {
-            return formatHoursDecimal(day.totalMinutes)
+            return formatMinutes(day.totalMinutes)
         },
         shortName(name) {
             return name.length > 11 ? name.slice(0, 9) + '.' : name

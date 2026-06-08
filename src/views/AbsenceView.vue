@@ -56,7 +56,7 @@
                     </div>
                     <div class="acard">
                         <div class="acard__lab">{{ t('worktime', 'Freizeitausgleich genommen') }}</div>
-                        <div class="acard__val">{{ compensatoryDays }} {{ t('worktime', 'Tage') }}</div>
+                        <div class="acard__val">{{ compensatoryDays }} {{ t('worktime', 'Tage') }} <small v-if="compensatoryDays > 0">(≈{{ compensatoryHoursLabel }})</small></div>
                     </div>
                     <div class="acard">
                         <div class="acard__lab">{{ t('worktime', 'Übertrag Vorjahr') }}</div>
@@ -195,7 +195,8 @@ import { mapGetters, mapActions } from 'vuex'
 import AbsenceRow from '../components/AbsenceRow.vue'
 import MonthPicker from '../components/MonthPicker.vue'
 import AbsenceTimeline from '../components/AbsenceTimeline.vue'
-import { getCurrentYear, getCurrentMonth, getLocale } from '../utils/dateUtils.js'
+import { getCurrentYear, getCurrentMonth } from '../utils/dateUtils.js'
+import { formatMinutes } from '../utils/timeUtils.js'
 import { confirmAction, showErrorMessage, showSuccessMessage } from '../utils/errorHandler.js'
 import ReportService from '../services/ReportService.js'
 import AbsenceService from '../services/AbsenceService.js'
@@ -253,6 +254,10 @@ export default {
             return this.absences
                 .filter(a => a.type === 'compensatory' && a.status === 'approved')
                 .reduce((sum, a) => sum + (Number(a.days) || 0), 0)
+        },
+        compensatoryHoursLabel() {
+            const daily = this.overtime?.dailyMinutes ?? 0
+            return formatMinutes(Math.round(this.compensatoryDays * daily))
         },
     },
     watch: {
@@ -321,9 +326,8 @@ export default {
             return { 'acard__val--pos': minutes > 0, 'acard__val--neg': minutes < 0 }
         },
         signedHours(minutes) {
-            const hours = (Math.abs(minutes) / 60).toLocaleString(getLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 })
             const sign = minutes < 0 ? '−' : '+'
-            return `${sign}${hours} h`
+            return `${sign}${formatMinutes(Math.abs(minutes))} h`
         },
         startCreate() {
             this.editingId = null

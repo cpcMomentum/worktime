@@ -380,6 +380,9 @@ class ReportController extends BaseController {
                 'carryoverMinutes' => $carryoverMinutes,
                 'totalOvertimeMinutes' => $totalOvertime + $carryoverMinutes,
                 'totalOvertimeHours' => round(($totalOvertime + $carryoverMinutes) / 60, 2),
+                // Average daily target (weekly hours / 5), used for the ≈ hours hint
+                // next to Freizeitausgleich days (#252.7).
+                'dailyMinutes' => (int)round($employee->getWeeklyHours() / 5 * 60),
             ]);
         } catch (\Exception $e) {
             return $this->handleException($e);
@@ -460,6 +463,39 @@ class ReportController extends BaseController {
         return $this->workScheduleService->countWorkingDays($absence->getEmployeeId(), $start, $end, []);
     }
 
+    /**
+     * Returns the current date (today, time zeroed). Wrapped in a method so tests
+     * can pin "today" to a fixed date and verify the proportional Soll/overtime logic.
+     */
+    protected function currentDate(): DateTime {
+        return new DateTime('today');
+    }
+
+    /**
+     * Whether the given day has activity that makes it count toward the proportional
+     * Soll: a time entry on that day or an approved absence covering it.
+     *
+     * @param object[] $timeEntries
+     * @param object[] $absences
+     */
+    private function hasActivityOnDay(DateTime $day, array $timeEntries, array $absences): bool {
+        $dayStr = $day->format('Y-m-d');
+        foreach ($timeEntries as $entry) {
+            $entryDate = $entry->getDate();
+            if ($entryDate instanceof DateTime && $entryDate->format('Y-m-d') === $dayStr) {
+                return true;
+            }
+        }
+        foreach ($absences as $absence) {
+            if ($absence->isApproved()
+                && $absence->getStartDate() <= $day
+                && $absence->getEndDate() >= $day) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private function calculateMonthlyStats(
         Employee $employee,
         int $year,
@@ -470,7 +506,7 @@ class ReportController extends BaseController {
     ): array {
         $startDate = new DateTime("$year-$month-01");
         $monthEndDate = (clone $startDate)->modify('last day of this month');
-        $today = new DateTime('today');
+        $today = $this->currentDate();
         $employeeId = $employee->getId();
 
         // Clip to employee's employment period
@@ -546,16 +582,32 @@ class ReportController extends BaseController {
         // Determine if this is the current month
         $isCurrentMonth = $year === (int)$today->format('Y') && $month === (int)$today->format('n');
 
-        // For "up to today" calculations
-        $endDateForActual = ($isCurrentMonth && $today < $monthEndDate) ? $today : $monthEndDate;
+        // For "up to today" calculations.
+        // #251.5: the running day only counts toward the proportional Soll once it has
+        // activity (a time entry today or an approved absence covering today). Without
+        // that, today is excluded so the balance shows no spurious morning deficit.
+        $endDateForActual = $monthEndDate;
+        if ($isCurrentMonth && $today < $monthEndDate) {
+            $endDateForActual = $this->hasActivityOnDay($today, $timeEntries, $absences)
+                ? $today
+                : (clone $today)->modify('-1 day');
+        }
+
+        // If today is excluded and it is the first (working) day of the month, the
+        // "until today" range falls before the month start -> no proportional Soll yet.
+        $hasProportionalRange = $endDateForActual >= $startDate;
 
         // Count working days using schedule-aware service
         $workingDaysMonth = $this->workScheduleService->countWorkingDays($employeeId, $startDate, $monthEndDate, $holidays);
-        $workingDaysUntilToday = $this->workScheduleService->countWorkingDays($employeeId, $startDate, $endDateForActual, $holidays);
+        $workingDaysUntilToday = $hasProportionalRange
+            ? $this->workScheduleService->countWorkingDays($employeeId, $startDate, $endDateForActual, $holidays)
+            : 0.0;
 
         // Calculate target minutes using schedule-aware service
         $monthlyTargetMinutes = $this->workScheduleService->calculateTargetMinutes($employeeId, $startDate, $monthEndDate, $holidays);
-        $proportionalTargetMinutes = $this->workScheduleService->calculateTargetMinutes($employeeId, $startDate, $endDateForActual, $holidays);
+        $proportionalTargetMinutes = $hasProportionalRange
+            ? $this->workScheduleService->calculateTargetMinutes($employeeId, $startDate, $endDateForActual, $holidays)
+            : 0;
 
         // dailyMinutes approximation for display
         $dailyMinutes = $workingDaysMonth > 0 ? (int)round($monthlyTargetMinutes / $workingDaysMonth) : 0;
@@ -614,7 +666,7 @@ class ReportController extends BaseController {
                 }
 
                 // For actual/overtime calculation: only count absences up to today
-                if ($absenceStart <= $endDateForActual) {
+                if ($hasProportionalRange && $absenceStart <= $endDateForActual) {
                     $actualAbsenceStart = $absenceStart < $startDate ? $startDate : $absenceStart;
                     $actualAbsenceEnd = $absenceEnd > $endDateForActual ? $endDateForActual : $absenceEnd;
                     $daysUntilToday = $this->workScheduleService->countWorkingDays($employeeId, $actualAbsenceStart, $actualAbsenceEnd, $holidays);

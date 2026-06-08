@@ -81,7 +81,7 @@ import CalendarStarIcon from 'vue-material-design-icons/CalendarStar.vue'
 import { mapActions } from 'vuex'
 import TimeEntryForm from './TimeEntryForm.vue'
 import { formatDateWithWeekday } from '../utils/dateUtils.js'
-import { formatHoursDecimal } from '../utils/timeUtils.js'
+import { formatMinutes } from '../utils/timeUtils.js'
 import { getAbsenceColorClass } from '../utils/formatters.js'
 import { confirmAction, showErrorMessage, showSuccessMessage } from '../utils/errorHandler.js'
 
@@ -152,7 +152,7 @@ export default {
     methods: {
         ...mapActions('timeEntries', ['deleteTimeEntry']),
         hoursLabel(minutes) {
-            return `${formatHoursDecimal(minutes)} h`
+            return `${formatMinutes(minutes)} h`
         },
         projectName(projectId) {
             if (!projectId) return ''

@@ -1,6 +1,6 @@
 <template>
     <div class="overtime-summary">
-        <div class="kpi-cards" :class="{ 'kpi-cards--two': vacationRemaining === null }">
+        <div class="kpi-cards" :class="{ 'kpi-cards--two': vacationTotal === null }">
             <!-- Ist / Soll -->
             <div class="kpi-card kpi-card--main">
                 <div class="kpi-card__head">
@@ -26,10 +26,10 @@
                 </div>
             </div>
 
-            <!-- Urlaub -->
-            <div v-if="vacationRemaining !== null" class="kpi-card">
+            <!-- Urlaub: Rest / Anspruch -->
+            <div v-if="vacationTotal !== null" class="kpi-card">
                 <div class="kpi-lab">{{ t('worktime', 'Urlaub {year}', { year }) }}</div>
-                <div class="kpi-num pos">{{ vacationRemaining }} <small>{{ t('worktime', 'Tage übrig') }}</small></div>
+                <div class="kpi-num pos">{{ vacationRemaining ?? 0 }} <small>/ {{ vacationTotal }} {{ t('worktime', 'Tage übrig') }}</small></div>
                 <div v-if="vacationSub" class="kpi-sub">{{ vacationSub }}</div>
             </div>
 
@@ -37,7 +37,7 @@
             <div class="kpi-card">
                 <div class="kpi-lab">
                     {{ overtimeMinutes >= 0 ? t('worktime', 'Überstunden') : t('worktime', 'Minusstunden') }}
-                    <InfoIcon>{{ t('worktime', 'Das Soll wird anteilig bis heute berechnet. Noch nicht erfasste Arbeitstage erscheinen als Minusstunden.') }}</InfoIcon>
+                    <InfoIcon>{{ t('worktime', 'Das Soll wird anteilig bis gestern berechnet. Der heutige Tag zählt erst mit, sobald du Zeit erfasst.') }}</InfoIcon>
                 </div>
                 <div class="kpi-num" :class="{ pos: overtimeMinutes > 0, neg: overtimeMinutes < 0 }">
                     {{ overtimeMinutes > 0 ? '+' : '' }}{{ absHoursLabel(overtimeMinutes) }} <small>h</small>
@@ -94,8 +94,8 @@
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue'
 import ChevronUp from 'vue-material-design-icons/ChevronUp.vue'
-import { formatMinutesWithUnit } from '../utils/timeUtils.js'
-import { getMonthName, getLocale } from '../utils/dateUtils.js'
+import { formatMinutesWithUnit, formatMinutes as formatHM } from '../utils/timeUtils.js'
+import { getMonthName } from '../utils/dateUtils.js'
 import InfoIcon from '../components/InfoIcon.vue'
 
 export default {
@@ -199,9 +199,6 @@ export default {
             if (this.vacationCarryover > 0) {
                 return this.t('worktime', 'inkl. {days} Tage Übertrag', { days: this.vacationCarryover })
             }
-            if (this.vacationTotal !== null) {
-                return this.t('worktime', 'von {days} Tagen', { days: this.vacationTotal })
-            }
             return ''
         },
     },
@@ -210,10 +207,10 @@ export default {
             return formatMinutesWithUnit(minutes)
         },
         hoursLabel(minutes) {
-            return (minutes / 60).toLocaleString(getLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+            return formatHM(minutes)
         },
         absHoursLabel(minutes) {
-            return (Math.abs(minutes) / 60).toLocaleString(getLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+            return formatHM(Math.abs(minutes))
         },
     },
 }
