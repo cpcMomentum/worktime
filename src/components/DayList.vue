@@ -148,6 +148,7 @@ export default {
 
 .dl-day.sel {
     background: var(--color-primary-element-light);
+    box-shadow: inset 3px 0 0 var(--color-primary-element);
 }
 
 .dl-day.today .dl-d {
