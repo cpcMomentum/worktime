@@ -532,6 +532,11 @@ OC.L10N.register(
     "Klick auf einen Monat öffnet ihn in der Liste-Ansicht." : "Click a month to open it in the list view.",
     "Gesamt bis heute" : "Total to date",
     "PDF Monatsbericht" : "PDF monthly report",
-    "Weitere Aktionen" : "More actions"
+    "Weitere Aktionen" : "More actions",
+    "Ist / Soll · {year}" : "Actual / Target · {year}",
+    "Ist / Soll · {month}" : "Actual / Target · {month}",
+    "Kein Übertrag aus Vorjahr" : "No carryover from previous year",
+    "Freizeitausgleich reduziert die Überstunden automatisch." : "Compensatory leave automatically reduces overtime.",
+    "Freizeitausgleich genommen" : "Compensatory time taken"
 },
 "nplurals=2; plural=(n != 1);");

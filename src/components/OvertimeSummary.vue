@@ -1,7 +1,7 @@
 <template>
     <div class="overtime-summary">
         <div class="kpi-cards" :class="{ 'kpi-cards--two': vacationRemaining === null }">
-            <!-- Soll / Ist -->
+            <!-- Ist / Soll -->
             <div class="kpi-card kpi-card--main">
                 <div class="kpi-card__head">
                     <span class="kpi-lab">{{ headLabel }}</span>

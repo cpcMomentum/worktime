@@ -532,6 +532,11 @@ OC.L10N.register(
     "Klick auf einen Monat öffnet ihn in der Liste-Ansicht." : "Klick auf einen Monat öffnet ihn in der Liste-Ansicht.",
     "Gesamt bis heute" : "Gesamt bis heute",
     "PDF Monatsbericht" : "PDF Monatsbericht",
-    "Weitere Aktionen" : "Weitere Aktionen"
+    "Weitere Aktionen" : "Weitere Aktionen",
+    "Ist / Soll · {year}" : "Ist / Soll · {year}",
+    "Ist / Soll · {month}" : "Ist / Soll · {month}",
+    "Kein Übertrag aus Vorjahr" : "Kein Übertrag aus Vorjahr",
+    "Freizeitausgleich reduziert die Überstunden automatisch." : "Freizeitausgleich reduziert die Überstunden automatisch.",
+    "Freizeitausgleich genommen" : "Freizeitausgleich genommen"
 },
 "nplurals=2; plural=(n != 1);");
