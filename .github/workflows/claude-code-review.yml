@@ -59,7 +59,9 @@ jobs:
         if: steps.cycles.outputs.count < 3 && steps.cycles.outputs.last_status != 'APPROVED'
         uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          # Volle Historie: der Reviewer berechnet den PR-Diff via base...HEAD,
+          # das braucht den Base-Branch + Merge-Base (sonst "no merge base").
+          fetch-depth: 0
           ref: ${{ github.head_ref }}
 
       - name: Run Claude Code Review & Auto-Fix

@@ -29,7 +29,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          # Volle Historie: Claude berechnet Diffs via base...HEAD und braucht
+          # den Base-Branch + Merge-Base (sonst "no merge base" auf flachem Clone).
+          fetch-depth: 0
 
       - name: Run Claude Code
         id: claude
