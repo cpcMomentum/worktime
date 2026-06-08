@@ -249,9 +249,9 @@ export default {
 }
 
 .kpi-lab {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
-    color: var(--color-text-maxcontrast);
+    color: var(--color-main-text);
 }
 
 .kpi-num {
@@ -265,7 +265,7 @@ export default {
 .kpi-num small {
     font-size: 14px;
     font-weight: 600;
-    color: var(--color-text-maxcontrast);
+    color: var(--color-main-text);
 }
 
 .kpi-num.pos {
@@ -277,7 +277,7 @@ export default {
 }
 
 .kpi-sub {
-    font-size: 12.5px;
+    font-size: 13px;
     color: var(--color-text-maxcontrast);
     margin-top: 6px;
 }
@@ -317,8 +317,8 @@ export default {
 .kpi-bf {
     display: flex;
     justify-content: space-between;
-    font-size: 12px;
-    color: var(--color-text-maxcontrast);
+    font-size: 13px;
+    color: var(--color-main-text);
     margin-top: 6px;
 }
 
@@ -356,7 +356,7 @@ export default {
     margin: 0 0 8px;
     font-size: 13px;
     font-weight: 600;
-    color: var(--color-text-maxcontrast);
+    color: var(--color-main-text);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }

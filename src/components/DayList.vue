@@ -120,9 +120,9 @@ export default {
 
 .dl-head {
     padding: 0 14px 10px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
-    color: var(--color-text-maxcontrast);
+    color: var(--color-main-text);
     border-bottom: 1px solid var(--color-border-dark, var(--color-border));
 }
 
@@ -195,7 +195,7 @@ export default {
 
 .dl-d small {
     display: block;
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 400;
     color: var(--color-text-maxcontrast);
 }
@@ -212,7 +212,7 @@ export default {
 }
 
 .dl-count {
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--color-text-maxcontrast);
     background: var(--color-background-dark);
@@ -236,7 +236,7 @@ export default {
 }
 
 .dl-pause {
-    color: var(--color-text-maxcontrast);
+    color: var(--color-main-text);
     font-size: 13px;
 }
 

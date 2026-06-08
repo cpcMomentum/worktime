@@ -145,9 +145,9 @@ export default {
 }
 
 .dow {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
-    color: var(--color-text-maxcontrast);
+    color: var(--color-main-text);
     text-align: center;
     padding: 2px 0;
 }
@@ -212,7 +212,7 @@ export default {
 
 .cell .mi {
     margin-top: auto;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     overflow: hidden;
     text-overflow: ellipsis;

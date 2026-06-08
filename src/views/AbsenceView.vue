@@ -483,9 +483,9 @@ export default {
 }
 
 .acard__lab {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
-    color: var(--color-text-maxcontrast);
+    color: var(--color-main-text);
 }
 
 .acard__val {
@@ -504,7 +504,7 @@ export default {
 }
 
 .acard__sub {
-    font-size: 12.5px;
+    font-size: 13px;
     color: var(--color-text-maxcontrast);
     margin-top: 4px;
 }
@@ -548,7 +548,7 @@ export default {
 .absence-table th {
     font-size: 15px;
     font-weight: 600;
-    color: var(--color-text-maxcontrast);
+    color: var(--color-main-text);
     border-bottom: 2px solid var(--color-border-dark, var(--color-border));
 }
 

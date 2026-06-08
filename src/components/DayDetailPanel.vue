@@ -213,7 +213,7 @@ export default {
 }
 
 .dp-sub {
-    color: var(--color-text-maxcontrast);
+    color: var(--color-main-text);
     font-size: 13px;
     margin: 2px 0 14px;
 }
@@ -283,8 +283,8 @@ export default {
 }
 
 .dp-entry-meta {
-    color: var(--color-text-maxcontrast);
-    font-size: 12.5px;
+    color: var(--color-main-text);
+    font-size: 13px;
     margin-top: 2px;
 }
 
