@@ -11,7 +11,7 @@
             <div v-for="day in days"
                 :key="day.date"
                 class="dl-day"
-                :class="{ sel: day.date === selectedDate, weekend: day.isWeekend, empty: !day.entries.length, today: day.isToday }"
+                :class="{ sel: day.date === selectedDate, weekend: day.isWeekend, empty: !day.entries.length, today: day.isToday, weekstart: isWeekStart(day) }"
                 tabindex="0"
                 role="button"
                 @click="$emit('select', day.date)"
@@ -86,6 +86,10 @@ export default {
         weekday(day) {
             return getDayName(day.dayOfWeek)
         },
+        isWeekStart(day) {
+            // Montag (JS getDay() === 1) startet eine neue Woche
+            return new Date(day.date).getDay() === 1
+        },
         absenceColorClass: getAbsenceColorClass,
         pauseLabel(day) {
             if (!day.entries.length) return ''
@@ -137,6 +141,11 @@ export default {
     border-top: none;
 }
 
+/* Wochentrennung: kräftigere Linie am Wochenanfang (Montag) */
+.dl-day.weekstart:not(:first-child) {
+    border-top: 2px solid var(--color-border-dark, var(--color-border));
+}
+
 .dl-day:hover {
     background: var(--color-background-hover);
 }
@@ -183,6 +192,8 @@ export default {
 
 .dl-day.empty.weekend {
     background: var(--color-background-hover);
+    padding-top: 4px;
+    padding-bottom: 4px;
 }
 
 .dl-day.empty.weekend.sel,
