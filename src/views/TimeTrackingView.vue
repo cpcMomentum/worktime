@@ -52,7 +52,7 @@
                 <NcActions v-if="!isYearMode" :aria-label="t('worktime', 'Weitere Aktionen')">
                     <NcActionButton @click="downloadPdf">
                         <template #icon>
-                            <DownloadIcon :size="20" />
+                            <FilePdfBox :size="20" />
                         </template>
                         {{ t('worktime', 'PDF Monatsbericht') }}
                     </NcActionButton>
@@ -140,7 +140,7 @@ import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import NcModal from '@nextcloud/vue/dist/Components/NcModal.js'
 import SendIcon from 'vue-material-design-icons/Send.vue'
 import LockIcon from 'vue-material-design-icons/Lock.vue'
-import DownloadIcon from 'vue-material-design-icons/Download.vue'
+import FilePdfBox from 'vue-material-design-icons/FilePdfBox.vue'
 import FormatListBulletedIcon from 'vue-material-design-icons/FormatListBulleted.vue'
 import CalendarIcon from 'vue-material-design-icons/Calendar.vue'
 import ChartBarIcon from 'vue-material-design-icons/ChartBar.vue'
@@ -170,7 +170,7 @@ export default {
         NcModal,
         SendIcon,
         LockIcon,
-        DownloadIcon,
+        FilePdfBox,
         FormatListBulletedIcon,
         CalendarIcon,
         ChartBarIcon,

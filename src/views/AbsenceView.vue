@@ -22,7 +22,7 @@
         <!-- ============ MEIN KONTO ============ -->
         <div v-show="tab === 'konto'">
             <section v-if="vacationStats" class="acard-section">
-                <h3>{{ t('worktime', 'Urlaubskonto {year}', { year: currentYear }) }}</h3>
+                <h3>{{ t('worktime', 'Urlaub') }}</h3>
                 <div class="acards acards--4">
                     <div class="acard">
                         <div class="acard__lab">{{ t('worktime', 'Anspruch') }}</div>
@@ -30,7 +30,8 @@
                     </div>
                     <div class="acard">
                         <div class="acard__lab">{{ t('worktime', 'Übertrag Vorjahr') }}</div>
-                        <div class="acard__val">{{ vacationCarryover }}</div>
+                        <div v-if="vacationCarryover !== 0" class="acard__val">{{ vacationCarryover }}</div>
+                        <div v-else class="acard__none">{{ t('worktime', 'Kein Übertrag aus Vorjahr') }}</div>
                     </div>
                     <div class="acard">
                         <div class="acard__lab">{{ t('worktime', 'Genommen') }}</div>
@@ -47,7 +48,7 @@
             </section>
 
             <section v-if="overtime" class="acard-section">
-                <h3>{{ t('worktime', 'Überstunden {year}', { year: currentYear }) }}</h3>
+                <h3>{{ t('worktime', 'Überstunden') }}</h3>
                 <div class="acards acards--3">
                     <div class="acard">
                         <div class="acard__lab">{{ t('worktime', 'Saldo') }}</div>
@@ -59,11 +60,12 @@
                     </div>
                     <div class="acard">
                         <div class="acard__lab">{{ t('worktime', 'Übertrag Vorjahr') }}</div>
-                        <div class="acard__val" :class="overtimeValClass(overtimeCarryMin)">{{ signedHours(overtimeCarryMin) }}</div>
+                        <div v-if="overtimeCarryMin !== 0" class="acard__val" :class="overtimeValClass(overtimeCarryMin)">{{ signedHours(overtimeCarryMin) }}</div>
+                        <div v-else class="acard__none">{{ t('worktime', 'Kein Übertrag aus Vorjahr') }}</div>
                     </div>
                 </div>
                 <p class="acard-hint">
-                    {{ t('worktime', 'Freizeitausgleich wird als Abwesenheit eingetragen und reduziert die Überstunden automatisch.') }}
+                    {{ t('worktime', 'Freizeitausgleich reduziert die Überstunden automatisch.') }}
                 </p>
             </section>
 
@@ -501,6 +503,13 @@ export default {
     font-size: 12.5px;
     color: var(--color-text-maxcontrast);
     margin-top: 4px;
+}
+
+.acard__none {
+    font-size: 13px;
+    color: var(--color-text-maxcontrast);
+    margin-top: 8px;
+    line-height: 1.3;
 }
 
 .acard-hint {

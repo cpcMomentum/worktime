@@ -161,9 +161,9 @@ export default {
         },
         headLabel() {
             if (this.period === 'year') {
-                return this.t('worktime', 'Soll / Ist · {year}', { year: this.year })
+                return this.t('worktime', 'Ist / Soll · {year}', { year: this.year })
             }
-            return this.t('worktime', 'Soll / Ist · {month}', { month: this.monthLabel })
+            return this.t('worktime', 'Ist / Soll · {month}', { month: this.monthLabel })
         },
         // Volles Periodensoll (Monat: aus statistics, Jahr: aus prop)
         periodSoll() {
