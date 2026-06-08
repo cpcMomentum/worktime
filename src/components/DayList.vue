@@ -87,8 +87,7 @@ export default {
             return getDayName(day.dayOfWeek)
         },
         isWeekStart(day) {
-            // Montag (JS getDay() === 1) startet eine neue Woche
-            return new Date(day.date).getDay() === 1
+            return day.dayOfWeek === 1
         },
         absenceColorClass: getAbsenceColorClass,
         pauseLabel(day) {
