@@ -380,8 +380,7 @@ class ReportController extends BaseController {
                 'carryoverMinutes' => $carryoverMinutes,
                 'totalOvertimeMinutes' => $totalOvertime + $carryoverMinutes,
                 'totalOvertimeHours' => round(($totalOvertime + $carryoverMinutes) / 60, 2),
-                // Average daily target (weekly hours / 5), used for the ≈ hours hint
-                // next to Freizeitausgleich days (#252.7).
+                // Average daily target (weekly hours / 5), used for the Freizeitausgleich ≈ hours hint.
                 'dailyMinutes' => (int)round($employee->getWeeklyHours() / 5 * 60),
             ]);
         } catch (\Exception $e) {
@@ -583,9 +582,9 @@ class ReportController extends BaseController {
         $isCurrentMonth = $year === (int)$today->format('Y') && $month === (int)$today->format('n');
 
         // For "up to today" calculations.
-        // #251.5: the running day only counts toward the proportional Soll once it has
-        // activity (a time entry today or an approved absence covering today). Without
-        // that, today is excluded so the balance shows no spurious morning deficit.
+        // The running day only counts toward the proportional Soll once it has activity
+        // (a time entry today or an approved absence covering today). Without that,
+        // today is excluded so the balance shows no spurious morning deficit.
         $endDateForActual = $monthEndDate;
         if ($isCurrentMonth && $today < $monthEndDate) {
             $endDateForActual = $this->hasActivityOnDay($today, $timeEntries, $absences)
