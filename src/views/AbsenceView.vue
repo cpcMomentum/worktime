@@ -21,7 +21,7 @@
             <div class="konto-stats">
             <section v-if="vacationStats" class="konto-box">
                 <h3>{{ t('worktime', 'Urlaub') }}</h3>
-                <div class="konto-hero konto-hero--pos">
+                <div class="konto-hero" :class="vacationStats.remaining >= 0 ? 'konto-hero--pos' : 'konto-hero--neg'">
                     {{ vacationStats.remaining }} <small>/ {{ vacationStats.total }} {{ t('worktime', 'Tage übrig') }}</small>
                 </div>
                 <div class="vac-progress"
@@ -352,9 +352,6 @@ export default {
                 this.teamLoading = false
             }
         },
-        overtimeValClass(minutes) {
-            return { 'acard__val--pos': minutes > 0, 'acard__val--neg': minutes < 0 }
-        },
         signedHours(minutes) {
             const sign = minutes < 0 ? '−' : '+'
             return `${sign}${formatMinutes(Math.abs(minutes))} h`
@@ -475,58 +472,6 @@ export default {
     background: var(--color-main-background);
     color: var(--color-primary-element);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
-}
-
-/* Stat-Cards (konsistent mit KPI-Cards) */
-.acard-section {
-    margin-bottom: 20px;
-}
-
-.acard-section h3 {
-    font-size: 15px;
-    font-weight: 600;
-    margin: 0 0 12px;
-}
-
-.acards {
-    display: grid;
-    gap: 12px;
-}
-
-.acards--4 {
-    grid-template-columns: repeat(4, 1fr);
-}
-
-.acards--3 {
-    grid-template-columns: repeat(3, 1fr);
-}
-
-.acard {
-    background: var(--color-main-background);
-    border: 1px solid var(--color-border-dark, var(--color-border));
-    border-radius: var(--border-radius-large, 12px);
-    padding: 14px 16px;
-}
-
-.acard--hl {
-    border-color: var(--wt-vacation, #4a9d63);
-}
-
-.acard__lab {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--color-main-text);
-}
-
-.acard__val {
-    font-size: 24px;
-    font-weight: 700;
-    margin-top: 5px;
-    font-variant-numeric: tabular-nums;
-}
-
-.acard__val--xl {
-    font-size: 30px;
 }
 
 .konto-yearbar {
@@ -654,33 +599,6 @@ export default {
 
 .list-head .list-title {
     margin: 0;
-}
-
-.acard__val--pos {
-    color: var(--color-success-text);
-}
-
-.acard__val--neg {
-    color: var(--color-error-text);
-}
-
-.acard__sub {
-    font-size: 13px;
-    color: var(--color-text-maxcontrast);
-    margin-top: 4px;
-}
-
-.acard__none {
-    font-size: 13px;
-    color: var(--color-text-maxcontrast);
-    margin-top: 8px;
-    line-height: 1.3;
-}
-
-.acard-hint {
-    margin-top: 10px;
-    font-size: 13px;
-    color: var(--color-text-maxcontrast);
 }
 
 .list-title {
