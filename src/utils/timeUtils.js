@@ -1,4 +1,5 @@
 import { translate as t } from '@nextcloud/l10n'
+import { getLocale } from './dateUtils.js'
 
 /**
  * Format minutes to hours:minutes string
@@ -31,8 +32,7 @@ export function formatMinutesWithUnit(minutes) {
 export function formatHoursDecimal(minutes) {
     if (minutes === null || minutes === undefined) return '0,00'
     const hours = minutes / 60
-    const locale = document.documentElement.lang || navigator.language || 'de-DE'
-    return hours.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    return hours.toLocaleString(getLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 /**

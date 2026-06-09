@@ -147,7 +147,7 @@ import ChartBarIcon from 'vue-material-design-icons/ChartBar.vue'
 import { mapGetters, mapActions, mapState } from 'vuex'
 import { showSuccess, showError } from '@nextcloud/dialogs'
 import { confirmAction } from '../utils/errorHandler.js'
-import { getCurrentYear, getCurrentMonth, getMonthDays, getToday, formatDateISO } from '../utils/dateUtils.js'
+import { getCurrentYear, getCurrentMonth, getMonthDays, getToday, formatDateISO, getLocale } from '../utils/dateUtils.js'
 import { getAbsenceTypeLabel } from '../utils/formatters.js'
 import MonthPicker from '../components/MonthPicker.vue'
 import YearPicker from '../components/YearPicker.vue'
@@ -434,9 +434,8 @@ export default {
             ReportService.downloadPdf(this.employeeId, this.selectedMonth.year, this.selectedMonth.month)
         },
         async confirmSubmitMonth() {
-            const locale = document.documentElement.lang || navigator.language || 'de-DE'
             const monthName = new Date(this.selectedMonth.year, this.selectedMonth.month - 1)
-                .toLocaleDateString(locale, { month: 'long', year: 'numeric' })
+                .toLocaleDateString(getLocale(), { month: 'long', year: 'numeric' })
 
             const confirmed = await confirmAction(
                 this.t('worktime', 'Möchten Sie die Zeiteinträge für {month} einreichen? Die eingereichten Einträge werden zur Genehmigung übermittelt.', { month: monthName }),

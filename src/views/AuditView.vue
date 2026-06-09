@@ -101,7 +101,7 @@ import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import ShieldIcon from 'vue-material-design-icons/Shield.vue'
 import AuditService from '../services/AuditService.js'
-import { formatDateISO } from '../utils/dateUtils.js'
+import { formatDateISO, getLocale } from '../utils/dateUtils.js'
 import { mapGetters, mapActions } from 'vuex'
 
 export default {
@@ -193,8 +193,7 @@ export default {
         formatDateTime(iso) {
             if (!iso) return '-'
             const d = new Date(iso)
-            const locale = document.documentElement.lang || 'de-DE'
-            return d.toLocaleString(locale, { dateStyle: 'short', timeStyle: 'short' })
+            return d.toLocaleString(getLocale(), { dateStyle: 'short', timeStyle: 'short' })
         },
         updateDiff(entry) {
             const skip = new Set(['id', 'employeeId', 'createdAt', 'updatedAt', 'userId'])

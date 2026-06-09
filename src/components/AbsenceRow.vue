@@ -116,7 +116,7 @@ import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js
 import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import CloseIcon from 'vue-material-design-icons/Close.vue'
 import ContentSaveIcon from 'vue-material-design-icons/ContentSave.vue'
-import { formatDateISO } from '../utils/dateUtils.js'
+import { formatDateISO, getLocale } from '../utils/dateUtils.js'
 import { formatDateWithWeekday, getAbsenceTypeLabel, getStatusLabel } from '../utils/formatters.js'
 
 export default {
@@ -228,8 +228,7 @@ export default {
 
             // Apply scope: e.g., 5 days * 0.5 = 2.5
             const effectiveDays = workingDays * this.form.scope
-            const locale = document.documentElement.lang || navigator.language || 'de-DE'
-            return effectiveDays.toLocaleString(locale, { maximumFractionDigits: 1 })
+            return effectiveDays.toLocaleString(getLocale(), { maximumFractionDigits: 1 })
         },
         estimatedDays() {
             if (!this.form.startDate || !this.form.endDate) return 0

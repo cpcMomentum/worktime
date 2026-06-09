@@ -6,19 +6,11 @@
 
 import { translate as t } from '@nextcloud/l10n'
 import { STATUS_LABELS, ABSENCE_TYPE_LABELS, ENTRY_STATUS, ABSENCE_STATUS } from '../constants.js'
-import { formatDate as formatDateFromDateUtils } from './dateUtils.js'
+import { formatDate as formatDateFromDateUtils, getLocale } from './dateUtils.js'
 import { formatMinutes, formatMinutesWithUnit, formatHoursDecimal } from './timeUtils.js'
 
 // Re-export time formatting functions for convenience
 export { formatMinutes, formatMinutesWithUnit, formatHoursDecimal }
-
-/**
- * Get the user's locale from Nextcloud
- * @returns {string}
- */
-function getLocale() {
-    return document.documentElement.lang || navigator.language || 'de-DE'
-}
 
 /**
  * Format minutes to hours as decimal with locale-aware separator

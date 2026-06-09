@@ -625,7 +625,7 @@ import EmployeeList from '../components/EmployeeList.vue'
 import ProjectForm from '../components/ProjectForm.vue'
 import ProjectList from '../components/ProjectList.vue'
 import { showSuccessMessage, showErrorMessage } from '../utils/errorHandler.js'
-import { getCurrentYear } from '../utils/dateUtils.js'
+import { getCurrentYear, getLocale } from '../utils/dateUtils.js'
 import YearlyCarryoverService from '../services/YearlyCarryoverService.js'
 import ReportService from '../services/ReportService.js'
 import InfoIcon from '../components/InfoIcon.vue'
@@ -1147,8 +1147,7 @@ export default {
         formatDate(dateStr) {
             if (!dateStr) return ''
             const date = new Date(dateStr)
-            const locale = document.documentElement.lang || navigator.language || 'de-DE'
-            return date.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' })
+            return date.toLocaleDateString(getLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' })
         },
         openHolidayForm(holiday) {
             this.editingHoliday = holiday
