@@ -21,6 +21,9 @@
 
         <!-- ============ MEIN KONTO ============ -->
         <div v-show="tab === 'konto'">
+            <div class="konto-yearbar">
+                <YearPicker :year="currentYear" :max="thisYear" @update="onYearChange" />
+            </div>
             <section v-if="vacationStats" class="acard-section">
                 <h3>{{ t('worktime', 'Urlaub') }}</h3>
                 <div class="acards acards--4">
@@ -42,7 +45,7 @@
                     </div>
                     <div class="acard acard--hl">
                         <div class="acard__lab">{{ t('worktime', 'Verbleibend') }}</div>
-                        <div class="acard__val acard__val--pos">{{ vacationStats.remaining }}</div>
+                        <div class="acard__val acard__val--pos acard__val--xl">{{ vacationStats.remaining }}</div>
                     </div>
                 </div>
             </section>
@@ -52,7 +55,7 @@
                 <div class="acards acards--3">
                     <div class="acard">
                         <div class="acard__lab">{{ t('worktime', 'Saldo') }}</div>
-                        <div class="acard__val" :class="overtimeValClass(overtimeSaldoMin)">{{ signedHours(overtimeSaldoMin) }}</div>
+                        <div class="acard__val acard__val--xl" :class="overtimeValClass(overtimeSaldoMin)">{{ signedHours(overtimeSaldoMin) }}</div>
                     </div>
                     <div class="acard">
                         <div class="acard__lab">{{ t('worktime', 'Freizeitausgleich genommen') }}</div>
@@ -194,6 +197,7 @@ import CalendarIcon from 'vue-material-design-icons/Calendar.vue'
 import { mapGetters, mapActions } from 'vuex'
 import AbsenceRow from '../components/AbsenceRow.vue'
 import MonthPicker from '../components/MonthPicker.vue'
+import YearPicker from '../components/YearPicker.vue'
 import AbsenceTimeline from '../components/AbsenceTimeline.vue'
 import { getCurrentYear, getCurrentMonth } from '../utils/dateUtils.js'
 import { formatMinutes } from '../utils/timeUtils.js'
@@ -212,6 +216,7 @@ export default {
         CalendarIcon,
         AbsenceRow,
         MonthPicker,
+        YearPicker,
         AbsenceTimeline,
     },
     data() {
@@ -233,6 +238,9 @@ export default {
         ...mapGetters('permissions', ['employeeId', 'isAdmin', 'isHrManager', 'canApprove']),
         isPrivileged() {
             return this.isAdmin || this.isHrManager || this.canApprove
+        },
+        thisYear() {
+            return getCurrentYear()
         },
         sortedAbsences() {
             return [...this.absences].sort((a, b) => b.startDate.localeCompare(a.startDate))
@@ -279,6 +287,10 @@ export default {
             'deleteAbsence',
             'cancelAbsence',
         ]),
+        onYearChange(year) {
+            this.currentYear = year
+            this.loadData()
+        },
         async loadData() {
             await Promise.all([
                 this.fetchAbsences(this.currentYear),
@@ -493,6 +505,16 @@ export default {
     font-weight: 700;
     margin-top: 5px;
     font-variant-numeric: tabular-nums;
+}
+
+.acard__val--xl {
+    font-size: 30px;
+}
+
+.konto-yearbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
 }
 
 .acard__val--pos {

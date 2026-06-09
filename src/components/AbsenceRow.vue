@@ -444,6 +444,20 @@ tr.creating {
     white-space: nowrap;
 }
 
+/* Aktions-Icons nur bei Hover/Fokus zeigen — aber nur auf Geräten mit Hover.
+   Touch/Mobile (kein Hover) zeigt sie weiterhin dauerhaft (Accessibility). */
+@media (hover: hover) {
+    .actions-buttons {
+        opacity: 0;
+        transition: opacity 0.1s;
+    }
+
+    tr:hover .actions-buttons,
+    tr:focus-within .actions-buttons {
+        opacity: 1;
+    }
+}
+
 .status-badge {
     display: inline-block;
     padding: 2px 8px;
