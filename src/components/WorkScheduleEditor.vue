@@ -280,7 +280,7 @@ export default {
                 } else {
                     data.validFrom = this.form.validFrom
                         ? formatDateISO(this.form.validFrom)
-                        : new Date().toISOString().slice(0, 10)
+                        : formatDateISO(new Date())
                     await this.createSchedule({
                         employeeId: this.employeeId,
                         data,
