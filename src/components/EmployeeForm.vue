@@ -62,7 +62,7 @@
                     required>
             </div>
             <div class="form-group">
-                <label for="vacationDays">{{ t('worktime', 'Urlaubstage') }} <InfoIcon>{{ t('worktime', 'Jährlicher Urlaubsanspruch. Jeder genommene Urlaubstag wird davon abgezogen. Der Restanspruch wird in der Zeiterfassung angezeigt.') }}</InfoIcon> *</label>
+                <label for="vacationDays">{{ t('worktime', 'Urlaubstage') }} <InfoIcon>{{ t('worktime', 'Jährlicher Urlaubsanspruch. Jeder genommene Urlaubstag wird davon abgezogen. Der Resturlaub wird in der Zeiterfassung angezeigt.') }}</InfoIcon> *</label>
                 <input id="vacationDays"
                     v-model.number="form.vacationDays"
                     type="number"
