@@ -40,7 +40,7 @@
                         <td>{{ getAbsenceTypeLabel(absence.type) }}</td>
                         <td>{{ formatDate(absence.startDate) }} - {{ formatDate(absence.endDate) }}</td>
                         <td class="center">{{ absence.days }}</td>
-                        <td>{{ absence.note || '-' }}</td>
+                        <td class="note-cell"><span class="note-text">{{ absence.note || '-' }}</span></td>
                     </tr>
                 </tbody>
             </table>
@@ -71,7 +71,7 @@
                         <td>{{ getAbsenceTypeLabel(absence.type) }}</td>
                         <td>{{ formatDate(absence.startDate) }} - {{ formatDate(absence.endDate) }}</td>
                         <td class="center">{{ absence.days }}</td>
-                        <td>{{ absence.note || '-' }}</td>
+                        <td class="note-cell"><span class="note-text">{{ absence.note || '-' }}</span></td>
                         <td class="center actions-cell">
                             <NcButton type="primary"
                                 :disabled="processingAbsence === absence.id"
@@ -839,9 +839,17 @@ export default {
 
 .description-cell {
     max-width: 280px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+/* Bemerkung (Anzeige): kappt die Spaltenbreite und bricht lange Texte um,
+   damit die Tabelle nicht über ihren Container hinauswächst (#275). */
+.note-cell .note-text {
+    display: inline-block;
+    max-width: 22rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 .status-badge {

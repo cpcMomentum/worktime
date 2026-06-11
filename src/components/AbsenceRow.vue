@@ -8,7 +8,7 @@
                 {{ translatedTypeName }}
             </td>
             <td>{{ absence.days }}</td>
-            <td>{{ absence.note || '-' }}</td>
+            <td class="note-cell"><span class="note-text">{{ absence.note || '-' }}</span></td>
             <td>
                 <span class="status-badge" :class="absence.status">
                     {{ getStatusLabel(absence.status) }}
@@ -400,6 +400,15 @@ tr.creating {
 
 .note-input {
     min-width: 10rem;
+}
+
+/* Bemerkung (Anzeige): kappt die Spaltenbreite und bricht lange Texte um,
+   damit die Tabelle nicht über die Kachel hinauswächst (#275). */
+.note-cell .note-text {
+    display: inline-block;
+    max-width: 22rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 .inline-picker {
