@@ -1189,8 +1189,7 @@ export default {
         },
         async saveHoliday() {
             try {
-                // formatDateISO nutzt lokale Datumsteile; toISOString() (UTC) verschob
-                // das Datum in Zeitzonen östlich von UTC um -1 Tag (#273).
+                // formatDateISO nutzt lokale Datumsteile statt UTC → kein -1-Tag-Shift in UTC+x (#273).
                 const dateStr = this.holidayFormData.date instanceof Date
                     ? formatDateISO(this.holidayFormData.date)
                     : this.holidayFormData.date
