@@ -7,6 +7,9 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Fixed
+- **Lange Bemerkungen brechen in Abwesenheits- und Genehmigungstabellen um (#275)**: Bemerkungen ohne natürliche Trennzeichen dehnten die Tabellen über ihren Container hinaus (ererbtes `white-space: nowrap`). Anzeigenotiz-Zellen in `AbsenceRow` und `ApprovalOverviewView` bekommen jetzt einen umbrechenden Wrapper (`max-width 22rem`, `white-space: normal`, `overflow-wrap: anywhere`). Die Beschreibungsspalte in der Detail-Tabelle wechselt konsistent von Ellipsis-Abschneiden auf Zeilenumbruch.
+
 ## [0.9.2] - 2026-06-07
 
 ### Added
