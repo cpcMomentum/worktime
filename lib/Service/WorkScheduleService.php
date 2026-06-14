@@ -322,29 +322,31 @@ class WorkScheduleService {
 
     /**
      * Get vacation days entitlement for a year.
-     * Pro-rates across multiple schedules if profile changes occur mid-year.
+     *
+     * Vacation entitlement is an annual figure tied to the work-schedule profile
+     * that is valid for the employee, not a value that accrues per sub-period the
+     * way working hours do. Pro-rating it across mid-year profile changes produced
+     * confusing blended numbers that disagreed with the profile editor and the
+     * employee overview (#281) – e.g. an auto-created default profile (30 days)
+     * overlapping a real, mid-year profile (14 days) showed ~21 instead of 14.
+     *
+     * We therefore take the entitlement from the profile valid at the year's
+     * reference date: today for the current year (so it matches the employee
+     * overview and profile editor), the year's end for past years.
      */
     public function getVacationDaysForYear(int $employeeId, int $year): int {
-        $jan1 = new DateTime("$year-01-01");
-        $dec31 = new DateTime("$year-12-31");
-        $segments = $this->buildSegments($employeeId, $jan1, $dec31);
+        $now = new DateTime();
+        $yearStart = new DateTime("$year-01-01");
+        $yearEnd = new DateTime("$year-12-31");
 
-        // Nur ein Profil das ganze Jahr → direkt zurueckgeben
-        if (count($segments) === 1) {
-            return $segments[0]['schedule']->getVacationDays();
+        // The year's end, but never in the future: the current year uses the
+        // profile valid today; a future year falls back to the year's start.
+        $reference = $yearEnd < $now ? $yearEnd : $now;
+        if ($reference < $yearStart) {
+            $reference = $yearStart;
         }
 
-        // Mehrere Profile → anteilig berechnen
-        $daysInYear = (int)$jan1->diff($dec31)->days + 1;
-        $totalDays = 0.0;
-
-        foreach ($segments as $segment) {
-            $daysInSegment = (int)$segment['start']->diff($segment['end'])->days + 1;
-            $fraction = $daysInSegment / $daysInYear;
-            $totalDays += $segment['schedule']->getVacationDays() * $fraction;
-        }
-
-        return (int)round($totalDays);
+        return $this->getScheduleForDate($employeeId, $reference)->getVacationDays();
     }
 
     /**
