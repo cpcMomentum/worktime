@@ -78,7 +78,7 @@ import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import DeleteIcon from 'vue-material-design-icons/Delete.vue'
 import LockIcon from 'vue-material-design-icons/Lock.vue'
 import CalendarStarIcon from 'vue-material-design-icons/CalendarStar.vue'
-import { mapActions } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 import TimeEntryForm from './TimeEntryForm.vue'
 import { formatDateWithWeekday } from '../utils/dateUtils.js'
 import { formatMinutes } from '../utils/timeUtils.js'
@@ -118,6 +118,7 @@ export default {
         }
     },
     computed: {
+        ...mapGetters('permissions', ['isCorrectionMode']),
         dayTitle() {
             return formatDateWithWeekday(this.day.date)
         },
@@ -134,6 +135,10 @@ export default {
                 : this.t('worktime', '{scope} Tage', { scope })
         },
         readonly() {
+            // In HR correction mode the lock is bypassed (a reason is required on save).
+            if (this.isCorrectionMode) {
+                return false
+            }
             return this.monthStatus === 'submitted' || this.monthStatus === 'approved'
         },
         lockedMessage() {

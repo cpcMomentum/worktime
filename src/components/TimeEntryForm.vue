@@ -71,6 +71,10 @@
                 {{ t('worktime', 'Speichern') }}
             </NcButton>
         </div>
+
+        <CorrectionReasonModal v-if="showReasonModal"
+            @confirm="onReasonConfirm"
+            @close="showReasonModal = false" />
     </div>
 </template>
 
@@ -84,6 +88,7 @@ import { formatMinutesWithUnit, calculateWorkMinutes, suggestBreak as suggestBre
 import { showErrorMessage } from '../utils/errorHandler.js'
 import SettingsService from '../services/SettingsService.js'
 import InfoIcon from '../components/InfoIcon.vue'
+import CorrectionReasonModal from '../components/CorrectionReasonModal.vue'
 
 export default {
     name: 'TimeEntryForm',
@@ -92,6 +97,7 @@ export default {
         NcButton,
         NcSelect,
         NcDateTimePicker,
+        CorrectionReasonModal,
     },
     props: {
         entry: {
@@ -119,9 +125,12 @@ export default {
                 projectId: null,
                 description: '',
             },
+            showReasonModal: false,
+            pendingData: null,
         }
     },
     computed: {
+        ...mapGetters('permissions', ['isCorrectionMode']),
         ...mapGetters('projects', ['activeProjects']),
         ...mapGetters('employees', ['currentEmployee']),
         requiredBreak() {
@@ -228,23 +237,38 @@ export default {
         cancel() {
             this.$emit('cancel')
         },
-        async save() {
+        save() {
+            const data = {
+                date: formatDateISO(this.form.date),
+                startTime: this.form.startTime,
+                endTime: this.form.endTime,
+                breakMinutes: this.form.breakMinutes,
+                projectId: this.form.projectId,
+                description: this.form.description || null,
+            }
+            // In HR correction mode, capture a mandatory reason before saving.
+            if (this.isCorrectionMode) {
+                this.pendingData = data
+                this.showReasonModal = true
+                return
+            }
+            this.persist(data)
+        },
+        onReasonConfirm(reason) {
+            const data = this.pendingData
+            this.showReasonModal = false
+            this.pendingData = null
+            if (data) {
+                this.persist({ ...data, reason })
+            }
+        },
+        async persist(data) {
             try {
-                const data = {
-                    date: formatDateISO(this.form.date),
-                    startTime: this.form.startTime,
-                    endTime: this.form.endTime,
-                    breakMinutes: this.form.breakMinutes,
-                    projectId: this.form.projectId,
-                    description: this.form.description || null,
-                }
-
                 if (this.isEdit) {
                     await this.updateTimeEntry({ id: this.entry.id, data })
                 } else {
                     await this.createTimeEntry(data)
                 }
-
                 this.$emit('saved')
             } catch (error) {
                 console.error('Failed to save time entry:', error)

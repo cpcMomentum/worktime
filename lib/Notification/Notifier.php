@@ -146,6 +146,11 @@ class Notifier implements INotifier {
 						[$params['monthYear']]
 					)
 				);
+				if (!empty($params['reason'])) {
+					$notification->setParsedMessage(
+						$l->t('Begründung der Korrektur: %s', [$params['reason']])
+					);
+				}
 				break;
 
 			default:

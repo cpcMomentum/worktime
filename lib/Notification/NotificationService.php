@@ -106,8 +106,8 @@ class NotificationService {
 		$this->sendTimeEntryDecisionNotification($employeeId, $year, $month, 'time_entries_rejected');
 	}
 
-	public function notifyTimeEntriesReopened(int $employeeId, int $year, int $month): void {
-		$this->sendTimeEntryDecisionNotification($employeeId, $year, $month, 'time_entries_reopened');
+	public function notifyTimeEntriesReopened(int $employeeId, int $year, int $month, string $reason = ''): void {
+		$this->sendTimeEntryDecisionNotification($employeeId, $year, $month, 'time_entries_reopened', $reason);
 	}
 
 	private function sendSupervisorAbsenceNotification(Absence $absence, string $subject): void {
@@ -155,13 +155,14 @@ class NotificationService {
 		}
 	}
 
-	private function sendTimeEntryDecisionNotification(int $employeeId, int $year, int $month, string $subject): void {
+	private function sendTimeEntryDecisionNotification(int $employeeId, int $year, int $month, string $subject, string $reason = ''): void {
 		try {
 			$employee = $this->employeeMapper->find($employeeId);
 			$monthYear = self::MONTH_NAMES[$month] . ' ' . $year;
 
 			$notification = $this->createNotification($subject, $employee->getUserId(), [
 				'monthYear' => $monthYear,
+				'reason' => $reason,
 			]);
 			$notification->setObject('time_entry', $employeeId . '-' . $year . '-' . $month);
 

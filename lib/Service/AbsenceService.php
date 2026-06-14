@@ -140,9 +140,10 @@ class AbsenceService {
 
         // Audit log (record the HR correction reason when present)
         if ($currentUserId) {
+            $auditReason = $this->timeEntryService->auditReason($effectiveReason, $allowLockedOverride, $reason);
             $newValues = $absence->jsonSerialize();
-            if ($effectiveReason !== null) {
-                $newValues['reason'] = $effectiveReason;
+            if ($auditReason !== null) {
+                $newValues['reason'] = $auditReason;
             }
             $this->auditLogService->logCreate($currentUserId, 'absence', $absence->getId(), $newValues);
         }
@@ -245,9 +246,10 @@ class AbsenceService {
 
         // Audit log (record the HR correction reason when present)
         if ($currentUserId) {
+            $auditReason = $this->timeEntryService->auditReason($effectiveReason, $allowLockedOverride, $reason);
             $newValues = $absence->jsonSerialize();
-            if ($effectiveReason !== null) {
-                $newValues['reason'] = $effectiveReason;
+            if ($auditReason !== null) {
+                $newValues['reason'] = $auditReason;
             }
             $this->auditLogService->logUpdate($currentUserId, 'absence', $absence->getId(), $oldValues, $newValues);
         }

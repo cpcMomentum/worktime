@@ -145,9 +145,10 @@ class TimeEntryService {
 
         // Audit log (record the HR correction reason when present)
         if ($currentUserId) {
+            $auditReason = $this->auditReason($effectiveReason, $allowLockedOverride, $reason);
             $newValues = $entry->jsonSerialize();
-            if ($effectiveReason !== null) {
-                $newValues['reason'] = $effectiveReason;
+            if ($auditReason !== null) {
+                $newValues['reason'] = $auditReason;
             }
             $this->auditLogService->logCreate($currentUserId, 'time_entry', $entry->getId(), $newValues);
         }
@@ -246,9 +247,10 @@ class TimeEntryService {
 
         // Audit log (record the HR correction reason when present)
         if ($currentUserId) {
+            $auditReason = $this->auditReason($effectiveReason, $allowLockedOverride, $reason);
             $newValues = $entry->jsonSerialize();
-            if ($effectiveReason !== null) {
-                $newValues['reason'] = $effectiveReason;
+            if ($auditReason !== null) {
+                $newValues['reason'] = $auditReason;
             }
             $this->auditLogService->logUpdate($currentUserId, 'time_entry', $entry->getId(), $oldValues, $newValues);
         }
@@ -534,7 +536,7 @@ class TimeEntryService {
         }
 
         if ($reopened > 0) {
-            $this->notificationService->notifyTimeEntriesReopened($employeeId, $year, $month);
+            $this->notificationService->notifyTimeEntriesReopened($employeeId, $year, $month, $reason);
         }
 
         return [
@@ -687,6 +689,24 @@ class TimeEntryService {
             );
         }
         return $reason;
+    }
+
+    /**
+     * The reason to record in the audit log for a create/update (#148): the
+     * enforced reason for a closed month, otherwise any reason an HR/Admin
+     * deliberately supplied (so every HR correction stays documented), else null.
+     */
+    public function auditReason(?string $effectiveReason, bool $allowOverride, ?string $reason): ?string {
+        if ($effectiveReason !== null) {
+            return $effectiveReason;
+        }
+        if ($allowOverride) {
+            $trimmed = trim((string)$reason);
+            if ($trimmed !== '') {
+                return $trimmed;
+            }
+        }
+        return null;
     }
 
     /**

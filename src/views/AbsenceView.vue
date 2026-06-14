@@ -195,6 +195,10 @@
                 :holidays="teamHolidays"
                 :show-full-legend="isPrivileged" />
         </div>
+
+        <CorrectionReasonModal v-if="pendingCorrection"
+            @confirm="onReasonConfirm"
+            @close="pendingCorrection = null" />
     </div>
 </template>
 
@@ -206,6 +210,7 @@ import PlusIcon from 'vue-material-design-icons/Plus.vue'
 import CalendarIcon from 'vue-material-design-icons/Calendar.vue'
 import { mapGetters, mapActions } from 'vuex'
 import AbsenceRow from '../components/AbsenceRow.vue'
+import CorrectionReasonModal from '../components/CorrectionReasonModal.vue'
 import MonthPicker from '../components/MonthPicker.vue'
 import YearPicker from '../components/YearPicker.vue'
 import AbsenceTimeline from '../components/AbsenceTimeline.vue'
@@ -226,6 +231,7 @@ export default {
         PlusIcon,
         CalendarIcon,
         AbsenceRow,
+        CorrectionReasonModal,
         MonthPicker,
         YearPicker,
         AbsenceTimeline,
@@ -238,6 +244,7 @@ export default {
             editingId: null,
             isCreating: false,
             overtime: null,
+            pendingCorrection: null,
             teamMonth: { year: getCurrentYear(), month: getCurrentMonth() },
             teamOverview: [],
             teamHolidays: [],
@@ -247,7 +254,7 @@ export default {
     },
     computed: {
         ...mapGetters('absences', ['absences', 'absenceTypes', 'vacationStats', 'loading']),
-        ...mapGetters('permissions', ['activeEmployeeId', 'isAdmin', 'isHrManager', 'canApprove']),
+        ...mapGetters('permissions', ['activeEmployeeId', 'isAdmin', 'isHrManager', 'canApprove', 'isCorrectionMode']),
         isPrivileged() {
             return this.isAdmin || this.isHrManager || this.canApprove
         },
@@ -370,7 +377,32 @@ export default {
         cancelEdit() {
             this.editingId = null
         },
-        async onCreate({ data }) {
+        onCreate({ data }) {
+            // In HR correction mode, capture a mandatory reason before saving.
+            if (this.isCorrectionMode) {
+                this.pendingCorrection = { mode: 'create', data }
+                return
+            }
+            this.doCreate(data)
+        },
+        onUpdate({ id, data }) {
+            if (this.isCorrectionMode) {
+                this.pendingCorrection = { mode: 'update', id, data }
+                return
+            }
+            this.doUpdate(id, data)
+        },
+        onReasonConfirm(reason) {
+            const pending = this.pendingCorrection
+            this.pendingCorrection = null
+            if (!pending) return
+            if (pending.mode === 'create') {
+                this.doCreate({ ...pending.data, reason })
+            } else {
+                this.doUpdate(pending.id, { ...pending.data, reason })
+            }
+        },
+        async doCreate(data) {
             try {
                 await this.createAbsence(data)
                 this.isCreating = false
@@ -381,7 +413,7 @@ export default {
                 showErrorMessage(error.message || this.t('worktime', 'Fehler beim Erstellen'))
             }
         },
-        async onUpdate({ id, data }) {
+        async doUpdate(id, data) {
             try {
                 await this.updateAbsence({ id, data })
                 this.editingId = null

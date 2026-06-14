@@ -250,4 +250,21 @@ class TimeEntryServiceTest extends TestCase {
             $this->service->lockedMonthsInRange(1, $start, $end)
         );
     }
+
+    public function testAuditReasonPrefersEnforcedReason(): void {
+        $this->assertSame('Pflichtgrund', $this->service->auditReason('Pflichtgrund', true, 'anderer'));
+    }
+
+    public function testAuditReasonRecordsHrReasonOnOpenMonth(): void {
+        $this->assertSame('Stempelfehler korrigiert', $this->service->auditReason(null, true, '  Stempelfehler korrigiert  '));
+    }
+
+    public function testAuditReasonIgnoresReasonWithoutOverride(): void {
+        $this->assertNull($this->service->auditReason(null, false, 'kein Override'));
+    }
+
+    public function testAuditReasonNullWhenNoReason(): void {
+        $this->assertNull($this->service->auditReason(null, true, '  '));
+        $this->assertNull($this->service->auditReason(null, true, null));
+    }
 }
