@@ -140,15 +140,19 @@ class Notifier implements INotifier {
 				break;
 
 			case 'time_entries_reopened':
-				$notification->setParsedSubject(
-					$l->t(
-						'Die Genehmigung deiner Zeiteinträge für %s wurde zurückgenommen. Bitte erneut einreichen.',
-						[$params['monthYear']]
-					)
-				);
 				if (!empty($params['reason'])) {
-					$notification->setParsedMessage(
-						$l->t('Begründung der Korrektur: %s', [$params['reason']])
+					$notification->setParsedSubject(
+						$l->t(
+							'Die Genehmigung deiner Zeiteinträge für %1$s wurde zurückgenommen (Grund: %2$s). Bitte erneut einreichen.',
+							[$params['monthYear'], $params['reason']]
+						)
+					);
+				} else {
+					$notification->setParsedSubject(
+						$l->t(
+							'Die Genehmigung deiner Zeiteinträge für %s wurde zurückgenommen. Bitte erneut einreichen.',
+							[$params['monthYear']]
+						)
 					);
 				}
 				break;

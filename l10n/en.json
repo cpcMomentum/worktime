@@ -579,7 +579,7 @@
 		"Begründung (mindestens 10 Zeichen)": "Reason (at least 10 characters)",
 		"z. B. Stempelfehler nach Rücksprache mit der Mitarbeiterin korrigiert": "e.g. corrected a clock-in error after consulting the employee",
 		"Korrektur speichern": "Save correction",
-		"Begründung der Korrektur: %s": "Reason for the correction: %s"
+		"Die Genehmigung deiner Zeiteinträge für %1$s wurde zurückgenommen (Grund: %2$s). Bitte erneut einreichen.": "The approval of your time entries for %1$s was withdrawn (reason: %2$s). Please resubmit."
 	},
 	"pluralForm": "nplurals=2; plural=(n != 1);"
 }
