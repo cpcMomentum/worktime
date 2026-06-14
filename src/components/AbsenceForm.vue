@@ -48,7 +48,7 @@
                 rows="2" />
         </div>
 
-        <p v-if="isOverQuota" class="quota-hint">
+        <p v-if="showQuotaHint" class="quota-hint">
             {{ t('worktime', 'Hinweis: Der Zeitraum umfasst ca. {requested} Werktage (Resturlaub: {available}). Abgezogen werden nur deine Arbeitstage laut Arbeitszeitmodell – bei Teilzeit also weniger.', { available: quotaAvailable.toFixed(1), requested: estimatedDays.toFixed(1) }) }}
         </p>
 
@@ -136,7 +136,7 @@ export default {
             }
             return available
         },
-        isOverQuota() {
+        showQuotaHint() {
             if (this.form.type !== 'vacation') return false
             if (!this.vacationStats) return false
             return this.estimatedDays > this.quotaAvailable

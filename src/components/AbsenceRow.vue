@@ -81,7 +81,7 @@
                     @keydown="onKeydown">
             </td>
             <td>
-                <span v-if="isOverQuota" class="quota-hint">
+                <span v-if="showQuotaHint" class="quota-hint">
                     {{ t('worktime', 'Hinweis: ca. {requested} Werktage im Zeitraum (Resturlaub: {available}). Abgezogen werden nur Arbeitstage laut Arbeitszeitmodell.', { available: quotaAvailable.toFixed(1), requested: estimatedDays.toFixed(1) }) }}
                 </span>
                 <span v-else-if="absence && absence.status === 'approved' && absence.type !== 'sick' && absence.type !== 'child_sick'" class="edit-hint">
@@ -251,7 +251,7 @@ export default {
             }
             return available
         },
-        isOverQuota() {
+        showQuotaHint() {
             if (this.form.type !== 'vacation') return false
             if (!this.vacationStats) return false
             return this.estimatedDays > this.quotaAvailable
