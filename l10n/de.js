@@ -208,7 +208,6 @@ OC.L10N.register(
     "½ Tag" : "½ Tag",
     "1 Tag" : "1 Tag",
     "Halber Tag = 0,5 Tage. Start- und Enddatum sind identisch." : "Halber Tag = 0,5 Tage. Start- und Enddatum sind identisch.",
-    "Nicht genügend Urlaubstage. Verfügbar: {available}, beantragt: {requested}." : "Nicht genügend Urlaubstage. Verfügbar: {available}, beantragt: {requested}.",
     "Startdatum" : "Startdatum",
     "Enddatum" : "Enddatum",
     "Von" : "Von",
