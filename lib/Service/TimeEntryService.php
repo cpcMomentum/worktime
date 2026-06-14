@@ -98,7 +98,9 @@ class TimeEntryService {
         int $breakMinutes,
         ?int $projectId = null,
         ?string $description = null,
-        string $currentUserId = ''
+        string $currentUserId = '',
+        ?string $reason = null,
+        bool $allowLockedOverride = false
     ): TimeEntry {
         $dateObj = new DateTime($date);
         $startTimeObj = DateTime::createFromFormat('H:i', $startTime) ?: null;
@@ -119,6 +121,10 @@ class TimeEntryService {
             throw new ValidationException($errors);
         }
 
+        // Closed-month rules (#148): block employees, require a reason for HR corrections.
+        $lockedMonths = $this->lockedMonthsInRange($employeeId, $dateObj, $dateObj);
+        $effectiveReason = $this->requireReasonForLockedMonths($lockedMonths, $allowLockedOverride, $reason);
+
         // Calculate work minutes
         $workMinutes = $this->calculateWorkMinutes($startTimeObj, $endTimeObj, $breakMinutes);
 
@@ -137,9 +143,18 @@ class TimeEntryService {
 
         $entry = $this->timeEntryMapper->insert($entry);
 
-        // Audit log
+        // Audit log (record the HR correction reason when present)
         if ($currentUserId) {
-            $this->auditLogService->logCreate($currentUserId, 'time_entry', $entry->getId(), $entry->jsonSerialize());
+            $newValues = $entry->jsonSerialize();
+            if ($effectiveReason !== null) {
+                $newValues['reason'] = $effectiveReason;
+            }
+            $this->auditLogService->logCreate($currentUserId, 'time_entry', $entry->getId(), $newValues);
+        }
+
+        // HR correction in a closed month: reopen the affected months for re-approval.
+        if ($effectiveReason !== null) {
+            $this->reopenLockedMonths($employeeId, $lockedMonths, $effectiveReason, $currentUserId);
         }
 
         return $entry;
@@ -157,10 +172,13 @@ class TimeEntryService {
         int $breakMinutes,
         ?int $projectId = null,
         ?string $description = null,
-        string $currentUserId = ''
+        string $currentUserId = '',
+        ?string $reason = null,
+        bool $allowLockedOverride = false
     ): TimeEntry {
         $entry = $this->find($id);
         $oldValues = $entry->jsonSerialize();
+        $oldDate = clone $entry->getDate();
 
         $dateObj = new DateTime($date);
         $startTimeObj = DateTime::createFromFormat('H:i', $startTime) ?: null;
@@ -181,14 +199,22 @@ class TimeEntryService {
             throw new ValidationException($errors);
         }
 
-        // Cannot edit approved entries
-        if ($entry->getStatus() === TimeEntry::STATUS_APPROVED) {
-            throw ValidationException::fromSingleError('status', 'Cannot edit approved time entries');
-        }
+        // Closed-month rules (#148): block employees, require a reason for HR
+        // corrections. Cover both the old and the new date (a move can leave a
+        // closed month).
+        $rangeStart = $oldDate <= $dateObj ? $oldDate : $dateObj;
+        $rangeEnd = $oldDate <= $dateObj ? $dateObj : $oldDate;
+        $lockedMonths = $this->lockedMonthsInRange($entry->getEmployeeId(), $rangeStart, $rangeEnd);
+        $effectiveReason = $this->requireReasonForLockedMonths($lockedMonths, $allowLockedOverride, $reason);
 
-        // Cannot edit submitted entries (awaiting approval; HR uses reopen/reject)
-        if ($entry->getStatus() === TimeEntry::STATUS_SUBMITTED) {
-            throw ValidationException::fromSingleError('status', 'Cannot edit submitted time entries');
+        // Employees cannot edit approved/submitted entries; an HR correction may.
+        if (!$allowLockedOverride) {
+            if ($entry->getStatus() === TimeEntry::STATUS_APPROVED) {
+                throw ValidationException::fromSingleError('status', 'Cannot edit approved time entries');
+            }
+            if ($entry->getStatus() === TimeEntry::STATUS_SUBMITTED) {
+                throw ValidationException::fromSingleError('status', 'Cannot edit submitted time entries');
+            }
         }
 
         // Calculate work minutes
@@ -203,16 +229,33 @@ class TimeEntryService {
         $entry->setDescription($description);
         $entry->setUpdatedAt(new DateTime());
 
-        // Reset to draft if was rejected
-        if ($entry->getStatus() === TimeEntry::STATUS_REJECTED) {
+        if ($effectiveReason !== null) {
+            // HR correction in a closed month: the entry returns to draft and the
+            // month is reopened for re-approval.
+            $entry->setStatus(TimeEntry::STATUS_DRAFT);
+            $entry->setApprovedAt(null);
+            $entry->setApprovedBy(null);
+            $entry->setSubmittedAt(null);
+            $entry->setSubmittedBy(null);
+        } elseif ($entry->getStatus() === TimeEntry::STATUS_REJECTED) {
+            // Reset to draft if was rejected
             $entry->setStatus(TimeEntry::STATUS_DRAFT);
         }
 
         $entry = $this->timeEntryMapper->update($entry);
 
-        // Audit log
+        // Audit log (record the HR correction reason when present)
         if ($currentUserId) {
-            $this->auditLogService->logUpdate($currentUserId, 'time_entry', $entry->getId(), $oldValues, $entry->jsonSerialize());
+            $newValues = $entry->jsonSerialize();
+            if ($effectiveReason !== null) {
+                $newValues['reason'] = $effectiveReason;
+            }
+            $this->auditLogService->logUpdate($currentUserId, 'time_entry', $entry->getId(), $oldValues, $newValues);
+        }
+
+        // Reopen the affected closed months for re-approval.
+        if ($effectiveReason !== null) {
+            $this->reopenLockedMonths($entry->getEmployeeId(), $lockedMonths, $effectiveReason, $currentUserId);
         }
 
         return $entry;
@@ -577,6 +620,85 @@ class TimeEntryService {
         $summary = $this->timeEntryMapper->getMonthlyStatusSummary($employeeId, $year, $month);
         $total = $summary['draft'] + $summary['submitted'] + $summary['approved'] + $summary['rejected'];
         return $total > 0 && $summary['approved'] === $total;
+    }
+
+    /**
+     * Whether a month is locked for employee self-service (#148): a month is
+     * locked when it is fully approved, or when it lies in a past calendar year
+     * (regardless of approval status). HR/Admin can still correct it via the
+     * HR correction flow (reason + month reopening).
+     */
+    public function isMonthLocked(int $employeeId, int $year, int $month): bool {
+        $currentYear = (int)(new DateTime())->format('Y');
+        if ($year < $currentYear) {
+            return true;
+        }
+        return $this->isMonthApproved($employeeId, $year, $month);
+    }
+
+    /**
+     * The locked months that a date range touches.
+     *
+     * @return array<array{0: int, 1: int}> list of [year, month] pairs
+     */
+    public function lockedMonthsInRange(int $employeeId, DateTime $start, DateTime $end): array {
+        $locked = [];
+        $cursor = new DateTime($start->format('Y-m-01'));
+        $last = new DateTime($end->format('Y-m-01'));
+        while ($cursor <= $last) {
+            $year = (int)$cursor->format('Y');
+            $month = (int)$cursor->format('n');
+            if ($this->isMonthLocked($employeeId, $year, $month)) {
+                $locked[] = [$year, $month];
+            }
+            $cursor->modify('+1 month');
+        }
+        return $locked;
+    }
+
+    /**
+     * Enforce the closed-month rules for a create/update (#148), shared by the
+     * time-entry and absence services.
+     *
+     * - No locked month touched: returns null (normal save).
+     * - Locked month touched without override: blocks (employee self-service).
+     * - Locked month touched with override (HR/Admin): requires a reason of at
+     *   least 10 characters and returns it (the caller records it in the audit
+     *   log and reopens the affected months).
+     *
+     * @param array<array{0: int, 1: int}> $lockedMonths
+     * @throws ValidationException
+     */
+    public function requireReasonForLockedMonths(array $lockedMonths, bool $allowOverride, ?string $reason): ?string {
+        if (empty($lockedMonths)) {
+            return null;
+        }
+        if (!$allowOverride) {
+            throw ValidationException::fromSingleError(
+                'period',
+                $this->l->t('Dieser Zeitraum ist abgeschlossen. Bitte wende dich an HR.')
+            );
+        }
+        $reason = trim((string)$reason);
+        if (mb_strlen($reason) < 10) {
+            throw ValidationException::fromSingleError(
+                'reason',
+                $this->l->t('Begründung erforderlich (mindestens 10 Zeichen).')
+            );
+        }
+        return $reason;
+    }
+
+    /**
+     * Reopen the given (closed) months after an HR correction: their approved
+     * entries go back to draft and the employee is notified.
+     *
+     * @param array<array{0: int, 1: int}> $lockedMonths
+     */
+    private function reopenLockedMonths(int $employeeId, array $lockedMonths, string $reason, string $currentUserId): void {
+        foreach ($lockedMonths as [$year, $month]) {
+            $this->reopenMonth($employeeId, $year, $month, $reason, $currentUserId);
+        }
     }
 
     /**

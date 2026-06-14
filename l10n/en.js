@@ -528,7 +528,6 @@ OC.L10N.register(
     "Überlappung mit bestehendem Eintrag (%1$s - %2$s)" : "Overlap with existing entry (%1$s - %2$s)",
     "Scope muss zwischen 0 und 1 liegen" : "Scope must be between 0 and 1",
     "Halber Tag ist nur für einen einzelnen Tag möglich" : "Half day is only possible for a single day",
-    "Tag %1$s kann nicht entfernt werden (Monat %2$02d/%3$d ist genehmigt)" : "Day %1$s cannot be removed (month %2$02d/%3$d is approved)",
     "Gültig-ab darf frühestens der 1. des aktuellen Monats sein" : "Valid-from must be no earlier than the 1st of the current month",
     "Ein Profil mit diesem Gültig-ab Datum existiert bereits" : "A profile with this valid-from date already exists",
     "Maximale tägliche Arbeitszeit ist %s Stunden (siehe Einstellungen)" : "Maximum daily working time is %s hours (see settings)",
@@ -567,6 +566,8 @@ OC.L10N.register(
     "Freizeitausgleich reduziert die Überstunden automatisch." : "Compensatory leave automatically reduces overtime.",
     "Freizeitausgleich genommen" : "Compensatory time taken",
     "Hinweis: Der Zeitraum umfasst ca. {requested} Werktage (Resturlaub: {available}). Abgezogen werden nur deine Arbeitstage laut Arbeitszeitmodell – bei Teilzeit also weniger." : "Note: the period spans approx. {requested} working days (remaining: {available}). Only your working days according to your work schedule are deducted – fewer for part-time.",
-    "Hinweis: ca. {requested} Werktage im Zeitraum (Resturlaub: {available}). Abgezogen werden nur Arbeitstage laut Arbeitszeitmodell." : "Note: approx. {requested} working days in the period (remaining: {available}). Only working days according to the work schedule are deducted."
+    "Hinweis: ca. {requested} Werktage im Zeitraum (Resturlaub: {available}). Abgezogen werden nur Arbeitstage laut Arbeitszeitmodell." : "Note: approx. {requested} working days in the period (remaining: {available}). Only working days according to the work schedule are deducted.",
+    "Dieser Zeitraum ist abgeschlossen. Bitte wende dich an HR." : "This period is closed. Please contact HR.",
+    "Begründung erforderlich (mindestens 10 Zeichen)." : "A reason is required (at least 10 characters)."
 },
 "nplurals=2; plural=(n != 1);");

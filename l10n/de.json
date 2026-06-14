@@ -527,7 +527,6 @@
 		"Überlappung mit bestehendem Eintrag (%1$s - %2$s)": "Überlappung mit bestehendem Eintrag (%1$s - %2$s)",
 		"Scope muss zwischen 0 und 1 liegen": "Scope muss zwischen 0 und 1 liegen",
 		"Halber Tag ist nur für einen einzelnen Tag möglich": "Halber Tag ist nur für einen einzelnen Tag möglich",
-		"Tag %1$s kann nicht entfernt werden (Monat %2$02d/%3$d ist genehmigt)": "Tag %1$s kann nicht entfernt werden (Monat %2$02d/%3$d ist genehmigt)",
 		"Gültig-ab darf frühestens der 1. des aktuellen Monats sein": "Gültig-ab darf frühestens der 1. des aktuellen Monats sein",
 		"Ein Profil mit diesem Gültig-ab Datum existiert bereits": "Ein Profil mit diesem Gültig-ab Datum existiert bereits",
 		"Maximale tägliche Arbeitszeit ist %s Stunden (siehe Einstellungen)": "Maximale tägliche Arbeitszeit ist %s Stunden (siehe Einstellungen)",

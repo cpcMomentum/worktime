@@ -198,4 +198,56 @@ class TimeEntryServiceTest extends TestCase {
         $this->assertEquals(160.0, $stats['totalWorkHours']);
         $this->assertEquals(22, $stats['entryCount']);
     }
+
+    // --- #148: closed-month locking + HR correction override ---
+
+    public function testIsMonthLockedPastYearIsAlwaysLocked(): void {
+        $pastYear = (int)(new DateTime())->format('Y') - 1;
+        // A past calendar year is locked regardless of approval status.
+        $this->assertTrue($this->service->isMonthLocked(1, $pastYear, 6));
+    }
+
+    public function testIsMonthLockedCurrentYearApprovedIsLocked(): void {
+        $year = (int)(new DateTime())->format('Y');
+        $this->timeEntryMapper->method('getMonthlyStatusSummary')
+            ->willReturn(['draft' => 0, 'submitted' => 0, 'approved' => 3, 'rejected' => 0]);
+        $this->assertTrue($this->service->isMonthLocked(1, $year, 3));
+    }
+
+    public function testIsMonthLockedCurrentYearNotApprovedIsOpen(): void {
+        $year = (int)(new DateTime())->format('Y');
+        $this->timeEntryMapper->method('getMonthlyStatusSummary')
+            ->willReturn(['draft' => 1, 'submitted' => 1, 'approved' => 2, 'rejected' => 0]);
+        $this->assertFalse($this->service->isMonthLocked(1, $year, 3));
+    }
+
+    public function testRequireReasonReturnsNullWhenNoLockedMonths(): void {
+        $this->assertNull($this->service->requireReasonForLockedMonths([], true, null));
+        $this->assertNull($this->service->requireReasonForLockedMonths([], false, 'whatever'));
+    }
+
+    public function testRequireReasonBlocksEmployeeOnLockedMonth(): void {
+        $this->expectException(ValidationException::class);
+        $this->service->requireReasonForLockedMonths([[2025, 5]], false, null);
+    }
+
+    public function testRequireReasonRejectsTooShortReasonForHrOverride(): void {
+        $this->expectException(ValidationException::class);
+        $this->service->requireReasonForLockedMonths([[2025, 5]], true, 'zu kurz'); // 7 chars
+    }
+
+    public function testRequireReasonReturnsTrimmedReasonForHrOverride(): void {
+        $reason = $this->service->requireReasonForLockedMonths([[2025, 5]], true, '  Stempelfehler korrigiert  ');
+        $this->assertSame('Stempelfehler korrigiert', $reason);
+    }
+
+    public function testLockedMonthsInRangeListsEachLockedMonth(): void {
+        $pastYear = (int)(new DateTime())->format('Y') - 1;
+        $start = new DateTime("$pastYear-01-15");
+        $end = new DateTime("$pastYear-03-10");
+        $this->assertSame(
+            [[$pastYear, 1], [$pastYear, 2], [$pastYear, 3]],
+            $this->service->lockedMonthsInRange(1, $start, $end)
+        );
+    }
 }

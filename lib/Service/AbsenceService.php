@@ -89,7 +89,9 @@ class AbsenceService {
         ?string $note = null,
         string $federalState = 'BY',
         string $currentUserId = '',
-        float $scope = 1.0
+        float $scope = 1.0,
+        ?string $reason = null,
+        bool $allowLockedOverride = false
     ): Absence {
         $startDateObj = new DateTime($startDate);
         $endDateObj = new DateTime($endDate);
@@ -99,6 +101,10 @@ class AbsenceService {
         if (!empty($errors)) {
             throw new ValidationException($errors);
         }
+
+        // Closed-month rules (#148): block employees, require a reason for HR corrections.
+        $lockedMonths = $this->timeEntryService->lockedMonthsInRange($employeeId, $startDateObj, $endDateObj);
+        $effectiveReason = $this->timeEntryService->requireReasonForLockedMonths($lockedMonths, $allowLockedOverride, $reason);
 
         // Calculate working days and apply scope (schedule-aware)
         $workingDays = $this->calculateWorkingDays($startDateObj, $endDateObj, $federalState, $employeeId);
@@ -132,9 +138,20 @@ class AbsenceService {
 
         $absence = $this->absenceMapper->insert($absence);
 
-        // Audit log
+        // Audit log (record the HR correction reason when present)
         if ($currentUserId) {
-            $this->auditLogService->logCreate($currentUserId, 'absence', $absence->getId(), $absence->jsonSerialize());
+            $newValues = $absence->jsonSerialize();
+            if ($effectiveReason !== null) {
+                $newValues['reason'] = $effectiveReason;
+            }
+            $this->auditLogService->logCreate($currentUserId, 'absence', $absence->getId(), $newValues);
+        }
+
+        // HR correction in a closed month: reopen the affected time-entry months.
+        if ($effectiveReason !== null) {
+            foreach ($lockedMonths as [$lockedYear, $lockedMonth]) {
+                $this->timeEntryService->reopenMonth($employeeId, $lockedYear, $lockedMonth, $effectiveReason, $currentUserId);
+            }
         }
 
         try {
@@ -163,10 +180,14 @@ class AbsenceService {
         ?string $note = null,
         string $federalState = 'BY',
         string $currentUserId = '',
-        float $scope = 1.0
+        float $scope = 1.0,
+        ?string $reason = null,
+        bool $allowLockedOverride = false
     ): Absence {
         $absence = $this->find($id);
         $oldValues = $absence->jsonSerialize();
+        $oldStart = clone $absence->getStartDate();
+        $oldEnd = clone $absence->getEndDate();
 
         // Cannot edit cancelled absences
         if ($absence->getStatus() === Absence::STATUS_CANCELLED) {
@@ -178,18 +199,17 @@ class AbsenceService {
 
         // Validate basic rules
         $errors = $this->validate($absence->getEmployeeId(), $type, $startDateObj, $endDateObj, $id, $scope);
-
-        // Validate modification if this is an approved absence being edited
-        if ($absence->getStatus() === Absence::STATUS_APPROVED) {
-            $modificationErrors = $this->validateModification($absence, $startDateObj, $endDateObj);
-            if (!empty($modificationErrors)) {
-                $errors['modification'] = $modificationErrors;
-            }
-        }
-
         if (!empty($errors)) {
             throw new ValidationException($errors);
         }
+
+        // Closed-month rules (#148): employees are blocked from any change that
+        // touches a closed month (old or new range); HR corrections require a
+        // reason and reopen the affected months.
+        $rangeStart = min($oldStart, $startDateObj);
+        $rangeEnd = max($oldEnd, $endDateObj);
+        $lockedMonths = $this->timeEntryService->lockedMonthsInRange($absence->getEmployeeId(), $rangeStart, $rangeEnd);
+        $effectiveReason = $this->timeEntryService->requireReasonForLockedMonths($lockedMonths, $allowLockedOverride, $reason);
 
         // Calculate working days and apply scope (schedule-aware)
         $workingDays = $this->calculateWorkingDays($startDateObj, $endDateObj, $federalState, $absence->getEmployeeId());
@@ -223,9 +243,20 @@ class AbsenceService {
 
         $absence = $this->absenceMapper->update($absence);
 
-        // Audit log
+        // Audit log (record the HR correction reason when present)
         if ($currentUserId) {
-            $this->auditLogService->logUpdate($currentUserId, 'absence', $absence->getId(), $oldValues, $absence->jsonSerialize());
+            $newValues = $absence->jsonSerialize();
+            if ($effectiveReason !== null) {
+                $newValues['reason'] = $effectiveReason;
+            }
+            $this->auditLogService->logUpdate($currentUserId, 'absence', $absence->getId(), $oldValues, $newValues);
+        }
+
+        // HR correction in a closed month: reopen the affected time-entry months.
+        if ($effectiveReason !== null) {
+            foreach ($lockedMonths as [$lockedYear, $lockedMonth]) {
+                $this->timeEntryService->reopenMonth($absence->getEmployeeId(), $lockedYear, $lockedMonth, $effectiveReason, $currentUserId);
+            }
         }
 
         return $absence;
@@ -467,48 +498,6 @@ class AbsenceService {
     }
 
     /**
-     * Validate that no days from approved months are being removed
-     *
-     * @return string[] Error messages
-     */
-    private function validateModification(Absence $absence, DateTime $newStart, DateTime $newEnd): array {
-        $errors = [];
-        $today = new DateTime('today');
-
-        // Get all days from original range
-        $originalDays = $this->getDaysInRange($absence->getStartDate(), $absence->getEndDate());
-        $newDays = $this->getDaysInRange($newStart, $newEnd);
-
-        // Convert new days to string array for comparison
-        $newDayStrings = array_map(fn(DateTime $d) => $d->format('Y-m-d'), $newDays);
-
-        // Find days being removed
-        foreach ($originalDays as $day) {
-            $dayString = $day->format('Y-m-d');
-            if (!in_array($dayString, $newDayStrings)) {
-                // Day is being removed - check if allowed
-                if ($day < $today) {
-                    // Day in past - check if month is approved
-                    $year = (int)$day->format('Y');
-                    $month = (int)$day->format('n');
-                    if ($this->timeEntryService->isMonthApproved($absence->getEmployeeId(), $year, $month)) {
-                        $errors[] = $this->l->t(
-                            'Tag %1$s kann nicht entfernt werden (Monat %2$02d/%3$d ist genehmigt)',
-                            [
-                                $day->format('d.m.Y'),
-                                $month,
-                                $year,
-                            ]
-                        );
-                    }
-                }
-            }
-        }
-
-        return $errors;
-    }
-
-    /**
      * Get absence overview for all visible employees in a given month.
      *
      * @return array[] Array of { employeeId, employeeName, absences }
@@ -596,20 +585,5 @@ class AbsenceService {
 
         // 'all' — visible to everyone
         return true;
-    }
-
-    /**
-     * Get all days in a date range
-     *
-     * @return DateTime[]
-     */
-    private function getDaysInRange(DateTime $start, DateTime $end): array {
-        $days = [];
-        $current = clone $start;
-        while ($current <= $end) {
-            $days[] = clone $current;
-            $current->modify('+1 day');
-        }
-        return $days;
     }
 }

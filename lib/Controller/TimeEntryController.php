@@ -85,7 +85,8 @@ class TimeEntryController extends BaseController {
         string $endTime = '',
         int $breakMinutes = 0,
         ?int $projectId = null,
-        ?string $description = null
+        ?string $description = null,
+        ?string $reason = null
     ): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
@@ -99,6 +100,9 @@ class TimeEntryController extends BaseController {
             return $this->forbiddenResponse();
         }
 
+        // Only HR/Admin may correct closed months (with a mandatory reason).
+        $allowLockedOverride = $this->permissionService->canManageEmployees($this->userId);
+
         try {
             $entry = $this->timeEntryService->create(
                 $employeeId,
@@ -108,7 +112,9 @@ class TimeEntryController extends BaseController {
                 $breakMinutes,
                 $projectId,
                 $description,
-                $this->userId
+                $this->userId,
+                $reason,
+                $allowLockedOverride
             );
 
             return $this->createdResponse($entry);
@@ -125,11 +131,15 @@ class TimeEntryController extends BaseController {
         string $endTime,
         int $breakMinutes,
         ?int $projectId = null,
-        ?string $description = null
+        ?string $description = null,
+        ?string $reason = null
     ): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
         }
+
+        // Only HR/Admin may correct closed months (with a mandatory reason).
+        $allowLockedOverride = $this->permissionService->canManageEmployees($this->userId);
 
         try {
             $entry = $this->timeEntryService->find($id);
@@ -146,7 +156,9 @@ class TimeEntryController extends BaseController {
                 $breakMinutes,
                 $projectId,
                 $description,
-                $this->userId
+                $this->userId,
+                $reason,
+                $allowLockedOverride
             );
 
             return $this->successResponse($entry);

@@ -470,7 +470,6 @@
 		"Überlappung mit bestehendem Eintrag (%1$s - %2$s)": "Překryv se stávajícím záznamem (%1$s - %2$s)",
 		"Scope muss zwischen 0 und 1 liegen": "Rozsah musí být mezi 0 a 1",
 		"Halber Tag ist nur für einen einzelnen Tag möglich": "Půlden je možný pouze pro jeden den",
-		"Tag %1$s kann nicht entfernt werden (Monat %2$02d/%3$d ist genehmigt)": "Den %1$s nelze odstranit (měsíc %2$02d/%3$d je schválen)",
 		"Gültig-ab darf frühestens der 1. des aktuellen Monats sein": "Platnost-od může být nejdříve 1. den aktuálního měsíce",
 		"Ein Profil mit diesem Gültig-ab Datum existiert bereits": "Profil s tímto datem platnosti-od již existuje",
 		"Maximale tägliche Arbeitszeit ist %s Stunden (siehe Einstellungen)": "Maximální denní pracovní doba je %s hodin (viz nastavení)",

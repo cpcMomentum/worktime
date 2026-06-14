@@ -90,7 +90,8 @@ class AbsenceController extends BaseController {
         string $startDate = '',
         string $endDate = '',
         ?string $note = null,
-        float $scope = 1.0
+        float $scope = 1.0,
+        ?string $reason = null
     ): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
@@ -109,6 +110,9 @@ class AbsenceController extends BaseController {
             return $this->successResponse(['error' => 'Scope must be between 0 and 1'], 400);
         }
 
+        // Only HR/Admin may correct closed months (with a mandatory reason).
+        $allowLockedOverride = $this->permissionService->canManageEmployees($this->userId);
+
         try {
             // Get employee's federal state
             $employee = $this->employeeService->find($employeeId);
@@ -122,7 +126,9 @@ class AbsenceController extends BaseController {
                 $note,
                 $federalState,
                 $this->userId,
-                $scope
+                $scope,
+                $reason,
+                $allowLockedOverride
             );
 
             return $this->createdResponse($absence);
@@ -138,7 +144,8 @@ class AbsenceController extends BaseController {
         string $startDate,
         string $endDate,
         ?string $note = null,
-        float $scope = 1.0
+        float $scope = 1.0,
+        ?string $reason = null
     ): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
@@ -148,6 +155,9 @@ class AbsenceController extends BaseController {
         if ($scope < 0 || $scope > 1) {
             return $this->successResponse(['error' => 'Scope must be between 0 and 1'], 400);
         }
+
+        // Only HR/Admin may correct closed months (with a mandatory reason).
+        $allowLockedOverride = $this->permissionService->canManageEmployees($this->userId);
 
         try {
             $absence = $this->absenceService->find($id);
@@ -168,7 +178,9 @@ class AbsenceController extends BaseController {
                 $note,
                 $federalState,
                 $this->userId,
-                $scope
+                $scope,
+                $reason,
+                $allowLockedOverride
             );
 
             return $this->successResponse($absence);
