@@ -28,7 +28,6 @@ const state = {
 const getters = {
     permissions: (state) => state.permissions,
     approvalRequired: (state) => state.approvalRequired,
-    correction: (state) => state.correction,
     isCorrectionMode: (state) => state.correction.targetEmployeeId !== null,
     correctionEmployeeName: (state) => state.correction.employeeName,
     // The employee whose data the views should load/edit: the correction target

@@ -204,7 +204,7 @@ export default {
     computed: {
         ...mapState('timeEntries', ['selectedMonth']),
         ...mapGetters('timeEntries', ['timeEntries', 'loading']),
-        ...mapGetters('permissions', ['employeeId', 'activeEmployeeId', 'approvalRequired']),
+        ...mapGetters('permissions', ['activeEmployeeId', 'approvalRequired']),
         ...mapGetters('employees', ['currentEmployee']),
         ...mapGetters('projects', ['activeProjects']),
         projects() {

@@ -247,7 +247,7 @@ export default {
     },
     computed: {
         ...mapGetters('absences', ['absences', 'absenceTypes', 'vacationStats', 'loading']),
-        ...mapGetters('permissions', ['employeeId', 'activeEmployeeId', 'isAdmin', 'isHrManager', 'canApprove']),
+        ...mapGetters('permissions', ['activeEmployeeId', 'isAdmin', 'isHrManager', 'canApprove']),
         isPrivileged() {
             return this.isAdmin || this.isHrManager || this.canApprove
         },
