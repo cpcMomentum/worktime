@@ -81,8 +81,8 @@
                     @keydown="onKeydown">
             </td>
             <td>
-                <span v-if="isOverQuota" class="quota-warning">
-                    {{ t('worktime', 'Nicht genügend Urlaubstage. Verfügbar: {available}, beantragt: {requested}.', { available: quotaAvailable.toFixed(1), requested: estimatedDays.toFixed(1) }) }}
+                <span v-if="isOverQuota" class="quota-hint">
+                    {{ t('worktime', 'Hinweis: ca. {requested} Werktage im Zeitraum (Resturlaub: {available}). Abgezogen werden nur Arbeitstage laut Arbeitszeitmodell.', { available: quotaAvailable.toFixed(1), requested: estimatedDays.toFixed(1) }) }}
                 </span>
                 <span v-else-if="absence && absence.status === 'approved' && absence.type !== 'sick' && absence.type !== 'child_sick'" class="edit-hint">
                     {{ t('worktime', 'Erneute Genehmigung erforderlich') }}
@@ -260,7 +260,10 @@ export default {
             if (!this.form.type || !this.form.startDate || !this.form.endDate) return false
             const start = new Date(this.form.startDate)
             const end = new Date(this.form.endDate)
-            return start <= end && !this.isOverQuota
+            // The frontend day estimate ignores the work schedule and holidays, so
+            // it must not block submission (a part-timer's whole-week request would
+            // be wrongly rejected). The backend validates schedule-aware.
+            return start <= end
         },
         canEdit() {
             // Auch genehmigte Abwesenheiten können bearbeitet werden
@@ -499,9 +502,9 @@ tr.creating {
     font-style: italic;
 }
 
-.quota-warning {
+.quota-hint {
     font-size: 0.85em;
-    color: var(--color-error);
+    color: var(--color-text-maxcontrast);
     font-weight: 500;
 }
 

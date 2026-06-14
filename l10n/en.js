@@ -566,6 +566,8 @@ OC.L10N.register(
     "Ist / Soll · {month}" : "Actual / Target · {month}",
     "Kein Übertrag aus Vorjahr" : "No carryover from previous year",
     "Freizeitausgleich reduziert die Überstunden automatisch." : "Compensatory leave automatically reduces overtime.",
-    "Freizeitausgleich genommen" : "Compensatory time taken"
+    "Freizeitausgleich genommen" : "Compensatory time taken",
+    "Hinweis: Der Zeitraum umfasst ca. {requested} Werktage (Resturlaub: {available}). Abgezogen werden nur deine Arbeitstage laut Arbeitszeitmodell – bei Teilzeit also weniger." : "Note: the period spans approx. {requested} working days (remaining: {available}). Only your working days according to your work schedule are deducted – fewer for part-time.",
+    "Hinweis: ca. {requested} Werktage im Zeitraum (Resturlaub: {available}). Abgezogen werden nur Arbeitstage laut Arbeitszeitmodell." : "Note: approx. {requested} working days in the period (remaining: {available}). Only working days according to the work schedule are deducted."
 },
 "nplurals=2; plural=(n != 1);");

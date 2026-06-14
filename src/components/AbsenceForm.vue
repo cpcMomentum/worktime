@@ -48,8 +48,8 @@
                 rows="2" />
         </div>
 
-        <p v-if="isOverQuota" class="quota-warning">
-            {{ t('worktime', 'Nicht genügend Urlaubstage. Verfügbar: {available}, beantragt: {requested}.', { available: quotaAvailable.toFixed(1), requested: estimatedDays.toFixed(1) }) }}
+        <p v-if="isOverQuota" class="quota-hint">
+            {{ t('worktime', 'Hinweis: Der Zeitraum umfasst ca. {requested} Werktage (Resturlaub: {available}). Abgezogen werden nur deine Arbeitstage laut Arbeitszeitmodell – bei Teilzeit also weniger.', { available: quotaAvailable.toFixed(1), requested: estimatedDays.toFixed(1) }) }}
         </p>
 
         <div class="form-actions">
@@ -142,8 +142,12 @@ export default {
             return this.estimatedDays > this.quotaAvailable
         },
         isValid() {
+            // The frontend day estimate ignores the work schedule and holidays,
+            // so it must not block submission (a part-timer's whole-week request
+            // would be wrongly rejected). The backend validates schedule-aware and
+            // rejects a genuine over-quota with a precise message.
             return !!(this.form.type && this.form.startDate && this.form.endDate &&
-                this.form.startDate <= this.form.endDate && !this.isOverQuota)
+                this.form.startDate <= this.form.endDate)
         },
     },
     watch: {
@@ -266,12 +270,12 @@ export default {
     color: var(--color-text-maxcontrast);
 }
 
-.quota-warning {
+.quota-hint {
     margin: 0 0 12px 0;
     padding: 8px 12px;
-    background: var(--color-error-hover);
-    color: var(--color-error);
-    border-left: 3px solid var(--color-error);
+    background: var(--color-background-hover);
+    color: var(--color-main-text);
+    border-left: 3px solid var(--color-warning);
     border-radius: var(--border-radius);
     font-size: 0.9em;
 }
