@@ -518,6 +518,7 @@
 		"Deine Zeiteinträge für %s wurden genehmigt": "Deine Zeiteinträge für %s wurden genehmigt",
 		"Deine Zeiteinträge für %s wurden abgelehnt": "Deine Zeiteinträge für %s wurden abgelehnt",
 		"Die Genehmigung deiner Zeiteinträge für %s wurde zurückgenommen. Bitte erneut einreichen.": "Die Genehmigung deiner Zeiteinträge für %s wurde zurückgenommen. Bitte erneut einreichen.",
+		"Die Genehmigung deiner Zeiteinträge für %1$s wurde zurückgenommen (Grund: %2$s). Bitte erneut einreichen.": "Die Genehmigung deiner Zeiteinträge für %1$s wurde zurückgenommen (Grund: %2$s). Bitte erneut einreichen.",
 		"Zukünftige Einträge sind nicht erlaubt": "Zukünftige Einträge sind nicht erlaubt",
 		"Ungültiges Zeitformat": "Ungültiges Zeitformat",
 		"Maximale tägliche Arbeitszeit (%s Std.) überschritten": "Maximale tägliche Arbeitszeit (%s Std.) überschritten",
