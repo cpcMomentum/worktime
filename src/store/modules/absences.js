@@ -64,7 +64,7 @@ const mutations = {
 
 const actions = {
     async fetchAbsences({ commit, rootGetters }, year = null) {
-        const employeeId = rootGetters['permissions/employeeId']
+        const employeeId = rootGetters['permissions/activeEmployeeId']
         if (!employeeId) return
 
         commit('SET_LOADING', true)
@@ -89,7 +89,7 @@ const actions = {
     },
 
     async fetchVacationStats({ commit, rootGetters }, year = null) {
-        const employeeId = rootGetters['permissions/employeeId']
+        const employeeId = rootGetters['permissions/activeEmployeeId']
         if (!employeeId) return
 
         const targetYear = year || new Date().getFullYear()
@@ -111,7 +111,7 @@ const actions = {
     },
 
     async createAbsence({ commit, rootGetters }, data) {
-        const employeeId = rootGetters['permissions/employeeId']
+        const employeeId = rootGetters['permissions/activeEmployeeId']
         const absence = await AbsenceService.create({ ...data, employeeId })
         commit('ADD_ABSENCE', absence)
         return absence

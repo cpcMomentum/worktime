@@ -17,11 +17,23 @@ const state = {
     loading: false,
     loaded: false,
     approvalRequired: true,
+    // HR/Admin correction context (#148): when set, the tracking and absence
+    // views operate on this employee instead of the logged-in user.
+    correction: {
+        targetEmployeeId: null,
+        employeeName: null,
+    },
 }
 
 const getters = {
     permissions: (state) => state.permissions,
     approvalRequired: (state) => state.approvalRequired,
+    correction: (state) => state.correction,
+    isCorrectionMode: (state) => state.correction.targetEmployeeId !== null,
+    correctionEmployeeName: (state) => state.correction.employeeName,
+    // The employee whose data the views should load/edit: the correction target
+    // when active, otherwise the logged-in user's own employee.
+    activeEmployeeId: (state) => state.correction.targetEmployeeId ?? state.permissions.employeeId,
     isAdmin: (state) => state.permissions.isAdmin,
     isHrManager: (state) => state.permissions.isHrManager,
     isSupervisor: (state) => state.permissions.isSupervisor,
@@ -48,6 +60,12 @@ const mutations = {
     SET_APPROVAL_REQUIRED(state, approvalRequired) {
         state.approvalRequired = approvalRequired
     },
+    SET_CORRECTION(state, { targetEmployeeId, employeeName }) {
+        state.correction = { targetEmployeeId, employeeName }
+    },
+    CLEAR_CORRECTION(state) {
+        state.correction = { targetEmployeeId: null, employeeName: null }
+    },
 }
 
 const actions = {
@@ -69,6 +87,14 @@ const actions = {
 
     setApprovalRequired({ commit }, approvalRequired) {
         commit('SET_APPROVAL_REQUIRED', approvalRequired)
+    },
+
+    startCorrection({ commit }, { employeeId, employeeName }) {
+        commit('SET_CORRECTION', { targetEmployeeId: employeeId, employeeName })
+    },
+
+    endCorrection({ commit }) {
+        commit('CLEAR_CORRECTION')
     },
 }
 

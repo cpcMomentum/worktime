@@ -204,7 +204,7 @@ export default {
     computed: {
         ...mapState('timeEntries', ['selectedMonth']),
         ...mapGetters('timeEntries', ['timeEntries', 'loading']),
-        ...mapGetters('permissions', ['employeeId', 'approvalRequired']),
+        ...mapGetters('permissions', ['employeeId', 'activeEmployeeId', 'approvalRequired']),
         ...mapGetters('employees', ['currentEmployee']),
         ...mapGetters('projects', ['activeProjects']),
         projects() {
@@ -331,7 +331,7 @@ export default {
                 this.loadData()
             },
         },
-        employeeId(newVal, oldVal) {
+        activeEmployeeId(newVal, oldVal) {
             if (newVal && newVal !== oldVal) {
                 this.loadData()
             }
@@ -376,7 +376,7 @@ export default {
             }
         },
         async loadData() {
-            if (!this.employeeId) return
+            if (!this.activeEmployeeId) return
             this.overviewYear = this.selectedMonth.year
             await Promise.all([
                 this.fetchTimeEntries(),
@@ -386,9 +386,9 @@ export default {
             ])
         },
         async loadOvertime() {
-            if (!this.employeeId) return
+            if (!this.activeEmployeeId) return
             try {
-                const overtime = await ReportService.getOvertime(this.employeeId, this.overviewYear)
+                const overtime = await ReportService.getOvertime(this.activeEmployeeId, this.overviewYear)
                 this.yearlyMonths = overtime?.monthly || []
                 this.carryoverMinutes = overtime?.carryoverMinutes || 0
             } catch (error) {
@@ -396,10 +396,10 @@ export default {
             }
         },
         async loadStatistics() {
-            if (!this.employeeId) return
+            if (!this.activeEmployeeId) return
             try {
                 const report = await ReportService.getMonthly(
-                    this.employeeId,
+                    this.activeEmployeeId,
                     this.selectedMonth.year,
                     this.selectedMonth.month
                 )
@@ -411,9 +411,9 @@ export default {
             }
         },
         async loadVacationStats() {
-            if (!this.employeeId) return
+            if (!this.activeEmployeeId) return
             try {
-                const stats = await AbsenceService.getVacationStats(this.employeeId, this.selectedMonth.year)
+                const stats = await AbsenceService.getVacationStats(this.activeEmployeeId, this.selectedMonth.year)
                 this.vacationRemaining = stats?.remaining ?? null
                 this.vacationCarryover = Math.round(stats?.carryover ?? 0)
                 this.vacationTotal = stats?.total ?? null
@@ -430,8 +430,8 @@ export default {
             this.setSelectedMonth({ year: this.overviewYear, month })
         },
         downloadPdf() {
-            if (!this.employeeId) return
-            ReportService.downloadPdf(this.employeeId, this.selectedMonth.year, this.selectedMonth.month)
+            if (!this.activeEmployeeId) return
+            ReportService.downloadPdf(this.activeEmployeeId, this.selectedMonth.year, this.selectedMonth.month)
         },
         async confirmSubmitMonth() {
             const monthName = new Date(this.selectedMonth.year, this.selectedMonth.month - 1)
@@ -448,7 +448,7 @@ export default {
             }
 
             try {
-                const result = await TimeEntryService.submitMonth(this.employeeId, this.selectedMonth.year, this.selectedMonth.month)
+                const result = await TimeEntryService.submitMonth(this.activeEmployeeId, this.selectedMonth.year, this.selectedMonth.month)
                 showSuccess(this.t('worktime', '{count} Einträge wurden eingereicht.', { count: result.submitted }))
                 await this.loadData()
             } catch (error) {

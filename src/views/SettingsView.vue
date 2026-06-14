@@ -37,6 +37,7 @@
 
                 <EmployeeList
                     :employees="employees"
+                    @correct="startCorrection"
                     @edit="editEmployee"
                     @delete="handleDeleteEmployee" />
 
@@ -1000,6 +1001,14 @@ export default {
         editEmployee(employee) {
             this.editingEmployee = employee
             this.showEmployeeForm = true
+        },
+        startCorrection(employee) {
+            // Enter HR correction mode for this employee and open the tracking view.
+            this.$store.dispatch('permissions/startCorrection', {
+                employeeId: employee.id,
+                employeeName: employee.fullName,
+            })
+            this.$router.push('/tracking').catch(() => {})
         },
         closeEmployeeForm() {
             this.showEmployeeForm = false

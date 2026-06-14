@@ -68,6 +68,20 @@
 
 		<NcAppContent>
 			<!-- Frische Installation: Keine Employees vorhanden, Admin sieht Willkommen (ausser auf /settings) -->
+			<!-- HR-Korrektur-Modus (#148): Kontext-Banner über allen Ansichten -->
+			<div v-if="isCorrectionMode" class="correction-banner">
+				<span class="correction-banner__who">
+					<WrenchIcon :size="20" />
+					<span class="correction-banner__text">
+						{{ t('worktime', 'Korrektur-Modus · {name}', { name: correctionEmployeeName }) }}
+						<small>{{ t('worktime', 'Änderungen werden protokolliert und dem Mitarbeiter angezeigt.') }}</small>
+					</span>
+				</span>
+				<NcButton type="tertiary" @click="exitCorrection">
+					{{ t('worktime', 'Korrektur beenden') }}
+				</NcButton>
+			</div>
+
 			<div v-if="!hasEmployees && canManageSettings && $route.path !== '/settings'" class="no-employee-warning">
 				<NcEmptyContent :name="t('worktime', 'Willkommen bei WorkTime')">
 					<template #icon>
@@ -116,6 +130,7 @@ import CogIcon from 'vue-material-design-icons/Cog.vue'
 import AccountCogIcon from 'vue-material-design-icons/AccountCog.vue'
 import AlertIcon from 'vue-material-design-icons/Alert.vue'
 import ShieldIcon from 'vue-material-design-icons/Shield.vue'
+import WrenchIcon from 'vue-material-design-icons/Wrench.vue'
 import { mapGetters, mapActions } from 'vuex'
 
 export default {
@@ -135,9 +150,10 @@ export default {
 		AccountCogIcon,
 		AlertIcon,
 		ShieldIcon,
+		WrenchIcon,
 	},
 	computed: {
-		...mapGetters('permissions', ['isEmployee', 'isAdmin', 'isHrManager', 'hasEmployees', 'canManageSettings', 'canApprove']),
+		...mapGetters('permissions', ['isEmployee', 'isAdmin', 'isHrManager', 'hasEmployees', 'canManageSettings', 'canApprove', 'isCorrectionMode', 'correctionEmployeeName']),
 	},
 	created() {
 		this.initializeApp()
@@ -146,6 +162,11 @@ export default {
 		...mapActions('employees', ['fetchCurrentEmployee', 'fetchFederalStates']),
 		...mapActions('projects', ['fetchProjects']),
 		...mapActions('absences', ['fetchAbsenceTypes']),
+		...mapActions('permissions', ['endCorrection']),
+		exitCorrection() {
+			this.endCorrection()
+			this.$router.push('/settings').catch(() => {})
+		},
 		async initializeApp() {
 			// Load initial data
 			await Promise.all([
@@ -170,6 +191,33 @@ export default {
 	align-items: center;
 	height: 100%;
 	padding: 40px;
+}
+
+.correction-banner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin: 12px 16px 0;
+	padding: 10px 16px;
+	background: var(--color-warning-hover, #fbe7d0);
+	border: 1px solid var(--color-warning, #c7870e);
+	border-left: 4px solid var(--color-warning, #c7870e);
+	border-radius: var(--border-radius-large, 8px);
+}
+
+.correction-banner__who {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-weight: 600;
+	color: var(--color-main-text);
+}
+
+.correction-banner__text small {
+	display: block;
+	font-weight: 400;
+	color: var(--color-text-maxcontrast);
 }
 </style>
 

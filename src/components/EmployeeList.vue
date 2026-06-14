@@ -29,6 +29,14 @@
                     </td>
                     <td class="actions-col">
                         <NcButton type="tertiary"
+                            :aria-label="t('worktime', 'Korrigieren')"
+                            :title="t('worktime', 'Zeiten/Abwesenheiten dieses Mitarbeiters korrigieren')"
+                            @click="$emit('correct', employee)">
+                            <template #icon>
+                                <Wrench :size="20" />
+                            </template>
+                        </NcButton>
+                        <NcButton type="tertiary"
                             :aria-label="t('worktime', 'Bearbeiten')"
                             @click="$emit('edit', employee)">
                             <template #icon>
@@ -79,6 +87,7 @@ import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Close from 'vue-material-design-icons/Close.vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
+import Wrench from 'vue-material-design-icons/Wrench.vue'
 
 export default {
     name: 'EmployeeList',
@@ -89,6 +98,7 @@ export default {
         Pencil,
         Close,
         AccountGroup,
+        Wrench,
     },
     props: {
         employees: {

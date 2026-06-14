@@ -567,7 +567,12 @@
 		"Hinweis: Der Zeitraum umfasst ca. {requested} Werktage (Resturlaub: {available}). Abgezogen werden nur deine Arbeitstage laut Arbeitszeitmodell – bei Teilzeit also weniger.": "Note: the period spans approx. {requested} working days (remaining: {available}). Only your working days according to your work schedule are deducted – fewer for part-time.",
 		"Hinweis: ca. {requested} Werktage im Zeitraum (Resturlaub: {available}). Abgezogen werden nur Arbeitstage laut Arbeitszeitmodell.": "Note: approx. {requested} working days in the period (remaining: {available}). Only working days according to the work schedule are deducted.",
 		"Dieser Zeitraum ist abgeschlossen. Bitte wende dich an HR.": "This period is closed. Please contact HR.",
-		"Begründung erforderlich (mindestens 10 Zeichen).": "A reason is required (at least 10 characters)."
+		"Begründung erforderlich (mindestens 10 Zeichen).": "A reason is required (at least 10 characters).",
+		"Korrigieren": "Correct",
+		"Zeiten/Abwesenheiten dieses Mitarbeiters korrigieren": "Correct this employee's times/absences",
+		"Korrektur-Modus · {name}": "Correction mode · {name}",
+		"Änderungen werden protokolliert und dem Mitarbeiter angezeigt.": "Changes are logged and shown to the employee.",
+		"Korrektur beenden": "End correction"
 	},
 	"pluralForm": "nplurals=2; plural=(n != 1);"
 }

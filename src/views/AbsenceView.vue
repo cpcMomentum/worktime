@@ -247,7 +247,7 @@ export default {
     },
     computed: {
         ...mapGetters('absences', ['absences', 'absenceTypes', 'vacationStats', 'loading']),
-        ...mapGetters('permissions', ['employeeId', 'isAdmin', 'isHrManager', 'canApprove']),
+        ...mapGetters('permissions', ['employeeId', 'activeEmployeeId', 'isAdmin', 'isHrManager', 'canApprove']),
         isPrivileged() {
             return this.isAdmin || this.isHrManager || this.canApprove
         },
@@ -287,10 +287,10 @@ export default {
         },
     },
     watch: {
-        employeeId: {
+        activeEmployeeId: {
             immediate: true,
             handler() {
-                if (this.employeeId) {
+                if (this.activeEmployeeId) {
                     this.loadData()
                 }
             },
@@ -317,9 +317,9 @@ export default {
             ])
         },
         async loadOvertime() {
-            if (!this.employeeId) return
+            if (!this.activeEmployeeId) return
             try {
-                this.overtime = await ReportService.getOvertime(this.employeeId, this.currentYear)
+                this.overtime = await ReportService.getOvertime(this.activeEmployeeId, this.currentYear)
             } catch (error) {
                 console.error('Failed to load overtime stats:', error)
             }
