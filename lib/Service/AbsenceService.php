@@ -276,8 +276,10 @@ class AbsenceService {
         $lockedMonths = $this->timeEntryService->lockedMonthsInRange($absence->getEmployeeId(), $absence->getStartDate(), $absence->getEndDate());
         $effectiveReason = $this->timeEntryService->requireReasonForLockedMonths($lockedMonths, $allowLockedOverride, $reason);
 
-        // Employees cannot delete approved absences; an HR correction may.
-        if (!$allowLockedOverride
+        // Approved absences cannot be deleted (they are cancelled instead) — except by
+        // an HR correction of a CLOSED month. In open months the rule applies to
+        // everyone, regardless of role.
+        if (!($allowLockedOverride && !empty($lockedMonths))
             && $absence->getStatus() === Absence::STATUS_APPROVED
             && !in_array($absence->getType(), [Absence::TYPE_SICK, Absence::TYPE_CHILD_SICK], true)) {
             throw new ForbiddenException('Cannot delete approved absences');

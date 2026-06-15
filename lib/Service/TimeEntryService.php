@@ -275,8 +275,10 @@ class TimeEntryService {
         $lockedMonths = $this->lockedMonthsInRange($entry->getEmployeeId(), $entry->getDate(), $entry->getDate());
         $effectiveReason = $this->requireReasonForLockedMonths($lockedMonths, $allowLockedOverride, $reason);
 
-        // Employees cannot delete approved/submitted entries; an HR correction may.
-        if (!$allowLockedOverride) {
+        // Approved/submitted entries cannot be deleted — except by an HR correction
+        // of a CLOSED month (which requires a reason and reopens the month). In open
+        // months the rule applies to everyone (use reopen/reject instead).
+        if (!($allowLockedOverride && !empty($lockedMonths))) {
             if ($entry->getStatus() === TimeEntry::STATUS_APPROVED) {
                 throw new ForbiddenException('Cannot delete approved time entries');
             }
