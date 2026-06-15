@@ -265,6 +265,8 @@ class TimeEntryService {
 
     /**
      * @throws NotFoundException
+     * @throws ValidationException
+     * @throws ForbiddenException
      */
     public function delete(int $id, string $currentUserId = '', ?string $reason = null, bool $allowLockedOverride = false): void {
         $entry = $this->find($id);
