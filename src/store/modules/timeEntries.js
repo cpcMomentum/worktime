@@ -109,8 +109,10 @@ const actions = {
         return entry
     },
 
-    async deleteTimeEntry({ commit }, id) {
-        await TimeEntryService.delete(id)
+    async deleteTimeEntry({ commit }, payload) {
+        const id = typeof payload === 'object' && payload !== null ? payload.id : payload
+        const reason = typeof payload === 'object' && payload !== null ? payload.reason : null
+        await TimeEntryService.delete(id, reason)
         commit('REMOVE_TIME_ENTRY', id)
     },
 

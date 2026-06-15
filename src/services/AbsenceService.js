@@ -40,9 +40,9 @@ export default {
         }
     },
 
-    async delete(id) {
+    async delete(id, reason = null) {
         try {
-            await api.delete(`/absences/${id}`)
+            await api.delete(`/absences/${id}`, reason ? { params: { reason } } : undefined)
         } catch (error) {
             handleApiError(error)
         }

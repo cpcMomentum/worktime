@@ -81,7 +81,7 @@ class NotificationService {
 				return;
 			}
 
-			$monthYear = self::MONTH_NAMES[$month] . ' ' . $year;
+			$monthYear = (self::MONTH_NAMES[$month] ?? (string)$month) . ' ' . $year;
 
 			$notification = $this->createNotification('time_entries_submitted', $supervisorUserId, [
 				'employeeName' => $employee->getFullName(),
@@ -158,7 +158,7 @@ class NotificationService {
 	private function sendTimeEntryDecisionNotification(int $employeeId, int $year, int $month, string $subject, string $reason = ''): void {
 		try {
 			$employee = $this->employeeMapper->find($employeeId);
-			$monthYear = self::MONTH_NAMES[$month] . ' ' . $year;
+			$monthYear = (self::MONTH_NAMES[$month] ?? (string)$month) . ' ' . $year;
 
 			$notification = $this->createNotification($subject, $employee->getUserId(), [
 				'monthYear' => $monthYear,

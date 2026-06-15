@@ -168,10 +168,13 @@ class TimeEntryController extends BaseController {
     }
 
     #[NoAdminRequired]
-    public function destroy(int $id): JSONResponse {
+    public function destroy(int $id, ?string $reason = null): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
         }
+
+        // Only HR/Admin may delete in closed months (with a mandatory reason).
+        $allowLockedOverride = $this->permissionService->canManageEmployees($this->userId);
 
         try {
             $entry = $this->timeEntryService->find($id);
@@ -180,7 +183,7 @@ class TimeEntryController extends BaseController {
                 return $this->forbiddenResponse();
             }
 
-            $this->timeEntryService->delete($id, $this->userId);
+            $this->timeEntryService->delete($id, $this->userId, $reason, $allowLockedOverride);
 
             return $this->deletedResponse();
         } catch (\Exception $e) {

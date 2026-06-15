@@ -267,21 +267,38 @@ class AbsenceService {
     /**
      * @throws NotFoundException
      */
-    public function delete(int $id, string $currentUserId = ''): void {
+    public function delete(int $id, string $currentUserId = '', ?string $reason = null, bool $allowLockedOverride = false): void {
         $absence = $this->find($id);
 
-        // Cannot delete approved absences (except sick/child_sick, which are info, not requests)
-        if ($absence->getStatus() === Absence::STATUS_APPROVED
+        // Closed-month rules (#148): block employees, require a reason for HR corrections.
+        $lockedMonths = $this->timeEntryService->lockedMonthsInRange($absence->getEmployeeId(), $absence->getStartDate(), $absence->getEndDate());
+        $effectiveReason = $this->timeEntryService->requireReasonForLockedMonths($lockedMonths, $allowLockedOverride, $reason);
+
+        // Employees cannot delete approved absences; an HR correction may.
+        if (!$allowLockedOverride
+            && $absence->getStatus() === Absence::STATUS_APPROVED
             && !in_array($absence->getType(), [Absence::TYPE_SICK, Absence::TYPE_CHILD_SICK], true)) {
             throw new ForbiddenException('Cannot delete approved absences');
         }
 
-        // Audit log
+        // Audit log (record the HR correction reason when present)
         if ($currentUserId) {
-            $this->auditLogService->logDelete($currentUserId, 'absence', $absence->getId(), $absence->jsonSerialize());
+            $auditReason = $this->timeEntryService->auditReason($effectiveReason, $allowLockedOverride, $reason);
+            $values = $absence->jsonSerialize();
+            if ($auditReason !== null) {
+                $values['reason'] = $auditReason;
+            }
+            $this->auditLogService->logDelete($currentUserId, 'absence', $absence->getId(), $values);
         }
 
         $this->absenceMapper->delete($absence);
+
+        // HR correction in a closed month: reopen the affected time-entry months.
+        if ($effectiveReason !== null) {
+            foreach ($lockedMonths as [$lockedYear, $lockedMonth]) {
+                $this->timeEntryService->reopenMonth($absence->getEmployeeId(), $lockedYear, $lockedMonth, $effectiveReason, $currentUserId);
+            }
+        }
     }
 
     /**

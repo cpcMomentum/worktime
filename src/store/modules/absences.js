@@ -123,8 +123,10 @@ const actions = {
         return absence
     },
 
-    async deleteAbsence({ commit }, id) {
-        await AbsenceService.delete(id)
+    async deleteAbsence({ commit }, payload) {
+        const id = typeof payload === 'object' && payload !== null ? payload.id : payload
+        const reason = typeof payload === 'object' && payload !== null ? payload.reason : null
+        await AbsenceService.delete(id, reason)
         commit('REMOVE_ABSENCE', id)
     },
 

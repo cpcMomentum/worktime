@@ -398,8 +398,20 @@ export default {
             if (!pending) return
             if (pending.mode === 'create') {
                 this.doCreate({ ...pending.data, reason })
-            } else {
+            } else if (pending.mode === 'update') {
                 this.doUpdate(pending.id, { ...pending.data, reason })
+            } else if (pending.mode === 'delete') {
+                this.doDeleteAbsence(pending.id, reason)
+            }
+        },
+        async doDeleteAbsence(id, reason) {
+            try {
+                await this.deleteAbsence({ id, reason })
+                showSuccessMessage(this.t('worktime', 'Abwesenheit gelöscht'))
+                this.loadData()
+            } catch (error) {
+                console.error('Failed to delete absence:', error)
+                showErrorMessage(error.message || this.t('worktime', 'Fehler beim Entfernen'))
             }
         },
         async doCreate(data) {
@@ -427,6 +439,12 @@ export default {
         async confirmRemove(absence) {
             const shouldCancel = absence.status === 'approved'
                 && absence.type !== 'sick' && absence.type !== 'child_sick'
+
+            // In HR correction mode, deleting requires a mandatory reason (storno keeps its own flow).
+            if (!shouldCancel && this.isCorrectionMode) {
+                this.pendingCorrection = { mode: 'delete', id: absence.id }
+                return
+            }
 
             const question = shouldCancel
                 ? this.t('worktime', 'Diese Abwesenheit stornieren? Sie bleibt mit Status "Storniert" sichtbar.')

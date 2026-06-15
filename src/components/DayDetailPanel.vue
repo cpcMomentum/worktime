@@ -68,6 +68,10 @@
                 {{ t('worktime', 'Eintrag hinzufügen') }}
             </NcButton>
         </template>
+
+        <CorrectionReasonModal v-if="pendingDeleteEntry"
+            @confirm="onDeleteReasonConfirm"
+            @close="pendingDeleteEntry = null" />
     </div>
 </template>
 
@@ -80,6 +84,7 @@ import LockIcon from 'vue-material-design-icons/Lock.vue'
 import CalendarStarIcon from 'vue-material-design-icons/CalendarStar.vue'
 import { mapActions, mapGetters } from 'vuex'
 import TimeEntryForm from './TimeEntryForm.vue'
+import CorrectionReasonModal from './CorrectionReasonModal.vue'
 import { formatDateWithWeekday } from '../utils/dateUtils.js'
 import { formatMinutes } from '../utils/timeUtils.js'
 import { getAbsenceColorClass } from '../utils/formatters.js'
@@ -95,6 +100,7 @@ export default {
         LockIcon,
         CalendarStarIcon,
         TimeEntryForm,
+        CorrectionReasonModal,
     },
     props: {
         day: {
@@ -115,6 +121,7 @@ export default {
         return {
             formMode: null, // 'add' | 'edit' | null
             editingEntry: null,
+            pendingDeleteEntry: null,
         }
     },
     computed: {
@@ -182,6 +189,11 @@ export default {
             this.$emit('refresh')
         },
         async confirmDelete(entry) {
+            // In HR correction mode, capture a mandatory reason instead of the plain confirm.
+            if (this.isCorrectionMode) {
+                this.pendingDeleteEntry = entry
+                return
+            }
             const confirmed = await confirmAction(
                 this.t('worktime', 'Möchten Sie diesen Eintrag wirklich löschen?'),
                 this.t('worktime', 'Eintrag löschen'),
@@ -189,8 +201,18 @@ export default {
                 true,
             )
             if (!confirmed) return
+            this.doDelete(entry, null)
+        },
+        onDeleteReasonConfirm(reason) {
+            const entry = this.pendingDeleteEntry
+            this.pendingDeleteEntry = null
+            if (entry) {
+                this.doDelete(entry, reason)
+            }
+        },
+        async doDelete(entry, reason) {
             try {
-                await this.deleteTimeEntry(entry.id)
+                await this.deleteTimeEntry({ id: entry.id, reason })
                 showSuccessMessage(this.t('worktime', 'Eintrag gelöscht'))
                 this.$emit('refresh')
             } catch (error) {

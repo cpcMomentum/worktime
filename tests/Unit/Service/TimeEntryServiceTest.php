@@ -267,4 +267,28 @@ class TimeEntryServiceTest extends TestCase {
         $this->assertNull($this->service->auditReason(null, true, '  '));
         $this->assertNull($this->service->auditReason(null, true, null));
     }
+
+    // --- #296: delete() respects the closed-month lock ---
+
+    private function makePastYearEntry(): TimeEntry {
+        $entry = new TimeEntry();
+        $entry->setId(99);
+        $entry->setEmployeeId(1);
+        $entry->setDate(new DateTime(((int)(new DateTime())->format('Y') - 1) . '-06-15'));
+        $entry->setStatus(TimeEntry::STATUS_DRAFT);
+        return $entry;
+    }
+
+    public function testDeleteBlocksEmployeeInLockedMonth(): void {
+        // A DRAFT entry in a past (locked) year must not be deletable without HR override.
+        $this->timeEntryMapper->method('find')->willReturn($this->makePastYearEntry());
+        $this->expectException(ValidationException::class);
+        $this->service->delete(99, 'user1', null, false);
+    }
+
+    public function testDeleteRequiresReasonForHrInLockedMonth(): void {
+        $this->timeEntryMapper->method('find')->willReturn($this->makePastYearEntry());
+        $this->expectException(ValidationException::class);
+        $this->service->delete(99, 'admin', null, true); // override but no reason
+    }
 }

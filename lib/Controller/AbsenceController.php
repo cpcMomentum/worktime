@@ -190,10 +190,13 @@ class AbsenceController extends BaseController {
     }
 
     #[NoAdminRequired]
-    public function destroy(int $id): JSONResponse {
+    public function destroy(int $id, ?string $reason = null): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
         }
+
+        // Only HR/Admin may delete in closed months (with a mandatory reason).
+        $allowLockedOverride = $this->permissionService->canManageEmployees($this->userId);
 
         try {
             $absence = $this->absenceService->find($id);
@@ -202,7 +205,7 @@ class AbsenceController extends BaseController {
                 return $this->forbiddenResponse();
             }
 
-            $this->absenceService->delete($id, $this->userId);
+            $this->absenceService->delete($id, $this->userId, $reason, $allowLockedOverride);
 
             return $this->deletedResponse();
         } catch (\Exception $e) {
