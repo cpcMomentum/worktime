@@ -228,7 +228,7 @@ class ProjectService {
             $errors['code'] = ['Project code already exists'];
         }
 
-        // Validate color format
+        // Validate code length
         if ($code !== null && strlen($code) > 50) {
             $errors['code'] = ['Project code must be 50 characters or less'];
         }

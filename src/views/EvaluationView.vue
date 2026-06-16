@@ -198,6 +198,7 @@ export default {
     watch: {
         period() { this.load() },
         billableOnly() { this.load() },
+        mode() { this.openKeys = {} },
     },
     created() {
         this.load()
