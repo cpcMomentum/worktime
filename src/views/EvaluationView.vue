@@ -1,46 +1,37 @@
 <template>
     <div class="evaluation-view">
-        <div class="ev-head">
-            <div>
-                <h2>{{ t('worktime', 'Auswertung') }}</h2>
-                <p class="ev-sub">{{ t('worktime', 'Stunden nach Projekt oder Mitarbeiter') }}</p>
-            </div>
-        </div>
+        <div class="view-header">
+            <h2>{{ t('worktime', 'Auswertung') }}</h2>
 
-        <div class="ev-controls">
-            <div class="ev-seg">
+            <div class="layout-seg" role="group" :aria-label="t('worktime', 'Zeitraum')">
                 <button v-for="p in periods"
                     :key="p.value"
-                    class="ev-seg-btn"
+                    class="seg-btn"
                     :class="{ active: period === p.value }"
                     @click="setPeriod(p.value)">
                     {{ p.label }}
                 </button>
             </div>
 
-            <div class="ev-period-nav">
+            <div class="period-nav">
                 <NcButton type="tertiary" :aria-label="t('worktime', 'Zurück')" @click="shiftPeriod(-1)">
                     <template #icon><ChevronLeftIcon :size="20" /></template>
                 </NcButton>
-                <span class="ev-period-label">{{ periodLabel }}</span>
+                <span class="period-nav__label">{{ periodLabel }}</span>
                 <NcButton type="tertiary" :aria-label="t('worktime', 'Weiter')" @click="shiftPeriod(1)">
                     <template #icon><ChevronRightIcon :size="20" /></template>
                 </NcButton>
             </div>
-
-            <NcCheckboxRadioSwitch :checked.sync="billableOnly">
-                {{ t('worktime', 'nur abrechenbare Stunden') }}
-            </NcCheckboxRadioSwitch>
         </div>
 
         <div class="ev-tabs">
-            <div class="ev-seg">
-                <button class="ev-seg-btn"
+            <div class="layout-seg" role="group">
+                <button class="seg-btn"
                     :class="{ active: tab === 'summary' }"
                     @click="tab = 'summary'">
                     {{ t('worktime', 'Zusammenfassung') }}
                 </button>
-                <button class="ev-seg-btn"
+                <button class="seg-btn"
                     :class="{ active: tab === 'entries' }"
                     @click="tab = 'entries'">
                     {{ t('worktime', 'Einzelbuchungen') }}
@@ -64,10 +55,6 @@
                 <div class="ev-kpi-value">{{ hours(totals.totalMinutes) }}</div>
             </div>
             <div class="ev-kpi">
-                <div class="ev-kpi-label">{{ t('worktime', 'davon abrechenbar') }}</div>
-                <div class="ev-kpi-value">{{ hours(totals.billableMinutes) }}</div>
-            </div>
-            <div class="ev-kpi">
                 <div class="ev-kpi-label">{{ t('worktime', 'Projekte') }}</div>
                 <div class="ev-kpi-value">{{ totals.projectCount }}</div>
             </div>
@@ -81,13 +68,13 @@
         <template v-if="tab === 'summary'">
             <div class="ev-mode">
                 <span class="ev-mode-label">{{ t('worktime', 'Ansicht') }}:</span>
-                <div class="ev-seg">
-                    <button class="ev-seg-btn"
+                <div class="layout-seg" role="group">
+                    <button class="seg-btn"
                         :class="{ active: mode === 'project' }"
                         @click="mode = 'project'">
                         {{ t('worktime', 'Nach Projekt') }}
                     </button>
-                    <button class="ev-seg-btn"
+                    <button class="seg-btn"
                         :class="{ active: mode === 'employee' }"
                         @click="mode = 'employee'">
                         {{ t('worktime', 'Nach Mitarbeiter') }}
@@ -115,7 +102,7 @@
                         <tr :key="group.key" class="ev-group-row" @click="toggle(group.key)">
                             <td class="ev-name">
                                 <ChevronRightIcon class="ev-caret" :class="{ open: isOpen(group.key) }" :size="16" />
-                                <span v-if="group.color" class="ev-dot" :style="{ background: group.color }" />
+                                <span class="ev-dot" :style="{ background: group.color || 'var(--color-border-dark)' }" />
                                 <span>{{ group.name }}</span>
                                 <span v-if="group.customer" class="ev-customer">· {{ group.customer }}</span>
                             </td>
@@ -126,7 +113,10 @@
                         <tr v-for="child in (isOpen(group.key) ? group.children : [])"
                             :key="group.key + '-' + child.key"
                             class="ev-child-row">
-                            <td class="ev-name ev-child-name">{{ child.name }}</td>
+                            <td class="ev-name ev-child-name">
+                                <span class="ev-dot ev-dot--sm" :style="{ background: child.color || 'var(--color-border-dark)' }" />
+                                <span>{{ child.name }}</span>
+                            </td>
                             <td class="ev-num">{{ hours(child.minutes) }}</td>
                             <td class="ev-num ev-muted">{{ share(child.minutes, group.minutes) }}</td>
                             <td class="ev-num" />
@@ -135,7 +125,7 @@
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td class="ev-name">{{ t('worktime', 'Gesamt') }}</td>
+                        <td class="ev-name ev-total">{{ t('worktime', 'Gesamt') }}</td>
                         <td class="ev-num">{{ hours(totals.totalMinutes) }}</td>
                         <td class="ev-num">100 %</td>
                         <td class="ev-num" />
@@ -166,7 +156,10 @@
                 <tbody>
                     <tr v-for="entry in entries" :key="entry.id">
                         <td>{{ formatDate(entry.date) }}</td>
-                        <td>{{ entry.projectName || t('worktime', 'Kein Projekt') }}</td>
+                        <td class="ev-name">
+                            <span class="ev-dot ev-dot--sm" :style="{ background: entry.color || 'var(--color-border-dark)' }" />
+                            <span>{{ entry.projectName || t('worktime', 'Kein Projekt') }}</span>
+                        </td>
                         <td class="ev-muted">{{ entry.customer || '–' }}</td>
                         <td>{{ entry.employeeName || t('worktime', 'Unbekannt') }}</td>
                         <td class="ev-num">{{ hours(entry.minutes) }}</td>
@@ -175,7 +168,7 @@
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td colspan="4" class="ev-name">{{ t('worktime', 'Gesamt') }}</td>
+                        <td colspan="4" class="ev-total">{{ t('worktime', 'Gesamt') }}</td>
                         <td class="ev-num">{{ hours(totals.totalMinutes) }}</td>
                         <td />
                     </tr>
@@ -187,21 +180,19 @@
 
 <script>
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import ChevronLeftIcon from 'vue-material-design-icons/ChevronLeft.vue'
 import ChevronRightIcon from 'vue-material-design-icons/ChevronRight.vue'
 import DownloadIcon from 'vue-material-design-icons/Download.vue'
 import ReportService from '../services/ReportService.js'
 import { formatMinutes } from '../utils/timeUtils.js'
-import { formatDate as formatDateUtil } from '../utils/dateUtils.js'
+import { formatDate as formatDateUtil, getMonthName } from '../utils/dateUtils.js'
 import { showErrorMessage } from '../utils/errorHandler.js'
 
 export default {
     name: 'EvaluationView',
     components: {
         NcButton,
-        NcCheckboxRadioSwitch,
         NcLoadingIcon,
         ChevronLeftIcon,
         ChevronRightIcon,
@@ -213,15 +204,13 @@ export default {
             year: now.getFullYear(),
             month: now.getMonth() + 1,
             period: 'month',
-            billableOnly: false,
             mode: 'project',
             tab: 'summary',
             loading: false,
             entriesLoading: false,
-            totals: { totalMinutes: 0, billableMinutes: 0, projectCount: 0, employeeCount: 0 },
+            totals: { totalMinutes: 0, projectCount: 0, employeeCount: 0 },
             rows: [],
             entries: [],
-            periodLabelFromApi: '',
             openKeys: {},
         }
     },
@@ -234,7 +223,13 @@ export default {
             ]
         },
         periodLabel() {
-            return this.periodLabelFromApi
+            if (this.period === 'year') {
+                return String(this.year)
+            }
+            if (this.period === 'quarter') {
+                return `Q${Math.floor((this.month - 1) / 3) + 1} ${this.year}`
+            }
+            return `${getMonthName(this.month)} ${this.year}`
         },
         groups() {
             const byKey = {}
@@ -259,6 +254,8 @@ export default {
                     name: isProject
                         ? (row.employeeName || this.t('worktime', 'Unbekannt'))
                         : (row.projectName || this.t('worktime', 'Kein Projekt')),
+                    // Children carry the project colour for recognition (project side only).
+                    color: isProject ? null : row.color,
                     minutes: row.minutes,
                 })
             }
@@ -270,7 +267,6 @@ export default {
     },
     watch: {
         period() { this.refresh() },
-        billableOnly() { this.refresh() },
         mode() { this.openKeys = {} },
         tab(value) { if (value === 'entries') { this.loadEntries() } },
     },
@@ -283,12 +279,6 @@ export default {
         },
         formatDate(date) {
             return formatDateUtil(date)
-        },
-        refresh() {
-            this.load()
-            if (this.tab === 'entries') {
-                this.loadEntries()
-            }
         },
         share(minutes, base = this.totals.totalMinutes) {
             if (!base) return '0 %'
@@ -313,7 +303,13 @@ export default {
             }
             while (this.month > 12) { this.month -= 12; this.year += 1 }
             while (this.month < 1) { this.month += 12; this.year -= 1 }
+            this.refresh()
+        },
+        refresh() {
             this.load()
+            if (this.tab === 'entries') {
+                this.loadEntries()
+            }
         },
         async load() {
             this.loading = true
@@ -322,12 +318,10 @@ export default {
                     year: this.year,
                     month: this.month,
                     period: this.period,
-                    billableOnly: this.billableOnly,
                 })
                 if (data) {
                     this.rows = data.rows || []
                     this.totals = data.totals || this.totals
-                    this.periodLabelFromApi = data.period?.label || ''
                 }
             } catch (error) {
                 showErrorMessage(error.message || this.t('worktime', 'Fehler beim Laden der Auswertung'))
@@ -342,7 +336,6 @@ export default {
                     year: this.year,
                     month: this.month,
                     period: this.period,
-                    billableOnly: this.billableOnly,
                 })
                 if (data) {
                     this.entries = data.entries || []
@@ -358,7 +351,6 @@ export default {
                 year: this.year,
                 month: this.month,
                 period: this.period,
-                billableOnly: this.billableOnly,
             })
         },
     },
@@ -372,54 +364,71 @@ export default {
     max-width: 1000px;
 }
 
-.ev-head h2 {
+/* Header: aligned with the time-tracking view */
+.view-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.view-header h2 {
     margin: 0;
 }
 
-.ev-sub {
-    color: var(--color-text-maxcontrast);
-    margin: 2px 0 16px;
+.layout-seg {
+    display: flex;
+    background: var(--color-background-dark);
+    border-radius: var(--border-radius-element, 8px);
+    padding: 3px;
 }
 
-.ev-controls {
-    display: flex;
-    flex-wrap: wrap;
+.seg-btn {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-maxcontrast);
+    background: none;
+    border: none;
+    padding: 6px 14px;
+    border-radius: var(--border-radius-element, 8px);
+    cursor: pointer;
+    display: inline-flex;
     align-items: center;
+    gap: 6px;
+}
+
+.seg-btn.active {
+    background: var(--color-main-background);
+    color: var(--color-primary-element);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.period-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.period-nav__label {
+    font-size: 1.1em;
+    font-weight: 500;
+    min-width: 11rem;
+    text-align: center;
+}
+
+.ev-tabs {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
     gap: 16px;
     margin-bottom: 16px;
 }
 
-.ev-seg {
-    display: inline-flex;
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-pill, 16px);
-    overflow: hidden;
-}
-
-.ev-seg-btn {
-    border: none;
-    background: var(--color-main-background);
-    color: var(--color-main-text);
-    padding: 6px 14px;
-    cursor: pointer;
-    font-size: 0.9em;
-}
-
-.ev-seg-btn.active {
-    background: var(--color-primary-element);
-    color: var(--color-primary-element-text);
-}
-
-.ev-period-nav {
+.ev-export {
     display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.ev-period-label {
-    min-width: 96px;
-    text-align: center;
-    font-weight: 600;
+    gap: 8px;
 }
 
 .ev-kpis {
@@ -455,20 +464,6 @@ export default {
 
 .ev-mode-label {
     color: var(--color-text-maxcontrast);
-}
-
-.ev-tabs {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 16px;
-}
-
-.ev-export {
-    display: flex;
-    gap: 8px;
 }
 
 .ev-table {
@@ -534,6 +529,11 @@ export default {
     flex-shrink: 0;
 }
 
+.ev-dot--sm {
+    width: 8px;
+    height: 8px;
+}
+
 .ev-customer {
     color: var(--color-text-maxcontrast);
     font-weight: normal;
@@ -542,16 +542,21 @@ export default {
 
 .ev-child-row td {
     border-bottom: 1px solid var(--color-border-light, var(--color-border));
+    background: var(--color-background-hover);
 }
 
 .ev-child-name {
-    padding-left: 34px;
+    padding-left: 52px;
     font-weight: normal;
-    color: var(--color-text-maxcontrast);
+    color: var(--color-main-text);
 }
 
 .ev-muted {
     color: var(--color-text-maxcontrast);
+}
+
+.ev-total {
+    font-weight: 600;
 }
 
 .ev-table tfoot td {
