@@ -57,6 +57,17 @@ export default {
         }
     },
 
+    async getProjectEvaluation({ year, month, period, billableOnly }) {
+        try {
+            const response = await api.get('/reports/projects', {
+                params: { year, month, period, billableOnly },
+            })
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
     getPdfUrl(employeeId, year, month) {
         return generateUrl('/apps/worktime/api/reports/pdf') +
             `?employeeId=${employeeId}&year=${year}&month=${month}`

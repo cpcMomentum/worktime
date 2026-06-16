@@ -19,6 +19,7 @@ use OCA\WorkTime\Service\EmployeeService;
 use OCA\WorkTime\Service\HolidayService;
 use OCA\WorkTime\Service\PdfService;
 use OCA\WorkTime\Service\PermissionService;
+use OCA\WorkTime\Service\ProjectService;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCA\WorkTime\Service\WorkScheduleService;
 use OCA\WorkTime\Service\YearlyCarryoverService;
@@ -46,6 +47,7 @@ class ReportController extends BaseController {
         private PdfService $pdfService,
         private WorkScheduleService $workScheduleService,
         private YearlyCarryoverService $carryoverService,
+        private ProjectService $projectService,
     ) {
         parent::__construct($request, $userId);
     }
@@ -93,6 +95,123 @@ class ReportController extends BaseController {
         } catch (\Exception $e) {
             return $this->handleException($e);
         }
+    }
+
+    /**
+     * Project evaluation (#57): work minutes grouped by project and employee
+     * over a month/quarter/year, for Admin/HR.
+     */
+    #[NoAdminRequired]
+    public function projects(int $year = 0, int $month = 0, string $period = 'month', bool $billableOnly = false): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+
+        if (!$this->permissionService->canManageEmployees($this->userId)) {
+            return $this->forbiddenResponse();
+        }
+
+        try {
+            [$start, $end, $label] = $this->resolvePeriod($year, $month, $period);
+
+            $aggregates = $this->timeEntryMapper->sumWorkMinutesGroupedByProjectAndEmployee($start, $end);
+
+            // Lookup maps for project metadata and employee names.
+            $projects = [];
+            foreach ($this->projectService->findAll() as $p) {
+                $projects[$p->getId()] = $p;
+            }
+            $employees = [];
+            foreach ($this->employeeService->findAll() as $e) {
+                $employees[$e->getId()] = $e;
+            }
+
+            $rows = [];
+            $totalMinutes = 0;
+            $billableMinutes = 0;
+            $projectIds = [];
+            $employeeIds = [];
+
+            foreach ($aggregates as $agg) {
+                $projectId = $agg['projectId'];
+                $project = $projects[$projectId] ?? null;
+                $isBillable = $project !== null && (bool)$project->getIsBillable();
+
+                if ($billableOnly && !$isBillable) {
+                    continue;
+                }
+
+                $employee = $employees[$agg['employeeId']] ?? null;
+                $minutes = $agg['minutes'];
+
+                $rows[] = [
+                    'projectId' => $projectId,
+                    'projectName' => $project?->getName(),
+                    'projectCode' => $project?->getCode(),
+                    'customer' => $project?->getCustomer(),
+                    'color' => $project?->getColor(),
+                    'isBillable' => $isBillable,
+                    'employeeId' => $agg['employeeId'],
+                    'employeeName' => $employee?->getFullName(),
+                    'minutes' => $minutes,
+                ];
+
+                $totalMinutes += $minutes;
+                if ($isBillable) {
+                    $billableMinutes += $minutes;
+                }
+                if ($projectId > 0) {
+                    $projectIds[$projectId] = true;
+                }
+                $employeeIds[$agg['employeeId']] = true;
+            }
+
+            return $this->successResponse([
+                'period' => [
+                    'year' => $year,
+                    'month' => $month,
+                    'type' => $period,
+                    'label' => $label,
+                    'start' => $start->format('Y-m-d'),
+                    'end' => $end->format('Y-m-d'),
+                ],
+                'totals' => [
+                    'totalMinutes' => $totalMinutes,
+                    'billableMinutes' => $billableMinutes,
+                    'projectCount' => count($projectIds),
+                    'employeeCount' => count($employeeIds),
+                ],
+                'rows' => $rows,
+            ]);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    /**
+     * Resolve the date range and a human label for a period selection.
+     *
+     * @return array{0: DateTime, 1: DateTime, 2: string}
+     */
+    private function resolvePeriod(int $year, int $month, string $period): array {
+        if ($period === 'year') {
+            $start = new DateTime("$year-01-01");
+            $end = new DateTime("$year-12-31");
+            return [$start, $end, (string)$year];
+        }
+
+        if ($period === 'quarter') {
+            $quarter = intdiv(max(1, min(12, $month)) - 1, 3); // 0..3
+            $startMonth = $quarter * 3 + 1;
+            $start = new DateTime(sprintf('%d-%02d-01', $year, $startMonth));
+            $end = (clone $start)->modify('+2 months')->modify('last day of this month');
+            return [$start, $end, sprintf('Q%d %d', $quarter + 1, $year)];
+        }
+
+        // default: month
+        $start = new DateTime(sprintf('%d-%02d-01', $year, max(1, min(12, $month))));
+        $end = (clone $start)->modify('last day of this month');
+        return [$start, $end, $start->format('m/Y')];
     }
 
     #[NoAdminRequired]

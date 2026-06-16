@@ -226,6 +226,35 @@ class TimeEntryMapper extends QBMapper {
     }
 
     /**
+     * Sum work minutes grouped by project and employee over a date range (#57).
+     * Entries without a project are grouped under projectId 0.
+     *
+     * @return array<array{projectId: int, employeeId: int, minutes: int}>
+     */
+    public function sumWorkMinutesGroupedByProjectAndEmployee(DateTime $startDate, DateTime $endDate): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('project_id', 'employee_id')
+            ->selectAlias($qb->func()->sum('work_minutes'), 'minutes')
+            ->from($this->getTableName())
+            ->where($qb->expr()->gte('date', $qb->createNamedParameter($startDate, IQueryBuilder::PARAM_DATE)))
+            ->andWhere($qb->expr()->lte('date', $qb->createNamedParameter($endDate, IQueryBuilder::PARAM_DATE)))
+            ->groupBy('project_id', 'employee_id');
+
+        $result = $qb->executeQuery();
+        $rows = [];
+        while ($row = $result->fetch()) {
+            $rows[] = [
+                'projectId' => (int)$row['project_id'],
+                'employeeId' => (int)$row['employee_id'],
+                'minutes' => (int)$row['minutes'],
+            ];
+        }
+        $result->closeCursor();
+
+        return $rows;
+    }
+
+    /**
      * @return TimeEntry[]
      */
     public function findByStatus(string $status): array {

@@ -105,5 +105,6 @@ return [
         ['name' => 'report#team', 'url' => '/api/reports/team', 'verb' => 'GET'],
         ['name' => 'report#overtime', 'url' => '/api/reports/overtime', 'verb' => 'GET'],
         ['name' => 'report#allEmployeesStatus', 'url' => '/api/reports/all-status', 'verb' => 'GET'],
+        ['name' => 'report#projects', 'url' => '/api/reports/projects', 'verb' => 'GET'],
     ]
 ];
