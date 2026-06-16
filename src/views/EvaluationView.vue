@@ -368,7 +368,8 @@ export default {
 <style scoped>
 .evaluation-view {
     padding: 20px;
-    max-width: 960px;
+    padding-left: 50px;
+    max-width: 1000px;
 }
 
 .ev-head h2 {
