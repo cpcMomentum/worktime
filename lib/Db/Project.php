@@ -28,6 +28,7 @@ use OCP\AppFramework\Db\Entity;
  * @method void setColor(?string $color)
  * @method int getIsActive()
  * @method int getIsBillable()
+ * @method int getAllEmployees()
  * @method DateTime getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
  * @method DateTime getUpdatedAt()
@@ -42,6 +43,7 @@ class Project extends Entity implements JsonSerializable {
     protected ?string $color = null;
     protected int $isActive = 1;
     protected int $isBillable = 1;
+    protected int $allEmployees = 1;
     protected ?DateTime $createdAt = null;
     protected ?DateTime $updatedAt = null;
 
@@ -49,6 +51,7 @@ class Project extends Entity implements JsonSerializable {
         $this->addType('id', 'integer');
         $this->addType('isActive', 'integer');
         $this->addType('isBillable', 'integer');
+        $this->addType('allEmployees', 'integer');
         $this->addType('createdAt', 'datetime');
         $this->addType('updatedAt', 'datetime');
     }
@@ -63,6 +66,12 @@ class Project extends Entity implements JsonSerializable {
         $value = is_bool($isBillable) ? ($isBillable ? 1 : 0) : $isBillable;
         $this->isBillable = $value;
         $this->markFieldUpdated('isBillable');
+    }
+
+    public function setAllEmployees(bool|int $allEmployees): void {
+        $value = is_bool($allEmployees) ? ($allEmployees ? 1 : 0) : $allEmployees;
+        $this->allEmployees = $value;
+        $this->markFieldUpdated('allEmployees');
     }
 
     public function getDisplayName(): string {
@@ -83,6 +92,7 @@ class Project extends Entity implements JsonSerializable {
             'color' => $this->color,
             'isActive' => (bool)$this->isActive,
             'isBillable' => (bool)$this->isBillable,
+            'allEmployees' => (bool)$this->allEmployees,
             'createdAt' => $this->createdAt?->format('c'),
             'updatedAt' => $this->updatedAt?->format('c'),
         ];

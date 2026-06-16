@@ -59,6 +59,25 @@
             </NcCheckboxRadioSwitch>
         </div>
 
+        <div class="form-group">
+            <NcCheckboxRadioSwitch :checked.sync="form.allEmployees">
+                {{ t('worktime', 'Für alle Mitarbeitenden freigeben') }}
+            </NcCheckboxRadioSwitch>
+            <p class="form-hint">
+                {{ t('worktime', 'Wenn deaktiviert, können nur die ausgewählten Mitarbeitenden auf dieses Projekt buchen.') }}
+            </p>
+        </div>
+
+        <div v-if="!form.allEmployees" class="form-group">
+            <label for="projectMembers">{{ t('worktime', 'Zugeordnete Mitarbeitende') }}</label>
+            <NcSelect id="projectMembers"
+                v-model="selectedMembers"
+                :options="employeeOptions"
+                :multiple="true"
+                :close-on-select="false"
+                :placeholder="t('worktime', 'Mitarbeitende auswählen')" />
+        </div>
+
         <div class="form-actions">
             <NcButton type="tertiary" @click="cancel">
                 {{ t('worktime', 'Abbrechen') }}
@@ -73,7 +92,8 @@
 <script>
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
-import { mapActions } from 'vuex'
+import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
+import { mapActions, mapGetters } from 'vuex'
 import { showSuccessMessage, showErrorMessage } from '../utils/errorHandler.js'
 
 export default {
@@ -81,6 +101,7 @@ export default {
     components: {
         NcButton,
         NcCheckboxRadioSwitch,
+        NcSelect,
     },
     props: {
         project: {
@@ -98,15 +119,32 @@ export default {
                 color: null,
                 isActive: true,
                 isBillable: true,
+                allEmployees: true,
+                memberIds: [],
             },
         }
     },
     computed: {
+        ...mapGetters('employees', ['employees']),
         isEdit() {
             return !!this.project
         },
         isValid() {
             return this.form.name.trim().length > 0
+        },
+        employeeOptions() {
+            return this.employees.map(e => ({
+                id: e.id,
+                label: `${e.firstName} ${e.lastName}`.trim() || e.userId,
+            }))
+        },
+        selectedMembers: {
+            get() {
+                return this.employeeOptions.filter(o => this.form.memberIds.includes(o.id))
+            },
+            set(value) {
+                this.form.memberIds = (value || []).map(o => o.id)
+            },
         },
     },
     watch: {
@@ -122,12 +160,20 @@ export default {
                         color: project.color || null,
                         isActive: project.isActive ?? true,
                         isBillable: project.isBillable ?? true,
+                        allEmployees: project.allEmployees ?? true,
+                        memberIds: Array.isArray(project.memberIds) ? [...project.memberIds] : [],
                     }
                 } else {
                     this.resetForm()
                 }
             },
         },
+    },
+    created() {
+        // Employees are needed for the assignment multi-select.
+        if (!this.employees.length) {
+            this.$store.dispatch('employees/fetchEmployees')
+        }
     },
     methods: {
         ...mapActions('projects', ['createProject', 'updateProject']),
@@ -140,6 +186,8 @@ export default {
                 color: null,
                 isActive: true,
                 isBillable: true,
+                allEmployees: true,
+                memberIds: [],
             }
         },
         cancel() {
@@ -155,6 +203,8 @@ export default {
                     color: this.form.color || null,
                     isActive: this.form.isActive,
                     isBillable: this.form.isBillable,
+                    allEmployees: this.form.allEmployees,
+                    memberIds: this.form.allEmployees ? [] : this.form.memberIds,
                 }
 
                 if (this.isEdit) {
@@ -182,6 +232,12 @@ export default {
 .project-form h3 {
     margin-top: 0;
     margin-bottom: 16px;
+}
+
+.form-hint {
+    margin: 4px 0 0;
+    font-size: 0.85em;
+    color: var(--color-text-maxcontrast);
 }
 
 .form-group {

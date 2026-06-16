@@ -16,6 +16,7 @@ use OCA\WorkTime\Notification\NotificationService;
 use OCA\WorkTime\Service\AbsenceService;
 use OCA\WorkTime\Service\AuditLogService;
 use OCA\WorkTime\Service\ForbiddenException;
+use OCA\WorkTime\Service\ProjectService;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCA\WorkTime\Service\ValidationException;
 use OCA\WorkTime\Service\WorkScheduleService;
@@ -62,6 +63,8 @@ class AbsenceServiceTest extends TestCase {
         // Real TimeEntryService so the lock helpers (lockedMonthsInRange,
         // requireReasonForLockedMonths, auditReason, reopenMonth) run for real.
         $settingsMapper = $this->createMock(CompanySettingMapper::class);
+        $projectService = $this->createMock(ProjectService::class);
+        $projectService->method('isProjectAllowedForEmployee')->willReturn(true);
         $timeEntryService = new TimeEntryService(
             $this->timeEntryMapper,
             $settingsMapper,
@@ -69,6 +72,7 @@ class AbsenceServiceTest extends TestCase {
             $this->absenceMapper,
             $this->auditLogService,
             $this->notificationService,
+            $projectService,
             $this->logger,
             $this->l
         );

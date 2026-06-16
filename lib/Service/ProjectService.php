@@ -12,6 +12,7 @@ namespace OCA\WorkTime\Service;
 use DateTime;
 use OCA\WorkTime\Db\Project;
 use OCA\WorkTime\Db\ProjectMapper;
+use OCA\WorkTime\Db\ProjectEmployeeMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
 
@@ -19,6 +20,7 @@ class ProjectService {
 
     public function __construct(
         private ProjectMapper $projectMapper,
+        private ProjectEmployeeMapper $projectEmployeeMapper,
         private AuditLogService $auditLogService,
         private LoggerInterface $logger,
     ) {
@@ -60,7 +62,9 @@ class ProjectService {
         bool $isActive = true,
         bool $isBillable = true,
         string $currentUserId = '',
-        ?string $customer = null
+        ?string $customer = null,
+        bool $allEmployees = true,
+        ?array $memberIds = null
     ): Project {
         // Validate
         $errors = $this->validate($name, $code);
@@ -76,10 +80,15 @@ class ProjectService {
         $project->setColor($color);
         $project->setIsActive($isActive);
         $project->setIsBillable($isBillable);
+        $project->setAllEmployees($allEmployees);
         $project->setCreatedAt(new DateTime());
         $project->setUpdatedAt(new DateTime());
 
         $project = $this->projectMapper->insert($project);
+
+        if ($memberIds !== null) {
+            $this->projectEmployeeMapper->setMembers($project->getId(), $memberIds);
+        }
 
         // Audit log
         if ($currentUserId) {
@@ -102,7 +111,9 @@ class ProjectService {
         bool $isActive = true,
         bool $isBillable = true,
         string $currentUserId = '',
-        ?string $customer = null
+        ?string $customer = null,
+        bool $allEmployees = true,
+        ?array $memberIds = null
     ): Project {
         $project = $this->find($id);
         $oldValues = $project->jsonSerialize();
@@ -120,9 +131,14 @@ class ProjectService {
         $project->setColor($color);
         $project->setIsActive($isActive);
         $project->setIsBillable($isBillable);
+        $project->setAllEmployees($allEmployees);
         $project->setUpdatedAt(new DateTime());
 
         $project = $this->projectMapper->update($project);
+
+        if ($memberIds !== null) {
+            $this->projectEmployeeMapper->setMembers($project->getId(), $memberIds);
+        }
 
         // Audit log
         if ($currentUserId) {
@@ -143,7 +159,48 @@ class ProjectService {
             $this->auditLogService->logDelete($currentUserId, 'project', $project->getId(), $project->jsonSerialize());
         }
 
+        $this->projectEmployeeMapper->deleteForProject($id);
         $this->projectMapper->delete($project);
+    }
+
+    /**
+     * Employee IDs assigned to a project (only meaningful when allEmployees=0).
+     *
+     * @return int[]
+     */
+    public function getMemberIds(int $projectId): array {
+        return $this->projectEmployeeMapper->findEmployeeIdsForProject($projectId);
+    }
+
+    /**
+     * Active projects an employee may book on: projects open to all employees,
+     * plus the ones the employee is explicitly assigned to (#58).
+     *
+     * @return Project[]
+     */
+    public function getProjectsForEmployee(int $employeeId): array {
+        $assignedIds = $this->projectEmployeeMapper->findProjectIdsForEmployee($employeeId);
+        $assigned = array_fill_keys($assignedIds, true);
+
+        return array_values(array_filter(
+            $this->projectMapper->findAllActive(),
+            static fn (Project $p) => (bool)$p->getAllEmployees() || isset($assigned[$p->getId()])
+        ));
+    }
+
+    /**
+     * Whether the given employee may book on the given project (#58).
+     */
+    public function isProjectAllowedForEmployee(int $projectId, int $employeeId): bool {
+        try {
+            $project = $this->find($projectId);
+        } catch (NotFoundException $e) {
+            return false;
+        }
+        if ((bool)$project->getAllEmployees()) {
+            return true;
+        }
+        return in_array($employeeId, $this->projectEmployeeMapper->findEmployeeIdsForProject($projectId), true);
     }
 
     /**

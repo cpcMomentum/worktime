@@ -13,6 +13,7 @@ use OCA\WorkTime\Db\TimeEntry;
 use OCA\WorkTime\Db\TimeEntryMapper;
 use OCA\WorkTime\Notification\NotificationService;
 use OCA\WorkTime\Service\AuditLogService;
+use OCA\WorkTime\Service\ProjectService;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCA\WorkTime\Service\ValidationException;
 use OCA\WorkTime\Service\ForbiddenException;
@@ -29,6 +30,7 @@ class TimeEntryServiceTest extends TestCase {
     private AbsenceMapper $absenceMapper;
     private AuditLogService $auditLogService;
     private NotificationService $notificationService;
+    private ProjectService $projectService;
     private LoggerInterface $logger;
     private IL10N $l;
 
@@ -39,6 +41,9 @@ class TimeEntryServiceTest extends TestCase {
         $this->absenceMapper = $this->createMock(AbsenceMapper::class);
         $this->auditLogService = $this->createMock(AuditLogService::class);
         $this->notificationService = $this->createMock(NotificationService::class);
+        $this->projectService = $this->createMock(ProjectService::class);
+        // By default, any project is allowed; the assignment guard (#58) is tested separately.
+        $this->projectService->method('isProjectAllowedForEmployee')->willReturn(true);
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->l = $this->createMock(IL10N::class);
         $this->l->method('t')->willReturnCallback(
@@ -78,6 +83,7 @@ class TimeEntryServiceTest extends TestCase {
             $this->absenceMapper,
             $this->auditLogService,
             $this->notificationService,
+            $this->projectService,
             $this->logger,
             $this->l
         );

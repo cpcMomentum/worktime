@@ -31,6 +31,7 @@ class TimeEntryService {
         private AbsenceMapper $absenceMapper,
         private AuditLogService $auditLogService,
         private NotificationService $notificationService,
+        private ProjectService $projectService,
         private LoggerInterface $logger,
         private IL10N $l,
     ) {
@@ -121,6 +122,11 @@ class TimeEntryService {
             throw new ValidationException($errors);
         }
 
+        // Project assignment (#58): the employee must be allowed to book on the project.
+        if ($projectId !== null && !$this->projectService->isProjectAllowedForEmployee($projectId, $employeeId)) {
+            throw ValidationException::fromSingleError('projectId', $this->l->t('Dieses Projekt ist dem Mitarbeiter nicht zugeordnet.'));
+        }
+
         // Closed-month rules (#148): block employees, require a reason for HR corrections.
         $lockedMonths = $this->lockedMonthsInRange($employeeId, $dateObj, $dateObj);
         $effectiveReason = $this->requireReasonForLockedMonths($lockedMonths, $allowLockedOverride, $reason);
@@ -198,6 +204,14 @@ class TimeEntryService {
 
         if (!empty($errors)) {
             throw new ValidationException($errors);
+        }
+
+        // Project assignment (#58): only validate when the project actually changes,
+        // so existing entries on a now-restricted project stay editable (grandfathering).
+        if ($projectId !== null
+            && $projectId !== $entry->getProjectId()
+            && !$this->projectService->isProjectAllowedForEmployee($projectId, $entry->getEmployeeId())) {
+            throw ValidationException::fromSingleError('projectId', $this->l->t('Dieses Projekt ist dem Mitarbeiter nicht zugeordnet.'));
         }
 
         // Closed-month rules (#148): block employees, require a reason for HR
