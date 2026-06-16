@@ -92,7 +92,7 @@ class PdfService {
      * @param array{totalMinutes: int, billableMinutes: int} $totals
      * @return string PDF content
      */
-    public function generateProjectEvaluation(string $label, array $entries, array $totals): string {
+    public function generateProjectEvaluation(string $label, array $entries, array $totals, array $filter = []): string {
         $pdf = new TCPDF('L', 'mm', 'A4', true, 'UTF-8', false);
         $companyName = $this->settingsService->getCompanyName() ?: 'Projektauswertung';
         $pdf->SetCreator('WorkTime Nextcloud App');
@@ -116,6 +116,7 @@ class PdfService {
         $pdf->Cell(0, 8, 'Projektauswertung', 0, 1, 'C');
         $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_NORMAL);
         $pdf->Cell(0, 6, $label, 0, 1, 'C');
+        $this->addFilterContext($pdf, $filter);
         $pdf->Ln(4);
 
         // Column widths (landscape A4 content width ~267mm)
@@ -169,7 +170,7 @@ class PdfService {
      * @param array<array{name: string, minutes: int}> $rows
      * @return string PDF content
      */
-    public function generateProjectAggregate(string $label, array $rows, int $totalMinutes): string {
+    public function generateProjectAggregate(string $label, array $rows, int $totalMinutes, array $filter = []): string {
         $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
         $companyName = $this->settingsService->getCompanyName() ?: 'Projektauswertung';
         $pdf->SetCreator('WorkTime Nextcloud App');
@@ -193,6 +194,7 @@ class PdfService {
         $pdf->Cell(0, 8, 'Projektauswertung', 0, 1, 'C');
         $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_NORMAL);
         $pdf->Cell(0, 6, $label, 0, 1, 'C');
+        $this->addFilterContext($pdf, $filter);
         $pdf->Ln(4);
 
         // Portrait A4 content width ~180mm: 110 + 35 + 35
@@ -226,6 +228,23 @@ class PdfService {
         $h = intdiv($minutes, 60);
         $m = $minutes % 60;
         return sprintf('%d:%02d', $h, $m);
+    }
+
+    /**
+     * Render the filter context (which projects/employees the report covers)
+     * under the title, so an exported PDF is self-documenting.
+     *
+     * @param array{projects?: string, employees?: string} $filter
+     */
+    private function addFilterContext(TCPDF $pdf, array $filter): void {
+        if (empty($filter)) {
+            return;
+        }
+        $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_SMALL);
+        $pdf->SetTextColor(90, 90, 90);
+        $pdf->Cell(0, 5, 'Projekte: ' . ($filter['projects'] ?? 'Alle'), 0, 1, 'C');
+        $pdf->Cell(0, 5, 'Mitarbeitende: ' . ($filter['employees'] ?? 'Alle'), 0, 1, 'C');
+        $pdf->SetTextColor(0, 0, 0);
     }
 
     private function truncate(string $text, float $widthMm): string {

@@ -267,10 +267,13 @@ class ReportController extends BaseController {
             return $this->forbiddenResponse();
         }
         try {
-            [, , $label, $entries, $totals] = $this->collectProjectEntries($year, $month, $period, $billableOnly, $this->parseIds($projectIds), $this->parseIds($employeeIds));
+            $pIds = $this->parseIds($projectIds);
+            $eIds = $this->parseIds($employeeIds);
+            [, , $label, $entries, $totals] = $this->collectProjectEntries($year, $month, $period, $billableOnly, $pIds, $eIds);
+            $filter = $this->selectionLabels($pIds, $eIds);
             $pdf = $mode === 'agg'
-                ? $this->pdfService->generateProjectAggregate($label, $this->aggregateByEmployee($entries), $totals['totalMinutes'])
-                : $this->pdfService->generateProjectEvaluation($label, $entries, $totals);
+                ? $this->pdfService->generateProjectAggregate($label, $this->aggregateByEmployee($entries), $totals['totalMinutes'], $filter)
+                : $this->pdfService->generateProjectEvaluation($label, $entries, $totals, $filter);
             return new DataDownloadResponse($pdf, $this->exportFilename($label) . '.pdf', 'application/pdf');
         } catch (\Exception $e) {
             return $this->handleException($e);
@@ -373,6 +376,42 @@ class ReportController extends BaseController {
         return $rows;
     }
 
+    /**
+     * Human-readable labels for the current selection, for the export header.
+     * Empty id list => "Alle".
+     *
+     * @param int[] $projectIds
+     * @param int[] $employeeIds
+     * @return array{projects: string, employees: string}
+     */
+    private function selectionLabels(array $projectIds, array $employeeIds): array {
+        $projects = 'Alle';
+        if (!empty($projectIds)) {
+            $set = array_flip($projectIds);
+            $names = [];
+            foreach ($this->projectService->findAll() as $p) {
+                if (isset($set[$p->getId()])) {
+                    $names[] = $p->getName();
+                }
+            }
+            $projects = implode(', ', $names);
+        }
+
+        $employees = 'Alle';
+        if (!empty($employeeIds)) {
+            $set = array_flip($employeeIds);
+            $names = [];
+            foreach ($this->employeeService->findAll() as $e) {
+                if (isset($set[$e->getId()])) {
+                    $names[] = $e->getFullName();
+                }
+            }
+            $employees = implode(', ', $names);
+        }
+
+        return ['projects' => $projects, 'employees' => $employees];
+    }
+
     private function csvCell(string $value): string {
         return '"' . str_replace('"', '""', $value) . '"';
     }
@@ -406,9 +445,11 @@ class ReportController extends BaseController {
         }
 
         // default: month
-        $start = new DateTime(sprintf('%d-%02d-01', $year, max(1, min(12, $month))));
+        $m = max(1, min(12, $month));
+        $months = ['', 'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+        $start = new DateTime(sprintf('%d-%02d-01', $year, $m));
         $end = (clone $start)->modify('last day of this month');
-        return [$start, $end, $start->format('m/Y')];
+        return [$start, $end, $months[$m] . ' ' . $year];
     }
 
     #[NoAdminRequired]
