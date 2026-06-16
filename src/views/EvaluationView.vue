@@ -33,6 +33,31 @@
             </NcCheckboxRadioSwitch>
         </div>
 
+        <div class="ev-tabs">
+            <div class="ev-seg">
+                <button class="ev-seg-btn"
+                    :class="{ active: tab === 'summary' }"
+                    @click="tab = 'summary'">
+                    {{ t('worktime', 'Zusammenfassung') }}
+                </button>
+                <button class="ev-seg-btn"
+                    :class="{ active: tab === 'entries' }"
+                    @click="tab = 'entries'">
+                    {{ t('worktime', 'Einzelbuchungen') }}
+                </button>
+            </div>
+            <div class="ev-export">
+                <NcButton type="secondary" @click="exportData('csv')">
+                    <template #icon><DownloadIcon :size="18" /></template>
+                    {{ t('worktime', 'CSV') }}
+                </NcButton>
+                <NcButton type="secondary" @click="exportData('pdf')">
+                    <template #icon><DownloadIcon :size="18" /></template>
+                    {{ t('worktime', 'PDF') }}
+                </NcButton>
+            </div>
+        </div>
+
         <div class="ev-kpis">
             <div class="ev-kpi">
                 <div class="ev-kpi-label">{{ t('worktime', 'Gebuchte Stunden') }}</div>
@@ -52,69 +77,111 @@
             </div>
         </div>
 
-        <div class="ev-mode">
-            <span class="ev-mode-label">{{ t('worktime', 'Ansicht') }}:</span>
-            <div class="ev-seg">
-                <button class="ev-seg-btn"
-                    :class="{ active: mode === 'project' }"
-                    @click="mode = 'project'">
-                    {{ t('worktime', 'Nach Projekt') }}
-                </button>
-                <button class="ev-seg-btn"
-                    :class="{ active: mode === 'employee' }"
-                    @click="mode = 'employee'">
-                    {{ t('worktime', 'Nach Mitarbeiter') }}
-                </button>
+        <!-- Zusammenfassung -->
+        <template v-if="tab === 'summary'">
+            <div class="ev-mode">
+                <span class="ev-mode-label">{{ t('worktime', 'Ansicht') }}:</span>
+                <div class="ev-seg">
+                    <button class="ev-seg-btn"
+                        :class="{ active: mode === 'project' }"
+                        @click="mode = 'project'">
+                        {{ t('worktime', 'Nach Projekt') }}
+                    </button>
+                    <button class="ev-seg-btn"
+                        :class="{ active: mode === 'employee' }"
+                        @click="mode = 'employee'">
+                        {{ t('worktime', 'Nach Mitarbeiter') }}
+                    </button>
+                </div>
             </div>
-        </div>
 
-        <NcLoadingIcon v-if="loading" class="ev-loading" :size="32" />
+            <NcLoadingIcon v-if="loading" class="ev-loading" :size="32" />
 
-        <div v-else-if="!groups.length" class="ev-empty">
-            {{ t('worktime', 'Für diesen Zeitraum liegen keine Buchungen vor.') }}
-        </div>
+            <div v-else-if="!groups.length" class="ev-empty">
+                {{ t('worktime', 'Für diesen Zeitraum liegen keine Buchungen vor.') }}
+            </div>
 
-        <table v-else class="ev-table">
-            <thead>
-                <tr>
-                    <th>{{ mode === 'project' ? t('worktime', 'Projekt') : t('worktime', 'Mitarbeiter') }}</th>
-                    <th class="ev-num">{{ t('worktime', 'Stunden') }}</th>
-                    <th class="ev-num">{{ t('worktime', 'Anteil') }}</th>
-                    <th class="ev-num">{{ mode === 'project' ? t('worktime', 'Mitarbeitende') : t('worktime', 'Projekte') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                <template v-for="group in groups">
-                    <tr :key="group.key" class="ev-group-row" @click="toggle(group.key)">
-                        <td class="ev-name">
-                            <ChevronRightIcon class="ev-caret" :class="{ open: isOpen(group.key) }" :size="16" />
-                            <span v-if="group.color" class="ev-dot" :style="{ background: group.color }" />
-                            <span>{{ group.name }}</span>
-                            <span v-if="group.customer" class="ev-customer">· {{ group.customer }}</span>
-                        </td>
-                        <td class="ev-num">{{ hours(group.minutes) }}</td>
-                        <td class="ev-num">{{ share(group.minutes) }}</td>
-                        <td class="ev-num">{{ group.children.length }}</td>
+            <table v-else class="ev-table">
+                <thead>
+                    <tr>
+                        <th>{{ mode === 'project' ? t('worktime', 'Projekt') : t('worktime', 'Mitarbeiter') }}</th>
+                        <th class="ev-num">{{ t('worktime', 'Stunden') }}</th>
+                        <th class="ev-num">{{ t('worktime', 'Anteil') }}</th>
+                        <th class="ev-num">{{ mode === 'project' ? t('worktime', 'Mitarbeitende') : t('worktime', 'Projekte') }}</th>
                     </tr>
-                    <tr v-for="child in (isOpen(group.key) ? group.children : [])"
-                        :key="group.key + '-' + child.key"
-                        class="ev-child-row">
-                        <td class="ev-name ev-child-name">{{ child.name }}</td>
-                        <td class="ev-num">{{ hours(child.minutes) }}</td>
-                        <td class="ev-num ev-muted">{{ share(child.minutes, group.minutes) }}</td>
+                </thead>
+                <tbody>
+                    <template v-for="group in groups">
+                        <tr :key="group.key" class="ev-group-row" @click="toggle(group.key)">
+                            <td class="ev-name">
+                                <ChevronRightIcon class="ev-caret" :class="{ open: isOpen(group.key) }" :size="16" />
+                                <span v-if="group.color" class="ev-dot" :style="{ background: group.color }" />
+                                <span>{{ group.name }}</span>
+                                <span v-if="group.customer" class="ev-customer">· {{ group.customer }}</span>
+                            </td>
+                            <td class="ev-num">{{ hours(group.minutes) }}</td>
+                            <td class="ev-num">{{ share(group.minutes) }}</td>
+                            <td class="ev-num">{{ group.children.length }}</td>
+                        </tr>
+                        <tr v-for="child in (isOpen(group.key) ? group.children : [])"
+                            :key="group.key + '-' + child.key"
+                            class="ev-child-row">
+                            <td class="ev-name ev-child-name">{{ child.name }}</td>
+                            <td class="ev-num">{{ hours(child.minutes) }}</td>
+                            <td class="ev-num ev-muted">{{ share(child.minutes, group.minutes) }}</td>
+                            <td class="ev-num" />
+                        </tr>
+                    </template>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td class="ev-name">{{ t('worktime', 'Gesamt') }}</td>
+                        <td class="ev-num">{{ hours(totals.totalMinutes) }}</td>
+                        <td class="ev-num">100 %</td>
                         <td class="ev-num" />
                     </tr>
-                </template>
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td class="ev-name">{{ t('worktime', 'Gesamt') }}</td>
-                    <td class="ev-num">{{ hours(totals.totalMinutes) }}</td>
-                    <td class="ev-num">100 %</td>
-                    <td class="ev-num" />
-                </tr>
-            </tfoot>
-        </table>
+                </tfoot>
+            </table>
+        </template>
+
+        <!-- Einzelbuchungen -->
+        <template v-else>
+            <NcLoadingIcon v-if="entriesLoading" class="ev-loading" :size="32" />
+
+            <div v-else-if="!entries.length" class="ev-empty">
+                {{ t('worktime', 'Für diesen Zeitraum liegen keine Buchungen vor.') }}
+            </div>
+
+            <table v-else class="ev-table ev-entries">
+                <thead>
+                    <tr>
+                        <th>{{ t('worktime', 'Datum') }}</th>
+                        <th>{{ t('worktime', 'Projekt') }}</th>
+                        <th>{{ t('worktime', 'Kunde') }}</th>
+                        <th>{{ t('worktime', 'Mitarbeiter') }}</th>
+                        <th class="ev-num">{{ t('worktime', 'Stunden') }}</th>
+                        <th>{{ t('worktime', 'Tätigkeit') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="entry in entries" :key="entry.id">
+                        <td>{{ formatDate(entry.date) }}</td>
+                        <td>{{ entry.projectName || t('worktime', 'Kein Projekt') }}</td>
+                        <td class="ev-muted">{{ entry.customer || '–' }}</td>
+                        <td>{{ entry.employeeName || t('worktime', 'Unbekannt') }}</td>
+                        <td class="ev-num">{{ hours(entry.minutes) }}</td>
+                        <td class="ev-desc">{{ entry.description || '' }}</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" class="ev-name">{{ t('worktime', 'Gesamt') }}</td>
+                        <td class="ev-num">{{ hours(totals.totalMinutes) }}</td>
+                        <td />
+                    </tr>
+                </tfoot>
+            </table>
+        </template>
     </div>
 </template>
 
@@ -124,8 +191,10 @@ import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadi
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import ChevronLeftIcon from 'vue-material-design-icons/ChevronLeft.vue'
 import ChevronRightIcon from 'vue-material-design-icons/ChevronRight.vue'
+import DownloadIcon from 'vue-material-design-icons/Download.vue'
 import ReportService from '../services/ReportService.js'
 import { formatMinutes } from '../utils/timeUtils.js'
+import { formatDate as formatDateUtil } from '../utils/dateUtils.js'
 import { showErrorMessage } from '../utils/errorHandler.js'
 
 export default {
@@ -136,6 +205,7 @@ export default {
         NcLoadingIcon,
         ChevronLeftIcon,
         ChevronRightIcon,
+        DownloadIcon,
     },
     data() {
         const now = new Date()
@@ -145,9 +215,12 @@ export default {
             period: 'month',
             billableOnly: false,
             mode: 'project',
+            tab: 'summary',
             loading: false,
+            entriesLoading: false,
             totals: { totalMinutes: 0, billableMinutes: 0, projectCount: 0, employeeCount: 0 },
             rows: [],
+            entries: [],
             periodLabelFromApi: '',
             openKeys: {},
         }
@@ -196,16 +269,26 @@ export default {
         },
     },
     watch: {
-        period() { this.load() },
-        billableOnly() { this.load() },
+        period() { this.refresh() },
+        billableOnly() { this.refresh() },
         mode() { this.openKeys = {} },
+        tab(value) { if (value === 'entries') { this.loadEntries() } },
     },
     created() {
-        this.load()
+        this.refresh()
     },
     methods: {
         hours(minutes) {
             return `${formatMinutes(minutes || 0)} h`
+        },
+        formatDate(date) {
+            return formatDateUtil(date)
+        },
+        refresh() {
+            this.load()
+            if (this.tab === 'entries') {
+                this.loadEntries()
+            }
         },
         share(minutes, base = this.totals.totalMinutes) {
             if (!base) return '0 %'
@@ -251,6 +334,32 @@ export default {
             } finally {
                 this.loading = false
             }
+        },
+        async loadEntries() {
+            this.entriesLoading = true
+            try {
+                const data = await ReportService.getProjectEntries({
+                    year: this.year,
+                    month: this.month,
+                    period: this.period,
+                    billableOnly: this.billableOnly,
+                })
+                if (data) {
+                    this.entries = data.entries || []
+                }
+            } catch (error) {
+                showErrorMessage(error.message || this.t('worktime', 'Fehler beim Laden der Auswertung'))
+            } finally {
+                this.entriesLoading = false
+            }
+        },
+        exportData(format) {
+            ReportService.downloadProjectExport(format, {
+                year: this.year,
+                month: this.month,
+                period: this.period,
+                billableOnly: this.billableOnly,
+            })
         },
     },
 }
@@ -347,9 +456,32 @@ export default {
     color: var(--color-text-maxcontrast);
 }
 
+.ev-tabs {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.ev-export {
+    display: flex;
+    gap: 8px;
+}
+
 .ev-table {
     width: 100%;
     border-collapse: collapse;
+}
+
+.ev-entries th,
+.ev-entries td {
+    font-size: 0.9em;
+}
+
+.ev-desc {
+    color: var(--color-text-maxcontrast);
 }
 
 .ev-table th,

@@ -2,6 +2,11 @@ OC.L10N.register(
     "worktime",
     {
     "Auswertung" : "Evaluation",
+    "Zusammenfassung" : "Summary",
+    "Einzelbuchungen" : "Individual bookings",
+    "Tätigkeit" : "Activity",
+    "CSV" : "CSV",
+    "PDF" : "PDF",
     "Stunden nach Projekt oder Mitarbeiter" : "Hours by project or employee",
     "Zurück" : "Back",
     "Weiter" : "Next",

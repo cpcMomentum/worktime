@@ -189,6 +189,146 @@ class ReportController extends BaseController {
     }
 
     /**
+     * Individual bookings for the period (#57 detail / customer proof).
+     */
+    #[NoAdminRequired]
+    public function projectEntries(int $year = 0, int $month = 0, string $period = 'month', bool $billableOnly = false): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+        if (!$this->permissionService->canManageEmployees($this->userId)) {
+            return $this->forbiddenResponse();
+        }
+        try {
+            [, , $label, $entries, $totals] = $this->collectProjectEntries($year, $month, $period, $billableOnly);
+            return $this->successResponse([
+                'period' => ['label' => $label],
+                'totals' => $totals,
+                'entries' => $entries,
+            ]);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
+    public function projectsCsv(int $year = 0, int $month = 0, string $period = 'month', bool $billableOnly = false): DataDownloadResponse|JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+        if (!$this->permissionService->canManageEmployees($this->userId)) {
+            return $this->forbiddenResponse();
+        }
+        try {
+            [, , $label, $entries] = $this->collectProjectEntries($year, $month, $period, $billableOnly);
+
+            $headers = ['Datum', 'Projekt', 'Projektcode', 'Kunde', 'Mitarbeiter', 'Stunden', 'Abrechenbar', 'Tätigkeit'];
+            $lines = [implode(';', array_map([$this, 'csvCell'], $headers))];
+            foreach ($entries as $entry) {
+                $lines[] = implode(';', array_map([$this, 'csvCell'], [
+                    (new DateTime($entry['date']))->format('d.m.Y'),
+                    $entry['projectName'] ?? 'Kein Projekt',
+                    $entry['projectCode'] ?? '',
+                    $entry['customer'] ?? '',
+                    $entry['employeeName'] ?? '',
+                    $this->minutesToDecimal($entry['minutes']),
+                    $entry['isBillable'] ? 'ja' : 'nein',
+                    $entry['description'] ?? '',
+                ]));
+            }
+            // UTF-8 BOM so Excel detects the encoding.
+            $csv = "\xEF\xBB\xBF" . implode("\r\n", $lines) . "\r\n";
+
+            return new DataDownloadResponse($csv, $this->exportFilename($label) . '.csv', 'text/csv; charset=UTF-8');
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
+    public function projectsPdf(int $year = 0, int $month = 0, string $period = 'month', bool $billableOnly = false): DataDownloadResponse|JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+        if (!$this->permissionService->canManageEmployees($this->userId)) {
+            return $this->forbiddenResponse();
+        }
+        try {
+            [, , $label, $entries, $totals] = $this->collectProjectEntries($year, $month, $period, $billableOnly);
+            $pdf = $this->pdfService->generateProjectEvaluation($label, $entries, $totals);
+            return new DataDownloadResponse($pdf, $this->exportFilename($label) . '.pdf', 'application/pdf');
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    /**
+     * Collect individual bookings for the period, enriched with project and
+     * employee metadata. Shared by the JSON, CSV and PDF endpoints.
+     *
+     * @return array{0: DateTime, 1: DateTime, 2: string, 3: array, 4: array{totalMinutes: int, billableMinutes: int}}
+     */
+    private function collectProjectEntries(int $year, int $month, string $period, bool $billableOnly): array {
+        [$start, $end, $label] = $this->resolvePeriod($year, $month, $period);
+
+        $projects = [];
+        foreach ($this->projectService->findAll() as $p) {
+            $projects[$p->getId()] = $p;
+        }
+        $employees = [];
+        foreach ($this->employeeService->findAll() as $e) {
+            $employees[$e->getId()] = $e;
+        }
+
+        $entries = [];
+        $totalMinutes = 0;
+        $billableMinutes = 0;
+        foreach ($this->timeEntryMapper->findByDateRange($start, $end) as $te) {
+            $projectId = (int)($te->getProjectId() ?? 0);
+            $project = $projects[$projectId] ?? null;
+            $isBillable = $project !== null && (bool)$project->getIsBillable();
+            if ($billableOnly && !$isBillable) {
+                continue;
+            }
+            $employee = $employees[$te->getEmployeeId()] ?? null;
+            $minutes = (int)$te->getWorkMinutes();
+            $entries[] = [
+                'id' => $te->getId(),
+                'date' => $te->getDate()->format('Y-m-d'),
+                'projectId' => $projectId,
+                'projectName' => $project?->getName(),
+                'projectCode' => $project?->getCode(),
+                'customer' => $project?->getCustomer(),
+                'isBillable' => $isBillable,
+                'employeeId' => $te->getEmployeeId(),
+                'employeeName' => $employee?->getFullName(),
+                'minutes' => $minutes,
+                'description' => $te->getDescription(),
+            ];
+            $totalMinutes += $minutes;
+            if ($isBillable) {
+                $billableMinutes += $minutes;
+            }
+        }
+
+        return [$start, $end, $label, $entries, ['totalMinutes' => $totalMinutes, 'billableMinutes' => $billableMinutes]];
+    }
+
+    private function csvCell(string $value): string {
+        return '"' . str_replace('"', '""', $value) . '"';
+    }
+
+    private function minutesToDecimal(int $minutes): string {
+        return number_format($minutes / 60, 2, ',', '');
+    }
+
+    private function exportFilename(string $label): string {
+        return 'Projektauswertung_' . preg_replace('/[^A-Za-z0-9_-]+/', '-', $label);
+    }
+
+    /**
      * Resolve the date range and a human label for a period selection.
      *
      * @return array{0: DateTime, 1: DateTime, 2: string}

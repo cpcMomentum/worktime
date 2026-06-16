@@ -226,6 +226,23 @@ class TimeEntryMapper extends QBMapper {
     }
 
     /**
+     * All time entries in a date range across all employees, ordered by date (#57).
+     *
+     * @return TimeEntry[]
+     */
+    public function findByDateRange(DateTime $startDate, DateTime $endDate): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->gte('date', $qb->createNamedParameter($startDate, IQueryBuilder::PARAM_DATE)))
+            ->andWhere($qb->expr()->lte('date', $qb->createNamedParameter($endDate, IQueryBuilder::PARAM_DATE)))
+            ->orderBy('date', 'ASC')
+            ->addOrderBy('id', 'ASC');
+
+        return $this->findEntities($qb);
+    }
+
+    /**
      * Sum work minutes grouped by project and employee over a date range (#57).
      * Entries without a project are grouped under projectId 0.
      *

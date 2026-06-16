@@ -84,6 +84,100 @@ class PdfService {
     }
 
     /**
+     * Generate a project evaluation PDF (#57): individual bookings over a period,
+     * usable as a customer proof. Landscape for the wide table.
+     *
+     * @param string $label Period label (e.g. "06/2026", "Q2 2026", "2026")
+     * @param array<array{date: string, projectName: ?string, customer: ?string, employeeName: ?string, minutes: int, description: ?string, isBillable: bool}> $entries
+     * @param array{totalMinutes: int, billableMinutes: int} $totals
+     * @return string PDF content
+     */
+    public function generateProjectEvaluation(string $label, array $entries, array $totals): string {
+        $pdf = new TCPDF('L', 'mm', 'A4', true, 'UTF-8', false);
+        $companyName = $this->settingsService->getCompanyName() ?: 'Projektauswertung';
+        $pdf->SetCreator('WorkTime Nextcloud App');
+        $pdf->SetAuthor($companyName);
+        $pdf->SetTitle('Projektauswertung');
+        $pdf->setPrintHeader(false);
+        $pdf->setPrintFooter(true);
+        $pdf->setFooterFont([self::FONT_FAMILY, '', self::FONT_SIZE_SMALL]);
+        $pdf->setFooterMargin(10);
+        $pdf->SetMargins(15, 15, 15);
+        $pdf->SetAutoPageBreak(true, 20);
+        $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_NORMAL);
+        $pdf->AddPage();
+
+        if ($this->settingsService->getCompanyName()) {
+            $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_TITLE);
+            $pdf->Cell(0, 10, $companyName, 0, 1, 'C');
+            $pdf->Ln(1);
+        }
+        $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_HEADER);
+        $pdf->Cell(0, 8, 'Projektauswertung', 0, 1, 'C');
+        $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_NORMAL);
+        $pdf->Cell(0, 6, $label, 0, 1, 'C');
+        $pdf->Ln(4);
+
+        // Column widths (landscape A4 content width ~267mm)
+        $cols = [
+            ['Datum', 24, 'L'],
+            ['Projekt', 55, 'L'],
+            ['Kunde', 40, 'L'],
+            ['Mitarbeiter', 45, 'L'],
+            ['Stunden', 20, 'R'],
+            ['Tätigkeit', 83, 'L'],
+        ];
+
+        $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_SMALL);
+        $pdf->SetFillColor(240, 240, 240);
+        foreach ($cols as $col) {
+            $pdf->Cell($col[1], 7, $col[0], 1, 0, $col[2], true);
+        }
+        $pdf->Ln();
+
+        $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_SMALL);
+        foreach ($entries as $entry) {
+            $date = (new DateTime($entry['date']))->format('d.m.Y');
+            $row = [
+                $date,
+                $entry['projectName'] ?? 'Kein Projekt',
+                $entry['customer'] ?? '',
+                $entry['employeeName'] ?? '',
+                $this->minutesToHours($entry['minutes']),
+                $entry['description'] ?? '',
+            ];
+            foreach ($cols as $i => $col) {
+                $pdf->Cell($col[1], 6, $this->truncate($row[$i], $col[1]), 1, 0, $col[2]);
+            }
+            $pdf->Ln();
+        }
+
+        // Totals
+        $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_SMALL);
+        $pdf->Cell(164, 7, 'Gesamt', 1, 0, 'R');
+        $pdf->Cell(20, 7, $this->minutesToHours($totals['totalMinutes']), 1, 0, 'R');
+        $pdf->Cell(83, 7, 'davon abrechenbar: ' . $this->minutesToHours($totals['billableMinutes']), 1, 0, 'L');
+        $pdf->Ln();
+
+        return $pdf->Output('', 'S');
+    }
+
+    private function minutesToHours(int $minutes): string {
+        $h = intdiv($minutes, 60);
+        $m = $minutes % 60;
+        return sprintf('%d:%02d', $h, $m);
+    }
+
+    private function truncate(string $text, float $widthMm): string {
+        // Rough character budget for the small font at the given column width.
+        $max = (int)max(4, $widthMm / 1.7);
+        if (mb_strlen($text) <= $max) {
+            return $text;
+        }
+        return mb_substr($text, 0, $max - 1) . '…';
+    }
+
+    /**
      * Create and configure TCPDF instance
      */
     private function createPdf(): TCPDF {
