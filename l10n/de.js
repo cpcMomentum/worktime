@@ -92,6 +92,8 @@ OC.L10N.register(
     "Neues Projekt" : "Neues Projekt",
     "Projekt bearbeiten" : "Projekt bearbeiten",
     "Projektcode" : "Projektcode",
+    "Kunde" : "Kunde",
+    "Optional, z.B. für die Auswertung" : "Optional, z.B. für die Auswertung",
     "z.B. PRJ-001" : "z.B. PRJ-001",
     "Abrechenbar" : "Abrechenbar",
     "Farbe" : "Farbe",

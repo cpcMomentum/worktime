@@ -59,7 +59,8 @@ class ProjectService {
         ?string $color = null,
         bool $isActive = true,
         bool $isBillable = true,
-        string $currentUserId = ''
+        string $currentUserId = '',
+        ?string $customer = null
     ): Project {
         // Validate
         $errors = $this->validate($name, $code);
@@ -71,6 +72,7 @@ class ProjectService {
         $project->setName($name);
         $project->setCode($code);
         $project->setDescription($description);
+        $project->setCustomer($customer);
         $project->setColor($color);
         $project->setIsActive($isActive);
         $project->setIsBillable($isBillable);
@@ -99,7 +101,8 @@ class ProjectService {
         ?string $color = null,
         bool $isActive = true,
         bool $isBillable = true,
-        string $currentUserId = ''
+        string $currentUserId = '',
+        ?string $customer = null
     ): Project {
         $project = $this->find($id);
         $oldValues = $project->jsonSerialize();
@@ -113,6 +116,7 @@ class ProjectService {
         $project->setName($name);
         $project->setCode($code);
         $project->setDescription($description);
+        $project->setCustomer($customer);
         $project->setColor($color);
         $project->setIsActive($isActive);
         $project->setIsBillable($isBillable);

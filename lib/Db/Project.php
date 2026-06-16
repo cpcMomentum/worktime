@@ -22,6 +22,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setCode(?string $code)
  * @method string|null getDescription()
  * @method void setDescription(?string $description)
+ * @method string|null getCustomer()
+ * @method void setCustomer(?string $customer)
  * @method string|null getColor()
  * @method void setColor(?string $color)
  * @method int getIsActive()
@@ -36,6 +38,7 @@ class Project extends Entity implements JsonSerializable {
     protected string $name = '';
     protected ?string $code = null;
     protected ?string $description = null;
+    protected ?string $customer = null;
     protected ?string $color = null;
     protected int $isActive = 1;
     protected int $isBillable = 1;
@@ -76,6 +79,7 @@ class Project extends Entity implements JsonSerializable {
             'code' => $this->code,
             'displayName' => $this->getDisplayName(),
             'description' => $this->description,
+            'customer' => $this->customer,
             'color' => $this->color,
             'isActive' => (bool)$this->isActive,
             'isBillable' => (bool)$this->isBillable,

@@ -22,6 +22,15 @@
         </div>
 
         <div class="form-group">
+            <label for="projectCustomer">{{ t('worktime', 'Kunde') }}</label>
+            <input id="projectCustomer"
+                v-model="form.customer"
+                type="text"
+                class="input-field"
+                :placeholder="t('worktime', 'Optional, z.B. für die Auswertung')">
+        </div>
+
+        <div class="form-group">
             <label for="projectDescription">{{ t('worktime', 'Beschreibung') }}</label>
             <textarea id="projectDescription"
                 v-model="form.description"
@@ -85,6 +94,7 @@ export default {
                 name: '',
                 code: null,
                 description: null,
+                customer: null,
                 color: null,
                 isActive: true,
                 isBillable: true,
@@ -108,6 +118,7 @@ export default {
                         name: project.name || '',
                         code: project.code || null,
                         description: project.description || null,
+                        customer: project.customer || null,
                         color: project.color || null,
                         isActive: project.isActive ?? true,
                         isBillable: project.isBillable ?? true,
@@ -125,6 +136,7 @@ export default {
                 name: '',
                 code: null,
                 description: null,
+                customer: null,
                 color: null,
                 isActive: true,
                 isBillable: true,
@@ -139,6 +151,7 @@ export default {
                     name: this.form.name.trim(),
                     code: this.form.code?.trim() || null,
                     description: this.form.description?.trim() || null,
+                    customer: this.form.customer?.trim() || null,
                     color: this.form.color || null,
                     isActive: this.form.isActive,
                     isBillable: this.form.isBillable,

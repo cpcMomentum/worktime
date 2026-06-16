@@ -75,7 +75,8 @@ class ProjectController extends BaseController {
         ?string $description = null,
         ?string $color = null,
         bool $isActive = true,
-        bool $isBillable = true
+        bool $isBillable = true,
+        ?string $customer = null
     ): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
@@ -93,7 +94,8 @@ class ProjectController extends BaseController {
                 $color,
                 $isActive,
                 $isBillable,
-                $this->userId
+                $this->userId,
+                $customer
             );
 
             return $this->createdResponse($project);
@@ -110,7 +112,8 @@ class ProjectController extends BaseController {
         ?string $description = null,
         ?string $color = null,
         bool $isActive = true,
-        bool $isBillable = true
+        bool $isBillable = true,
+        ?string $customer = null
     ): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
@@ -129,7 +132,8 @@ class ProjectController extends BaseController {
                 $color,
                 $isActive,
                 $isBillable,
-                $this->userId
+                $this->userId,
+                $customer
             );
 
             return $this->successResponse($project);
