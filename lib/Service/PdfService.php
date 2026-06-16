@@ -156,7 +156,67 @@ class PdfService {
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_SMALL);
         $pdf->Cell(164, 7, 'Gesamt', 1, 0, 'R');
         $pdf->Cell(20, 7, $this->minutesToHours($totals['totalMinutes']), 1, 0, 'R');
-        $pdf->Cell(83, 7, 'davon abrechenbar: ' . $this->minutesToHours($totals['billableMinutes']), 1, 0, 'L');
+        $pdf->Cell(83, 7, '', 1, 0, 'L');
+        $pdf->Ln();
+
+        return $pdf->Output('', 'S');
+    }
+
+    /**
+     * Generate an aggregated project evaluation PDF (#57): hours per employee
+     * over a period, for the current selection. Portrait.
+     *
+     * @param array<array{name: string, minutes: int}> $rows
+     * @return string PDF content
+     */
+    public function generateProjectAggregate(string $label, array $rows, int $totalMinutes): string {
+        $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+        $companyName = $this->settingsService->getCompanyName() ?: 'Projektauswertung';
+        $pdf->SetCreator('WorkTime Nextcloud App');
+        $pdf->SetAuthor($companyName);
+        $pdf->SetTitle('Projektauswertung');
+        $pdf->setPrintHeader(false);
+        $pdf->setPrintFooter(true);
+        $pdf->setFooterFont([self::FONT_FAMILY, '', self::FONT_SIZE_SMALL]);
+        $pdf->setFooterMargin(10);
+        $pdf->SetMargins(15, 15, 15);
+        $pdf->SetAutoPageBreak(true, 20);
+        $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_NORMAL);
+        $pdf->AddPage();
+
+        if ($this->settingsService->getCompanyName()) {
+            $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_TITLE);
+            $pdf->Cell(0, 10, $companyName, 0, 1, 'C');
+            $pdf->Ln(1);
+        }
+        $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_HEADER);
+        $pdf->Cell(0, 8, 'Projektauswertung', 0, 1, 'C');
+        $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_NORMAL);
+        $pdf->Cell(0, 6, $label, 0, 1, 'C');
+        $pdf->Ln(4);
+
+        // Portrait A4 content width ~180mm: 110 + 35 + 35
+        $total = max(1, $totalMinutes);
+        $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_SMALL);
+        $pdf->SetFillColor(240, 240, 240);
+        $pdf->Cell(110, 7, 'Mitarbeiter', 1, 0, 'L', true);
+        $pdf->Cell(35, 7, 'Stunden', 1, 0, 'R', true);
+        $pdf->Cell(35, 7, 'Anteil', 1, 0, 'R', true);
+        $pdf->Ln();
+
+        $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_SMALL);
+        foreach ($rows as $row) {
+            $pct = round($row['minutes'] / $total * 100);
+            $pdf->Cell(110, 6, $this->truncate($row['name'], 110), 1, 0, 'L');
+            $pdf->Cell(35, 6, $this->minutesToHours($row['minutes']), 1, 0, 'R');
+            $pdf->Cell(35, 6, $pct . ' %', 1, 0, 'R');
+            $pdf->Ln();
+        }
+
+        $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_SMALL);
+        $pdf->Cell(110, 7, 'Gesamt', 1, 0, 'R');
+        $pdf->Cell(35, 7, $this->minutesToHours($totalMinutes), 1, 0, 'R');
+        $pdf->Cell(35, 7, '100 %', 1, 0, 'R');
         $pdf->Ln();
 
         return $pdf->Output('', 'S');

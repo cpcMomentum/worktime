@@ -445,6 +445,7 @@ export default {
                 period: this.period,
                 projectIds: [...this.selectedProjects],
                 employeeIds: [...this.selectedEmployees],
+                mode: this.tab, // 'agg' or 'detail' — export matches the current view
             })
         },
     },

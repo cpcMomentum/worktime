@@ -79,9 +79,9 @@ export default {
         }
     },
 
-    projectExportUrl(format, { year, month, period, projectIds = [], employeeIds = [] }) {
+    projectExportUrl(format, { year, month, period, projectIds = [], employeeIds = [], mode = 'detail' }) {
         const path = format === 'pdf' ? 'projects-pdf' : 'projects-csv'
-        const params = new URLSearchParams({ year, month, period })
+        const params = new URLSearchParams({ year, month, period, mode })
         if (projectIds.length) params.set('projectIds', projectIds.join(','))
         if (employeeIds.length) params.set('employeeIds', employeeIds.join(','))
         return generateUrl(`/apps/worktime/api/reports/${path}`) + '?' + params.toString()

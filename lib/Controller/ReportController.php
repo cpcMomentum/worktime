@@ -213,7 +213,7 @@ class ReportController extends BaseController {
 
     #[NoAdminRequired]
     #[NoCSRFRequired]
-    public function projectsCsv(int $year = 0, int $month = 0, string $period = 'month', bool $billableOnly = false, string $projectIds = '', string $employeeIds = ''): DataDownloadResponse|JSONResponse {
+    public function projectsCsv(int $year = 0, int $month = 0, string $period = 'month', bool $billableOnly = false, string $projectIds = '', string $employeeIds = '', string $mode = 'detail'): DataDownloadResponse|JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
         }
@@ -221,21 +221,32 @@ class ReportController extends BaseController {
             return $this->forbiddenResponse();
         }
         try {
-            [, , $label, $entries] = $this->collectProjectEntries($year, $month, $period, $billableOnly, $this->parseIds($projectIds), $this->parseIds($employeeIds));
+            [, , $label, $entries, $totals] = $this->collectProjectEntries($year, $month, $period, $billableOnly, $this->parseIds($projectIds), $this->parseIds($employeeIds));
 
-            $headers = ['Datum', 'Projekt', 'Projektcode', 'Kunde', 'Mitarbeiter', 'Stunden', 'Abrechenbar', 'Tätigkeit'];
-            $lines = [implode(';', array_map([$this, 'csvCell'], $headers))];
-            foreach ($entries as $entry) {
-                $lines[] = implode(';', array_map([$this, 'csvCell'], [
-                    (new DateTime($entry['date']))->format('d.m.Y'),
-                    $entry['projectName'] ?? 'Kein Projekt',
-                    $entry['projectCode'] ?? '',
-                    $entry['customer'] ?? '',
-                    $entry['employeeName'] ?? '',
-                    $this->minutesToDecimal($entry['minutes']),
-                    $entry['isBillable'] ? 'ja' : 'nein',
-                    $entry['description'] ?? '',
-                ]));
+            if ($mode === 'agg') {
+                $total = max(1, $totals['totalMinutes']);
+                $lines = [implode(';', array_map([$this, 'csvCell'], ['Mitarbeiter', 'Stunden', 'Anteil']))];
+                foreach ($this->aggregateByEmployee($entries) as $row) {
+                    $lines[] = implode(';', array_map([$this, 'csvCell'], [
+                        $row['name'],
+                        $this->minutesToDecimal($row['minutes']),
+                        round($row['minutes'] / $total * 100) . ' %',
+                    ]));
+                }
+            } else {
+                $headers = ['Datum', 'Projekt', 'Projektcode', 'Kunde', 'Mitarbeiter', 'Stunden', 'Tätigkeit'];
+                $lines = [implode(';', array_map([$this, 'csvCell'], $headers))];
+                foreach ($entries as $entry) {
+                    $lines[] = implode(';', array_map([$this, 'csvCell'], [
+                        (new DateTime($entry['date']))->format('d.m.Y'),
+                        $entry['projectName'] ?? 'Kein Projekt',
+                        $entry['projectCode'] ?? '',
+                        $entry['customer'] ?? '',
+                        $entry['employeeName'] ?? '',
+                        $this->minutesToDecimal($entry['minutes']),
+                        $entry['description'] ?? '',
+                    ]));
+                }
             }
             // UTF-8 BOM so Excel detects the encoding.
             $csv = "\xEF\xBB\xBF" . implode("\r\n", $lines) . "\r\n";
@@ -248,7 +259,7 @@ class ReportController extends BaseController {
 
     #[NoAdminRequired]
     #[NoCSRFRequired]
-    public function projectsPdf(int $year = 0, int $month = 0, string $period = 'month', bool $billableOnly = false, string $projectIds = '', string $employeeIds = ''): DataDownloadResponse|JSONResponse {
+    public function projectsPdf(int $year = 0, int $month = 0, string $period = 'month', bool $billableOnly = false, string $projectIds = '', string $employeeIds = '', string $mode = 'detail'): DataDownloadResponse|JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
         }
@@ -257,7 +268,9 @@ class ReportController extends BaseController {
         }
         try {
             [, , $label, $entries, $totals] = $this->collectProjectEntries($year, $month, $period, $billableOnly, $this->parseIds($projectIds), $this->parseIds($employeeIds));
-            $pdf = $this->pdfService->generateProjectEvaluation($label, $entries, $totals);
+            $pdf = $mode === 'agg'
+                ? $this->pdfService->generateProjectAggregate($label, $this->aggregateByEmployee($entries), $totals['totalMinutes'])
+                : $this->pdfService->generateProjectEvaluation($label, $entries, $totals);
             return new DataDownloadResponse($pdf, $this->exportFilename($label) . '.pdf', 'application/pdf');
         } catch (\Exception $e) {
             return $this->handleException($e);
@@ -338,6 +351,26 @@ class ReportController extends BaseController {
             return [];
         }
         return array_values(array_filter(array_map('intval', explode(',', $raw)), static fn (int $id) => $id > 0));
+    }
+
+    /**
+     * Aggregate enriched entries to hours per employee, sorted by hours desc.
+     *
+     * @param array $entries
+     * @return array<array{name: string, minutes: int}>
+     */
+    private function aggregateByEmployee(array $entries): array {
+        $byEmp = [];
+        foreach ($entries as $e) {
+            $id = $e['employeeId'];
+            if (!isset($byEmp[$id])) {
+                $byEmp[$id] = ['name' => $e['employeeName'] ?? 'Unbekannt', 'minutes' => 0];
+            }
+            $byEmp[$id]['minutes'] += $e['minutes'];
+        }
+        $rows = array_values($byEmp);
+        usort($rows, static fn ($a, $b) => $b['minutes'] - $a['minutes']);
+        return $rows;
     }
 
     private function csvCell(string $value): string {
