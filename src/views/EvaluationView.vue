@@ -665,30 +665,28 @@ export default {
     gap: 8px;
 }
 
+/* Flat table, consistent with the audit/approval tables in the app. */
 .ev-table {
     width: 100%;
     border-collapse: collapse;
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-large, 12px);
-    overflow: hidden;
-}
-
-.ev-entries th,
-.ev-entries td {
-    font-size: 0.9em;
-}
-
-.ev-table th,
-.ev-table td {
-    padding: 9px 12px;
-    border-bottom: 1px solid var(--color-border-light, var(--color-border));
-    text-align: left;
+    font-size: 14px;
 }
 
 .ev-table th {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 2px solid var(--color-border-dark, var(--color-border));
+    font-weight: 600;
     color: var(--color-text-maxcontrast);
-    font-weight: 500;
-    font-size: 0.85em;
+    white-space: nowrap;
+}
+
+.ev-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.ev-table tbody tr:hover {
     background: var(--color-background-hover);
 }
 
@@ -733,8 +731,12 @@ export default {
 
 .ev-table tfoot td {
     font-weight: 600;
-    border-top: 2px solid var(--color-border);
+    border-top: 2px solid var(--color-border-dark, var(--color-border));
     border-bottom: none;
+}
+
+.ev-table tfoot tr:hover {
+    background: none;
 }
 
 .ev-loading,
