@@ -213,7 +213,7 @@ class ReportController extends BaseController {
 
     #[NoAdminRequired]
     #[NoCSRFRequired]
-    public function projectsCsv(int $year = 0, int $month = 0, string $period = 'month', bool $billableOnly = false): DataDownloadResponse|JSONResponse {
+    public function projectsCsv(int $year = 0, int $month = 0, string $period = 'month', bool $billableOnly = false, string $projectIds = '', string $employeeIds = ''): DataDownloadResponse|JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
         }
@@ -221,7 +221,7 @@ class ReportController extends BaseController {
             return $this->forbiddenResponse();
         }
         try {
-            [, , $label, $entries] = $this->collectProjectEntries($year, $month, $period, $billableOnly);
+            [, , $label, $entries] = $this->collectProjectEntries($year, $month, $period, $billableOnly, $this->parseIds($projectIds), $this->parseIds($employeeIds));
 
             $headers = ['Datum', 'Projekt', 'Projektcode', 'Kunde', 'Mitarbeiter', 'Stunden', 'Abrechenbar', 'Tätigkeit'];
             $lines = [implode(';', array_map([$this, 'csvCell'], $headers))];
@@ -248,7 +248,7 @@ class ReportController extends BaseController {
 
     #[NoAdminRequired]
     #[NoCSRFRequired]
-    public function projectsPdf(int $year = 0, int $month = 0, string $period = 'month', bool $billableOnly = false): DataDownloadResponse|JSONResponse {
+    public function projectsPdf(int $year = 0, int $month = 0, string $period = 'month', bool $billableOnly = false, string $projectIds = '', string $employeeIds = ''): DataDownloadResponse|JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
         }
@@ -256,7 +256,7 @@ class ReportController extends BaseController {
             return $this->forbiddenResponse();
         }
         try {
-            [, , $label, $entries, $totals] = $this->collectProjectEntries($year, $month, $period, $billableOnly);
+            [, , $label, $entries, $totals] = $this->collectProjectEntries($year, $month, $period, $billableOnly, $this->parseIds($projectIds), $this->parseIds($employeeIds));
             $pdf = $this->pdfService->generateProjectEvaluation($label, $entries, $totals);
             return new DataDownloadResponse($pdf, $this->exportFilename($label) . '.pdf', 'application/pdf');
         } catch (\Exception $e) {
@@ -268,10 +268,15 @@ class ReportController extends BaseController {
      * Collect individual bookings for the period, enriched with project and
      * employee metadata. Shared by the JSON, CSV and PDF endpoints.
      *
+     * @param int[] $projectIds optional filter (empty = all)
+     * @param int[] $employeeIds optional filter (empty = all)
      * @return array{0: DateTime, 1: DateTime, 2: string, 3: array, 4: array{totalMinutes: int, billableMinutes: int}}
      */
-    private function collectProjectEntries(int $year, int $month, string $period, bool $billableOnly): array {
+    private function collectProjectEntries(int $year, int $month, string $period, bool $billableOnly, array $projectIds = [], array $employeeIds = []): array {
         [$start, $end, $label] = $this->resolvePeriod($year, $month, $period);
+
+        $projectFilter = array_flip($projectIds);
+        $employeeFilter = array_flip($employeeIds);
 
         $projects = [];
         foreach ($this->projectService->findAll() as $p) {
@@ -292,6 +297,12 @@ class ReportController extends BaseController {
             if ($billableOnly && !$isBillable) {
                 continue;
             }
+            if (!empty($projectFilter) && !isset($projectFilter[$projectId])) {
+                continue;
+            }
+            if (!empty($employeeFilter) && !isset($employeeFilter[$te->getEmployeeId()])) {
+                continue;
+            }
             $employee = $employees[$te->getEmployeeId()] ?? null;
             $minutes = (int)$te->getWorkMinutes();
             $entries[] = [
@@ -301,6 +312,7 @@ class ReportController extends BaseController {
                 'projectName' => $project?->getName(),
                 'projectCode' => $project?->getCode(),
                 'customer' => $project?->getCustomer(),
+                'color' => $project?->getColor(),
                 'isBillable' => $isBillable,
                 'employeeId' => $te->getEmployeeId(),
                 'employeeName' => $employee?->getFullName(),
@@ -314,6 +326,18 @@ class ReportController extends BaseController {
         }
 
         return [$start, $end, $label, $entries, ['totalMinutes' => $totalMinutes, 'billableMinutes' => $billableMinutes]];
+    }
+
+    /**
+     * Parse a comma-separated list of positive integer IDs from a query param.
+     *
+     * @return int[]
+     */
+    private function parseIds(string $raw): array {
+        if ($raw === '') {
+            return [];
+        }
+        return array_values(array_filter(array_map('intval', explode(',', $raw)), static fn (int $id) => $id > 0));
     }
 
     private function csvCell(string $value): string {

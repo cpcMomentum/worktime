@@ -2,6 +2,9 @@ OC.L10N.register(
     "worktime",
     {
     "Auswertung" : "Evaluation",
+    "Aggregiert" : "Aggregated",
+    "Alle" : "All",
+    "Für diese Auswahl liegen keine Buchungen vor." : "No bookings for this selection.",
     "Zusammenfassung" : "Summary",
     "Einzelbuchungen" : "Individual bookings",
     "Tätigkeit" : "Activity",

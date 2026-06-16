@@ -79,10 +79,12 @@ export default {
         }
     },
 
-    projectExportUrl(format, { year, month, period, billableOnly }) {
+    projectExportUrl(format, { year, month, period, projectIds = [], employeeIds = [] }) {
         const path = format === 'pdf' ? 'projects-pdf' : 'projects-csv'
-        const query = `?year=${year}&month=${month}&period=${period}&billableOnly=${billableOnly ? 1 : 0}`
-        return generateUrl(`/apps/worktime/api/reports/${path}`) + query
+        const params = new URLSearchParams({ year, month, period })
+        if (projectIds.length) params.set('projectIds', projectIds.join(','))
+        if (employeeIds.length) params.set('employeeIds', employeeIds.join(','))
+        return generateUrl(`/apps/worktime/api/reports/${path}`) + '?' + params.toString()
     },
 
     downloadProjectExport(format, params) {
