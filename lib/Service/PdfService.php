@@ -344,7 +344,7 @@ class PdfService {
             $holidayDates[$holiday->getDate()->format('Y-m-d')] = $holiday->getName();
         }
 
-        // Project id -> name lookup for the project column (#292).
+        // Project id -> name lookup (including inactive projects for historical entries).
         $projectNames = [];
         foreach ($this->projectMapper->findAll() as $project) {
             $projectNames[$project->getId()] = $project->getName();
