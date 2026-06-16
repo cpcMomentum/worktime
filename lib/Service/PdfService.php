@@ -14,6 +14,7 @@ use OCA\WorkTime\Db\Absence;
 use OCA\WorkTime\Db\CompanySetting;
 use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\Holiday;
+use OCA\WorkTime\Db\ProjectMapper;
 use OCA\WorkTime\Db\TimeEntry;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException as FilesNotFoundException;
@@ -30,6 +31,7 @@ class PdfService {
     public function __construct(
         private CompanySettingsService $settingsService,
         private IRootFolder $rootFolder,
+        private ProjectMapper $projectMapper,
     ) {
     }
 
@@ -342,6 +344,12 @@ class PdfService {
             $holidayDates[$holiday->getDate()->format('Y-m-d')] = $holiday->getName();
         }
 
+        // Project id -> name lookup for the project column (#292).
+        $projectNames = [];
+        foreach ($this->projectMapper->findAll() as $project) {
+            $projectNames[$project->getId()] = $project->getName();
+        }
+
         // Build entries by date
         $entriesByDate = [];
         foreach ($timeEntries as $entry) {
@@ -356,12 +364,13 @@ class PdfService {
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_SMALL);
         $pdf->SetFillColor(230, 230, 230);
 
-        $pdf->Cell(25, 7, 'Datum', 1, 0, 'C', true);
-        $pdf->Cell(15, 7, 'Tag', 1, 0, 'C', true);
-        $pdf->Cell(20, 7, 'Beginn', 1, 0, 'C', true);
-        $pdf->Cell(20, 7, 'Ende', 1, 0, 'C', true);
-        $pdf->Cell(20, 7, 'Pause', 1, 0, 'C', true);
+        $pdf->Cell(22, 7, 'Datum', 1, 0, 'C', true);
+        $pdf->Cell(12, 7, 'Tag', 1, 0, 'C', true);
+        $pdf->Cell(17, 7, 'Beginn', 1, 0, 'C', true);
+        $pdf->Cell(17, 7, 'Ende', 1, 0, 'C', true);
+        $pdf->Cell(17, 7, 'Pause', 1, 0, 'C', true);
         $pdf->Cell(20, 7, 'Arbeitszeit', 1, 0, 'C', true);
+        $pdf->Cell(28, 7, 'Projekt', 1, 0, 'C', true);
         $pdf->Cell(0, 7, 'Bemerkung', 1, 1, 'C', true);
 
         // Table body
@@ -399,6 +408,7 @@ class PdfService {
                         $entry->getEndTime()->format('H:i'),
                         $this->formatMinutes($entry->getBreakMinutes()),
                         $this->formatMinutes($entry->getWorkMinutes()),
+                        $entry->getProjectId() !== null ? ($projectNames[$entry->getProjectId()] ?? '') : '',
                         $entry->getDescription() ?? '',
                         $fill
                     );
@@ -415,6 +425,7 @@ class PdfService {
                     '-',
                     '-',
                     '-',
+                    '',
                     'Feiertag: ' . $holidayDates[$dateStr],
                     $fill
                 );
@@ -424,6 +435,7 @@ class PdfService {
                     $pdf,
                     $dateFormatted,
                     $dayName,
+                    '',
                     '',
                     '',
                     '',
@@ -503,18 +515,20 @@ class PdfService {
         string $end,
         string $break,
         string $work,
+        string $project,
         string $note,
         bool $fill
     ): void {
-        $noteWidth = $this->getNoteCellWidth($pdf, 120.0);
+        $noteWidth = $this->getNoteCellWidth($pdf, 133.0);
         $rowHeight = $this->calculateRowHeight($pdf, $note, $noteWidth);
 
-        $pdf->Cell(25, $rowHeight, $date, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
-        $pdf->Cell(15, $rowHeight, $day, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
-        $pdf->Cell(20, $rowHeight, $start, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
-        $pdf->Cell(20, $rowHeight, $end, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
-        $pdf->Cell(20, $rowHeight, $break, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
+        $pdf->Cell(22, $rowHeight, $date, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
+        $pdf->Cell(12, $rowHeight, $day, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
+        $pdf->Cell(17, $rowHeight, $start, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
+        $pdf->Cell(17, $rowHeight, $end, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
+        $pdf->Cell(17, $rowHeight, $break, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
         $pdf->Cell(20, $rowHeight, $work, 1, 0, 'C', $fill, '', 0, false, 'T', 'M');
+        $pdf->Cell(28, $rowHeight, $this->truncate($project, 28), 1, 0, 'L', $fill, '', 0, false, 'T', 'M');
         $pdf->MultiCell($noteWidth, $rowHeight, $note, 1, 'L', $fill, 1, '', '', true, 0, false, true, 0, 'M');
     }
 
