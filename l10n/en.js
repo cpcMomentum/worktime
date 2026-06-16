@@ -3,6 +3,9 @@ OC.L10N.register(
     {
     "Auswertung" : "Evaluation",
     "Aggregiert" : "Aggregated",
+    "Projekt suchen …" : "Search project …",
+    "Mitarbeiter suchen …" : "Search employee …",
+    "+ {count} weitere" : "+ {count} more",
     "Alle" : "All",
     "Für diese Auswahl liegen keine Buchungen vor." : "No bookings for this selection.",
     "Zusammenfassung" : "Summary",

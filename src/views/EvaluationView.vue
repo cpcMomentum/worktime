@@ -30,7 +30,7 @@
                 <button class="ev-chip ev-chip--all" :class="{ on: !selectedProjects.size }" @click="clearProjects">
                     {{ t('worktime', 'Alle') }}
                 </button>
-                <button v-for="p in projectChips"
+                <button v-for="p in visibleProjects.list"
                     :key="'p' + p.id"
                     class="ev-chip"
                     :class="{ on: selectedProjects.has(p.id) }"
@@ -39,7 +39,15 @@
                     <span class="ev-cdot" :style="{ background: selectedProjects.has(p.id) ? '#fff' : (p.color || 'var(--color-border-dark)') }" />
                     <span>{{ p.name }}</span>
                     <span v-if="p.customer" class="ev-ccust">· {{ p.customer }}</span>
+                    <span v-if="selectedProjects.has(p.id)" class="ev-x">×</span>
                 </button>
+                <button v-if="visibleProjects.hidden" class="ev-chip ev-chip--more" @click="projectsExpanded = true">
+                    {{ t('worktime', '+ {count} weitere', { count: visibleProjects.hidden }) }}
+                </button>
+                <label class="ev-search">
+                    <MagnifyIcon :size="16" />
+                    <input v-model="projectSearch" type="text" :placeholder="t('worktime', 'Projekt suchen …')">
+                </label>
             </div>
         </div>
 
@@ -49,14 +57,22 @@
                 <button class="ev-chip ev-chip--all" :class="{ on: !selectedEmployees.size }" @click="clearEmployees">
                     {{ t('worktime', 'Alle') }}
                 </button>
-                <button v-for="e in employeeChips"
+                <button v-for="e in visibleEmployees.list"
                     :key="'e' + e.id"
                     class="ev-chip ev-chip--emp"
                     :class="{ on: selectedEmployees.has(e.id) }"
                     @click="toggleEmployee(e.id)">
                     <span class="ev-av">{{ initials(e.name) }}</span>
                     <span>{{ e.name }}</span>
+                    <span v-if="selectedEmployees.has(e.id)" class="ev-x">×</span>
                 </button>
+                <button v-if="visibleEmployees.hidden" class="ev-chip ev-chip--more" @click="employeesExpanded = true">
+                    {{ t('worktime', '+ {count} weitere', { count: visibleEmployees.hidden }) }}
+                </button>
+                <label class="ev-search">
+                    <MagnifyIcon :size="16" />
+                    <input v-model="employeeSearch" type="text" :placeholder="t('worktime', 'Mitarbeiter suchen …')">
+                </label>
             </div>
         </div>
 
@@ -172,6 +188,7 @@ import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import ChevronLeftIcon from 'vue-material-design-icons/ChevronLeft.vue'
 import ChevronRightIcon from 'vue-material-design-icons/ChevronRight.vue'
 import DownloadIcon from 'vue-material-design-icons/Download.vue'
+import MagnifyIcon from 'vue-material-design-icons/Magnify.vue'
 import ReportService from '../services/ReportService.js'
 import { formatMinutes } from '../utils/timeUtils.js'
 import { formatDate as formatDateUtil, getMonthName } from '../utils/dateUtils.js'
@@ -185,6 +202,7 @@ export default {
         ChevronLeftIcon,
         ChevronRightIcon,
         DownloadIcon,
+        MagnifyIcon,
     },
     data() {
         const now = new Date()
@@ -201,6 +219,13 @@ export default {
             selectedProjects: new Set(),
             selectedEmployees: new Set(),
             sort: { key: 'minutes', dir: -1 },
+            // Chip scaling: only the top N unselected chips are shown by default;
+            // the rest is reachable via search or "+ N weitere".
+            topN: 8,
+            projectSearch: '',
+            employeeSearch: '',
+            projectsExpanded: false,
+            employeesExpanded: false,
         }
     },
     computed: {
@@ -238,6 +263,22 @@ export default {
                 }
             }
             return Object.values(seen).sort((a, b) => a.name.localeCompare(b.name))
+        },
+        projectMinutes() {
+            const m = {}
+            for (const r of this.rows) m[r.projectId] = (m[r.projectId] || 0) + r.minutes
+            return m
+        },
+        employeeMinutes() {
+            const m = {}
+            for (const r of this.rows) m[r.employeeId] = (m[r.employeeId] || 0) + r.minutes
+            return m
+        },
+        visibleProjects() {
+            return this.buildChips(this.projectChips, this.selectedProjects, this.projectSearch, this.projectsExpanded, this.projectMinutes)
+        },
+        visibleEmployees() {
+            return this.buildChips(this.employeeChips, this.selectedEmployees, this.employeeSearch, this.employeesExpanded, this.employeeMinutes)
         },
         filteredRows() {
             return this.rows.filter(r =>
@@ -297,6 +338,23 @@ export default {
         initials(name) {
             return name.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase()
         },
+        /**
+         * Chip display list: selected items first (always visible), then the
+         * unselected ones filtered by the search and ranked by hours, capped at
+         * topN unless searching or expanded.
+         */
+        buildChips(items, selected, search, expanded, mins) {
+            const sel = items.filter(it => selected.has(it.id))
+            const q = search.trim().toLowerCase()
+            let rest = items.filter(it => !selected.has(it.id))
+            if (q) {
+                rest = rest.filter(it => it.name.toLowerCase().includes(q)
+                    || (it.customer || '').toLowerCase().includes(q))
+            }
+            rest.sort((a, b) => (mins[b.id] || 0) - (mins[a.id] || 0))
+            const limited = (expanded || q) ? rest : rest.slice(0, this.topN)
+            return { list: [...sel, ...limited], hidden: rest.length - limited.length }
+        },
         pct(minutes) {
             const base = this.totals.totalMinutes || 1
             return Math.round((minutes / base) * 100)
@@ -341,6 +399,10 @@ export default {
             this.load()
             this.entries = []
             this.entriesLoadedKey = null
+            this.projectSearch = ''
+            this.employeeSearch = ''
+            this.projectsExpanded = false
+            this.employeesExpanded = false
             if (this.tab === 'detail') this.ensureEntries()
         },
         periodKey() { return `${this.year}-${this.month}-${this.period}` },
@@ -507,6 +569,40 @@ export default {
     color: var(--color-text-maxcontrast);
     font-weight: normal;
     font-size: 0.9em;
+}
+
+.ev-x {
+    margin-left: 2px;
+    font-weight: 700;
+    opacity: 0.8;
+}
+
+.ev-chip--more {
+    border-style: dashed;
+    color: var(--color-text-maxcontrast);
+    font-weight: 600;
+}
+
+.ev-search {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1.5px solid var(--color-border-dark);
+    border-radius: 999px;
+    padding: 4px 12px;
+    background: var(--color-main-background);
+    min-width: 190px;
+    color: var(--color-text-maxcontrast);
+}
+
+.ev-search input {
+    border: none;
+    outline: none;
+    background: none;
+    font: inherit;
+    font-size: 13px;
+    color: var(--color-main-text);
+    width: 100%;
 }
 
 .ev-av {

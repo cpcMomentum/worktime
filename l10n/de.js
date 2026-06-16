@@ -3,6 +3,9 @@ OC.L10N.register(
     {
     "Auswertung" : "Auswertung",
     "Aggregiert" : "Aggregiert",
+    "Projekt suchen …" : "Projekt suchen …",
+    "Mitarbeiter suchen …" : "Mitarbeiter suchen …",
+    "+ {count} weitere" : "+ {count} weitere",
     "Alle" : "Alle",
     "Für diese Auswahl liegen keine Buchungen vor." : "Für diese Auswahl liegen keine Buchungen vor.",
     "Zusammenfassung" : "Zusammenfassung",
