@@ -1,6 +1,12 @@
 <template>
     <div class="project-form">
-        <h3>{{ isEdit ? t('worktime', 'Projekt bearbeiten') : t('worktime', 'Neues Projekt') }}</h3>
+        <div class="project-form-header">
+            <h3>{{ isEdit ? t('worktime', 'Projekt bearbeiten') : t('worktime', 'Neues Projekt') }}</h3>
+            <NcCheckboxRadioSwitch :checked.sync="form.isActive" type="switch">
+                {{ t('worktime', 'Aktiv') }}
+            </NcCheckboxRadioSwitch>
+        </div>
+        <p class="header-hint">{{ t('worktime', 'Inaktive Projekte stehen nicht mehr zur Auswahl.') }}</p>
 
         <div class="form-row">
             <div class="form-group">
@@ -54,28 +60,28 @@
         </div>
 
         <div class="form-group">
-            <NcCheckboxRadioSwitch :checked.sync="form.isActive">
-                {{ t('worktime', 'Aktiv') }}
+            <label class="form-group-label">{{ t('worktime', 'Buchungsberechtigung') }}</label>
+            <NcCheckboxRadioSwitch :checked.sync="bookingMode"
+                value="all"
+                name="project-booking"
+                type="radio">
+                {{ t('worktime', 'Alle Mitarbeitenden') }}
             </NcCheckboxRadioSwitch>
-        </div>
-
-        <div class="form-group">
-            <NcCheckboxRadioSwitch :checked.sync="form.allEmployees">
-                {{ t('worktime', 'Für alle Mitarbeitenden freigeben') }}
+            <NcCheckboxRadioSwitch :checked.sync="bookingMode"
+                value="selected"
+                name="project-booking"
+                type="radio">
+                {{ t('worktime', 'Nur ausgewählte Mitarbeitende') }}
             </NcCheckboxRadioSwitch>
-            <p class="form-hint">
-                {{ t('worktime', 'Wenn deaktiviert, können nur die ausgewählten Mitarbeitenden auf dieses Projekt buchen.') }}
-            </p>
-        </div>
 
-        <div v-if="!form.allEmployees" class="form-group">
-            <label for="projectMembers">{{ t('worktime', 'Zugeordnete Mitarbeitende') }}</label>
-            <NcSelect id="projectMembers"
-                v-model="selectedMembers"
-                :options="employeeOptions"
-                :multiple="true"
-                :close-on-select="false"
-                :placeholder="t('worktime', 'Mitarbeitende auswählen')" />
+            <div v-if="bookingMode === 'selected'" class="member-select">
+                <NcSelect id="projectMembers"
+                    v-model="selectedMembers"
+                    :options="employeeOptions"
+                    :multiple="true"
+                    :close-on-select="false"
+                    :placeholder="t('worktime', 'Mitarbeitende auswählen')" />
+            </div>
         </div>
 
         <div class="form-actions">
@@ -144,6 +150,14 @@ export default {
             },
             set(value) {
                 this.form.memberIds = (value || []).map(o => o.id)
+            },
+        },
+        bookingMode: {
+            get() {
+                return this.form.allEmployees ? 'all' : 'selected'
+            },
+            set(value) {
+                this.form.allEmployees = value === 'all'
             },
         },
     },
@@ -229,15 +243,33 @@ export default {
     padding: 20px;
 }
 
-.project-form h3 {
-    margin-top: 0;
-    margin-bottom: 16px;
+.project-form-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 4px;
 }
 
-.form-hint {
-    margin: 4px 0 0;
+.project-form-header h3 {
+    margin: 0;
+}
+
+.header-hint {
+    margin: 0 0 20px;
     font-size: 0.85em;
     color: var(--color-text-maxcontrast);
+}
+
+.form-group-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.member-select {
+    margin-top: 8px;
+    padding-left: 28px;
 }
 
 .form-group {
