@@ -64,14 +64,22 @@ class ProjectEmployeeMapper extends QBMapper {
      * @param int[] $employeeIds
      */
     public function setMembers(int $projectId, array $employeeIds): void {
-        $this->deleteForProject($projectId);
-
         $unique = array_values(array_unique(array_map('intval', $employeeIds)));
-        foreach ($unique as $employeeId) {
-            $member = new ProjectEmployee();
-            $member->setProjectId($projectId);
-            $member->setEmployeeId($employeeId);
-            $this->insert($member);
+
+        // Atomic replace: a failing insert must not leave a half-applied assignment.
+        $this->db->beginTransaction();
+        try {
+            $this->deleteForProject($projectId);
+            foreach ($unique as $employeeId) {
+                $member = new ProjectEmployee();
+                $member->setProjectId($projectId);
+                $member->setEmployeeId($employeeId);
+                $this->insert($member);
+            }
+            $this->db->commit();
+        } catch (\Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
         }
     }
 

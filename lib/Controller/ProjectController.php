@@ -75,7 +75,10 @@ class ProjectController extends BaseController {
         try {
             $project = $this->projectService->find($id);
             $data = $project->jsonSerialize();
-            $data['memberIds'] = $this->projectService->getMemberIds($id);
+            // Member assignment is management data — only expose it to managers.
+            if ($this->permissionService->canManageProjects($this->userId)) {
+                $data['memberIds'] = $this->projectService->getMemberIds($id);
+            }
             return $this->successResponse($data);
         } catch (\Exception $e) {
             return $this->handleException($e);
@@ -116,7 +119,9 @@ class ProjectController extends BaseController {
                 $memberIds
             );
 
-            return $this->createdResponse($project);
+            $data = $project->jsonSerialize();
+            $data['memberIds'] = $this->projectService->getMemberIds($project->getId());
+            return $this->createdResponse($data);
         } catch (\Exception $e) {
             return $this->handleException($e);
         }
@@ -158,7 +163,9 @@ class ProjectController extends BaseController {
                 $memberIds
             );
 
-            return $this->successResponse($project);
+            $data = $project->jsonSerialize();
+            $data['memberIds'] = $this->projectService->getMemberIds($project->getId());
+            return $this->successResponse($data);
         } catch (\Exception $e) {
             return $this->handleException($e);
         }
