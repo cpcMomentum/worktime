@@ -115,7 +115,8 @@
         <NcLoadingIcon v-if="loading || (tab === 'detail' && entriesLoading)" class="ev-loading" :size="32" />
 
         <!-- Aggregiert: Stunden je Mitarbeiter -->
-        <table v-else-if="tab === 'agg' && aggRows.length" class="ev-table">
+        <div v-else-if="tab === 'agg' && aggRows.length" class="ev-card">
+        <table class="ev-table">
             <thead>
                 <tr>
                     <th class="sortable" @click="sortBy('name')">{{ t('worktime', 'Mitarbeiter') }}{{ sortArrow('name') }}</th>
@@ -141,9 +142,11 @@
                 </tr>
             </tfoot>
         </table>
+        </div>
 
         <!-- Einzelbuchungen -->
-        <table v-else-if="tab === 'detail' && detailRows.length" class="ev-table ev-entries">
+        <div v-else-if="tab === 'detail' && detailRows.length" class="ev-card">
+        <table class="ev-table ev-entries">
             <thead>
                 <tr>
                     <th class="sortable" @click="sortBy('date')">{{ t('worktime', 'Datum') }}{{ sortArrow('date') }}</th>
@@ -175,6 +178,7 @@
                 </tr>
             </tfoot>
         </table>
+        </div>
 
         <div v-else class="ev-empty">
             {{ t('worktime', 'Für diese Auswahl liegen keine Buchungen vor.') }}
@@ -663,6 +667,15 @@ export default {
 .ev-export {
     display: flex;
     gap: 8px;
+}
+
+/* Table card — same container as the audit/approval tables. */
+.ev-card {
+    background: var(--color-main-background);
+    border: 1px solid var(--color-border-dark, var(--color-border));
+    border-radius: var(--border-radius-large, 12px);
+    padding: 8px 16px;
+    overflow-x: auto;
 }
 
 /* Flat table, consistent with the audit/approval tables in the app. */
