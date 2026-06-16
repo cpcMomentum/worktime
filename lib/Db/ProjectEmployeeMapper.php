@@ -75,6 +75,27 @@ class ProjectEmployeeMapper extends QBMapper {
         }
     }
 
+    /**
+     * All project→employee assignments as a map keyed by project_id.
+     * Used to load member lists for a full project listing in one query.
+     *
+     * @return array<int, int[]>
+     */
+    public function findAllGroupedByProject(): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('project_id', 'employee_id')
+            ->from($this->getTableName());
+
+        $result = $qb->executeQuery();
+        $grouped = [];
+        while ($row = $result->fetch()) {
+            $grouped[(int)$row['project_id']][] = (int)$row['employee_id'];
+        }
+        $result->closeCursor();
+
+        return $grouped;
+    }
+
     public function deleteForProject(int $projectId): void {
         $qb = $this->db->getQueryBuilder();
         $qb->delete($this->getTableName())

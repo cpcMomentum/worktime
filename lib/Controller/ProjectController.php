@@ -56,9 +56,10 @@ class ProjectController extends BaseController {
         }
 
         // Admin/HR can see all projects including inactive, with their member assignment.
-        $projects = array_map(function ($project) {
+        $allMemberIds = $this->projectService->getAllMemberIds();
+        $projects = array_map(function ($project) use ($allMemberIds) {
             $data = $project->jsonSerialize();
-            $data['memberIds'] = $this->projectService->getMemberIds($project->getId());
+            $data['memberIds'] = $allMemberIds[$project->getId()] ?? [];
             return $data;
         }, $this->projectService->findAll());
 

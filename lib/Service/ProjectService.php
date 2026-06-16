@@ -173,6 +173,16 @@ class ProjectService {
     }
 
     /**
+     * All project member IDs in a single query, grouped by project ID.
+     * Use this instead of calling getMemberIds() per project to avoid N+1 queries.
+     *
+     * @return array<int, int[]>
+     */
+    public function getAllMemberIds(): array {
+        return $this->projectEmployeeMapper->findAllGroupedByProject();
+    }
+
+    /**
      * Active projects an employee may book on: projects open to all employees,
      * plus the ones the employee is explicitly assigned to (#58).
      *
