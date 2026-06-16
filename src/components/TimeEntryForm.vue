@@ -2,7 +2,7 @@
     <div class="time-entry-form" :class="{ embedded }">
         <h3 v-if="!embedded">{{ isEdit ? t('worktime', 'Eintrag bearbeiten') : t('worktime', 'Neuer Eintrag') }}</h3>
 
-        <div v-if="!embedded" class="form-group">
+        <div v-if="!embedded || isEdit" class="form-group">
             <label for="date">{{ t('worktime', 'Datum') }}</label>
             <NcDateTimePicker id="date"
                 v-model="form.date"
