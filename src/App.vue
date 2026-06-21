@@ -242,6 +242,9 @@ export default {
 	--wt-compensatory: #7c3aed;
 	--wt-unpaid: #6b7280;
 	--wt-special: #0891b2;
+	/* Einheitliche Inhaltsbreite für alle Daten-Views (eine Stelle, wirkt überall).
+	   Formular-Views (Einstellungen) bleiben bewusst schmaler. */
+	--wt-content-max-width: 1200px;
 }
 
 /* Trenner zwischen NcSettingsSection-Themen kräftiger (Default --color-border ist kaum sichtbar) */

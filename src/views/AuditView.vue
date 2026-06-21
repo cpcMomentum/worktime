@@ -220,7 +220,7 @@ export default {
 .audit-view {
     padding: 20px;
     padding-left: 50px;
-    max-width: 1400px;
+    max-width: var(--wt-content-max-width);
 }
 
 .audit-card {

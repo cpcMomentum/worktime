@@ -642,7 +642,7 @@ export default {
 .evaluation-view {
     padding: 20px;
     padding-left: 50px;
-    max-width: 1040px;
+    max-width: var(--wt-content-max-width);
 }
 
 .view-header {
