@@ -24,7 +24,7 @@ jobs:
     outputs:
       ocp: ${{ steps.derive.outputs.ocp }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: derive
         name: NC-Versionen aus info.xml ableiten
         run: |
@@ -49,7 +49,7 @@ jobs:
         ocp-version: ${{ fromJson(needs.versions.outputs.ocp) }}
     name: PHP ${{ matrix.php-version }} / ocp ${{ matrix.ocp-version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup PHP ${{ matrix.php-version }}
         uses: shivammathur/setup-php@v2
