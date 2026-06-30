@@ -13,6 +13,7 @@ use DateTime;
 use OCA\WorkTime\Db\AuditLog;
 use OCA\WorkTime\Db\OvertimePayout;
 use OCA\WorkTime\Db\OvertimePayoutMapper;
+use OCP\AppFramework\Db\DoesNotExistException;
 
 class OvertimePayoutService {
 
@@ -80,7 +81,11 @@ class OvertimePayoutService {
     }
 
     public function delete(int $id, string $currentUserId): void {
-        $payout = $this->mapper->find($id);
+        try {
+            $payout = $this->mapper->find($id);
+        } catch (DoesNotExistException) {
+            throw new NotFoundException('Overtime payout not found');
+        }
         $oldValues = $payout->jsonSerialize();
 
         $this->mapper->delete($payout);
