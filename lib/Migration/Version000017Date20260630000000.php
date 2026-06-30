@@ -45,6 +45,7 @@ class Version000017Date20260630000000 extends SimpleMigrationStep {
 			]);
 			$table->addColumn('note', Types::STRING, [
 				'notnull' => true,
+				'default' => '',
 				'length' => 500,
 			]);
 			$table->addColumn('created_by', Types::STRING, [

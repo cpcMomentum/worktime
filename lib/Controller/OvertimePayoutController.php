@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Controller;
 
 use DateTime;
+use OCA\WorkTime\Service\EmployeeService;
 use OCA\WorkTime\Service\OvertimePayoutService;
 use OCA\WorkTime\Service\PermissionService;
 use OCP\AppFramework\Http;
@@ -24,6 +25,7 @@ class OvertimePayoutController extends BaseController {
         ?string $userId,
         private OvertimePayoutService $payoutService,
         private PermissionService $permissionService,
+        private EmployeeService $employeeService,
     ) {
         parent::__construct($request, $userId);
     }
@@ -69,6 +71,8 @@ class OvertimePayoutController extends BaseController {
         }
 
         try {
+            // Verify the employee exists (throws NotFoundException -> 404)
+            $this->employeeService->find($employeeId);
             $payout = $this->payoutService->create(
                 $employeeId, $date, $minutes, $note, $this->userId
             );

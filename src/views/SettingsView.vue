@@ -1732,7 +1732,7 @@ export default {
                 const [h, m] = s.split(':')
                 const mm = parseInt(m || '0', 10)
                 const hh = parseInt(h || '0', 10)
-                if (isNaN(hh) || isNaN(mm)) return null
+                if (isNaN(hh) || isNaN(mm) || mm > 59) return null
                 return hh * 60 + mm
             }
             const f = parseFloat(s)

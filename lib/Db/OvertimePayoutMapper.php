@@ -85,7 +85,7 @@ class OvertimePayoutMapper extends QBMapper {
         $sum = $result->fetchOne();
         $result->closeCursor();
 
-        return (int)$sum;
+        return (int)($sum ?? 0);
     }
 
     public function deleteByEmployeeId(int $employeeId): void {

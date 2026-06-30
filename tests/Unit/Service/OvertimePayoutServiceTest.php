@@ -26,10 +26,16 @@ class OvertimePayoutServiceTest extends TestCase {
         $this->service = new OvertimePayoutService($this->mapper, $this->auditLogService);
     }
 
-    public function testCreateRejectsZeroOrNegativeMinutes(): void {
+    public function testCreateRejectsZeroMinutes(): void {
         $this->mapper->expects($this->never())->method('insert');
         $this->expectException(\InvalidArgumentException::class);
         $this->service->create(1, new DateTime('2026-06-30'), 0, 'Gültiger Grund hier', 'admin');
+    }
+
+    public function testCreateRejectsNegativeMinutes(): void {
+        $this->mapper->expects($this->never())->method('insert');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->service->create(1, new DateTime('2026-06-30'), -60, 'Gültiger Grund hier', 'admin');
     }
 
     public function testCreateRejectsShortNote(): void {
