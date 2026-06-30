@@ -58,6 +58,10 @@
                         <span class="substat__l">{{ t('worktime', 'Freizeitausgleich') }}</span>
                         <span class="substat__v">{{ compensatoryDays }} {{ t('worktime', 'Tage') }}<small v-if="compensatoryDays > 0"> (≈{{ compensatoryHoursLabel }})</small></span>
                     </div>
+                    <div v-if="overtimePaidOutMin > 0" class="substat">
+                        <span class="substat__l">{{ t('worktime', 'Ausgezahlt {year}', { year: currentYear }) }}</span>
+                        <span class="substat__v">{{ signedHours(-overtimePaidOutMin) }}</span>
+                    </div>
                     <div class="substat">
                         <span class="substat__l">{{ t('worktime', 'Übertrag Vorjahr') }}</span>
                         <span class="substat__v">{{ overtimeCarryMin !== 0 ? signedHours(overtimeCarryMin) : '–' }}</span>
@@ -247,6 +251,9 @@ export default {
         },
         overtimeCarryMin() {
             return this.overtime?.carryoverMinutes ?? 0
+        },
+        overtimePaidOutMin() {
+            return this.overtime?.paidOutMinutes ?? 0
         },
         compensatoryDays() {
             return this.absences

@@ -627,6 +627,120 @@
                 </NcModal>
             </NcSettingsSection>
 
+            <NcSettingsSection v-if="canManageEmployees"
+                v-show="activeSection === 'sec-ueberstunden-auszahlung'"
+                id="sec-ueberstunden-auszahlung" :name="t('worktime', 'Überstunden-Auszahlung')"
+                :description="t('worktime', 'Überstunden in Geld vergüten und vom Saldo abziehen. Auszahlungen werden im Audit-Log protokolliert.')">
+                <div v-if="payoutEmployees.length > 0" class="settings-table-card">
+                <table class="carryover-table">
+                    <thead>
+                        <tr>
+                            <th>{{ t('worktime', 'Mitarbeiter') }}</th>
+                            <th class="text-right">{{ t('worktime', 'Saldo aktuell') }}</th>
+                            <th class="text-right">{{ t('worktime', 'Ausgezahlt {year}', { year: payoutYear }) }}</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="emp in payoutEmployees" :key="emp.employeeId">
+                            <td>{{ emp.fullName }}</td>
+                            <td class="text-right">
+                                <span :class="emp.saldoMinutes >= 0 ? 'value-positive' : 'value-negative'">{{ formatSignedHours(emp.saldoMinutes) }} h</span>
+                            </td>
+                            <td class="text-right">
+                                <span v-if="emp.paidOutMinutes > 0">{{ formatAbsHours(emp.paidOutMinutes) }} h</span>
+                                <span v-else class="value-na">–</span>
+                            </td>
+                            <td class="carryover-actions">
+                                <NcButton type="secondary"
+                                    :disabled="emp.saldoMinutes <= 0"
+                                    @click="openPayoutModal(emp)">
+                                    <template #icon>
+                                        <CashMultiple :size="20" />
+                                    </template>
+                                    {{ t('worktime', 'Auszahlen') }}
+                                </NcButton>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                </div>
+
+                <h3 class="payout-hist-title">{{ t('worktime', 'Auszahlungs-Historie {year}', { year: payoutYear }) }}</h3>
+                <div v-if="payoutHistory.length > 0" class="settings-table-card">
+                <table class="carryover-table">
+                    <thead>
+                        <tr>
+                            <th>{{ t('worktime', 'Datum') }}</th>
+                            <th>{{ t('worktime', 'Mitarbeiter') }}</th>
+                            <th class="text-right">{{ t('worktime', 'Stunden') }}</th>
+                            <th>{{ t('worktime', 'Notiz') }}</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="p in payoutHistory" :key="p.id">
+                            <td>{{ formatDateDisplay(p.payoutDate) }}</td>
+                            <td>{{ p.employeeName }}</td>
+                            <td class="text-right">{{ formatAbsHours(p.minutes) }} h</td>
+                            <td class="payout-note">{{ p.note }}</td>
+                            <td class="carryover-actions">
+                                <NcButton type="tertiary"
+                                    :aria-label="t('worktime', 'Auszahlung löschen')"
+                                    @click="deletePayout(p)">
+                                    <template #icon>
+                                        <Close :size="20" />
+                                    </template>
+                                </NcButton>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                </div>
+                <p v-else class="payout-hist-empty">{{ t('worktime', 'Noch keine Auszahlungen erfasst.') }}</p>
+
+                <!-- Payout Modal -->
+                <NcModal v-if="showPayoutModal"
+                    :name="t('worktime', 'Überstunden auszahlen')"
+                    @close="closePayoutModal">
+                    <div class="cancel-modal">
+                        <h3>{{ t('worktime', 'Überstunden auszahlen für {name}', { name: payoutTarget?.fullName }) }}</h3>
+                        <p class="cancel-modal__hint">
+                            {{ t('worktime', 'Verfügbarer Saldo: {saldo} h', { saldo: formatSignedHours(payoutTarget?.saldoMinutes || 0) }) }}
+                        </p>
+                        <div class="form-group">
+                            <label>{{ t('worktime', 'Auszuzahlende Stunden') }}</label>
+                            <input v-model="payoutForm.hours"
+                                type="text"
+                                :placeholder="t('worktime', 'z. B. 8:00 oder 8,5')"
+                                class="input-field input-small">
+                        </div>
+                        <div class="form-group">
+                            <label>{{ t('worktime', 'Datum') }}</label>
+                            <input v-model="payoutForm.date"
+                                type="date"
+                                class="input-field input-small">
+                        </div>
+                        <div class="form-group">
+                            <label>{{ t('worktime', 'Notiz / Grund (Pflicht)') }}</label>
+                            <input v-model="payoutForm.note"
+                                type="text"
+                                :placeholder="t('worktime', 'mind. 10 Zeichen, landet im Audit-Log')"
+                                class="input-field">
+                        </div>
+                        <p v-if="payoutError" class="payout-error">{{ payoutError }}</p>
+                        <div class="form-actions">
+                            <NcButton type="tertiary" @click="closePayoutModal">
+                                {{ t('worktime', 'Abbrechen') }}
+                            </NcButton>
+                            <NcButton type="primary" @click="submitPayout">
+                                {{ t('worktime', 'Auszahlung erfassen') }}
+                            </NcButton>
+                        </div>
+                    </div>
+                </NcModal>
+            </NcSettingsSection>
+
             </div>
         </div>
     </div>
@@ -659,6 +773,7 @@ import FilePdfBox from 'vue-material-design-icons/FilePdfBox.vue'
 import StarOutline from 'vue-material-design-icons/StarOutline.vue'
 import CalendarStar from 'vue-material-design-icons/CalendarStar.vue'
 import SwapHorizontalBold from 'vue-material-design-icons/SwapHorizontalBold.vue'
+import CashMultiple from 'vue-material-design-icons/CashMultiple.vue'
 import { getFilePickerBuilder, FilePickerType, DialogBuilder } from '@nextcloud/dialogs'
 import { mapGetters, mapActions } from 'vuex'
 import SettingsService from '../services/SettingsService.js'
@@ -667,12 +782,14 @@ import EmployeeForm from '../components/EmployeeForm.vue'
 import EmployeeList from '../components/EmployeeList.vue'
 import ProjectForm from '../components/ProjectForm.vue'
 import ProjectList from '../components/ProjectList.vue'
-import { showSuccessMessage, showErrorMessage } from '../utils/errorHandler.js'
+import { showSuccessMessage, showErrorMessage, confirmAction } from '../utils/errorHandler.js'
 import { getCurrentYear, getLocale, formatDateISO, getMonthName } from '../utils/dateUtils.js'
 import YearlyCarryoverService from '../services/YearlyCarryoverService.js'
+import OvertimePayoutService from '../services/OvertimePayoutService.js'
 import ReportService from '../services/ReportService.js'
 import TimeEntryService from '../services/TimeEntryService.js'
 import InfoIcon from '../components/InfoIcon.vue'
+import { formatMinutes } from '../utils/timeUtils.js'
 
 function round2(value) {
     return Math.round(value * 100) / 100
@@ -708,6 +825,7 @@ export default {
         StarOutline,
         CalendarStar,
         SwapHorizontalBold,
+        CashMultiple,
         EmployeeForm,
         EmployeeList,
         ProjectForm,
@@ -759,6 +877,18 @@ export default {
                 vacationDays: 0,
                 reason: '',
             },
+            // Overtime payout (#401)
+            payoutYear: getCurrentYear(),
+            payoutEmployees: [],
+            payoutHistory: [],
+            showPayoutModal: false,
+            payoutTarget: null,
+            payoutForm: {
+                hours: '',
+                date: formatDateISO(new Date()),
+                note: '',
+            },
+            payoutError: '',
         }
     },
     computed: {
@@ -882,7 +1012,10 @@ export default {
                 group(this.t('worktime', 'Kalender'), [
                     { id: 'sec-sondertage', label: this.t('worktime', 'Sondertage'), icon: 'StarOutline', visible: this.canManageSettings },
                     { id: 'sec-feiertage', label: this.t('worktime', 'Feiertage'), icon: 'CalendarStar', visible: this.canManageHolidays },
+                ]),
+                group(this.t('worktime', 'Konten'), [
                     { id: 'sec-jahresuebertrag', label: this.t('worktime', 'Jahresübertrag'), icon: 'SwapHorizontalBold', visible: this.canManageEmployees },
+                    { id: 'sec-ueberstunden-auszahlung', label: this.t('worktime', 'Überstunden-Auszahlung'), icon: 'CashMultiple', visible: this.canManageEmployees },
                 ]),
             ]
         },
@@ -918,6 +1051,7 @@ export default {
         }
         if (this.canManageEmployees) {
             this.loadCarryovers()
+            this.loadPayouts()
         }
         this.initActiveSection()
     },
@@ -1552,6 +1686,115 @@ export default {
             const sign = value >= 0 ? '+' : ''
             return `${sign}${value.toFixed(1)}`
         },
+        // ---- Überstunden-Auszahlung (#401) ----
+        async loadPayouts() {
+            try {
+                const [teamYearData, payouts] = await Promise.all([
+                    ReportService.getTeamYear(this.payoutYear),
+                    OvertimePayoutService.getByYear(this.payoutYear),
+                ])
+
+                this.payoutEmployees = (teamYearData || []).map(r => ({
+                    employeeId: r.employee.id,
+                    fullName: r.employee.fullName,
+                    saldoMinutes: r.totalOvertimeMinutes || 0,
+                    paidOutMinutes: r.paidOutMinutes || 0,
+                }))
+
+                const nameMap = {}
+                this.employees.forEach(e => { nameMap[e.id] = `${e.firstName} ${e.lastName}` })
+                this.payoutHistory = (payouts || []).map(p => ({
+                    ...p,
+                    employeeName: nameMap[p.employeeId] || `#${p.employeeId}`,
+                }))
+            } catch (error) {
+                console.error('Failed to load payouts:', error)
+            }
+        },
+        openPayoutModal(emp) {
+            this.payoutTarget = emp
+            this.payoutForm = {
+                hours: '',
+                date: formatDateISO(new Date()),
+                note: '',
+            }
+            this.payoutError = ''
+            this.showPayoutModal = true
+        },
+        closePayoutModal() {
+            this.showPayoutModal = false
+            this.payoutTarget = null
+        },
+        parsePayoutMinutes(str) {
+            const s = (str || '').trim().replace(',', '.')
+            if (s === '') return null
+            if (s.includes(':')) {
+                const [h, m] = s.split(':')
+                const mm = parseInt(m || '0', 10)
+                const hh = parseInt(h || '0', 10)
+                if (isNaN(hh) || isNaN(mm)) return null
+                return hh * 60 + mm
+            }
+            const f = parseFloat(s)
+            if (isNaN(f)) return null
+            return Math.round(f * 60)
+        },
+        async submitPayout() {
+            const minutes = this.parsePayoutMinutes(this.payoutForm.hours)
+            const saldo = this.payoutTarget?.saldoMinutes || 0
+            if (minutes === null || minutes <= 0) {
+                this.payoutError = this.t('worktime', 'Bitte gültige Stunden eingeben.')
+                return
+            }
+            if (minutes > saldo) {
+                this.payoutError = this.t('worktime', 'Die Auszahlung darf den verfügbaren Saldo nicht überschreiten.')
+                return
+            }
+            if (this.payoutForm.note.trim().length < 10) {
+                this.payoutError = this.t('worktime', 'Bitte einen Grund mit mindestens 10 Zeichen angeben.')
+                return
+            }
+            try {
+                await OvertimePayoutService.create(
+                    this.payoutTarget.employeeId,
+                    this.payoutForm.date,
+                    minutes,
+                    this.payoutForm.note.trim(),
+                )
+                showSuccessMessage(this.t('worktime', 'Auszahlung erfasst'))
+                this.closePayoutModal()
+                await this.loadPayouts()
+            } catch (error) {
+                this.payoutError = error.message
+            }
+        },
+        async deletePayout(payout) {
+            const confirmed = await confirmAction(
+                this.t('worktime', 'Diese Auszahlung löschen? Der Überstundensaldo wird wieder erhöht.'),
+                this.t('worktime', 'Auszahlung löschen'),
+                this.t('worktime', 'Löschen'),
+                true,
+            )
+            if (!confirmed) return
+            try {
+                await OvertimePayoutService.delete(payout.id)
+                showSuccessMessage(this.t('worktime', 'Auszahlung gelöscht'))
+                await this.loadPayouts()
+            } catch (error) {
+                showErrorMessage(error.message)
+            }
+        },
+        formatSignedHours(minutes) {
+            const sign = minutes >= 0 ? '+' : ''
+            return `${sign}${formatMinutes(minutes)}`
+        },
+        formatAbsHours(minutes) {
+            return formatMinutes(Math.abs(minutes))
+        },
+        formatDateDisplay(iso) {
+            if (!iso) return ''
+            return iso.split('-').reverse().join('.')
+        },
     },
 }
 </script>
@@ -2070,6 +2313,27 @@ export default {
 
 .value-na {
     color: var(--color-text-maxcontrast);
+}
+
+.payout-hist-title {
+    margin: 24px 0 8px;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.payout-hist-empty {
+    color: var(--color-text-maxcontrast);
+    font-size: 13px;
+}
+
+.payout-note {
+    color: var(--color-text-maxcontrast);
+}
+
+.payout-error {
+    color: var(--color-error);
+    font-size: 13px;
+    margin: 0;
 }
 
 .cancel-modal {

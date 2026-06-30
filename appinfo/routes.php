@@ -101,6 +101,11 @@ return [
         ['name' => 'yearly_carryover#lock', 'url' => '/api/carryover/{id}/lock', 'verb' => 'POST', 'requirements' => ['id' => '\d+']],
         ['name' => 'yearly_carryover#cancel', 'url' => '/api/carryover/{id}/cancel', 'verb' => 'POST', 'requirements' => ['id' => '\d+']],
 
+        // Overtime Payout API
+        ['name' => 'overtime_payout#index', 'url' => '/api/overtime-payouts/{year}', 'verb' => 'GET', 'requirements' => ['year' => '\d+']],
+        ['name' => 'overtime_payout#create', 'url' => '/api/overtime-payouts', 'verb' => 'POST'],
+        ['name' => 'overtime_payout#destroy', 'url' => '/api/overtime-payouts/{id}', 'verb' => 'DELETE', 'requirements' => ['id' => '\d+']],
+
         // Audit Log API
         ['name' => 'audit#index', 'url' => '/api/audit-logs', 'verb' => 'GET'],
 

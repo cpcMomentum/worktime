@@ -19,6 +19,7 @@ use OCA\WorkTime\Service\ProjectService;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCA\WorkTime\Service\WorkScheduleService;
 use OCA\WorkTime\Service\YearlyCarryoverService;
+use OCA\WorkTime\Service\OvertimePayoutService;
 use OCP\IL10N;
 use OCP\IRequest;
 use PHPUnit\Framework\TestCase;
@@ -48,6 +49,7 @@ class CompensatoryOvertimeTest extends TestCase {
 			$this->createMock(PdfService::class),
 			$schedule,
 			$this->createMock(YearlyCarryoverService::class),
+			$this->createMock(OvertimePayoutService::class),
 			$this->createMock(ProjectService::class),
 			$this->createMock(IL10N::class),
 		);

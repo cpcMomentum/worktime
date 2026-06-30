@@ -17,6 +17,7 @@ use OCA\WorkTime\Db\TimeEntryMapper;
 use OCA\WorkTime\Service\AbsenceService;
 use OCA\WorkTime\Service\EmployeeService;
 use OCA\WorkTime\Service\HolidayService;
+use OCA\WorkTime\Service\OvertimePayoutService;
 use OCA\WorkTime\Service\PdfService;
 use OCA\WorkTime\Service\PermissionService;
 use OCA\WorkTime\Service\ProjectService;
@@ -48,6 +49,7 @@ class ReportController extends BaseController {
         private PdfService $pdfService,
         private WorkScheduleService $workScheduleService,
         private YearlyCarryoverService $carryoverService,
+        private OvertimePayoutService $payoutService,
         private ProjectService $projectService,
         private IL10N $l,
     ) {
@@ -805,6 +807,9 @@ class ReportController extends BaseController {
             // Overtime carryover
             $overtimeCarryover = $this->carryoverService->getOvertimeCarryoverMinutes($empId, $year);
 
+            // Overtime paid out in money reduces the balance (#401)
+            $paidOutMinutes = $this->payoutService->getPaidOutMinutes($empId, $year);
+
             $report[] = [
                 'employee' => [
                     'id' => $empId,
@@ -815,7 +820,8 @@ class ReportController extends BaseController {
                 'vacationStats' => $vacationStats,
                 'months' => $months,
                 'carryoverMinutes' => $overtimeCarryover,
-                'totalOvertimeMinutes' => $totalOvertimeMinutes + $overtimeCarryover,
+                'paidOutMinutes' => $paidOutMinutes,
+                'totalOvertimeMinutes' => $totalOvertimeMinutes + $overtimeCarryover - $paidOutMinutes,
             ];
         }
 
@@ -867,13 +873,18 @@ class ReportController extends BaseController {
 
             $carryoverMinutes = $this->carryoverService->getOvertimeCarryoverMinutes($employeeId, $year);
 
+            // Overtime paid out in money reduces the balance (#401)
+            $paidOutMinutes = $this->payoutService->getPaidOutMinutes($employeeId, $year);
+            $netOvertime = $totalOvertime + $carryoverMinutes - $paidOutMinutes;
+
             return $this->successResponse([
                 'employee' => $employee,
                 'year' => $year,
                 'monthly' => $monthlyData,
                 'carryoverMinutes' => $carryoverMinutes,
-                'totalOvertimeMinutes' => $totalOvertime + $carryoverMinutes,
-                'totalOvertimeHours' => round(($totalOvertime + $carryoverMinutes) / 60, 2),
+                'paidOutMinutes' => $paidOutMinutes,
+                'totalOvertimeMinutes' => $netOvertime,
+                'totalOvertimeHours' => round($netOvertime / 60, 2),
                 // Average daily target (weekly hours / 5), used for the Freizeitausgleich ≈ hours hint.
                 'dailyMinutes' => (int)round($employee->getWeeklyHours() / 5 * 60),
             ]);

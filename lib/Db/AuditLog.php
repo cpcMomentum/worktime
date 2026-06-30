@@ -48,6 +48,7 @@ class AuditLog extends Entity implements JsonSerializable {
     public const ENTITY_PROJECT = 'project';
     public const ENTITY_HOLIDAY = 'holiday';
     public const ENTITY_SETTING = 'setting';
+    public const ENTITY_OVERTIME_PAYOUT = 'overtime_payout';
 
     protected string $userId = '';
     protected string $action = '';
