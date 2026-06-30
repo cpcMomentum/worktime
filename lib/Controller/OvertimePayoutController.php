@@ -63,7 +63,8 @@ class OvertimePayoutController extends BaseController {
         }
 
         $date = DateTime::createFromFormat('!Y-m-d', $payoutDate);
-        if ($date === false) {
+        $dateErrors = DateTime::getLastErrors();
+        if ($date === false || ($dateErrors !== false && ($dateErrors['error_count'] > 0 || $dateErrors['warning_count'] > 0))) {
             return new JSONResponse(['error' => 'Invalid payout date.'], Http::STATUS_BAD_REQUEST);
         }
 
