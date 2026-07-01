@@ -5,25 +5,17 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Tests\Unit\Controller;
 
 use DateTime;
-use OCA\WorkTime\Controller\ReportController;
 use OCA\WorkTime\Db\Absence;
-use OCA\WorkTime\Db\AbsenceMapper;
 use OCA\WorkTime\Db\Employee;
-use OCA\WorkTime\Db\TimeEntryMapper;
+use OCA\WorkTime\Db\OvertimePayoutMapper;
 use OCA\WorkTime\Service\AbsenceService;
 use OCA\WorkTime\Service\EmployeeService;
 use OCA\WorkTime\Service\HolidayService;
-use OCA\WorkTime\Service\PdfService;
-use OCA\WorkTime\Service\PermissionService;
-use OCA\WorkTime\Service\ProjectService;
+use OCA\WorkTime\Service\OvertimeCalculationService;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCA\WorkTime\Service\WorkScheduleService;
 use OCA\WorkTime\Service\YearlyCarryoverService;
-use OCA\WorkTime\Service\OvertimePayoutService;
-use OCP\IL10N;
-use OCP\IRequest;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
 
 /**
  * Regression test for #186 / #149: taking a Freizeitausgleich (compensatory) day
@@ -35,23 +27,15 @@ use ReflectionMethod;
  */
 class CompensatoryOvertimeTest extends TestCase {
 
-	private function makeController(WorkScheduleService $schedule): ReportController {
-		return new ReportController(
-			$this->createMock(IRequest::class),
-			'tester',
-			$this->createMock(TimeEntryService::class),
-			$this->createMock(TimeEntryMapper::class),
-			$this->createMock(AbsenceMapper::class),
-			$this->createMock(AbsenceService::class),
-			$this->createMock(EmployeeService::class),
-			$this->createMock(HolidayService::class),
-			$this->createMock(PermissionService::class),
-			$this->createMock(PdfService::class),
+	private function makeService(WorkScheduleService $schedule): OvertimeCalculationService {
+		return new OvertimeCalculationService(
 			$schedule,
 			$this->createMock(YearlyCarryoverService::class),
-			$this->createMock(OvertimePayoutService::class),
-			$this->createMock(ProjectService::class),
-			$this->createMock(IL10N::class),
+			$this->createMock(OvertimePayoutMapper::class),
+			$this->createMock(EmployeeService::class),
+			$this->createMock(TimeEntryService::class),
+			$this->createMock(AbsenceService::class),
+			$this->createMock(HolidayService::class),
 		);
 	}
 
@@ -60,12 +44,10 @@ class CompensatoryOvertimeTest extends TestCase {
 	 * @param object[] $absences
 	 */
 	private function overtimeFor(WorkScheduleService $schedule, array $entries, array $absences): int {
-		$controller = $this->makeController($schedule);
-		$method = new ReflectionMethod(ReportController::class, 'calculateMonthlyStats');
-		$method->setAccessible(true);
+		$service = $this->makeService($schedule);
 		// April 2026 is a fully completed month relative to any later run date,
 		// so the proportional ("up to today") logic equals the full month.
-		$stats = $method->invoke($controller, $this->employee(), 2026, 4, $entries, $absences, []);
+		$stats = $service->getMonthlyStats($this->employee(), 2026, 4, $entries, $absences, []);
 		return $stats['overtimeMinutes'];
 	}
 

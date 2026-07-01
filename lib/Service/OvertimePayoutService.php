@@ -20,6 +20,7 @@ class OvertimePayoutService {
     public function __construct(
         private OvertimePayoutMapper $mapper,
         private AuditLogService $auditLogService,
+        private OvertimeCalculationService $overtimeCalc,
     ) {
     }
 
@@ -59,6 +60,21 @@ class OvertimePayoutService {
         }
         if (mb_strlen(trim($note)) < 10) {
             throw new \InvalidArgumentException('Bitte einen Grund mit mindestens 10 Zeichen angeben.');
+        }
+
+        // Server-side balance guard (#426): the frontend caps a payout at the
+        // available overtime balance, but a direct POST could bypass that and push
+        // the balance negative. The net balance for the payout's year already
+        // accounts for existing payouts, so a new payout of $minutes is only valid
+        // while it does not exceed what remains.
+        $year = (int)$payoutDate->format('Y');
+        $available = $this->overtimeCalc->getNetOvertimeMinutes($employeeId, $year);
+        if ($minutes > $available) {
+            throw new \InvalidArgumentException(sprintf(
+                'Die Auszahlung (%d Min.) überschreitet den verfügbaren Überstundensaldo (%d Min.).',
+                $minutes,
+                $available
+            ));
         }
 
         $payout = new OvertimePayout();
