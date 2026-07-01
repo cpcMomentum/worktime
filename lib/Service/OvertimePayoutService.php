@@ -14,6 +14,8 @@ use OCA\WorkTime\Db\AuditLog;
 use OCA\WorkTime\Db\OvertimePayout;
 use OCA\WorkTime\Db\OvertimePayoutMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\DB\QueryBuilder\IQueryBuilder;
+use OCP\IDBConnection;
 
 class OvertimePayoutService {
 
@@ -21,6 +23,7 @@ class OvertimePayoutService {
         private OvertimePayoutMapper $mapper,
         private AuditLogService $auditLogService,
         private OvertimeCalculationService $overtimeCalc,
+        private IDBConnection $db,
     ) {
     }
 
@@ -62,26 +65,7 @@ class OvertimePayoutService {
             throw new \InvalidArgumentException('Bitte einen Grund mit mindestens 10 Zeichen angeben.');
         }
 
-        // Server-side balance guard (#426): the frontend caps a payout at the
-        // available overtime balance, but a direct POST could bypass that and push
-        // the balance negative. The net balance for the payout's year already
-        // accounts for existing payouts, so a new payout of $minutes is only valid
-        // while it does not exceed what remains.
-        //
-        // Accepted limitation: read-then-insert is not serialized, so two payouts
-        // created for the same employee within the same instant could both pass
-        // this check (TOCTOU). This endpoint is admin/HR-only and single-operator
-        // in practice, so a hard DB lock is deliberately deferred to the follow-up
-        // (#428) rather than added to this admin-only path.
         $year = (int)$payoutDate->format('Y');
-        $available = $this->overtimeCalc->getNetOvertimeMinutes($employeeId, $year);
-        if ($minutes > $available) {
-            throw new \InvalidArgumentException(sprintf(
-                'Die Auszahlung (%d Min.) überschreitet den verfügbaren Überstundensaldo (%d Min.).',
-                $minutes,
-                $available
-            ));
-        }
 
         $payout = new OvertimePayout();
         $payout->setEmployeeId($employeeId);
@@ -92,14 +76,60 @@ class OvertimePayoutService {
         $payout->setCreatedAt(new DateTime());
         $payout->setUpdatedAt(new DateTime());
 
-        $result = $this->mapper->insert($payout);
+        // Server-side balance guard (#426): the frontend caps a payout at the
+        // available overtime balance, but a direct POST could bypass that and push
+        // the balance negative. The net balance for the payout's year already
+        // accounts for existing payouts, so a new payout of $minutes is only valid
+        // while it does not exceed what remains.
+        //
+        // The read-check-insert runs in a transaction that first locks the employee
+        // row FOR UPDATE (#428). This serializes concurrent payout creations for the
+        // same employee: a second request blocks on the lock until the first commits,
+        // then reads the now-updated balance and is rejected if it would overdraw.
+        $this->db->beginTransaction();
+        try {
+            $this->lockEmployeeRow($employeeId);
 
-        $this->auditLogService->logCreate(
-            $currentUserId, AuditLog::ENTITY_OVERTIME_PAYOUT, $result->getId(),
-            $result->jsonSerialize()
-        );
+            $available = $this->overtimeCalc->getNetOvertimeMinutes($employeeId, $year);
+            if ($minutes > $available) {
+                throw new \InvalidArgumentException(sprintf(
+                    'Die Auszahlung (%d Min.) überschreitet den verfügbaren Überstundensaldo (%d Min.).',
+                    $minutes,
+                    $available
+                ));
+            }
+
+            $result = $this->mapper->insert($payout);
+
+            $this->auditLogService->logCreate(
+                $currentUserId, AuditLog::ENTITY_OVERTIME_PAYOUT, $result->getId(),
+                $result->jsonSerialize()
+            );
+
+            $this->db->commit();
+        } catch (\Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
 
         return $result;
+    }
+
+    /**
+     * Take a pessimistic row lock on the employee to serialize concurrent overtime
+     * payout creations for that employee (#428). Must be called inside a transaction.
+     *
+     * Protected so unit tests can stub the lock (mocking IQueryBuilder would pull in
+     * Doctrine DBAL types that are absent from the ocp-only test environment); the
+     * real FOR UPDATE behaviour is covered by the live smoke test.
+     */
+    protected function lockEmployeeRow(int $employeeId): void {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('id')
+            ->from('wt_employees')
+            ->where($qb->expr()->eq('id', $qb->createNamedParameter($employeeId, IQueryBuilder::PARAM_INT)))
+            ->forUpdate();
+        $qb->executeQuery()->closeCursor();
     }
 
     public function delete(int $id, string $currentUserId): void {

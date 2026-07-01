@@ -10,16 +10,23 @@ use OCA\WorkTime\Db\OvertimePayoutMapper;
 use OCA\WorkTime\Service\AuditLogService;
 use OCA\WorkTime\Service\OvertimeCalculationService;
 use OCA\WorkTime\Service\OvertimePayoutService;
+use OCP\IDBConnection;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Covers the overtime payout creation/validation logic (#401, #426).
+ * Covers the overtime payout creation/validation logic (#401, #426, #428).
+ *
+ * The employee-row FOR UPDATE lock (#428) is stubbed via a protected seam:
+ * mocking IQueryBuilder would require Doctrine DBAL types that are not present in
+ * the ocp-only test environment. The real lock is covered by the live smoke test;
+ * here we assert the transaction wrapping and that the lock is taken.
  */
 class OvertimePayoutServiceTest extends TestCase {
 
     private OvertimePayoutMapper $mapper;
     private AuditLogService $auditLogService;
     private OvertimeCalculationService $overtimeCalc;
+    private IDBConnection $db;
     private OvertimePayoutService $service;
 
     protected function setUp(): void {
@@ -29,10 +36,29 @@ class OvertimePayoutServiceTest extends TestCase {
         // By default there is plenty of overtime available, so the balance guard
         // (#426) does not interfere with the other creation-path assertions.
         $this->overtimeCalc->method('getNetOvertimeMinutes')->willReturn(100000);
-        $this->service = new OvertimePayoutService($this->mapper, $this->auditLogService, $this->overtimeCalc);
+        $this->db = $this->createMock(IDBConnection::class);
+        $this->service = $this->makeService($this->overtimeCalc, $this->db);
+    }
+
+    /**
+     * Build the service with the employee-row lock stubbed out. The returned
+     * instance exposes $lockCalls / $lockedIds for assertions.
+     */
+    private function makeService(OvertimeCalculationService $calc, IDBConnection $db): OvertimePayoutService {
+        return new class($this->mapper, $this->auditLogService, $calc, $db) extends OvertimePayoutService {
+            public int $lockCalls = 0;
+            /** @var int[] */
+            public array $lockedIds = [];
+            protected function lockEmployeeRow(int $employeeId): void {
+                $this->lockCalls++;
+                $this->lockedIds[] = $employeeId;
+            }
+        };
     }
 
     public function testCreateRejectsZeroMinutes(): void {
+        // Input validation happens before the transaction is opened.
+        $this->db->expects($this->never())->method('beginTransaction');
         $this->mapper->expects($this->never())->method('insert');
         $this->expectException(\InvalidArgumentException::class);
         $this->service->create(1, new DateTime('2026-06-30'), 0, 'Gültiger Grund hier', 'admin');
@@ -51,6 +77,10 @@ class OvertimePayoutServiceTest extends TestCase {
     }
 
     public function testCreateInsertsAndLogsAudit(): void {
+        // Happy path is wrapped in a committed transaction and takes the lock.
+        $this->db->expects($this->once())->method('beginTransaction');
+        $this->db->expects($this->once())->method('commit');
+        $this->db->expects($this->never())->method('rollBack');
         $this->mapper->expects($this->once())
             ->method('insert')
             ->willReturnCallback(function (OvertimePayout $p) {
@@ -66,17 +96,24 @@ class OvertimePayoutServiceTest extends TestCase {
         $this->assertSame(42, $result->getId());
         $this->assertSame(600, $result->getMinutes());
         $this->assertSame('Auszahlung mit Juni-Gehalt', $result->getNote());
+        $this->assertSame(1, $this->service->lockCalls);
+        $this->assertSame([1], $this->service->lockedIds);
     }
 
     public function testCreateRejectsPayoutExceedingAvailableBalance(): void {
         // #426: available balance is 300 min; a 600 min payout must be rejected
         // server-side even though the frontend cap could be bypassed via direct POST.
+        // #428: the transaction is rolled back and nothing is inserted.
         $overtimeCalc = $this->createMock(OvertimeCalculationService::class);
         $overtimeCalc->expects($this->once())
             ->method('getNetOvertimeMinutes')
             ->with(1, 2026)
             ->willReturn(300);
-        $service = new OvertimePayoutService($this->mapper, $this->auditLogService, $overtimeCalc);
+        $db = $this->createMock(IDBConnection::class);
+        $db->expects($this->once())->method('beginTransaction');
+        $db->expects($this->once())->method('rollBack');
+        $db->expects($this->never())->method('commit');
+        $service = $this->makeService($overtimeCalc, $db);
 
         $this->mapper->expects($this->never())->method('insert');
         $this->expectException(\InvalidArgumentException::class);
@@ -87,7 +124,9 @@ class OvertimePayoutServiceTest extends TestCase {
         // #426: a payout equal to the available balance is permitted (drives it to 0).
         $overtimeCalc = $this->createMock(OvertimeCalculationService::class);
         $overtimeCalc->method('getNetOvertimeMinutes')->willReturn(600);
-        $service = new OvertimePayoutService($this->mapper, $this->auditLogService, $overtimeCalc);
+        $db = $this->createMock(IDBConnection::class);
+        $db->expects($this->once())->method('commit');
+        $service = $this->makeService($overtimeCalc, $db);
 
         $this->mapper->expects($this->once())
             ->method('insert')
@@ -98,6 +137,25 @@ class OvertimePayoutServiceTest extends TestCase {
 
         $result = $service->create(1, new DateTime('2026-06-30'), 600, 'Auszahlung mit Juni-Gehalt', 'admin');
         $this->assertSame(600, $result->getMinutes());
+    }
+
+    public function testCreateTakesEmployeeLockInsideTransaction(): void {
+        // #428: create() must take the per-employee lock (inside the transaction)
+        // so concurrent creations serialize.
+        $overtimeCalc = $this->createMock(OvertimeCalculationService::class);
+        $overtimeCalc->method('getNetOvertimeMinutes')->willReturn(100000);
+        $db = $this->createMock(IDBConnection::class);
+        $db->expects($this->once())->method('beginTransaction');
+        $db->expects($this->once())->method('commit');
+        $service = $this->makeService($overtimeCalc, $db);
+        $this->mapper->method('insert')->willReturnCallback(function (OvertimePayout $p) {
+            $p->setId(9);
+            return $p;
+        });
+
+        $service->create(7, new DateTime('2026-06-30'), 60, 'Auszahlung mit Juni-Gehalt', 'admin');
+
+        $this->assertSame([7], $service->lockedIds);
     }
 
     public function testGetPaidOutMinutesDelegatesToMapper(): void {
