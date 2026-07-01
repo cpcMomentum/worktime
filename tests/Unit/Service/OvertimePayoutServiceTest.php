@@ -18,8 +18,9 @@ use PHPUnit\Framework\TestCase;
  *
  * The employee-row FOR UPDATE lock (#428) is stubbed via a protected seam:
  * mocking IQueryBuilder would require Doctrine DBAL types that are not present in
- * the ocp-only test environment. The real lock is covered by the live smoke test;
- * here we assert the transaction wrapping and that the lock is taken.
+ * the ocp-only test environment. There is no automated integration test exercising
+ * the real lock against a live database; here we only assert the transaction
+ * wrapping and that the lock method is invoked with the right id.
  */
 class OvertimePayoutServiceTest extends TestCase {
 

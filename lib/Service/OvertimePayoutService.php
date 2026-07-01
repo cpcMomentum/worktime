@@ -120,8 +120,14 @@ class OvertimePayoutService {
      * payout creations for that employee (#428). Must be called inside a transaction.
      *
      * Protected so unit tests can stub the lock (mocking IQueryBuilder would pull in
-     * Doctrine DBAL types that are absent from the ocp-only test environment); the
-     * real FOR UPDATE behaviour is covered by the live smoke test.
+     * Doctrine DBAL types that are absent from the ocp-only test environment); there
+     * is no automated integration test against a real MySQL/PostgreSQL/SQLite backend,
+     * so the actual FOR UPDATE behaviour must be verified manually against each.
+     *
+     * Known gap: SQLite has no row-level locking, so Doctrine's SQLite platform drops
+     * the FOR UPDATE clause silently (no-op). On SQLite-backed installs this method
+     * does not lock anything; serialization there depends entirely on SQLite's own
+     * whole-database write locking, not on this call.
      */
     protected function lockEmployeeRow(int $employeeId): void {
         $qb = $this->db->getQueryBuilder();
