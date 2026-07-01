@@ -12,7 +12,9 @@ namespace OCA\WorkTime\Service;
 use DateTime;
 use OCA\WorkTime\Db\Absence;
 use OCA\WorkTime\Db\Employee;
+use OCA\WorkTime\Db\Holiday;
 use OCA\WorkTime\Db\OvertimePayoutMapper;
+use OCA\WorkTime\Db\TimeEntry;
 
 /**
  * Overtime / monthly-statistics engine (#426).
@@ -84,8 +86,8 @@ class OvertimeCalculationService {
      * Whether the given day has activity that makes it count toward the proportional
      * Soll: a time entry on that day or an approved absence covering it.
      *
-     * @param object[] $timeEntries
-     * @param object[] $absences
+     * @param TimeEntry[] $timeEntries
+     * @param Absence[] $absences
      */
     private function hasActivityOnDay(DateTime $day, array $timeEntries, array $absences): bool {
         $dayStr = $day->format('Y-m-d');
@@ -111,9 +113,9 @@ class OvertimeCalculationService {
      * timesheet covers a fixed, user-chosen span, so Soll/Ist/Saldo are computed
      * over the whole range.
      *
-     * @param object[] $timeEntries
-     * @param object[] $absences
-     * @param object[] $holidays
+     * @param TimeEntry[] $timeEntries
+     * @param Absence[] $absences
+     * @param Holiday[] $holidays
      * @return array<string, mixed>
      */
     public function getRangeStats(
@@ -206,9 +208,9 @@ class OvertimeCalculationService {
     }
 
     /**
-     * @param object[] $timeEntries
-     * @param object[] $absences
-     * @param object[] $holidays
+     * @param TimeEntry[] $timeEntries
+     * @param Absence[] $absences
+     * @param Holiday[] $holidays
      * @return array<string, mixed>
      */
     public function getMonthlyStats(
@@ -487,7 +489,7 @@ class OvertimeCalculationService {
     /**
      * Calculate absence minutes using actual schedule for each day.
      *
-     * @param object[] $holidays
+     * @param Holiday[] $holidays
      */
     private function calculateAbsenceMinutes(int $employeeId, DateTime $start, DateTime $end, float $scope, array $holidays): int {
         $holidayMap = [];
