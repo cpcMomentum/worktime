@@ -128,6 +128,11 @@ class OvertimePayoutService {
      * the FOR UPDATE clause silently (no-op). On SQLite-backed installs this method
      * does not lock anything; serialization there depends entirely on SQLite's own
      * whole-database write locking, not on this call.
+     *
+     * This SQLite gap is a consciously accepted trade-off (#428): the lock is fully
+     * effective on the real deployment backends (PostgreSQL/MySQL/MariaDB), and this
+     * is an admin/HR-only path where the underlying race is already implausible, so
+     * no SQLite-specific serialization is added.
      */
     protected function lockEmployeeRow(int $employeeId): void {
         $qb = $this->db->getQueryBuilder();
