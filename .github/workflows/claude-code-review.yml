@@ -65,7 +65,10 @@ jobs:
           ref: ${{ github.head_ref }}
 
       - name: Run Claude Code Review & Auto-Fix
-        if: steps.cycles.outputs.count < 3 && steps.cycles.outputs.last_status != 'APPROVED'
+        # Feature PRs (against develop). Release PRs (release/* -> main) get a
+        # dedicated release-readiness review below instead — their diff is the whole
+        # accumulated release, whose code was already reviewed on the feature PRs.
+        if: steps.cycles.outputs.count < 3 && steps.cycles.outputs.last_status != 'APPROVED' && !startsWith(github.head_ref, 'release/')
         uses: anthropics/claude-code-action@v1
         with:
           # Auth: OAuth Token bevorzugt (claude_code_oauth_token).
@@ -121,3 +124,57 @@ jobs:
           claude_args: |
             --max-turns 50
             --allowedTools "Edit,MultiEdit,Glob,Grep,LS,Read,Write,Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git rm:*),Bash(gh pr comment:*),Bash(gh pr review:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(npm run:*),Bash(npx:*),Bash(cd:*),Bash(ls:*),Bash(cat:*),Bash(grep:*),Bash(head:*),Bash(tail:*),Bash(ruff:*),Bash(pip:*),Bash(python:*),mcp__github_comment__update_claude_comment"
+
+      - name: Run Claude Release Review
+        # Release PRs (release/* -> main): review RELEASE-readiness, not the code
+        # line-by-line (that happened on the feature PRs). Comment-only — never
+        # edit/commit/push: the release tarball may already be signed, and an
+        # auto-fix commit would desync signature.json + the uploaded tarball.
+        if: steps.cycles.outputs.count < 3 && steps.cycles.outputs.last_status != 'APPROVED' && startsWith(github.head_ref, 'release/')
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          allowed_bots: "claude[bot],github-actions[bot]"
+          show_full_output: true
+          prompt: |
+            Du bist ein RELEASE-Reviewer für einen Nextcloud-App-Release-PR.
+
+            Der zu reviewende Pull Request ist #${{ github.event.pull_request.number }} im Repository ${{ github.repository }}.
+            WICHTIG: Verwende fuer ALLE gh-Befehle ausschliesslich diese PR-Nummer (${{ github.event.pull_request.number }}).
+
+            Das ist ein RELEASE-PR (Branch beginnt mit "release/"). Er buendelt ALLE
+            Aenderungen seit dem letzten Release. Der einzelne Feature-Code wurde bereits
+            auf den develop-PRs reviewt — reviewe ihn NICHT Zeile fuer Zeile neu.
+            Ueberfliege den Diff nur fuer Auffaelligkeiten und pruefe die RELEASE-spezifischen Punkte.
+
+            Kontext holen (nur was du brauchst, nicht alles komplett lesen):
+              gh pr view ${{ github.event.pull_request.number }}
+              gh pr diff ${{ github.event.pull_request.number }}
+              git log origin/${{ github.base_ref }}..HEAD --oneline
+
+            Pruefe:
+            1. CHANGELOG: Deckt der Eintrag der neuen Version die tatsaechlichen Commits ab? Fehlt Nennenswertes, oder steht Falsches/Veraltetes drin?
+            2. Version: info.xml <version> korrekt nach SemVer erhoeht? min-/max-version stimmig?
+            3. Migrationen: Sind alle DB-Migrationen der gebuendelten Features vorhanden, konsistent nummeriert und idempotent (z.B. hasTable-Guard)?
+            4. Reste: Keine Debug-Ausgaben (console.log, var_dump, dd()), keine Blocker-TODO/FIXME, keine versehentlich eingecheckten Test-/Temp-Dateien im Release.
+            5. Cross-Feature-Integration: Aenderungen, die einzeln ok waren, aber zusammen kollidieren koennen (gleiche Datei/Funktion aus mehreren Features, widerspruechliche Migrationen).
+
+            NUR KOMMENTIEREN. Editiere/committe/pushe NICHTS — ein Release-Tarball ist evtl.
+            schon signiert; ein Auto-Fix wuerde signature.json und den hochgeladenen Tarball
+            desynchronisieren. Findings gehoeren als Kommentar an den Menschen.
+
+            Poste das Ergebnis mit:
+              gh pr comment ${{ github.event.pull_request.number }} --body "<REVIEW>"
+
+            <REVIEW> hat exakt dieses Format:
+
+            ### Claude Release Review
+            **Geprueft:** [Release-Checkliste-Punkte die du geprueft hast]
+            **Auffaellig:** [Liste konkreter Punkte, oder "Keine"]
+            **Status: APPROVED** oder **Status: NEEDS_FIX**
+
+            APPROVED wenn der Release sauber ist oder nur Kosmetik offen ist.
+            NEEDS_FIX nur bei echten Release-Blockern (fehlende Migration, falscher CHANGELOG/Version, Reste, Integrationskonflikt).
+          claude_args: |
+            --max-turns 40
+            --allowedTools "Glob,Grep,LS,Read,Bash(git diff:*),Bash(git log:*),Bash(gh pr comment:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr list:*),Bash(cat:*),Bash(ls:*),Bash(grep:*),Bash(head:*),Bash(tail:*),mcp__github_comment__update_claude_comment"
