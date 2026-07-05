@@ -6,8 +6,13 @@ on:
 
 jobs:
   claude-review:
-    # Only review non-draft PRs
-    if: github.event.pull_request.draft == false
+    # Only review non-draft PRs. Skip release PRs (release/* -> main): their diff
+    # is the full accumulated release since the last tag, which was already reviewed
+    # on the individual feature PRs to develop. Re-reviewing the whole batch is
+    # redundant and reliably exhausts the turn limit, failing the run for no reason.
+    if: >-
+      github.event.pull_request.draft == false &&
+      !startsWith(github.head_ref, 'release/')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
