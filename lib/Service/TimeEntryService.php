@@ -759,7 +759,6 @@ class TimeEntryService {
         }
 
         $warnings = [];
-        $grossHours = $totalGrossMinutes / 60;
 
         // §4 ArbZG minimum break, evaluated on the whole day. Upper step is
         // 9h + break6h gross (not a flat 9h), consistent with suggestBreak()/
@@ -779,12 +778,17 @@ class TimeEntryService {
             );
         }
 
-        // Maximum daily working hours, evaluated on the whole day.
+        // Maximum daily working hours (§3 ArbZG). The legal cap targets the
+        // WORKING time (net), not the presence span — mirrors suggestBreak()/
+        // dayWarnings §4 above and the fix in #403. Comparing gross wrongly
+        // flagged days whose net time is within the limit (#437).
+        $netMinutes = max(0, $totalGrossMinutes - $totalBreakMinutes);
+        $netHours = $netMinutes / 60;
         $maxHours = $this->settingsMapper->getValueAsFloat(CompanySetting::KEY_MAX_DAILY_HOURS);
-        if ($maxHours > 0 && $grossHours > $maxHours) {
+        if ($maxHours > 0 && $netHours > $maxHours) {
             $warnings[] = $this->l->t(
                 'Maximale tägliche Arbeitszeit (%1$s Std.) überschritten: an diesem Tag sind %2$s Std. erfasst.',
-                [(string)$maxHours, (string)round($grossHours, 2)]
+                [(string)$maxHours, (string)round($netHours, 2)]
             );
         }
 

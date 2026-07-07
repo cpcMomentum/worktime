@@ -693,4 +693,48 @@ class TimeEntryServiceTest extends TestCase {
             ->with([])->willReturn([]);
         $this->assertSame([], $this->service->findSubmittedMonths([]));
     }
+
+    /**
+     * #437: The §3 ArbZG max-daily-hours warning must evaluate NET working time
+     * (after breaks), not the gross presence span. 08:00–20:40 minus 45 min
+     * break is 11:55 net — within the 12h cap — so no warning may fire, even
+     * though the gross span (12:40) exceeds it.
+     */
+    public function testDayMaxHoursWarningUsesNetNotGross(): void {
+        $warnings = $this->service->dayWarnings([
+            $this->makeEntry('08:00', '20:40', 45),
+        ]);
+
+        $maxWarnings = array_filter(
+            $warnings,
+            static fn(string $w): bool => str_contains($w, 'Maximale tägliche Arbeitszeit')
+        );
+        $this->assertCount(
+            0,
+            $maxWarnings,
+            'Net time (11:55) is within the 12h cap; the gross span must not trigger the warning'
+        );
+    }
+
+    /**
+     * #437: When the NET working time actually exceeds the cap, the warning must
+     * still fire and report the net hours. 06:00–19:00 minus 45 min break =
+     * 12:15 net (12.25 h), which exceeds the 12h cap.
+     */
+    public function testDayMaxHoursWarningFiresOnNetExceedance(): void {
+        $warnings = $this->service->dayWarnings([
+            $this->makeEntry('06:00', '19:00', 45),
+        ]);
+
+        $maxWarnings = array_values(array_filter(
+            $warnings,
+            static fn(string $w): bool => str_contains($w, 'Maximale tägliche Arbeitszeit')
+        ));
+        $this->assertCount(1, $maxWarnings, 'Net 12:15 exceeds the 12h cap → warning expected');
+        $this->assertStringContainsString(
+            '12.25 Std. erfasst',
+            $maxWarnings[0],
+            'The warning must report NET hours (12.25), not gross (13)'
+        );
+    }
 }
