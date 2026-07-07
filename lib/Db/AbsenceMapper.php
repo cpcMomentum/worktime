@@ -55,18 +55,16 @@ class AbsenceMapper extends QBMapper {
      * @return Absence[]
      */
     public function findByEmployeeAndYear(int $employeeId, int $year): array {
+        // Overlap semantics: include every absence that TOUCHES the year, even
+        // when it starts in the previous year or ends in the next one (e.g. a
+        // Christmas→New Year vacation). A containment filter (start >= Jan 1 AND
+        // end <= Dec 31) silently dropped such absences from the personal list
+        // and the vacation balance (#439). The per-year day split is handled by
+        // AbsenceService::vacationDaysInYear().
         $startDate = new DateTime("$year-01-01");
         $endDate = new DateTime("$year-12-31");
 
-        $qb = $this->db->getQueryBuilder();
-        $qb->select('*')
-            ->from($this->getTableName())
-            ->where($qb->expr()->eq('employee_id', $qb->createNamedParameter($employeeId, IQueryBuilder::PARAM_INT)))
-            ->andWhere($qb->expr()->gte('start_date', $qb->createNamedParameter($startDate, IQueryBuilder::PARAM_DATE)))
-            ->andWhere($qb->expr()->lte('end_date', $qb->createNamedParameter($endDate, IQueryBuilder::PARAM_DATE)))
-            ->orderBy('start_date', 'ASC');
-
-        return $this->findEntities($qb);
+        return $this->findByEmployeeAndDateRange($employeeId, $startDate, $endDate);
     }
 
     /**
@@ -378,25 +376,5 @@ class AbsenceMapper extends QBMapper {
             ->orderBy('start_date', 'ASC');
 
         return $this->findEntities($qb);
-    }
-
-    public function sumVacationDaysByEmployeeAndYear(int $employeeId, int $year): float {
-        $startDate = new DateTime("$year-01-01");
-        $endDate = new DateTime("$year-12-31");
-
-        $qb = $this->db->getQueryBuilder();
-        $qb->select($qb->func()->sum('days'))
-            ->from($this->getTableName())
-            ->where($qb->expr()->eq('employee_id', $qb->createNamedParameter($employeeId, IQueryBuilder::PARAM_INT)))
-            ->andWhere($qb->expr()->eq('type', $qb->createNamedParameter(Absence::TYPE_VACATION)))
-            ->andWhere($qb->expr()->eq('status', $qb->createNamedParameter(Absence::STATUS_APPROVED)))
-            ->andWhere($qb->expr()->gte('start_date', $qb->createNamedParameter($startDate, IQueryBuilder::PARAM_DATE)))
-            ->andWhere($qb->expr()->lte('end_date', $qb->createNamedParameter($endDate, IQueryBuilder::PARAM_DATE)));
-
-        $result = $qb->executeQuery();
-        $sum = $result->fetchOne();
-        $result->closeCursor();
-
-        return (float)$sum;
     }
 }

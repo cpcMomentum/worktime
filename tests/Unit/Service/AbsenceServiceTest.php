@@ -398,4 +398,83 @@ class AbsenceServiceTest extends TestCase {
         $this->assertSame([Absence::STATUS_APPROVED], $statuses);
         $this->assertNotContains(Absence::STATUS_PENDING, $statuses);
     }
+
+    // ---------------------------------------------------------------------
+    // #439: Jahresübergreifende Abwesenheiten — anteilige Zählung pro Jahr
+    // ---------------------------------------------------------------------
+
+    public function testVacationDaysInYearFullyWithinReturnsStoredDays(): void {
+        $absence = $this->makeAbsence(
+            Absence::TYPE_VACATION,
+            Absence::STATUS_APPROVED,
+            new DateTime('2026-06-10'),
+            new DateTime('2026-06-12')
+        );
+        $absence->setDays('3.00');
+
+        // Fully inside the year → returns the stored value, no recomputation.
+        $this->assertSame(3.0, $this->service->vacationDaysInYear($absence, 2026, 'BW'));
+    }
+
+    public function testVacationDaysInYearNoOverlapReturnsZero(): void {
+        $absence = $this->makeAbsence(
+            Absence::TYPE_VACATION,
+            Absence::STATUS_APPROVED,
+            new DateTime('2025-06-10'),
+            new DateTime('2025-06-12')
+        );
+        $absence->setDays('3.00');
+
+        $this->assertSame(0.0, $this->service->vacationDaysInYear($absence, 2026, 'BW'));
+    }
+
+    public function testVacationDaysInYearSpanningCountsOnlyInYearPortion(): void {
+        // Christmas → New Year vacation: 3 working days in 2025, 1 in 2026.
+        $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
+        $this->workScheduleService->method('countWorkingDays')->willReturnCallback(
+            static fn(int $empId, DateTime $start, DateTime $end, array $holidays): float
+                => $start->format('Y') === '2025' ? 3.0 : 1.0
+        );
+
+        $absence = $this->makeAbsence(
+            Absence::TYPE_VACATION,
+            Absence::STATUS_APPROVED,
+            new DateTime('2025-12-29'),
+            new DateTime('2026-01-02')
+        );
+        // Stored total days (4) must be IGNORED for the spanning case — each year
+        // gets only its clipped portion, so no double counting across the two years.
+        $absence->setDays('4.00');
+
+        $this->assertSame(3.0, $this->service->vacationDaysInYear($absence, 2025, 'BW'));
+        $this->assertSame(1.0, $this->service->vacationDaysInYear($absence, 2026, 'BW'));
+    }
+
+    public function testGetVacationStatsDeductsOnlyInYearPortionOfSpanningVacation(): void {
+        $employee = new \OCA\WorkTime\Db\Employee();
+        $employee->setFederalState('BW');
+        $this->employeeMapper->method('find')->with(1)->willReturn($employee);
+
+        $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
+        $this->workScheduleService->method('countWorkingDays')->willReturnCallback(
+            static fn(int $empId, DateTime $start, DateTime $end, array $holidays): float
+                => $start->format('Y') === '2025' ? 3.0 : 1.0
+        );
+
+        $spanning = $this->makeAbsence(
+            Absence::TYPE_VACATION,
+            Absence::STATUS_APPROVED,
+            new DateTime('2025-12-29'),
+            new DateTime('2026-01-02')
+        );
+        $spanning->setDays('4.00');
+        // The year query (overlap) surfaces the spanning absence for 2025.
+        $this->absenceMapper->method('findByEmployeeAndYear')->with(1, 2025)->willReturn([$spanning]);
+
+        $stats = $this->service->getVacationStats(1, 2025, 30);
+
+        // Only the 3 in-year days count against 2025, not the full 4.
+        $this->assertSame(3.0, $stats['used']);
+        $this->assertSame(27.0, $stats['remaining']);
+    }
 }

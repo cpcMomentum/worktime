@@ -121,7 +121,7 @@ class AbsenceService {
         $days = $workingDays * $scope;
 
         if ($type === Absence::TYPE_VACATION) {
-            $this->checkVacationQuota($employeeId, $days, (int)$startDateObj->format('Y'));
+            $this->checkVacationQuota($employeeId, $startDateObj, $endDateObj, $federalState, $scope);
         }
 
         $isInformational = in_array($type, [Absence::TYPE_SICK, Absence::TYPE_CHILD_SICK], true);
@@ -230,7 +230,7 @@ class AbsenceService {
         $days = $workingDays * $scope;
 
         if ($type === Absence::TYPE_VACATION) {
-            $this->checkVacationQuota($absence->getEmployeeId(), $days, (int)$startDateObj->format('Y'), $id);
+            $this->checkVacationQuota($absence->getEmployeeId(), $startDateObj, $endDateObj, $federalState, $scope, $id);
         }
 
         $isInformational = in_array($type, [Absence::TYPE_SICK, Absence::TYPE_CHILD_SICK], true);
@@ -414,16 +414,21 @@ class AbsenceService {
      * Get vacation statistics for an employee in a given year
      */
     public function getVacationStats(int $employeeId, int $year, int $totalVacationDays): array {
-        $usedDays = $this->absenceMapper->sumVacationDaysByEmployeeAndYear($employeeId, $year);
-        $pendingAbsences = $this->absenceMapper->findByType($employeeId, Absence::TYPE_VACATION);
-        $pendingDays = 0;
+        $federalState = $this->employeeMapper->find($employeeId)->getFederalState();
 
-        foreach ($pendingAbsences as $absence) {
-            if ($absence->getStatus() === Absence::STATUS_PENDING) {
-                $absenceYear = (int)$absence->getStartDate()->format('Y');
-                if ($absenceYear === $year) {
-                    $pendingDays += (float)$absence->getDays();
-                }
+        // Overlap query + per-year day split (#439): a vacation spanning the year
+        // boundary is counted only with the portion that falls into this year.
+        $usedDays = 0.0;
+        $pendingDays = 0.0;
+        foreach ($this->absenceMapper->findByEmployeeAndYear($employeeId, $year) as $absence) {
+            if ($absence->getType() !== Absence::TYPE_VACATION) {
+                continue;
+            }
+            $daysInYear = $this->vacationDaysInYear($absence, $year, $federalState);
+            if ($absence->getStatus() === Absence::STATUS_APPROVED) {
+                $usedDays += $daysInYear;
+            } elseif ($absence->getStatus() === Absence::STATUS_PENDING) {
+                $pendingDays += $daysInYear;
             }
         }
 
@@ -469,6 +474,38 @@ class AbsenceService {
     }
 
     /**
+     * Vacation working days of an absence that fall WITHIN the given calendar year.
+     *
+     * This is the single source of truth for "how many vacation days does this
+     * absence count towards year X". For an absence fully contained in the year
+     * it is the stored `days`; for one spanning the year boundary (e.g. a
+     * Christmas→New Year vacation) only the clipped, in-year portion is counted —
+     * schedule- and holiday-aware — so the days are split across both years and
+     * never counted twice (#439). All per-year vacation counting must go through
+     * this method.
+     */
+    public function vacationDaysInYear(Absence $absence, int $year, string $federalState): float {
+        $yearStart = new DateTime("$year-01-01");
+        $yearEnd = new DateTime("$year-12-31");
+        $start = $absence->getStartDate();
+        $end = $absence->getEndDate();
+
+        // No overlap with the year at all.
+        if ($end < $yearStart || $start > $yearEnd) {
+            return 0.0;
+        }
+        // Fully within the year → the stored value already reflects it exactly.
+        if ($start >= $yearStart && $end <= $yearEnd) {
+            return (float)$absence->getDays();
+        }
+        // Spans the year boundary → count only the clipped, in-year working days.
+        $clipStart = $start < $yearStart ? $yearStart : $start;
+        $clipEnd = $end > $yearEnd ? $yearEnd : $end;
+        return $this->calculateWorkingDays($clipStart, $clipEnd, $federalState, $absence->getEmployeeId())
+            * $absence->getScopeValue();
+    }
+
+    /**
      * #360: A full-day absence is logically incompatible with time entries on the
      * same day — you cannot work and take the whole day off, and the overtime
      * would be counted twice (the absence consumes the daily target while the
@@ -511,35 +548,61 @@ class AbsenceService {
         ]);
     }
 
-    private function checkVacationQuota(int $employeeId, float $requestedDays, int $year, ?int $excludeId = null): void {
-        $employee = $this->employeeMapper->find($employeeId);
-        $totalVacationDays = (int)$employee->getVacationDays();
+    /**
+     * Enforce the yearly vacation quota for a new/edited absence. Checked per
+     * calendar year the request touches: a vacation spanning the year boundary
+     * consumes each year's quota only with its in-year portion (#439), so the
+     * quota is neither over- nor under-counted.
+     */
+    private function checkVacationQuota(
+        int $employeeId,
+        DateTime $startDate,
+        DateTime $endDate,
+        string $federalState,
+        float $scope,
+        ?int $excludeId = null
+    ): void {
+        $totalVacationDays = (float)$this->employeeMapper->find($employeeId)->getVacationDays();
 
-        // Sum all active (approved + pending) vacation days for the year, excluding the current record
-        $allVacations = $this->absenceMapper->findByEmployeeAndYear($employeeId, $year);
-        $usedDays = 0.0;
-        foreach ($allVacations as $absence) {
-            if ($absence->getType() !== Absence::TYPE_VACATION) {
-                continue;
-            }
-            if ($absence->getStatus() === Absence::STATUS_CANCELLED) {
-                continue;
-            }
-            if ($excludeId !== null && $absence->getId() === $excludeId) {
-                continue;
-            }
-            $usedDays += (float)$absence->getDays();
-        }
+        $startYear = (int)$startDate->format('Y');
+        $endYear = (int)$endDate->format('Y');
 
-        $remaining = $totalVacationDays - $usedDays;
-        if ($requestedDays > $remaining) {
-            throw new ValidationException([
-                'vacationQuota' => [sprintf(
-                    'Not enough vacation days. Available: %.1f, requested: %.1f.',
-                    max(0, $remaining),
-                    $requestedDays
-                )],
-            ]);
+        for ($year = $startYear; $year <= $endYear; $year++) {
+            $yearStart = new DateTime("$year-01-01");
+            $yearEnd = new DateTime("$year-12-31");
+            $clipStart = $startDate < $yearStart ? $yearStart : $startDate;
+            $clipEnd = $endDate > $yearEnd ? $yearEnd : $endDate;
+
+            $requestedInYear = $this->calculateWorkingDays($clipStart, $clipEnd, $federalState, $employeeId) * $scope;
+            if ($requestedInYear <= 0) {
+                continue;
+            }
+
+            // Already-used in-year days (approved + pending, excluding this record).
+            $usedDays = 0.0;
+            foreach ($this->absenceMapper->findByEmployeeAndYear($employeeId, $year) as $absence) {
+                if ($absence->getType() !== Absence::TYPE_VACATION) {
+                    continue;
+                }
+                if ($absence->getStatus() === Absence::STATUS_CANCELLED) {
+                    continue;
+                }
+                if ($excludeId !== null && $absence->getId() === $excludeId) {
+                    continue;
+                }
+                $usedDays += $this->vacationDaysInYear($absence, $year, $federalState);
+            }
+
+            $remaining = $totalVacationDays - $usedDays;
+            if ($requestedInYear > $remaining) {
+                throw new ValidationException([
+                    'vacationQuota' => [sprintf(
+                        'Not enough vacation days. Available: %.1f, requested: %.1f.',
+                        max(0, $remaining),
+                        $requestedInYear
+                    )],
+                ]);
+            }
         }
     }
 
