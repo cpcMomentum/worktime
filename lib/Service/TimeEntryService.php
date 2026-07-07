@@ -710,10 +710,11 @@ class TimeEntryService {
      * and returned as non-blocking warnings.
      *
      * Convention (kept consistent with validateBreak()/suggestBreak()): the §4
-     * threshold and the max-hours check are evaluated against the total GROSS
-     * minutes of the day (sum of each entry's start→end span, excluding the gaps
-     * between entries). Gaps between consecutive entries count as break time, on
-     * top of the explicitly recorded break minutes.
+     * threshold is evaluated against the total GROSS minutes of the day (sum of
+     * each entry's start→end span, excluding the gaps between entries), while the
+     * §3 max-hours check is evaluated against the total NET minutes (gross minus
+     * breaks, #437). Gaps between consecutive entries count as break time, on top
+     * of the explicitly recorded break minutes.
      *
      * @param TimeEntry[] $entries All time entries of one day (same date).
      * @return string[] Human-readable warning messages (empty when compliant).
