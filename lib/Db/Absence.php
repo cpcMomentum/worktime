@@ -40,6 +40,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setUpdatedAt(DateTime $updatedAt)
  * @method string getScope()
  * @method void setScope(string $scope)
+ * @method int getIsCentral()
+ * @method void setIsCentral(int $isCentral)
  */
 class Absence extends Entity implements JsonSerializable {
 
@@ -80,6 +82,8 @@ class Absence extends Entity implements JsonSerializable {
     protected string $scope = '1.00';
     /** @deprecated Use scope instead - kept for DB compatibility during migration */
     protected int $isHalfDay = 0;
+    /** #15: 1 = centrally created by admin/HR (Betriebsferien) — protected from employee edits. */
+    protected int $isCentral = 0;
 
     public function __construct() {
         $this->addType('id', 'integer');
@@ -91,6 +95,11 @@ class Absence extends Entity implements JsonSerializable {
         $this->addType('createdAt', 'datetime');
         $this->addType('updatedAt', 'datetime');
         $this->addType('isHalfDay', 'integer');
+        $this->addType('isCentral', 'integer');
+    }
+
+    public function isCentral(): bool {
+        return $this->isCentral === 1;
     }
 
     public function getScopeValue(): float {
@@ -138,6 +147,7 @@ class Absence extends Entity implements JsonSerializable {
             'approvedAt' => $this->approvedAt?->format('c'),
             'createdAt' => $this->createdAt?->format('c'),
             'updatedAt' => $this->updatedAt?->format('c'),
+            'isCentral' => $this->isCentral === 1,
         ];
     }
 }

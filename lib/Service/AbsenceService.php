@@ -179,6 +179,127 @@ class AbsenceService {
     }
 
     /**
+     * #15 Betriebsferien: book a company-wide (or selected) closure as vacation.
+     *
+     * Each targeted employee gets ONE approved, centrally-marked vacation entry
+     * for the period (schedule-aware, so part-time and holidays are handled per
+     * person). Employees whose remaining vacation does not cover the period, or
+     * who already have time entries in it, are NOT booked — they are returned in
+     * `skipped` for the admin to handle individually. This first step deliberately
+     * makes no assumption about how to treat an overage (follow-up: #15/#321).
+     *
+     * @param int[]|null $employeeIds null/empty = all active employees
+     * @return array{booked: list<array{employeeId:int,name:string,days:float}>, skipped: list<array{employeeId:int,name:string,reason:string}>}
+     * @throws ValidationException on invalid dates
+     */
+    public function createCompanyVacation(
+        string $startDate,
+        string $endDate,
+        ?array $employeeIds,
+        ?string $note,
+        string $currentUserId = ''
+    ): array {
+        $startDateObj = new DateTime($startDate);
+        $endDateObj = new DateTime($endDate);
+        if ($startDateObj > $endDateObj) {
+            throw new ValidationException(['endDate' => ['End date must be after start date']]);
+        }
+
+        $employees = [];
+        if ($employeeIds === null || $employeeIds === []) {
+            $employees = $this->employeeMapper->findAllActive();
+        } else {
+            foreach ($employeeIds as $id) {
+                try {
+                    $employees[] = $this->employeeMapper->find((int)$id);
+                } catch (\Exception) {
+                    // Unknown/removed employee id — silently ignore.
+                }
+            }
+        }
+
+        $booked = [];
+        $skipped = [];
+
+        foreach ($employees as $employee) {
+            $employeeId = $employee->getId();
+            $name = trim($employee->getFirstName() . ' ' . $employee->getLastName());
+            $federalState = $employee->getFederalState();
+
+            $workingDays = $this->calculateWorkingDays($startDateObj, $endDateObj, $federalState, $employeeId);
+            if ($workingDays <= 0) {
+                // No working day in the period for this employee (part-time not
+                // scheduled, or only holidays) — nothing to book or report.
+                continue;
+            }
+
+            $reason = null;
+            try {
+                $this->checkVacationQuota($employeeId, $startDateObj, $endDateObj, $federalState, 1.0);
+            } catch (ValidationException) {
+                $reason = 'insufficient_vacation';
+            }
+            if ($reason === null) {
+                try {
+                    $this->checkTimeEntryConflict($employeeId, $startDateObj, $endDateObj, 1.0);
+                } catch (ValidationException) {
+                    $reason = 'time_entry_conflict';
+                }
+            }
+            if ($reason !== null) {
+                $skipped[] = ['employeeId' => $employeeId, 'name' => $name, 'reason' => $reason];
+                continue;
+            }
+
+            $absence = new Absence();
+            $absence->setEmployeeId($employeeId);
+            $absence->setType(Absence::TYPE_VACATION);
+            $absence->setStartDate($startDateObj);
+            $absence->setEndDate($endDateObj);
+            $absence->setDays((string)$workingDays);
+            $absence->setScopeValue(1.0);
+            $absence->setNote($note);
+            $absence->setIsCentral(1);
+            $absence->setStatus(Absence::STATUS_APPROVED);
+            $absence->setApprovedAt(new DateTime());
+            $absence->setApprovedBy(null);
+            $absence->setCreatedAt(new DateTime());
+            $absence->setUpdatedAt(new DateTime());
+            $absence = $this->absenceMapper->insert($absence);
+
+            if ($currentUserId) {
+                $this->auditLogService->logCreate($currentUserId, 'absence', $absence->getId(), $absence->jsonSerialize());
+            }
+
+            $booked[] = ['employeeId' => $employeeId, 'name' => $name, 'days' => $workingDays];
+        }
+
+        return ['booked' => $booked, 'skipped' => $skipped];
+    }
+
+    /**
+     * @return Absence[]
+     */
+    public function findCentralAbsences(): array {
+        return $this->absenceMapper->findCentral();
+    }
+
+    /**
+     * Remove a whole Betriebsferien operation (all central entries for the exact
+     * date range). Returns the number of removed entries (#15).
+     */
+    public function deleteCompanyVacation(string $startDate, string $endDate, string $currentUserId = ''): int {
+        $entries = $this->absenceMapper->findCentralByRange(new DateTime($startDate), new DateTime($endDate));
+        foreach ($entries as $absence) {
+            if ($currentUserId) {
+                $this->auditLogService->logDelete($currentUserId, 'absence', $absence->getId(), $absence->jsonSerialize());
+            }
+            $this->absenceMapper->delete($absence);
+        }
+        return count($entries);
+    }
+
+    /**
      * @throws NotFoundException
      * @throws ValidationException
      * @throws ForbiddenException

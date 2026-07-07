@@ -477,4 +477,80 @@ class AbsenceServiceTest extends TestCase {
         $this->assertSame(3.0, $stats['used']);
         $this->assertSame(27.0, $stats['remaining']);
     }
+
+    // ---------------------------------------------------------------------
+    // #15: Betriebsferien — zentrale Urlaubsbuchung für alle/ausgewählte MA
+    // ---------------------------------------------------------------------
+
+    private function cvEmployee(int $id, string $first, int $vacationDays): \OCA\WorkTime\Db\Employee {
+        $e = new \OCA\WorkTime\Db\Employee();
+        $e->setId($id);
+        $e->setUserId('u' . $id);
+        $e->setFirstName($first);
+        $e->setLastName('Test');
+        $e->setFederalState('BW');
+        $e->setVacationDays($vacationDays);
+        $e->setIsActive(true);
+        return $e;
+    }
+
+    public function testCompanyVacationBooksEligibleAndSkipsInsufficient(): void {
+        // Emp 1 has 30 vacation days, Emp 2 only 3. The Betriebsferien needs 5.
+        $emp1 = $this->cvEmployee(1, 'Anna', 30);
+        $emp2 = $this->cvEmployee(2, 'Bea', 3);
+        $this->employeeMapper->method('find')->willReturnCallback(
+            static fn(int $id) => $id === 1 ? $emp1 : $emp2
+        );
+        $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
+        $this->workScheduleService->method('countWorkingDays')->willReturn(5.0);
+        $this->absenceMapper->method('findByEmployeeAndYear')->willReturn([]); // no prior vacation
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]); // no conflicts
+
+        $inserted = [];
+        $this->absenceMapper->method('insert')->willReturnCallback(
+            static function (Absence $a) use (&$inserted): Absence {
+                $a->setId(100 + count($inserted));
+                $inserted[] = $a;
+                return $a;
+            }
+        );
+
+        $result = $this->service->createCompanyVacation('2026-08-03', '2026-08-07', [1, 2], 'Betriebsferien', 'admin');
+
+        // Emp 1 booked, Emp 2 skipped (not enough vacation).
+        $this->assertCount(1, $result['booked']);
+        $this->assertSame(1, $result['booked'][0]['employeeId']);
+        $this->assertSame(5.0, $result['booked'][0]['days']);
+
+        $this->assertCount(1, $result['skipped']);
+        $this->assertSame(2, $result['skipped'][0]['employeeId']);
+        $this->assertSame('insufficient_vacation', $result['skipped'][0]['reason']);
+
+        // Exactly one absence was inserted, marked central + approved vacation.
+        $this->assertCount(1, $inserted);
+        $this->assertTrue($inserted[0]->isCentral());
+        $this->assertSame(Absence::STATUS_APPROVED, $inserted[0]->getStatus());
+        $this->assertSame(Absence::TYPE_VACATION, $inserted[0]->getType());
+    }
+
+    public function testCompanyVacationSkipsEmployeesWithTimeEntryConflict(): void {
+        $emp = $this->cvEmployee(1, 'Anna', 30);
+        $this->employeeMapper->method('find')->willReturn($emp);
+        $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
+        $this->workScheduleService->method('countWorkingDays')->willReturn(5.0);
+        $this->absenceMapper->method('findByEmployeeAndYear')->willReturn([]);
+
+        // A time entry exists in the period → full-day absence conflict (#360).
+        $entry = new TimeEntry();
+        $entry->setEmployeeId(1);
+        $entry->setDate(new DateTime('2026-08-04'));
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([$entry]);
+        $this->absenceMapper->expects($this->never())->method('insert');
+
+        $result = $this->service->createCompanyVacation('2026-08-03', '2026-08-07', [1], null, 'admin');
+
+        $this->assertCount(0, $result['booked']);
+        $this->assertCount(1, $result['skipped']);
+        $this->assertSame('time_entry_conflict', $result['skipped'][0]['reason']);
+    }
 }

@@ -123,4 +123,34 @@ export default {
             handleApiError(error)
         }
     },
+
+    // #15 Betriebsferien
+    async createCompanyVacation(data) {
+        try {
+            const response = await api.post('/absences/company-vacation', data)
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+            throw error
+        }
+    },
+
+    async getCentralAbsences() {
+        try {
+            const response = await api.get('/absences/central')
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
+    async deleteCompanyVacation(startDate, endDate) {
+        try {
+            const response = await api.post('/absences/company-vacation/delete', { startDate, endDate })
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+            throw error
+        }
+    },
 }

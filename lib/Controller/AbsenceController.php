@@ -166,6 +166,11 @@ class AbsenceController extends BaseController {
                 return $this->forbiddenResponse();
             }
 
+            // #15: centrally set Betriebsferien may only be changed by HR/Admin.
+            if ($absence->isCentral() && !$this->permissionService->canManageEmployees($this->userId)) {
+                return $this->forbiddenResponse();
+            }
+
             // Get employee's federal state
             $employee = $this->employeeService->find($absence->getEmployeeId());
             $federalState = $employee->getFederalState();
@@ -202,6 +207,11 @@ class AbsenceController extends BaseController {
             $absence = $this->absenceService->find($id);
 
             if (!$this->permissionService->canEditTimeEntry($this->userId, $absence->getEmployeeId())) {
+                return $this->forbiddenResponse();
+            }
+
+            // #15: centrally set Betriebsferien may only be removed by HR/Admin.
+            if ($absence->isCentral() && !$this->permissionService->canManageEmployees($this->userId)) {
                 return $this->forbiddenResponse();
             }
 
@@ -276,9 +286,75 @@ class AbsenceController extends BaseController {
                 return $this->forbiddenResponse();
             }
 
+            // #15: centrally set Betriebsferien may only be cancelled by HR/Admin,
+            // never by the affected employee.
+            if ($absence->isCentral() && !$this->permissionService->canManageEmployees($this->userId)) {
+                return $this->forbiddenResponse();
+            }
+
             $absence = $this->absenceService->cancel($id, $this->userId);
 
             return $this->successResponse($absence);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    /**
+     * #15 Betriebsferien: book a closure as vacation for all/selected employees.
+     */
+    #[NoAdminRequired]
+    public function companyVacation(
+        string $startDate = '',
+        string $endDate = '',
+        ?array $employeeIds = null,
+        ?string $note = null
+    ): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+        if (!$this->permissionService->canManageEmployees($this->userId)) {
+            return $this->forbiddenResponse();
+        }
+
+        try {
+            $result = $this->absenceService->createCompanyVacation($startDate, $endDate, $employeeIds, $note, $this->userId);
+            return $this->createdResponse($result);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    /**
+     * #15: list all active Betriebsferien entries for the settings overview.
+     */
+    #[NoAdminRequired]
+    public function centralAbsences(): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+        if (!$this->permissionService->canManageEmployees($this->userId)) {
+            return $this->forbiddenResponse();
+        }
+
+        return $this->successResponse($this->absenceService->findCentralAbsences());
+    }
+
+    /**
+     * #15: remove a whole Betriebsferien operation (all central entries for the range).
+     */
+    #[NoAdminRequired]
+    public function deleteCompanyVacation(string $startDate = '', string $endDate = ''): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+        if (!$this->permissionService->canManageEmployees($this->userId)) {
+            return $this->forbiddenResponse();
+        }
+
+        try {
+            $count = $this->absenceService->deleteCompanyVacation($startDate, $endDate, $this->userId);
+            return $this->successResponse(['removed' => $count]);
         } catch (\Exception $e) {
             return $this->handleException($e);
         }

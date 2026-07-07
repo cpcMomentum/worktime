@@ -377,4 +377,38 @@ class AbsenceMapper extends QBMapper {
 
         return $this->findEntities($qb);
     }
+
+    /**
+     * All centrally created (admin-set) absences — Betriebsferien (#15).
+     * Cancelled ones are excluded so the settings list only shows active entries.
+     *
+     * @return Absence[]
+     */
+    public function findCentral(): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('is_central', $qb->createNamedParameter(1, IQueryBuilder::PARAM_INT)))
+            ->andWhere($qb->expr()->neq('status', $qb->createNamedParameter(Absence::STATUS_CANCELLED)))
+            ->orderBy('start_date', 'DESC');
+
+        return $this->findEntities($qb);
+    }
+
+    /**
+     * Centrally created absences for one exact date range — identifies a single
+     * Betriebsferien operation for bulk removal (#15).
+     *
+     * @return Absence[]
+     */
+    public function findCentralByRange(DateTime $startDate, DateTime $endDate): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('is_central', $qb->createNamedParameter(1, IQueryBuilder::PARAM_INT)))
+            ->andWhere($qb->expr()->eq('start_date', $qb->createNamedParameter($startDate, IQueryBuilder::PARAM_DATE)))
+            ->andWhere($qb->expr()->eq('end_date', $qb->createNamedParameter($endDate, IQueryBuilder::PARAM_DATE)));
+
+        return $this->findEntities($qb);
+    }
 }

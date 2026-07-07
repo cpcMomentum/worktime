@@ -287,6 +287,13 @@
                 </div>
             </NcSettingsSection>
 
+            <NcSettingsSection v-if="canManageEmployees"
+                v-show="activeSection === 'sec-betriebsferien'"
+                id="sec-betriebsferien" :name="t('worktime', 'Betriebsferien')"
+                :description="t('worktime', 'Tragen Sie Betriebsferien zentral für alle oder ausgewählte Mitarbeiter als Urlaub ein.')">
+                <BetriebsferienSettings :employees="employees" />
+            </NcSettingsSection>
+
             <NcSettingsSection v-if="canManageSettings"
                 v-show="activeSection === 'sec-sondertage'"
                 id="sec-sondertage" :name="t('worktime', 'Sondertage')"
@@ -772,6 +779,7 @@ import CoffeeOutline from 'vue-material-design-icons/CoffeeOutline.vue'
 import FilePdfBox from 'vue-material-design-icons/FilePdfBox.vue'
 import StarOutline from 'vue-material-design-icons/StarOutline.vue'
 import CalendarStar from 'vue-material-design-icons/CalendarStar.vue'
+import Beach from 'vue-material-design-icons/Beach.vue'
 import SwapHorizontalBold from 'vue-material-design-icons/SwapHorizontalBold.vue'
 import CashMultiple from 'vue-material-design-icons/CashMultiple.vue'
 import { getFilePickerBuilder, FilePickerType, DialogBuilder } from '@nextcloud/dialogs'
@@ -780,6 +788,7 @@ import SettingsService from '../services/SettingsService.js'
 import HolidayService from '../services/HolidayService.js'
 import EmployeeForm from '../components/EmployeeForm.vue'
 import EmployeeList from '../components/EmployeeList.vue'
+import BetriebsferienSettings from '../components/BetriebsferienSettings.vue'
 import ProjectForm from '../components/ProjectForm.vue'
 import ProjectList from '../components/ProjectList.vue'
 import { showSuccessMessage, showErrorMessage, confirmAction } from '../utils/errorHandler.js'
@@ -824,10 +833,12 @@ export default {
         FilePdfBox,
         StarOutline,
         CalendarStar,
+        Beach,
         SwapHorizontalBold,
         CashMultiple,
         EmployeeForm,
         EmployeeList,
+        BetriebsferienSettings,
         ProjectForm,
         ProjectList,
     },
@@ -1010,6 +1021,7 @@ export default {
                     { id: 'sec-pdf', label: this.t('worktime', 'PDF-Archiv'), icon: 'FilePdfBox', visible: this.canManageSettings },
                 ]),
                 group(this.t('worktime', 'Kalender'), [
+                    { id: 'sec-betriebsferien', label: this.t('worktime', 'Betriebsferien'), icon: 'Beach', visible: this.canManageEmployees },
                     { id: 'sec-sondertage', label: this.t('worktime', 'Sondertage'), icon: 'StarOutline', visible: this.canManageSettings },
                     { id: 'sec-feiertage', label: this.t('worktime', 'Feiertage'), icon: 'CalendarStar', visible: this.canManageHolidays },
                 ]),
