@@ -84,7 +84,12 @@ jobs:
             Der zu reviewende Pull Request ist #${{ github.event.pull_request.number }} im Repository ${{ github.repository }}.
             WICHTIG: Verwende fuer ALLE gh-Befehle ausschliesslich diese PR-Nummer (${{ github.event.pull_request.number }}).
             Ignoriere Issue-Referenzen wie "Fixes #NN" oder Nummern im Titel/Diff — das ist NICHT die PR-Nummer.
-            Hol dir den Diff mit:  gh pr diff ${{ github.event.pull_request.number }}
+
+            Hol dir den Diff LOKAL mit git — NIEMALS mit "gh pr diff": die GitHub-API
+            ignoriert .gitattributes und liefert generierte js/-Bundles mit (bei einem
+            Chunk-Rename >30 MB, das sprengt den Kontext).
+              Dateiliste:  git diff origin/${{ github.base_ref }}...HEAD --name-status
+              Diff:        git diff origin/${{ github.base_ref }}...HEAD -- . ':(exclude)js/*'
 
             ## Schritt 1: Review
             Reviewe den KOMPLETTEN PR-Diff und pruefe:
@@ -123,7 +128,7 @@ jobs:
 
           claude_args: |
             --max-turns 50
-            --allowedTools "Edit,MultiEdit,Glob,Grep,LS,Read,Write,Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git rm:*),Bash(gh pr comment:*),Bash(gh pr review:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(npm run:*),Bash(npx:*),Bash(cd:*),Bash(ls:*),Bash(cat:*),Bash(grep:*),Bash(head:*),Bash(tail:*),Bash(ruff:*),Bash(pip:*),Bash(python:*),mcp__github_comment__update_claude_comment"
+            --allowedTools "Edit,MultiEdit,Glob,Grep,LS,Read,Write,Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git rm:*),Bash(gh pr comment:*),Bash(gh pr review:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(npm run:*),Bash(npx:*),Bash(cd:*),Bash(ls:*),Bash(cat:*),Bash(grep:*),Bash(head:*),Bash(tail:*),Bash(ruff:*),Bash(pip:*),Bash(python:*),mcp__github_comment__update_claude_comment"
 
       - name: Run Claude Release Review
         # Release PRs (release/* -> main): review RELEASE-readiness, not the code
@@ -147,9 +152,11 @@ jobs:
             auf den develop-PRs reviewt — reviewe ihn NICHT Zeile fuer Zeile neu.
             Ueberfliege den Diff nur fuer Auffaelligkeiten und pruefe die RELEASE-spezifischen Punkte.
 
-            Kontext holen (nur was du brauchst, nicht alles komplett lesen):
+            Kontext holen (nur was du brauchst, nicht alles komplett lesen).
+            Den Diff LOKAL mit git holen — NIEMALS mit "gh pr diff" (die GitHub-API
+            ignoriert .gitattributes und liefert generierte js/-Bundles >30 MB mit):
               gh pr view ${{ github.event.pull_request.number }}
-              gh pr diff ${{ github.event.pull_request.number }}
+              git diff origin/${{ github.base_ref }}...HEAD -- . ':(exclude)js/*'
               git log origin/${{ github.base_ref }}..HEAD --oneline
 
             Pruefe:
@@ -177,4 +184,4 @@ jobs:
             NEEDS_FIX nur bei echten Release-Blockern (fehlende Migration, falscher CHANGELOG/Version, Reste, Integrationskonflikt).
           claude_args: |
             --max-turns 40
-            --allowedTools "Glob,Grep,LS,Read,Bash(git diff:*),Bash(git log:*),Bash(gh pr comment:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr list:*),Bash(cat:*),Bash(ls:*),Bash(grep:*),Bash(head:*),Bash(tail:*),mcp__github_comment__update_claude_comment"
+            --allowedTools "Glob,Grep,LS,Read,Bash(git diff:*),Bash(git log:*),Bash(gh pr comment:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(cat:*),Bash(ls:*),Bash(grep:*),Bash(head:*),Bash(tail:*),mcp__github_comment__update_claude_comment"
