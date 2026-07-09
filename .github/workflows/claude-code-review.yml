@@ -110,6 +110,13 @@ jobs:
             Gebaute Artefakte (js/, css/, dist/, vendor/, Lockfiles, signature.json)
             NICHT reviewen — sie sind generiert.
 
+            Fuehre KEINE Tests, Builds oder Installationen aus — composer/npm
+            install sind hier geblockt, vendor/ und node_modules existieren im
+            Checkout nicht, und Tests laufen in eigenen CI-Jobs (phpunit-Matrix,
+            node). Verifiziere Aenderungen ausschliesslich statisch (Diff und
+            Code lesen). Ist ein Befehl geblockt ("requires approval"), probiere
+            KEINE Alternativen — arbeite direkt statisch weiter.
+
             ## Schritt 1: Review
             Reviewe den KOMPLETTEN PR-Diff und pruefe:
             - Code-Qualitaet und Best Practices
