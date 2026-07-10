@@ -200,10 +200,13 @@ export default {
             return start === end ? start : `${start} - ${end}`
         },
         typeOptions() {
-            return Object.entries(this.absenceTypes).map(([value, label]) => ({
-                id: value,
-                label,
-            }))
+            // Betriebsschließung ist nicht beantragbar — entsteht nur zentral (#15 Stufe 2).
+            return Object.entries(this.absenceTypes)
+                .filter(([value]) => value !== 'company_closure')
+                .map(([value, label]) => ({
+                    id: value,
+                    label,
+                }))
         },
         selectedType: {
             get() {
@@ -613,6 +616,7 @@ tr.creating {
 .type-dot.type-training { background-color: #2ecc71; }
 .type-dot.type-unpaid { background-color: #34495e; }
 .type-dot.type-compensatory { background-color: #1abc9c; }
+.type-dot.type-company_closure { background-color: #4a7dbd; }
 
 </style>
 

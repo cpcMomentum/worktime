@@ -116,11 +116,12 @@ export default {
 				special: { label: t('worktime', 'Sonderurlaub'), description: t('worktime', 'Bezahlte Freistellung, z.B. Hochzeit, Umzug oder Trauerfall.') },
 				compensatory: { label: t('worktime', 'Freizeitausgleich'), description: t('worktime', 'Überstunden als Freizeit nehmen. Reduziert die Überstunden.') },
 				unpaid: { label: t('worktime', 'Unbezahlter Urlaub'), description: t('worktime', 'Freistellung ohne Gehalt. Reduziert die Soll-Stunden.') },
+				company_closure: { label: t('worktime', 'Betriebsschließung'), description: t('worktime', 'Bezahlte Freistellung bei Betriebsferien. Kein Urlaubs- oder Überstundenabzug.') },
 			}
 			// Privilegierte User (Admin/HR/Supervisor) sehen immer die volle Legende
 			// ohne "Abwesend" (das ist nur die maskierte Anzeige für Kollegen)
 			if (this.showFullLegend) {
-				const types = ['vacation', 'sick', 'child_sick', 'special', 'training', 'unpaid', 'compensatory']
+				const types = ['vacation', 'sick', 'child_sick', 'special', 'training', 'unpaid', 'compensatory', 'company_closure']
 				return types.map(type => ({ type, ...typeInfo[type] }))
 			}
 			const usedTypes = new Set()
@@ -188,6 +189,7 @@ export default {
 					training: t('worktime', 'Fortbildung'),
 					compensatory: t('worktime', 'Freizeitausgleich'),
 					unpaid: t('worktime', 'Unbezahlter Urlaub'),
+					company_closure: t('worktime', 'Betriebsschließung'),
 				}
 			const typeLabel = typeLabels[absence.type] || absence.typeName
 			return `${typeLabel}: ${start} - ${end}`
@@ -294,6 +296,7 @@ export default {
 .type-special { background-color: #8e6bbf; }       /* Sonderurlaub */
 .type-compensatory { background-color: #3a9aa8; }  /* Freizeitausgleich */
 .type-unpaid { background-color: #5b6b7a; }        /* Unbezahlt */
+.type-company_closure { background-color: #4a7dbd; } /* Betriebsschließung */
 .type-absent { background-color: #9aa3ad; }        /* Abwesend (maskiert) */
 
 /* Status-Modus (#345): genehmigt = grün, beantragt = schraffiertes Amber */

@@ -31,6 +31,8 @@ export const ABSENCE_TYPES = {
     TRAINING: 'training',
     COMPENSATORY: 'compensatory',
     UNPAID: 'unpaid',
+    // #15 Stufe 2: nur zentral über Betriebsferien setzbar, nicht beantragbar
+    COMPANY_CLOSURE: 'company_closure',
 }
 
 /**
@@ -75,6 +77,7 @@ export function ABSENCE_TYPE_LABELS() {
         [ABSENCE_TYPES.TRAINING]: t('worktime', 'Fortbildung'),
         [ABSENCE_TYPES.COMPENSATORY]: t('worktime', 'Freizeitausgleich'),
         [ABSENCE_TYPES.UNPAID]: t('worktime', 'Unbezahlter Urlaub'),
+        [ABSENCE_TYPES.COMPANY_CLOSURE]: t('worktime', 'Betriebsschließung'),
     }
 }
 

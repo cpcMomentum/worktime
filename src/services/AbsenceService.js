@@ -123,4 +123,36 @@ export default {
             handleApiError(error)
         }
     },
+
+    // #15 Betriebsferien
+    async createCompanyVacation(data) {
+        try {
+            const response = await api.post('/absences/company-vacation', data)
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+            throw error
+        }
+    },
+
+    async getCentralAbsences() {
+        try {
+            const response = await api.get('/absences/central')
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
+    async deleteCompanyVacation(startDate, endDate, group = null) {
+        try {
+            // #15 Stufe 2: bevorzugt per Gruppen-ID (deckt Split-Einträge ab),
+            // Zeitraum bleibt als Fallback für Alt-Einträge ohne Gruppe.
+            const response = await api.post('/absences/company-vacation/delete', { startDate, endDate, group: group || '' })
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+            throw error
+        }
+    },
 }

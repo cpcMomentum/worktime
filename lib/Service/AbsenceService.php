@@ -22,6 +22,19 @@ use Psr\Log\LoggerInterface;
 
 class AbsenceService {
 
+    /** #15 Stufe 2: Überhang-Behandlung wenn der Resturlaub die Betriebsferien nicht deckt. */
+    public const OVERAGE_SKIP = 'skip';
+    public const OVERAGE_CLOSURE = 'closure';
+    public const OVERAGE_COMPENSATORY = 'compensatory';
+    public const OVERAGE_NEGATIVE = 'negative';
+
+    public const OVERAGE_OPTIONS = [
+        self::OVERAGE_SKIP,
+        self::OVERAGE_CLOSURE,
+        self::OVERAGE_COMPENSATORY,
+        self::OVERAGE_NEGATIVE,
+    ];
+
     public function __construct(
         private AbsenceMapper $absenceMapper,
         private EmployeeMapper $employeeMapper,
@@ -103,6 +116,11 @@ class AbsenceService {
         $startDateObj = new DateTime($startDate);
         $endDateObj = new DateTime($endDate);
 
+        // #15 Stufe 2: Betriebsschließung entsteht nur über den zentralen Weg.
+        if ($type === Absence::TYPE_COMPANY_CLOSURE) {
+            throw new ValidationException(['type' => [$this->l->t('Betriebsschließung kann nur zentral über die Betriebsferien gesetzt werden')]]);
+        }
+
         // Validate
         $errors = $this->validate($employeeId, $type, $startDateObj, $endDateObj, null, $scope);
         if (!empty($errors)) {
@@ -179,6 +197,278 @@ class AbsenceService {
     }
 
     /**
+     * #15 Betriebsferien: book a company-wide (or selected) closure as vacation.
+     *
+     * Each targeted employee gets approved, centrally-marked absence entries for
+     * the period (schedule-aware, so part-time and holidays are handled per
+     * person). Employees who already have time entries in the period are never
+     * booked — they are returned in `skipped` for the admin to handle.
+     *
+     * When the remaining vacation does not cover the period, `$overageHandling`
+     * decides (#15 Stufe 2 — a deliberate admin choice, the app makes no legal
+     * assessment):
+     *  - OVERAGE_SKIP: do not book, report as skipped (Stufe-1 behaviour).
+     *  - OVERAGE_CLOSURE: vacation until the quota is used up, the rest as paid
+     *    company closure (no vacation/overtime deduction).
+     *  - OVERAGE_COMPENSATORY: vacation until the quota is used up, the rest as
+     *    compensatory time (reduces the overtime balance).
+     *  - OVERAGE_NEGATIVE: book everything as vacation, allowing the account to
+     *    go negative (advance on next year's quota).
+     *
+     * All entries of one call share a `centralGroup` id so the operation can be
+     * listed and removed as a whole even when it splits into several entries.
+     *
+     * @param int[]|null $employeeIds null/empty = all active employees
+     * @return array{group: string, booked: list<array{employeeId:int,name:string,days:float,vacationDays:float,overageDays:float}>, skipped: list<array{employeeId:int,name:string,reason:string}>}
+     * @throws ValidationException on invalid dates or overage option
+     */
+    public function createCompanyVacation(
+        string $startDate,
+        string $endDate,
+        ?array $employeeIds,
+        ?string $note,
+        string $currentUserId = '',
+        string $overageHandling = self::OVERAGE_SKIP
+    ): array {
+        $startDateObj = new DateTime($startDate);
+        $endDateObj = new DateTime($endDate);
+        if ($startDateObj > $endDateObj) {
+            throw new ValidationException(['endDate' => ['End date must be after start date']]);
+        }
+        if (!in_array($overageHandling, self::OVERAGE_OPTIONS, true)) {
+            throw new ValidationException(['overageHandling' => ['Invalid overage handling option']]);
+        }
+
+        $employees = [];
+        if ($employeeIds === null || $employeeIds === []) {
+            $employees = $this->employeeMapper->findAllActive();
+        } else {
+            foreach ($employeeIds as $id) {
+                try {
+                    $employees[] = $this->employeeMapper->find((int)$id);
+                } catch (\Exception) {
+                    // Unknown/removed employee id — silently ignore.
+                }
+            }
+        }
+
+        $group = bin2hex(random_bytes(16));
+        $booked = [];
+        $skipped = [];
+
+        foreach ($employees as $employee) {
+            $employeeId = $employee->getId();
+            $name = trim($employee->getFirstName() . ' ' . $employee->getLastName());
+            $federalState = $employee->getFederalState();
+
+            $workingDays = $this->calculateWorkingDays($startDateObj, $endDateObj, $federalState, $employeeId);
+            if ($workingDays <= 0) {
+                // No working day in the period for this employee (part-time not
+                // scheduled, or only holidays) — nothing to book or report.
+                continue;
+            }
+
+            try {
+                $this->checkTimeEntryConflict($employeeId, $startDateObj, $endDateObj, 1.0);
+            } catch (ValidationException) {
+                $skipped[] = ['employeeId' => $employeeId, 'name' => $name, 'reason' => 'time_entry_conflict'];
+                continue;
+            }
+
+            if ($overageHandling === self::OVERAGE_SKIP) {
+                try {
+                    $this->checkVacationQuota($employeeId, $startDateObj, $endDateObj, $federalState, 1.0);
+                } catch (ValidationException) {
+                    $skipped[] = ['employeeId' => $employeeId, 'name' => $name, 'reason' => 'insufficient_vacation'];
+                    continue;
+                }
+            }
+
+            if ($overageHandling === self::OVERAGE_CLOSURE || $overageHandling === self::OVERAGE_COMPENSATORY) {
+                $overageType = $overageHandling === self::OVERAGE_CLOSURE
+                    ? Absence::TYPE_COMPANY_CLOSURE
+                    : Absence::TYPE_COMPENSATORY;
+                [$segments, $vacationDays, $overageDays] = $this->splitByVacationQuota(
+                    $employeeId, $startDateObj, $endDateObj, $federalState, $overageType
+                );
+                foreach ($segments as $segment) {
+                    $this->insertCentralAbsence(
+                        $employeeId, $segment['type'], $segment['start'], $segment['end'],
+                        $segment['days'], $note, $group, $currentUserId
+                    );
+                }
+            } else {
+                // OVERAGE_SKIP (quota already verified) or OVERAGE_NEGATIVE: one
+                // vacation entry over the whole period.
+                $vacationDays = $workingDays;
+                $overageDays = 0.0;
+                $this->insertCentralAbsence(
+                    $employeeId, Absence::TYPE_VACATION, clone $startDateObj, clone $endDateObj,
+                    $workingDays, $note, $group, $currentUserId
+                );
+            }
+
+            $booked[] = [
+                'employeeId' => $employeeId,
+                'name' => $name,
+                'days' => $vacationDays + $overageDays,
+                'vacationDays' => $vacationDays,
+                'overageDays' => $overageDays,
+            ];
+        }
+
+        return ['group' => $group, 'booked' => $booked, 'skipped' => $skipped];
+    }
+
+    /**
+     * #15 Stufe 2: walk the period day by day and classify each working day as
+     * vacation (while the employee's yearly quota still covers it) or as the
+     * chosen overage type. Consecutive days of the same class become one entry;
+     * non-working days in between attach to the running segment. Year-aware:
+     * a period crossing New Year draws on each year's own remaining quota.
+     *
+     * @return array{0: list<array{type:string,start:DateTime,end:DateTime,days:float}>, 1: float, 2: float}
+     *         [segments, vacationDays, overageDays]
+     */
+    private function splitByVacationQuota(
+        int $employeeId,
+        DateTime $startDate,
+        DateTime $endDate,
+        string $federalState,
+        string $overageType
+    ): array {
+        $holidays = $this->holidayMapper->findHolidaysInRange($startDate, $endDate, $federalState);
+
+        $remaining = [];
+        $segments = [];
+        $currentType = null;
+        $segStart = null;
+        $segDays = 0.0;
+        $vacationDays = 0.0;
+        $overageDays = 0.0;
+
+        for ($day = clone $startDate; $day <= $endDate; $day->modify('+1 day')) {
+            $dayValue = $this->workScheduleService->countWorkingDays($employeeId, $day, $day, $holidays);
+            if ($dayValue <= 0) {
+                continue;
+            }
+
+            $year = (int)$day->format('Y');
+            $remaining[$year] ??= $this->remainingVacationDays($employeeId, $year, $federalState);
+
+            if ($remaining[$year] >= $dayValue - 1e-9) {
+                $type = Absence::TYPE_VACATION;
+                $remaining[$year] -= $dayValue;
+                $vacationDays += $dayValue;
+            } else {
+                $type = $overageType;
+                $overageDays += $dayValue;
+            }
+
+            if ($currentType === null) {
+                // First working day: the segment covers leading non-working days too.
+                $currentType = $type;
+                $segStart = clone $startDate;
+            } elseif ($type !== $currentType) {
+                $segments[] = [
+                    'type' => $currentType,
+                    'start' => $segStart,
+                    'end' => (clone $day)->modify('-1 day'),
+                    'days' => $segDays,
+                ];
+                $currentType = $type;
+                $segStart = clone $day;
+                $segDays = 0.0;
+            }
+            $segDays += $dayValue;
+        }
+
+        if ($currentType !== null) {
+            // Last segment covers trailing non-working days up to the period end.
+            $segments[] = [
+                'type' => $currentType,
+                'start' => $segStart,
+                'end' => clone $endDate,
+                'days' => $segDays,
+            ];
+        }
+
+        return [$segments, $vacationDays, $overageDays];
+    }
+
+    private function insertCentralAbsence(
+        int $employeeId,
+        string $type,
+        DateTime $startDate,
+        DateTime $endDate,
+        float $days,
+        ?string $note,
+        string $group,
+        string $currentUserId
+    ): Absence {
+        $absence = new Absence();
+        $absence->setEmployeeId($employeeId);
+        $absence->setType($type);
+        $absence->setStartDate($startDate);
+        $absence->setEndDate($endDate);
+        $absence->setDays((string)$days);
+        $absence->setScopeValue(1.0);
+        $absence->setNote($note);
+        $absence->setIsCentral(1);
+        $absence->setCentralGroup($group);
+        $absence->setStatus(Absence::STATUS_APPROVED);
+        $absence->setApprovedAt(new DateTime());
+        $absence->setApprovedBy(null);
+        $absence->setCreatedAt(new DateTime());
+        $absence->setUpdatedAt(new DateTime());
+        $absence = $this->absenceMapper->insert($absence);
+
+        if ($currentUserId) {
+            $this->auditLogService->logCreate($currentUserId, 'absence', $absence->getId(), $absence->jsonSerialize());
+        }
+
+        return $absence;
+    }
+
+    /**
+     * @return Absence[]
+     */
+    public function findCentralAbsences(): array {
+        return $this->absenceMapper->findCentral();
+    }
+
+    /**
+     * Remove a whole Betriebsferien operation (all central entries for the exact
+     * date range). Returns the number of removed entries (#15).
+     */
+    public function deleteCompanyVacation(string $startDate, string $endDate, string $currentUserId = ''): int {
+        $entries = $this->absenceMapper->findCentralByRange(new DateTime($startDate), new DateTime($endDate));
+        return $this->deleteCentralEntries($entries, $currentUserId);
+    }
+
+    /**
+     * #15 Stufe 2: remove a whole Betriebsferien operation by its group id —
+     * covers split entries whose date ranges differ per employee.
+     */
+    public function deleteCompanyVacationByGroup(string $group, string $currentUserId = ''): int {
+        $entries = $this->absenceMapper->findCentralByGroup($group);
+        return $this->deleteCentralEntries($entries, $currentUserId);
+    }
+
+    /**
+     * @param Absence[] $entries
+     */
+    private function deleteCentralEntries(array $entries, string $currentUserId): int {
+        foreach ($entries as $absence) {
+            if ($currentUserId) {
+                $this->auditLogService->logDelete($currentUserId, 'absence', $absence->getId(), $absence->jsonSerialize());
+            }
+            $this->absenceMapper->delete($absence);
+        }
+        return count($entries);
+    }
+
+    /**
      * @throws NotFoundException
      * @throws ValidationException
      * @throws ForbiddenException
@@ -203,6 +493,12 @@ class AbsenceService {
         // Cannot edit cancelled absences
         if ($absence->getStatus() === Absence::STATUS_CANCELLED) {
             throw new ForbiddenException('Cannot edit cancelled absences');
+        }
+
+        // #15 Stufe 2: Betriebsschließung entsteht nur über den zentralen Weg —
+        // ein bestehender zentraler Eintrag darf den Typ aber behalten.
+        if ($type === Absence::TYPE_COMPANY_CLOSURE && $absence->getType() !== Absence::TYPE_COMPANY_CLOSURE) {
+            throw new ValidationException(['type' => [$this->l->t('Betriebsschließung kann nur zentral über die Betriebsferien gesetzt werden')]]);
         }
 
         $startDateObj = new DateTime($startDate);
@@ -562,8 +858,6 @@ class AbsenceService {
         float $scope,
         ?int $excludeId = null
     ): void {
-        $totalVacationDays = (float)$this->employeeMapper->find($employeeId)->getVacationDays();
-
         $startYear = (int)$startDate->format('Y');
         $endYear = (int)$endDate->format('Y');
 
@@ -578,22 +872,7 @@ class AbsenceService {
                 continue;
             }
 
-            // Already-used in-year days (approved + pending, excluding this record).
-            $usedDays = 0.0;
-            foreach ($this->absenceMapper->findByEmployeeAndYear($employeeId, $year) as $absence) {
-                if ($absence->getType() !== Absence::TYPE_VACATION) {
-                    continue;
-                }
-                if ($absence->getStatus() === Absence::STATUS_CANCELLED) {
-                    continue;
-                }
-                if ($excludeId !== null && $absence->getId() === $excludeId) {
-                    continue;
-                }
-                $usedDays += $this->vacationDaysInYear($absence, $year, $federalState);
-            }
-
-            $remaining = $totalVacationDays - $usedDays;
+            $remaining = $this->remainingVacationDays($employeeId, $year, $federalState, $excludeId);
             if ($requestedInYear > $remaining) {
                 throw new ValidationException([
                     'vacationQuota' => [sprintf(
@@ -604,6 +883,31 @@ class AbsenceService {
                 ]);
             }
         }
+    }
+
+    /**
+     * Remaining vacation days of one calendar year: quota minus the in-year
+     * portion of all approved + pending vacation entries (#439). May be
+     * negative after an OVERAGE_NEGATIVE booking (#15 Stufe 2).
+     */
+    private function remainingVacationDays(int $employeeId, int $year, string $federalState, ?int $excludeId = null): float {
+        $totalVacationDays = (float)$this->employeeMapper->find($employeeId)->getVacationDays();
+
+        $usedDays = 0.0;
+        foreach ($this->absenceMapper->findByEmployeeAndYear($employeeId, $year) as $absence) {
+            if ($absence->getType() !== Absence::TYPE_VACATION) {
+                continue;
+            }
+            if ($absence->getStatus() === Absence::STATUS_CANCELLED) {
+                continue;
+            }
+            if ($excludeId !== null && $absence->getId() === $excludeId) {
+                continue;
+            }
+            $usedDays += $this->vacationDaysInYear($absence, $year, $federalState);
+        }
+
+        return $totalVacationDays - $usedDays;
     }
 
     private function validate(int $employeeId, string $type, DateTime $startDate, DateTime $endDate, ?int $excludeId = null, float $scope = 1.0): array {

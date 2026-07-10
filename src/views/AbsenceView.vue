@@ -176,6 +176,13 @@
                             <span>{{ t('worktime', 'Überstunden als Freizeit nehmen. Reduziert die Überstunden.') }}</span>
                         </div>
                     </div>
+                    <div class="legend-item">
+                        <span class="legend-color type-company_closure" />
+                        <div class="legend-text">
+                            <strong>{{ t('worktime', 'Betriebsschließung') }}</strong>
+                            <span>{{ t('worktime', 'Bezahlte Freistellung bei Betriebsferien. Kein Urlaubs- oder Überstundenabzug.') }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -674,6 +681,7 @@ export default {
 .type-training { background-color: #2ecc71; }
 .type-unpaid { background-color: #34495e; }
 .type-compensatory { background-color: #1abc9c; }
+.type-company_closure { background-color: #4a7dbd; }
 
 .legend-text {
     display: flex;

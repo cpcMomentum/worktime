@@ -102,10 +102,13 @@ export default {
             return !!this.absence
         },
         typeOptions() {
-            return Object.entries(this.absenceTypes).map(([value, label]) => ({
-                id: value,
-                label,
-            }))
+            // Betriebsschließung ist nicht beantragbar — entsteht nur zentral (#15 Stufe 2).
+            return Object.entries(this.absenceTypes)
+                .filter(([value]) => value !== 'company_closure')
+                .map(([value, label]) => ({
+                    id: value,
+                    label,
+                }))
         },
         selectedType: {
             get() {
