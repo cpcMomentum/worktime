@@ -7,6 +7,15 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-07-10
+
+### Added
+- **Betriebsferien zentral eintragen (#15)**: Admin und HR können unter „Einstellungen → Betriebsferien" einen Schließungszeitraum für alle aktiven oder einzeln ausgewählte Mitarbeiter als genehmigten Urlaub buchen. Die Buchung ist pro Person arbeitszeit- und feiertagsbewusst (Teilzeit, 4-Tage-Woche und ohnehin freie Tage werden korrekt behandelt), zentral markierte Einträge sind vor Mitarbeiter-Bearbeitung geschützt, und bestehende Betriebsferien lassen sich als Ganzes wieder entfernen. Eine Suche filtert die Mitarbeiterauswahl.
+- **Konfigurierbare Behandlung von zu wenig Resturlaub (#15)**: Reicht der Resturlaub eines Mitarbeiters nicht für die Betriebsferien, wählt der Admin pro Vorgang bewusst, wie der Überhang behandelt wird — die App trifft keine rechtliche Wertung: (1) nicht buchen und auflisten, (2) bezahlte Freistellung über den neuen Abwesenheitstyp „Betriebsschließung" (kein Urlaubs- oder Überstundenabzug), (3) Freizeitausgleich (baut Überstunden ab) oder (4) Urlaub ins Minus (Vorgriff auf das Folgejahr). Der Resturlaub wird dabei bis 0 aufgebraucht und nur der Rest nach der gewählten Option gebucht; die Aufteilung ist jahresgenau. Mitarbeiter mit bereits erfassten Zeiten im Zeitraum werden nicht gebucht, sondern aufgelistet.
+
+### Changed
+- **Härtung des automatischen Code-Reviews in der CI (#451)**: Rein intern, keine Auswirkung auf die Funktion.
+
 ## [0.12.4] - 2026-07-07
 
 ### Fixed
