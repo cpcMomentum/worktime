@@ -74,6 +74,14 @@
                     </li>
                 </ul>
             </NcNoteCard>
+            <NcNoteCard v-if="bookedWithSkippedDays.length" type="info">
+                <strong>{{ t('worktime', 'Teilweise gebucht – bereits eigene Abwesenheit im Zeitraum:') }}</strong>
+                <ul class="bf-skipped">
+                    <li v-for="b in bookedWithSkippedDays" :key="b.employeeId">
+                        {{ skippedDaysLabel(b) }}
+                    </li>
+                </ul>
+            </NcNoteCard>
             <NcNoteCard v-if="result.skipped.length" type="warning">
                 <strong>{{ t('worktime', 'Nicht gebucht – bitte einzeln klären:') }}</strong>
                 <ul class="bf-skipped">
@@ -174,6 +182,10 @@ export default {
             if (!this.result || !this.result.booked) return []
             return this.result.booked.filter(b => (b.overageDays || 0) > 0)
         },
+        bookedWithSkippedDays() {
+            if (!this.result || !this.result.booked) return []
+            return this.result.booked.filter(b => (b.skippedDays || 0) > 0)
+        },
         filteredEmployees() {
             const q = this.employeeFilter.trim().toLowerCase()
             if (!q) return this.activeEmployees
@@ -231,6 +243,7 @@ export default {
         reasonLabel(reason) {
             if (reason === 'insufficient_vacation') return this.t('worktime', 'nicht genug Resturlaub')
             if (reason === 'time_entry_conflict') return this.t('worktime', 'Zeiteinträge im Zeitraum vorhanden')
+            if (reason === 'absence_conflict') return this.t('worktime', 'bereits eigene Abwesenheit im gesamten Zeitraum')
             return reason
         },
         async submit() {
@@ -263,6 +276,13 @@ export default {
                 vacation: b.vacationDays,
                 overage: b.overageDays,
                 type: overageName,
+            })
+        },
+        skippedDaysLabel(b) {
+            return this.t('worktime', '{name} – {booked} Tage gebucht, {skipped} Tage bereits abwesend', {
+                name: b.name,
+                booked: b.days,
+                skipped: b.skippedDays,
             })
         },
         async remove(group) {

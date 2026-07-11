@@ -621,6 +621,9 @@ OC.L10N.register(
     "Urlaub ins Minus" : "Dovolená do minusu",
     "{name} – {vacation} Tage Urlaub + {overage} Tage {type}" : "{name} – {vacation} dní dovolené + {overage} dní {type}",
     "Betriebsschließung kann nur zentral über die Betriebsferien gesetzt werden" : "Uzavření provozu lze nastavit pouze centrálně přes celozávodní dovolenou",
-    "Mitarbeiter mit bereits erfassten Zeiten im Zeitraum werden nicht gebucht, sondern Ihnen aufgelistet." : "Zaměstnanci s již zaznamenanými časy v daném období nebudou zaúčtováni, ale budou vám vypsáni."
+    "Mitarbeiter mit bereits erfassten Zeiten im Zeitraum werden nicht gebucht, sondern Ihnen aufgelistet." : "Zaměstnanci s již zaznamenanými časy v daném období nebudou zaúčtováni, ale budou vám vypsáni.",
+    "Teilweise gebucht – bereits eigene Abwesenheit im Zeitraum:" : "Částečně zapsáno – vlastní nepřítomnost již v tomto období:",
+    "bereits eigene Abwesenheit im gesamten Zeitraum" : "vlastní nepřítomnost již v celém období",
+    "{name} – {booked} Tage gebucht, {skipped} Tage bereits abwesend" : "{name} – {booked} dní zapsáno, {skipped} dní již nepřítomen"
 },
 "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;");

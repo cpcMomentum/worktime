@@ -621,6 +621,9 @@ OC.L10N.register(
     "Urlaub ins Minus" : "Urlaub ins Minus",
     "{name} – {vacation} Tage Urlaub + {overage} Tage {type}" : "{name} – {vacation} Tage Urlaub + {overage} Tage {type}",
     "Betriebsschließung kann nur zentral über die Betriebsferien gesetzt werden" : "Betriebsschließung kann nur zentral über die Betriebsferien gesetzt werden",
-    "Mitarbeiter mit bereits erfassten Zeiten im Zeitraum werden nicht gebucht, sondern Ihnen aufgelistet." : "Mitarbeiter mit bereits erfassten Zeiten im Zeitraum werden nicht gebucht, sondern Ihnen aufgelistet."
+    "Mitarbeiter mit bereits erfassten Zeiten im Zeitraum werden nicht gebucht, sondern Ihnen aufgelistet." : "Mitarbeiter mit bereits erfassten Zeiten im Zeitraum werden nicht gebucht, sondern Ihnen aufgelistet.",
+    "Teilweise gebucht – bereits eigene Abwesenheit im Zeitraum:" : "Teilweise gebucht – bereits eigene Abwesenheit im Zeitraum:",
+    "bereits eigene Abwesenheit im gesamten Zeitraum" : "bereits eigene Abwesenheit im gesamten Zeitraum",
+    "{name} – {booked} Tage gebucht, {skipped} Tage bereits abwesend" : "{name} – {booked} Tage gebucht, {skipped} Tage bereits abwesend"
 },
 "nplurals=2; plural=(n != 1);");
