@@ -326,9 +326,10 @@ class AbsenceService {
 
     /**
      * #454: collect the set of calendar days (Y-m-d) within [start, end] that are
-     * already covered by the employee's own non-cancelled absences. Those days
-     * must not be re-booked by a central Betriebsferien entry, otherwise the
-     * overtime and vacation accounting would count them twice.
+     * already covered by the employee's own approved or pending absences. Those
+     * days must not be re-booked by a central Betriebsferien entry, otherwise the
+     * overtime and vacation accounting would count them twice. Rejected absences
+     * are excluded — a declined request means the employee is not actually absent.
      *
      * @return array<string, true> keyed by 'Y-m-d' for O(1) lookup
      */
@@ -336,6 +337,9 @@ class AbsenceService {
         $existing = $this->absenceMapper->findOverlapping($employeeId, $startDate, $endDate);
         $blocked = [];
         foreach ($existing as $absence) {
+            if ($absence->getStatus() === Absence::STATUS_REJECTED) {
+                continue;
+            }
             $from = $absence->getStartDate() < $startDate ? clone $startDate : clone $absence->getStartDate();
             $to = $absence->getEndDate() > $endDate ? $endDate : $absence->getEndDate();
             for ($day = clone $from; $day <= $to; $day->modify('+1 day')) {
@@ -419,7 +423,9 @@ class AbsenceService {
             $bookableWorkingDays += $dayValue;
 
             $year = (int)$day->format('Y');
-            $remaining[$year] ??= $this->remainingVacationDays($employeeId, $year, $federalState);
+            if ($limitByQuota) {
+                $remaining[$year] ??= $this->remainingVacationDays($employeeId, $year, $federalState);
+            }
 
             if (!$limitByQuota || $remaining[$year] >= $dayValue - 1e-9) {
                 $type = Absence::TYPE_VACATION;

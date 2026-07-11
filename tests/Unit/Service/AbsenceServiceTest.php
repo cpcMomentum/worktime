@@ -816,6 +816,30 @@ class AbsenceServiceTest extends TestCase {
         $this->assertSame('absence_conflict', $result['skipped'][0]['reason']);
     }
 
+    public function testCompanyVacationDoesNotSkipDaysCoveredByRejectedAbsence(): void {
+        // A rejected request is not an actual absence — the employee worked
+        // those days, so the central booking must still cover the full period.
+        $emp = $this->cvEmployee(1, 'Anna', 30);
+        $this->employeeMapper->method('find')->willReturn($emp);
+        $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
+        $this->mockWeekdayWorkingDays();
+        $this->absenceMapper->method('findByEmployeeAndYear')->willReturn([]);
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]);
+        $rejected = $this->cvExistingAbsence('2026-08-05', '2026-08-06');
+        $rejected->setStatus(Absence::STATUS_REJECTED);
+        $this->absenceMapper->method('findOverlapping')->willReturn([$rejected]);
+        $inserted = &$this->collectInserts();
+
+        $result = $this->service->createCompanyVacation('2026-08-03', '2026-08-07', [1], null, 'admin');
+
+        $this->assertCount(1, $result['booked']);
+        $this->assertSame(5.0, $result['booked'][0]['days']);
+        $this->assertSame(0.0, $result['booked'][0]['skippedDays']);
+        $this->assertCount(1, $inserted);
+        $this->assertSame('2026-08-03', $inserted[0]->getStartDate()->format('Y-m-d'));
+        $this->assertSame('2026-08-07', $inserted[0]->getEndDate()->format('Y-m-d'));
+    }
+
     public function testCompanyVacationClosureDoesNotSpanExistingAbsence(): void {
         // 3 vacation days left, own absence on Wed. Bookable: Mon, Tue, Thu, Fri.
         // Mon/Tue/Thu = vacation (quota), Fri = closure. The Wed block forces a
