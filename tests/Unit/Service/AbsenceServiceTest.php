@@ -502,7 +502,7 @@ class AbsenceServiceTest extends TestCase {
             static fn(int $id) => $id === 1 ? $emp1 : $emp2
         );
         $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
-        $this->workScheduleService->method('countWorkingDays')->willReturn(5.0);
+        $this->mockWeekdayWorkingDays();
         $this->absenceMapper->method('findByEmployeeAndYear')->willReturn([]); // no prior vacation
         $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]); // no conflicts
 
@@ -537,7 +537,7 @@ class AbsenceServiceTest extends TestCase {
         $emp = $this->cvEmployee(1, 'Anna', 30);
         $this->employeeMapper->method('find')->willReturn($emp);
         $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
-        $this->workScheduleService->method('countWorkingDays')->willReturn(5.0);
+        $this->mockWeekdayWorkingDays();
         $this->absenceMapper->method('findByEmployeeAndYear')->willReturn([]);
 
         // A time entry exists in the period → full-day absence conflict (#360).
@@ -746,6 +746,110 @@ class AbsenceServiceTest extends TestCase {
 
         $this->assertSame(4.0, $result['booked'][0]['vacationDays']);
         $this->assertSame(3.0, $result['booked'][0]['overageDays']);
+    }
+
+    // ---------------------------------------------------------------------
+    // #454: Überlappung mit bestehenden persönlichen Abwesenheiten
+    // ---------------------------------------------------------------------
+
+    /** A stored, approved absence covering [$start, $end] for findOverlapping stubs. */
+    private function cvExistingAbsence(string $start, string $end): Absence {
+        $a = new Absence();
+        $a->setEmployeeId(1);
+        $a->setType(Absence::TYPE_VACATION);
+        $a->setStartDate(new DateTime($start));
+        $a->setEndDate(new DateTime($end));
+        $a->setStatus(Absence::STATUS_APPROVED);
+        return $a;
+    }
+
+    public function testCompanyVacationSkipsDaysCoveredByExistingAbsence(): void {
+        // Mon–Fri Betriebsferien, but the employee already has own vacation
+        // Wed–Thu. Only Mon, Tue and Fri get booked; the central entry must not
+        // span the already-absent days (would double-count).
+        $emp = $this->cvEmployee(1, 'Anna', 30);
+        $this->employeeMapper->method('find')->willReturn($emp);
+        $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
+        $this->mockWeekdayWorkingDays();
+        $this->absenceMapper->method('findByEmployeeAndYear')->willReturn([]);
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]);
+        $this->absenceMapper->method('findOverlapping')->willReturn([
+            $this->cvExistingAbsence('2026-08-05', '2026-08-06'),
+        ]);
+        $inserted = &$this->collectInserts();
+
+        $result = $this->service->createCompanyVacation('2026-08-03', '2026-08-07', [1], null, 'admin');
+
+        $this->assertCount(1, $result['booked']);
+        $this->assertSame(3.0, $result['booked'][0]['days']);
+        $this->assertSame(3.0, $result['booked'][0]['vacationDays']);
+        $this->assertSame(2.0, $result['booked'][0]['skippedDays']);
+        $this->assertCount(0, $result['skipped']);
+
+        // Two entries: Mon–Tue and Fri; nothing touching Wed/Thu.
+        $this->assertCount(2, $inserted);
+        $this->assertSame('2026-08-03', $inserted[0]->getStartDate()->format('Y-m-d'));
+        $this->assertSame('2026-08-04', $inserted[0]->getEndDate()->format('Y-m-d'));
+        $this->assertSame(2.0, (float)$inserted[0]->getDays());
+        $this->assertSame('2026-08-07', $inserted[1]->getStartDate()->format('Y-m-d'));
+        $this->assertSame('2026-08-07', $inserted[1]->getEndDate()->format('Y-m-d'));
+        $this->assertSame(1.0, (float)$inserted[1]->getDays());
+    }
+
+    public function testCompanyVacationSkipsEmployeeFullyCoveredByExistingAbsence(): void {
+        // The whole Betriebsferien range is already the employee's own absence.
+        $emp = $this->cvEmployee(1, 'Anna', 30);
+        $this->employeeMapper->method('find')->willReturn($emp);
+        $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
+        $this->mockWeekdayWorkingDays();
+        $this->absenceMapper->method('findByEmployeeAndYear')->willReturn([]);
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]);
+        $this->absenceMapper->method('findOverlapping')->willReturn([
+            $this->cvExistingAbsence('2026-08-03', '2026-08-07'),
+        ]);
+        $this->absenceMapper->expects($this->never())->method('insert');
+
+        $result = $this->service->createCompanyVacation('2026-08-03', '2026-08-07', [1], null, 'admin');
+
+        $this->assertCount(0, $result['booked']);
+        $this->assertCount(1, $result['skipped']);
+        $this->assertSame('absence_conflict', $result['skipped'][0]['reason']);
+    }
+
+    public function testCompanyVacationClosureDoesNotSpanExistingAbsence(): void {
+        // 3 vacation days left, own absence on Wed. Bookable: Mon, Tue, Thu, Fri.
+        // Mon/Tue/Thu = vacation (quota), Fri = closure. The Wed block forces a
+        // segment boundary so no entry spans it.
+        $emp = $this->cvEmployee(1, 'Anna', 3);
+        $this->employeeMapper->method('find')->willReturn($emp);
+        $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
+        $this->mockWeekdayWorkingDays();
+        $this->absenceMapper->method('findByEmployeeAndYear')->willReturn([]);
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]);
+        $this->absenceMapper->method('findOverlapping')->willReturn([
+            $this->cvExistingAbsence('2026-08-05', '2026-08-05'),
+        ]);
+        $inserted = &$this->collectInserts();
+
+        $result = $this->service->createCompanyVacation(
+            '2026-08-03', '2026-08-07', [1], null, 'admin', AbsenceService::OVERAGE_CLOSURE
+        );
+
+        $this->assertSame(3.0, $result['booked'][0]['vacationDays']);
+        $this->assertSame(1.0, $result['booked'][0]['overageDays']);
+        $this->assertSame(1.0, $result['booked'][0]['skippedDays']);
+
+        // Mon–Tue vacation, Thu vacation, Fri closure — none covering Wed.
+        $this->assertCount(3, $inserted);
+        $this->assertSame(Absence::TYPE_VACATION, $inserted[0]->getType());
+        $this->assertSame('2026-08-03', $inserted[0]->getStartDate()->format('Y-m-d'));
+        $this->assertSame('2026-08-04', $inserted[0]->getEndDate()->format('Y-m-d'));
+        $this->assertSame(Absence::TYPE_VACATION, $inserted[1]->getType());
+        $this->assertSame('2026-08-06', $inserted[1]->getStartDate()->format('Y-m-d'));
+        $this->assertSame('2026-08-06', $inserted[1]->getEndDate()->format('Y-m-d'));
+        $this->assertSame(Absence::TYPE_COMPANY_CLOSURE, $inserted[2]->getType());
+        $this->assertSame('2026-08-07', $inserted[2]->getStartDate()->format('Y-m-d'));
+        $this->assertSame('2026-08-07', $inserted[2]->getEndDate()->format('Y-m-d'));
     }
 
     public function testCompanyVacationRejectsInvalidOverageOption(): void {
