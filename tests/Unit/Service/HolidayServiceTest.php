@@ -6,9 +6,11 @@ namespace OCA\WorkTime\Tests\Unit\Service;
 
 use DateTime;
 use OCA\WorkTime\Db\CompanySettingMapper;
+use OCA\WorkTime\Db\Holiday;
 use OCA\WorkTime\Db\HolidayMapper;
 use OCA\WorkTime\Service\AuditLogService;
 use OCA\WorkTime\Service\HolidayService;
+use OCP\DB\Exception as DbException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -145,8 +147,8 @@ class HolidayServiceTest extends TestCase {
     // ---------------------------------------------------------------------
 
     public function testEnsureGeneratesHolidaysWhenMissing(): void {
-        // No holidays for the combo yet → generation runs (inserts happen).
-        $this->holidayMapper->method('existsForYearAndState')->with(2027, 'BW')->willReturn(false);
+        // No auto holidays for the combo yet → generation runs (inserts happen).
+        $this->holidayMapper->method('hasAutoForYearAndState')->with(2027, 'BW')->willReturn(false);
         $this->holidayMapper->method('insert')->willReturnArgument(0);
         $this->holidayMapper->expects($this->atLeastOnce())->method('insert');
 
@@ -154,18 +156,47 @@ class HolidayServiceTest extends TestCase {
     }
 
     public function testEnsureSkipsGenerationWhenAlreadyPresent(): void {
-        // Holidays already exist → no delete, no insert.
-        $this->holidayMapper->method('existsForYearAndState')->with(2026, 'BY')->willReturn(true);
+        // Auto holidays already exist → no delete, no insert.
+        $this->holidayMapper->method('hasAutoForYearAndState')->with(2026, 'BY')->willReturn(true);
         $this->holidayMapper->expects($this->never())->method('insert');
         $this->holidayMapper->expects($this->never())->method('deleteAutoByYearAndState');
 
         $this->service->ensureHolidaysForYear(2026, 'BY');
     }
 
+    public function testEnsureGeneratesWhenOnlyAManualHolidayExists(): void {
+        // #438 review: a single pre-existing MANUAL holiday must not suppress the
+        // deterministic set — the guard checks auto holidays only, so generation
+        // still runs here.
+        $this->holidayMapper->method('hasAutoForYearAndState')->with(2027, 'BW')->willReturn(false);
+        $this->holidayMapper->method('insert')->willReturnArgument(0);
+        $this->holidayMapper->expects($this->atLeastOnce())->method('insert');
+
+        $this->service->ensureHolidaysForYear(2027, 'BW');
+    }
+
+    public function testGenerateToleratesUniqueConstraintViolation(): void {
+        // #438 review: a concurrent first-time generation (or a manual holiday on
+        // the same date) makes an insert hit the (date, state) unique index. The
+        // service must treat it as already-present instead of failing the request.
+        $this->holidayMapper->method('hasAutoForYearAndState')->willReturn(false);
+        $uniqueViolation = new class ('duplicate') extends DbException {
+            public function getReason(): ?int {
+                return DbException::REASON_UNIQUE_CONSTRAINT_VIOLATION;
+            }
+        };
+        $this->holidayMapper->method('insert')->willThrowException($uniqueViolation);
+        $this->holidayMapper->method('findByDateAndState')->willReturn(new Holiday());
+
+        // Must not throw.
+        $this->service->ensureHolidaysForYear(2027, 'BW');
+        $this->addToAssertionCount(1);
+    }
+
     public function testEnsureMemoizesSoTheCheckRunsOncePerCombo(): void {
         // Two calls for the same (year, state) must hit the DB check only once.
         $this->holidayMapper->expects($this->once())
-            ->method('existsForYearAndState')->with(2026, 'BY')->willReturn(true);
+            ->method('hasAutoForYearAndState')->with(2026, 'BY')->willReturn(true);
 
         $this->service->ensureHolidaysForYear(2026, 'BY');
         $this->service->ensureHolidaysForYear(2026, 'BY');
@@ -174,7 +205,7 @@ class HolidayServiceTest extends TestCase {
     public function testEnsureRangeCoversEveryYearItTouches(): void {
         // A range crossing New Year must ensure both 2026 and 2027.
         $checkedYears = [];
-        $this->holidayMapper->method('existsForYearAndState')->willReturnCallback(
+        $this->holidayMapper->method('hasAutoForYearAndState')->willReturnCallback(
             function (int $year, string $state) use (&$checkedYears): bool {
                 $checkedYears[] = $year;
                 return true;

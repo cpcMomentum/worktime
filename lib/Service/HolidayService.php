@@ -16,6 +16,7 @@ use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\Holiday;
 use OCA\WorkTime\Db\HolidayMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\DB\Exception as DbException;
 use Psr\Log\LoggerInterface;
 
 class HolidayService {
@@ -71,7 +72,9 @@ class HolidayService {
         }
         // Mark first so a generation failure does not retry on every call.
         $this->ensuredYearStates[$key] = true;
-        if (!$this->holidayMapper->existsForYearAndState($year, $federalState)) {
+        // Guard on AUTO holidays, not "any row": a single manually-added holiday
+        // must not suppress generation of the deterministic set (#438 review).
+        if (!$this->holidayMapper->hasAutoForYearAndState($year, $federalState)) {
             $this->generateHolidays($year, $federalState, $currentUserId);
         }
     }
@@ -249,7 +252,17 @@ class HolidayService {
         $holiday->setYear($year);
         $holiday->setCreatedAt(new DateTime());
 
-        return $this->holidayMapper->insert($holiday);
+        try {
+            return $this->holidayMapper->insert($holiday);
+        } catch (DbException $e) {
+            // #438 review: the (date, federal_state) unique index can already be
+            // taken by a manual holiday on the same date, or by a concurrent
+            // first-time generation. Treat as already present instead of failing.
+            if ($e->getReason() === DbException::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
+                return $this->holidayMapper->findByDateAndState($holiday->getDate(), $federalState);
+            }
+            throw $e;
+        }
     }
 
     /**
