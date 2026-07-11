@@ -81,6 +81,7 @@ jobs:
           ref: ${{ github.head_ref }}
 
       - name: Run Claude Code Review & Auto-Fix
+        id: review
         # Feature PRs (against develop). Release PRs (release/* -> main) get a
         # dedicated release-readiness review below instead — their diff is the whole
         # accumulated release, whose code was already reviewed on the feature PRs.
@@ -157,6 +158,7 @@ jobs:
             --allowedTools "Edit,MultiEdit,Glob,Grep,LS,Read,Write,Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git merge-base:*),Bash(git fetch:*),Bash(git rm:*),Bash(gh pr comment:*),Bash(gh pr review:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(npm run:*),Bash(npx:*),Bash(cd:*),Bash(ls:*),Bash(cat:*),Bash(grep:*),Bash(head:*),Bash(tail:*),Bash(wc:*),Bash(find:*),Bash(mkdir:*),Bash(php:*),Bash(python3:*),Bash(ruff:*),Bash(pip:*),Bash(python:*),mcp__github_comment__update_claude_comment"
 
       - name: Run Claude Release Review
+        id: release_review
         # Release PRs (release/* -> main): review RELEASE-readiness, not the code
         # line-by-line (that happened on the feature PRs). Comment-only — never
         # edit/commit/push: the release tarball may already be signed, and an
@@ -212,3 +214,17 @@ jobs:
           claude_args: |
             --max-turns 40
             --allowedTools "Glob,Grep,LS,Read,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git merge-base:*),Bash(git fetch:*),Bash(gh pr comment:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr list:*),Bash(cat:*),Bash(ls:*),Bash(grep:*),Bash(head:*),Bash(tail:*),Bash(wc:*),Bash(find:*),mcp__github_comment__update_claude_comment"
+      - name: Fail bei still uebersprungenem Review
+        # Die claude-code-action validiert die Workflow-Datei gegen den
+        # Default-Branch (main) und ueberspringt das Review bei Abweichung
+        # STILL - der Check bleibt gruen ("Action skipped due to workflow
+        # validation error"). Dieser Guard macht daraus ein hartes Fail:
+        # ein gelaufener Review-Step MUSS eine execution_file liefern.
+        # Fix bei Fail: Workflow-Datei paarweise develop+main mergen,
+        # dann den Run neu starten.
+        if: |
+          (steps.review.outcome == 'success' && steps.review.outputs.execution_file == '') ||
+          (steps.release_review.outcome == 'success' && steps.release_review.outputs.execution_file == '')
+        run: |
+          echo "::error::Claude-Review wurde still uebersprungen (Workflow-Validierung gegen main). Workflow-Datei develop/main synchronisieren und Run neu starten."
+          exit 1
