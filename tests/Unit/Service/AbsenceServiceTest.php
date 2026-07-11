@@ -16,6 +16,7 @@ use OCA\WorkTime\Notification\NotificationService;
 use OCA\WorkTime\Service\AbsenceService;
 use OCA\WorkTime\Service\AuditLogService;
 use OCA\WorkTime\Service\ForbiddenException;
+use OCA\WorkTime\Service\HolidayService;
 use OCA\WorkTime\Service\ProjectService;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCA\WorkTime\Service\ValidationException;
@@ -43,6 +44,7 @@ class AbsenceServiceTest extends TestCase {
     private AuditLogService $auditLogService;
     private NotificationService $notificationService;
     private WorkScheduleService $workScheduleService;
+    private HolidayService $holidayService;
     private LoggerInterface $logger;
     private IL10N $l;
 
@@ -54,6 +56,7 @@ class AbsenceServiceTest extends TestCase {
         $this->auditLogService = $this->createMock(AuditLogService::class);
         $this->notificationService = $this->createMock(NotificationService::class);
         $this->workScheduleService = $this->createMock(WorkScheduleService::class);
+        $this->holidayService = $this->createMock(HolidayService::class);
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->l = $this->createMock(IL10N::class);
         $this->l->method('t')->willReturnCallback(
@@ -85,6 +88,7 @@ class AbsenceServiceTest extends TestCase {
             $this->auditLogService,
             $this->notificationService,
             $this->workScheduleService,
+            $this->holidayService,
             $this->logger,
             $this->l
         );

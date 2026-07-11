@@ -139,4 +139,52 @@ class HolidayServiceTest extends TestCase {
             ['NW', 11, 11], // NRW: nationwide + Allerheiligen + Fronleichnam
         ];
     }
+
+    // ---------------------------------------------------------------------
+    // #438: Lazy-Ensure fehlender Feiertage
+    // ---------------------------------------------------------------------
+
+    public function testEnsureGeneratesHolidaysWhenMissing(): void {
+        // No holidays for the combo yet → generation runs (inserts happen).
+        $this->holidayMapper->method('existsForYearAndState')->with(2027, 'BW')->willReturn(false);
+        $this->holidayMapper->method('insert')->willReturnArgument(0);
+        $this->holidayMapper->expects($this->atLeastOnce())->method('insert');
+
+        $this->service->ensureHolidaysForYear(2027, 'BW');
+    }
+
+    public function testEnsureSkipsGenerationWhenAlreadyPresent(): void {
+        // Holidays already exist → no delete, no insert.
+        $this->holidayMapper->method('existsForYearAndState')->with(2026, 'BY')->willReturn(true);
+        $this->holidayMapper->expects($this->never())->method('insert');
+        $this->holidayMapper->expects($this->never())->method('deleteAutoByYearAndState');
+
+        $this->service->ensureHolidaysForYear(2026, 'BY');
+    }
+
+    public function testEnsureMemoizesSoTheCheckRunsOncePerCombo(): void {
+        // Two calls for the same (year, state) must hit the DB check only once.
+        $this->holidayMapper->expects($this->once())
+            ->method('existsForYearAndState')->with(2026, 'BY')->willReturn(true);
+
+        $this->service->ensureHolidaysForYear(2026, 'BY');
+        $this->service->ensureHolidaysForYear(2026, 'BY');
+    }
+
+    public function testEnsureRangeCoversEveryYearItTouches(): void {
+        // A range crossing New Year must ensure both 2026 and 2027.
+        $checkedYears = [];
+        $this->holidayMapper->method('existsForYearAndState')->willReturnCallback(
+            function (int $year, string $state) use (&$checkedYears): bool {
+                $checkedYears[] = $year;
+                return true;
+            }
+        );
+
+        $this->service->ensureHolidaysForRange(
+            new DateTime('2026-12-20'), new DateTime('2027-01-10'), 'BY'
+        );
+
+        $this->assertSame([2026, 2027], $checkedYears);
+    }
 }
