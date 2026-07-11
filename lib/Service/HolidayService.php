@@ -259,7 +259,14 @@ class HolidayService {
             // taken by a manual holiday on the same date, or by a concurrent
             // first-time generation. Treat as already present instead of failing.
             if ($e->getReason() === DbException::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
-                return $this->holidayMapper->findByDateAndState($holiday->getDate(), $federalState);
+                try {
+                    return $this->holidayMapper->findByDateAndState($holiday->getDate(), $federalState);
+                } catch (DoesNotExistException) {
+                    // Conflicting row not yet visible to this transaction (e.g. an
+                    // uncommitted concurrent insert). Surface the original error
+                    // rather than an unrelated "not found".
+                    throw $e;
+                }
             }
             throw $e;
         }
