@@ -13,6 +13,7 @@ use DateTime;
 use OCA\WorkTime\Db\CompanySetting;
 use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\EmployeeMapper;
+use OCA\WorkTime\Db\TimeEntryMapper;
 use OCA\WorkTime\Db\WorkSchedule;
 use OCA\WorkTime\Db\WorkScheduleMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -24,6 +25,7 @@ class WorkScheduleService {
     public function __construct(
         private WorkScheduleMapper $mapper,
         private EmployeeMapper $employeeMapper,
+        private TimeEntryMapper $timeEntryMapper,
         private CompanySettingsService $companySettingsService,
         private AuditLogService $auditLogService,
         private LoggerInterface $logger,
@@ -85,12 +87,20 @@ class WorkScheduleService {
     ): WorkSchedule {
         $errors = $this->validate($dayHours, $vacationDays);
 
-        // valid_from darf nicht vor dem 1. des aktuellen Monats liegen
+        // #453: Rückdatierung ist erlaubt, solange sie keinen bereits genehmigten
+        // Zeitraum verändert und nicht vor dem Eintrittsdatum liegt. Die alte
+        // Sperre auf den 1. des aktuellen Monats war zu grob und verhinderte das
+        // legitime Nachtragen wechselnder Arbeitszeiten für die Vergangenheit.
         $validFromDate = new DateTime($validFrom);
-        $firstOfCurrentMonth = new DateTime('first day of this month');
-        $firstOfCurrentMonth->setTime(0, 0, 0);
-        if ($validFromDate < $firstOfCurrentMonth) {
-            $errors['validFrom'] = [$this->l->t('Gültig-ab darf frühestens der 1. des aktuellen Monats sein')];
+        $validFromDate->setTime(0, 0, 0);
+        [$earliestAllowed, $reason] = $this->earliestValidFrom($employeeId);
+        if ($earliestAllowed !== null && $validFromDate < $earliestAllowed) {
+            $formatted = $earliestAllowed->format('d.m.Y');
+            if ($reason === 'approved') {
+                $errors['validFrom'] = [$this->l->t('Gültig-ab darf nicht in einen bereits genehmigten Zeitraum fallen. Frühestens möglich: %s', [$formatted])];
+            } else {
+                $errors['validFrom'] = [$this->l->t('Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)', [$formatted])];
+            }
         }
 
         // Check for duplicate valid_from date
@@ -139,6 +149,47 @@ class WorkScheduleService {
         }
 
         return $schedule;
+    }
+
+    /**
+     * #453: earliest date a new work schedule may become valid. Back-dating is
+     * allowed, but must not reach into an already-approved period (its Soll would
+     * change retroactively) and must not predate the employee's entry date.
+     *
+     * Returns [?DateTime $earliest, string $reason] where reason is 'approved'
+     * (bound comes from an approved period), 'entry' (bound comes from the entry
+     * date), or '' (no lower bound at all).
+     *
+     * @return array{0: ?DateTime, 1: string}
+     */
+    private function earliestValidFrom(int $employeeId): array {
+        $earliest = null;
+        $reason = '';
+
+        // Entry date lower bound.
+        try {
+            $employee = $this->employeeMapper->find($employeeId);
+            $entryDate = $employee->getEntryDate();
+            if ($entryDate !== null) {
+                $earliest = (clone $entryDate)->setTime(0, 0, 0);
+                $reason = 'entry';
+            }
+        } catch (DoesNotExistException) {
+            // No employee row -> no entry-date bound.
+        }
+
+        // Approved-period lower bound: a schedule may start at the earliest on the
+        // day AFTER the last approved entry, so approved months stay untouched.
+        $lastApproved = $this->timeEntryMapper->findLatestApprovedDate($employeeId);
+        if ($lastApproved !== null) {
+            $dayAfterApproved = (clone $lastApproved)->modify('+1 day')->setTime(0, 0, 0);
+            if ($earliest === null || $dayAfterApproved > $earliest) {
+                $earliest = $dayAfterApproved;
+                $reason = 'approved';
+            }
+        }
+
+        return [$earliest, $reason];
     }
 
     /**

@@ -285,6 +285,30 @@ class TimeEntryMapper extends QBMapper {
     }
 
     /**
+     * #453: latest date of an APPROVED time entry for an employee, or null if
+     * none. Used to protect already-approved periods when back-dating a work
+     * schedule: a new schedule may not take effect on or before this date,
+     * otherwise the Soll hours of an approved month would change retroactively.
+     */
+    public function findLatestApprovedDate(int $employeeId): ?DateTime {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select($qb->func()->max('date'))
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('employee_id', $qb->createNamedParameter($employeeId, IQueryBuilder::PARAM_INT)))
+            ->andWhere($qb->expr()->eq('status', $qb->createNamedParameter(TimeEntry::STATUS_APPROVED)));
+
+        $result = $qb->executeQuery();
+        $value = $result->fetchOne();
+        $result->closeCursor();
+
+        if ($value === null || $value === false || $value === '') {
+            return null;
+        }
+
+        return new DateTime((string)$value);
+    }
+
+    /**
      * @return TimeEntry[]
      */
     public function findPendingForApproval(int $supervisorEmployeeId): array {
