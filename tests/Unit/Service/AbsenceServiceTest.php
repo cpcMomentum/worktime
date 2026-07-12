@@ -8,6 +8,7 @@ use DateTime;
 use OCA\WorkTime\Db\Absence;
 use OCA\WorkTime\Db\AbsenceMapper;
 use OCA\WorkTime\Db\CompanySettingMapper;
+use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\EmployeeMapper;
 use OCA\WorkTime\Db\HolidayMapper;
 use OCA\WorkTime\Db\TimeEntry;
@@ -891,5 +892,69 @@ class AbsenceServiceTest extends TestCase {
 
         $this->expectException(ValidationException::class);
         $this->service->create(1, Absence::TYPE_COMPANY_CLOSURE, '2026-08-03', '2026-08-07');
+    }
+
+    // ---------------------------------------------------------------------
+    // #443 A: a REJECTED vacation request must not consume the yearly quota
+    // ---------------------------------------------------------------------
+
+    private function vacation(string $status, string $start, string $end, string $days): Absence {
+        $a = $this->makeAbsence(Absence::TYPE_VACATION, $status, new DateTime($start), new DateTime($end));
+        $a->setDays($days);
+        return $a;
+    }
+
+    private function remaining(int $year): float {
+        $m = new \ReflectionMethod($this->service, 'remainingVacationDays');
+        $m->setAccessible(true);
+        return $m->invoke($this->service, 1, $year, 'BY', null);
+    }
+
+    public function testRejectedVacationDoesNotConsumeQuota(): void {
+        $emp = new Employee();
+        $emp->setId(1);
+        $emp->setVacationDays(30);
+        $this->employeeMapper->method('find')->willReturn($emp);
+        // The only vacation of the year was REJECTED — the days must be released.
+        $this->absenceMapper->method('findByEmployeeAndYear')
+            ->willReturn([$this->vacation(Absence::STATUS_REJECTED, '2026-03-02', '2026-03-06', '5.00')]);
+
+        $this->assertSame(30.0, $this->remaining(2026));
+    }
+
+    public function testApprovedVacationConsumesQuota(): void {
+        // Control: an APPROVED vacation of the same length DOES reduce the quota.
+        $emp = new Employee();
+        $emp->setId(1);
+        $emp->setVacationDays(30);
+        $this->employeeMapper->method('find')->willReturn($emp);
+        $this->absenceMapper->method('findByEmployeeAndYear')
+            ->willReturn([$this->vacation(Absence::STATUS_APPROVED, '2026-03-02', '2026-03-06', '5.00')]);
+
+        $this->assertSame(25.0, $this->remaining(2026));
+    }
+
+    // ---------------------------------------------------------------------
+    // #443 B: a REJECTED absence must not block a new/overlapping request
+    // ---------------------------------------------------------------------
+
+    private function validateOverlap(string $existingStatus): array {
+        $existing = $this->makeAbsence(Absence::TYPE_VACATION, $existingStatus, new DateTime('2026-03-02'), new DateTime('2026-03-06'));
+        $this->absenceMapper->method('findOverlapping')->willReturn([$existing]);
+
+        $m = new \ReflectionMethod($this->service, 'validate');
+        $m->setAccessible(true);
+        return $m->invoke($this->service, 1, Absence::TYPE_VACATION, new DateTime('2026-03-02'), new DateTime('2026-03-06'), null, 1.0);
+    }
+
+    public function testRejectedAbsenceDoesNotBlockOverlappingRequest(): void {
+        $errors = $this->validateOverlap(Absence::STATUS_REJECTED);
+        $this->assertArrayNotHasKey('startDate', $errors);
+    }
+
+    public function testPendingAbsenceBlocksOverlappingRequest(): void {
+        // Control: a still-standing (pending) absence DOES block.
+        $errors = $this->validateOverlap(Absence::STATUS_PENDING);
+        $this->assertArrayHasKey('startDate', $errors);
     }
 }
