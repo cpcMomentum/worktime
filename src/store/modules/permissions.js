@@ -16,7 +16,7 @@ const state = {
     },
     loading: false,
     loaded: false,
-    approvalRequired: true,
+    approvalRequired: false,
     // Company rules for time-entry fields (#329)
     requireProject: false,
     requireDescription: false,

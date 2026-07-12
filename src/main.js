@@ -18,7 +18,7 @@ const permissions = loadState('worktime', 'permissions', {})
 store.dispatch('permissions/initFromInitialState', permissions)
 
 // Whether the approval workflow is active for this instance
-const approvalRequired = loadState('worktime', 'approvalRequired', true)
+const approvalRequired = loadState('worktime', 'approvalRequired', false)
 store.dispatch('permissions/setApprovalRequired', approvalRequired)
 
 // Company rules: required project / description on time entries (#329)
