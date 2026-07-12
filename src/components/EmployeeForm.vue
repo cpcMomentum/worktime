@@ -152,6 +152,7 @@
 
         <WorkScheduleEditor v-if="isEdit && employee"
             :employee-id="employee.id"
+            :entry-date="employee.entryDate || null"
             @updated="$emit('schedule-updated')" />
 
         <div class="form-actions">

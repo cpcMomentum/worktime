@@ -7,6 +7,27 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-07-12
+
+### Changed
+- **Monatsgenehmigung standardmäßig aus (#472)**: Der Genehmigungsworkflow für Monate ist bei neuen Installationen jetzt standardmäßig ausgeschaltet. Wer ihn nutzen möchte, aktiviert ihn bewusst unter „Einstellungen → Genehmigung". Bestehende Instanzen, die den Workflow bereits verwenden, behalten ihre Einstellung unverändert (eine Migration schreibt den bisherigen Zustand fest, damit nichts stillschweigend umschaltet).
+
+### Fixed
+- **Abgelehnter Urlaub verbrauchte weiterhin Urlaubstage (#443)**: Ein vom Vorgesetzten abgelehnter Urlaubsantrag wurde weiter als „verbraucht" gezählt und reduzierte dauerhaft das Urlaubskonto. Dadurch konnten spätere, eigentlich zulässige Anträge fälschlich mit „Nicht genügend Urlaubstage" blockiert werden. Abgelehnte Anträge geben die Tage jetzt wieder frei.
+- **Abgelehnte Abwesenheit blockierte einen neuen Antrag (#443)**: Nach einer Ablehnung ließ sich für dieselben Tage kein korrigierter Antrag (oder eine Krankmeldung) mehr anlegen, weil die abgelehnte Abwesenheit noch als Überschneidung galt. Nur noch offene und genehmigte Abwesenheiten blockieren.
+- **Halber Feiertag bei bezahlter Abwesenheit falsch verrechnet (#443)**: Lag ein genehmigter Urlaub auf einem halben Feiertag (Heiligabend/Silvester, sofern aktiviert), wurde für diesen Tag ein Minus von etwa vier Stunden im Überstundenkonto erzeugt. Der halbe verbleibende Arbeitstag wird jetzt korrekt durch den Urlaub gedeckt.
+- **Doppelzählung bei Genehmigung mit vorhandenen Zeiteinträgen (#443)**: Wurde ein ganztägiger Abwesenheitsantrag genehmigt, obwohl am selben Tag bereits Zeiteinträge erfasst waren, entstanden Phantom-Überstunden. Die Genehmigung prüft diesen Konflikt jetzt und weist mit klarer Meldung darauf hin.
+- **Team-Jahresübersicht zählte Feiertage und halbe Tage als Urlaub (#443)**: In der Jahresübersicht pro Monat wurden Feiertage innerhalb eines Urlaubs sowie halbe Urlaubstage als volle Urlaubstage gezählt, was der Jahresbilanz auf demselben Bildschirm widersprach. Die Monatswerte berücksichtigen jetzt Feiertage und den Halbtags-Anteil.
+- **Pausenwarnung bei geteiltem Arbeitstag mit Lücke (#443)**: Ein durch eine Pausenlücke geteilter Tag mit mehr als neun Stunden reiner Arbeitszeit löste keine §4-Pausenwarnung aus, während derselbe Tag als ein Eintrag mit erfasster Pause korrekt gewarnt hätte. Die Prüfung bezieht sich jetzt einheitlich auf die reine Arbeitszeit.
+- **Arbeitszeitprofile rückwirkend anlegbar (#453)**: Ein Arbeitszeitprofil ließ sich für kein Datum vor dem laufenden Monat anlegen. Das Nachtragen wechselnder Arbeitszeiten (etwa beim Umstieg auf die App) ist jetzt bis zum Eintrittsdatum möglich, ohne bereits genehmigte Zeiträume zu verändern.
+- **Fehlende Feiertage werden bei der Berechnung erzeugt (#438)**: In Jahren oder Bundesländern, für die noch keine Feiertage generiert waren, wurde ein Feiertag als Arbeitstag gewertet. Fehlende Feiertage werden jetzt bei Bedarf automatisch ergänzt.
+- **Betriebsferien überspringen bestehende Abwesenheiten tagegenau (#454)**: Überschnitt sich ein Betriebsferien-Zeitraum mit einer bereits vorhandenen persönlichen Abwesenheit, werden die betroffenen Tage jetzt sauber übersprungen statt doppelt gebucht.
+- **Jahresübertrag-Tabelle ohne horizontalen Scrollbalken (#440)**: Die Tabelle unter „Jahresübertrag" passt sich jetzt der Breite an.
+- **Bemerkung des Antragstellers in der Genehmiger-Ansicht (#461)**: Die zu einem Urlaubsantrag erfasste Bemerkung ist jetzt auch für den genehmigenden Vorgesetzten sichtbar.
+
+### Changed (intern)
+- Härtung des automatischen Code-Reviews in der CI und Aktualisierung einer Entwicklungs-Abhängigkeit. Keine Auswirkung auf die Funktion.
+
 ## [0.13.0] - 2026-07-10
 
 ### Added

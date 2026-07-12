@@ -65,7 +65,12 @@
                                     {{ item.kind === 'month' ? t('worktime', 'Monat') : item.typeLabel }}
                                 </span>
                             </td>
-                            <td class="detail">{{ item.detail }}</td>
+                            <td class="detail">
+                                <div>{{ item.detail }}</div>
+                                <div v-if="item.note" class="note-line">
+                                    <span class="note-label">{{ t('worktime', 'Bemerkung') }}:</span> {{ item.note }}
+                                </div>
+                            </td>
                             <td class="actions-col">
                                 <div class="actions" @click.stop>
                                     <template v-if="item.kind === 'absence'">
@@ -308,6 +313,7 @@ export default {
                 employeeUserId: a.employeeUserId,
                 typeLabel: getAbsenceTypeLabel(a.type),
                 detail: `${formatDate(a.startDate)} – ${formatDate(a.endDate)} · ${a.days} ${t('worktime', 'Tage')}`,
+                note: a.note || '',
                 waitingSince: (a.createdAt || a.startDate || '').slice(0, 10),
             }))
         },
@@ -712,6 +718,20 @@ export default {
 
 .detail {
     color: var(--color-main-text);
+}
+
+.note-line {
+    margin-top: 2px;
+    color: var(--color-text-maxcontrast);
+    font-style: italic;
+    font-size: 0.9em;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.note-line .note-label {
+    font-style: normal;
+    font-weight: 600;
 }
 
 .actions-col {

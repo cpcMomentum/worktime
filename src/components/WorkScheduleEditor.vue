@@ -161,6 +161,13 @@ export default {
             type: Number,
             required: true,
         },
+        // #453: earliest selectable valid-from date (employee entry date, ISO
+        // 'YYYY-MM-DD'). Null means no lower bound in the picker; the backend
+        // still rejects dates inside an already-approved period.
+        entryDate: {
+            type: String,
+            default: null,
+        },
     },
     data() {
         return {
@@ -188,8 +195,10 @@ export default {
             return (h.mon + h.tue + h.wed + h.thu + h.fri + (h.sat || 0) + (h.sun || 0)).toFixed(1)
         },
         minValidFrom() {
-            const d = new Date()
-            d.setDate(1)
+            // #453: allow back-dating down to the employee's entry date. Without
+            // an entry date there is no lower bound in the picker.
+            if (!this.entryDate) return null
+            const d = new Date(this.entryDate + 'T00:00:00')
             d.setHours(0, 0, 0, 0)
             return d
         },
@@ -231,6 +240,7 @@ export default {
             }
         },
         disablePastDates(date) {
+            if (!this.minValidFrom) return false
             return date < this.minValidFrom
         },
         formatDate(dateStr) {

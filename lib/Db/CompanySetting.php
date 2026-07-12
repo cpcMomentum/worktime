@@ -52,7 +52,7 @@ class CompanySetting extends Entity implements JsonSerializable {
         self::KEY_MAX_DAILY_HOURS => '10',
         self::KEY_MIN_BREAK_MINUTES_6H => '30',
         self::KEY_MIN_BREAK_MINUTES_9H => '45',
-        self::KEY_APPROVAL_REQUIRED => '1',
+        self::KEY_APPROVAL_REQUIRED => '0',
         self::KEY_PDF_ARCHIVE_PATH => '/WorkTime/Archiv',
         self::KEY_PDF_ARCHIVE_USER => '',
         self::KEY_CHRISTMAS_EVE_HALF_DAY => '1',

@@ -43,6 +43,7 @@ class AbsenceService {
         private AuditLogService $auditLogService,
         private NotificationService $notificationService,
         private WorkScheduleService $workScheduleService,
+        private HolidayService $holidayService,
         private LoggerInterface $logger,
         private IL10N $l,
     ) {
@@ -256,13 +257,31 @@ class AbsenceService {
         $booked = [];
         $skipped = [];
 
+        // Overage handling drives two things: the type booked once the yearly
+        // quota is exhausted, and whether the quota is a hard limit at all.
+        // NEGATIVE books everything as vacation (account goes negative), so it is
+        // not limited by the quota; SKIP treats any overage as a reason to skip.
+        $overageType = match ($overageHandling) {
+            self::OVERAGE_CLOSURE => Absence::TYPE_COMPANY_CLOSURE,
+            self::OVERAGE_COMPENSATORY => Absence::TYPE_COMPENSATORY,
+            default => Absence::TYPE_VACATION,
+        };
+        $limitByQuota = $overageHandling !== self::OVERAGE_NEGATIVE;
+
         foreach ($employees as $employee) {
             $employeeId = $employee->getId();
             $name = trim($employee->getFirstName() . ' ' . $employee->getLastName());
             $federalState = $employee->getFederalState();
 
-            $workingDays = $this->calculateWorkingDays($startDateObj, $endDateObj, $federalState, $employeeId);
-            if ($workingDays <= 0) {
+            // #454: days already covered by the employee's own (non-cancelled)
+            // absences are skipped so the central booking never overlaps them —
+            // double crediting/deducting would result otherwise.
+            $blocked = $this->blockedDatesInPeriod($employeeId, $startDateObj, $endDateObj);
+
+            [$segments, $vacationDays, $overageDays, $bookableDays, $rawWorkingDays] =
+                $this->splitPeriod($employeeId, $startDateObj, $endDateObj, $federalState, $overageType, $limitByQuota, $blocked);
+
+            if ($rawWorkingDays <= 0) {
                 // No working day in the period for this employee (part-time not
                 // scheduled, or only holidays) — nothing to book or report.
                 continue;
@@ -275,36 +294,21 @@ class AbsenceService {
                 continue;
             }
 
-            if ($overageHandling === self::OVERAGE_SKIP) {
-                try {
-                    $this->checkVacationQuota($employeeId, $startDateObj, $endDateObj, $federalState, 1.0);
-                } catch (ValidationException) {
-                    $skipped[] = ['employeeId' => $employeeId, 'name' => $name, 'reason' => 'insufficient_vacation'];
-                    continue;
-                }
+            if ($bookableDays <= 0) {
+                // Every working day is already covered by an existing absence.
+                $skipped[] = ['employeeId' => $employeeId, 'name' => $name, 'reason' => 'absence_conflict'];
+                continue;
             }
 
-            if ($overageHandling === self::OVERAGE_CLOSURE || $overageHandling === self::OVERAGE_COMPENSATORY) {
-                $overageType = $overageHandling === self::OVERAGE_CLOSURE
-                    ? Absence::TYPE_COMPANY_CLOSURE
-                    : Absence::TYPE_COMPENSATORY;
-                [$segments, $vacationDays, $overageDays] = $this->splitByVacationQuota(
-                    $employeeId, $startDateObj, $endDateObj, $federalState, $overageType
-                );
-                foreach ($segments as $segment) {
-                    $this->insertCentralAbsence(
-                        $employeeId, $segment['type'], $segment['start'], $segment['end'],
-                        $segment['days'], $note, $group, $currentUserId
-                    );
-                }
-            } else {
-                // OVERAGE_SKIP (quota already verified) or OVERAGE_NEGATIVE: one
-                // vacation entry over the whole period.
-                $vacationDays = $workingDays;
-                $overageDays = 0.0;
+            if ($overageHandling === self::OVERAGE_SKIP && $overageDays > 0) {
+                $skipped[] = ['employeeId' => $employeeId, 'name' => $name, 'reason' => 'insufficient_vacation'];
+                continue;
+            }
+
+            foreach ($segments as $segment) {
                 $this->insertCentralAbsence(
-                    $employeeId, Absence::TYPE_VACATION, clone $startDateObj, clone $endDateObj,
-                    $workingDays, $note, $group, $currentUserId
+                    $employeeId, $segment['type'], $segment['start'], $segment['end'],
+                    $segment['days'], $note, $group, $currentUserId
                 );
             }
 
@@ -314,6 +318,7 @@ class AbsenceService {
                 'days' => $vacationDays + $overageDays,
                 'vacationDays' => $vacationDays,
                 'overageDays' => $overageDays,
+                'skippedDays' => $rawWorkingDays - $bookableDays,
             ];
         }
 
@@ -321,22 +326,58 @@ class AbsenceService {
     }
 
     /**
-     * #15 Stufe 2: walk the period day by day and classify each working day as
-     * vacation (while the employee's yearly quota still covers it) or as the
-     * chosen overage type. Consecutive days of the same class become one entry;
-     * non-working days in between attach to the running segment. Year-aware:
-     * a period crossing New Year draws on each year's own remaining quota.
+     * #454: collect the set of calendar days (Y-m-d) within [start, end] that are
+     * already covered by the employee's own approved or pending absences. Those
+     * days must not be re-booked by a central Betriebsferien entry, otherwise the
+     * overtime and vacation accounting would count them twice. Rejected absences
+     * are excluded — a declined request means the employee is not actually absent.
      *
-     * @return array{0: list<array{type:string,start:DateTime,end:DateTime,days:float}>, 1: float, 2: float}
-     *         [segments, vacationDays, overageDays]
+     * @return array<string, true> keyed by 'Y-m-d' for O(1) lookup
      */
-    private function splitByVacationQuota(
+    private function blockedDatesInPeriod(int $employeeId, DateTime $startDate, DateTime $endDate): array {
+        $existing = $this->absenceMapper->findOverlapping($employeeId, $startDate, $endDate);
+        $blocked = [];
+        foreach ($existing as $absence) {
+            if ($absence->getStatus() === Absence::STATUS_REJECTED) {
+                continue;
+            }
+            $from = $absence->getStartDate() < $startDate ? clone $startDate : clone $absence->getStartDate();
+            $to = $absence->getEndDate() > $endDate ? $endDate : $absence->getEndDate();
+            for ($day = clone $from; $day <= $to; $day->modify('+1 day')) {
+                $blocked[$day->format('Y-m-d')] = true;
+            }
+        }
+        return $blocked;
+    }
+
+    /**
+     * #15 Stufe 2 / #454: walk the period day by day and classify each bookable
+     * working day as vacation (while the employee's yearly quota still covers it,
+     * unless $limitByQuota is false) or as the chosen overage type. Consecutive
+     * days of the same class become one entry; non-working days in between attach
+     * to the running segment. Year-aware: a period crossing New Year draws on each
+     * year's own remaining quota.
+     *
+     * Days present in $blocked (already covered by the employee's own absences)
+     * are skipped entirely — they neither count nor get booked — and act as hard
+     * segment boundaries so no emitted entry ever spans an already-absent day.
+     *
+     * @param array<string, true> $blocked calendar days ('Y-m-d') to skip
+     * @return array{0: list<array{type:string,start:DateTime,end:DateTime,days:float}>, 1: float, 2: float, 3: float, 4: float}
+     *         [segments, vacationDays, overageDays, bookableWorkingDays, rawWorkingDays]
+     */
+    private function splitPeriod(
         int $employeeId,
         DateTime $startDate,
         DateTime $endDate,
         string $federalState,
-        string $overageType
+        string $overageType,
+        bool $limitByQuota,
+        array $blocked
     ): array {
+        // #438: ensure the period's holidays exist so the day-walk classifies them
+        // as non-working (not vacation/overage).
+        $this->holidayService->ensureHolidaysForRange($startDate, $endDate, $federalState);
         $holidays = $this->holidayMapper->findHolidaysInRange($startDate, $endDate, $federalState);
 
         $remaining = [];
@@ -346,19 +387,55 @@ class AbsenceService {
         $segDays = 0.0;
         $vacationDays = 0.0;
         $overageDays = 0.0;
+        $bookableWorkingDays = 0.0;
+        $rawWorkingDays = 0.0;
+        // Earliest calendar day that may belong to the next segment; advances past
+        // every blocked day so leading non-working days are absorbed but a segment
+        // never reaches back across an already-absent day.
+        $pendingStart = clone $startDate;
 
         for ($day = clone $startDate; $day <= $endDate; $day->modify('+1 day')) {
             $dayValue = $this->workScheduleService->countWorkingDays($employeeId, $day, $day, $holidays);
-            if ($dayValue <= 0) {
+
+            if (isset($blocked[$day->format('Y-m-d')])) {
+                if ($dayValue > 0) {
+                    $rawWorkingDays += $dayValue;
+                }
+                // Close the open segment before the block and forbid the next one
+                // from starting any earlier than the day after it.
+                if ($currentType !== null) {
+                    $segments[] = [
+                        'type' => $currentType,
+                        'start' => $segStart,
+                        'end' => (clone $day)->modify('-1 day'),
+                        'days' => $segDays,
+                    ];
+                    $currentType = null;
+                    $segStart = null;
+                    $segDays = 0.0;
+                }
+                $pendingStart = (clone $day)->modify('+1 day');
                 continue;
             }
 
-            $year = (int)$day->format('Y');
-            $remaining[$year] ??= $this->remainingVacationDays($employeeId, $year, $federalState);
+            if ($dayValue <= 0) {
+                // Non-working, non-blocked day: absorbed by the surrounding segment.
+                continue;
+            }
 
-            if ($remaining[$year] >= $dayValue - 1e-9) {
+            $rawWorkingDays += $dayValue;
+            $bookableWorkingDays += $dayValue;
+
+            $year = (int)$day->format('Y');
+            if ($limitByQuota) {
+                $remaining[$year] ??= $this->remainingVacationDays($employeeId, $year, $federalState);
+            }
+
+            if (!$limitByQuota || $remaining[$year] >= $dayValue - 1e-9) {
                 $type = Absence::TYPE_VACATION;
-                $remaining[$year] -= $dayValue;
+                if ($limitByQuota) {
+                    $remaining[$year] -= $dayValue;
+                }
                 $vacationDays += $dayValue;
             } else {
                 $type = $overageType;
@@ -366,9 +443,10 @@ class AbsenceService {
             }
 
             if ($currentType === null) {
-                // First working day: the segment covers leading non-working days too.
+                // Open a segment; it covers leading non-working days back to the
+                // last boundary (period start or the day after a block).
                 $currentType = $type;
-                $segStart = clone $startDate;
+                $segStart = clone $pendingStart;
             } elseif ($type !== $currentType) {
                 $segments[] = [
                     'type' => $currentType,
@@ -384,7 +462,8 @@ class AbsenceService {
         }
 
         if ($currentType !== null) {
-            // Last segment covers trailing non-working days up to the period end.
+            // No block follows the last working day (a trailing block would have
+            // closed the segment), so extend it over trailing non-working days.
             $segments[] = [
                 'type' => $currentType,
                 'start' => $segStart,
@@ -393,7 +472,7 @@ class AbsenceService {
             ];
         }
 
-        return [$segments, $vacationDays, $overageDays];
+        return [$segments, $vacationDays, $overageDays, $bookableWorkingDays, $rawWorkingDays];
     }
 
     private function insertCentralAbsence(
@@ -625,6 +704,20 @@ class AbsenceService {
             throw new ForbiddenException('Can only approve pending absences');
         }
 
+        // #443: re-check the time-entry conflict at approval time. The create-time
+        // #360 guard cannot see entries booked AFTER the (still pending) absence,
+        // and TimeEntryService only blocks entries against ALREADY-approved
+        // absences — so the order "pending full-day absence → book entries →
+        // approve" would otherwise create an approved full-day absence coexisting
+        // with time entries on the same day, double-counted in the overtime
+        // calculation. Block the approval until the entries are removed.
+        $this->checkTimeEntryConflict(
+            $absence->getEmployeeId(),
+            $absence->getStartDate(),
+            $absence->getEndDate(),
+            $absence->getScopeValue()
+        );
+
         $absence->setStatus(Absence::STATUS_APPROVED);
         $absence->setApprovedBy($approverEmployeeId);
         $absence->setApprovedAt(new DateTime());
@@ -742,6 +835,11 @@ class AbsenceService {
      * Falls back to Mon-Fri if no employeeId is available.
      */
     public function calculateWorkingDays(DateTime $startDate, DateTime $endDate, string $federalState, ?int $employeeId = null): float {
+        // #438: make sure the range's holidays exist before subtracting them —
+        // otherwise a holiday in a never-generated year/state counts as a working
+        // (and thus deducted) day.
+        $this->holidayService->ensureHolidaysForRange($startDate, $endDate, $federalState);
+
         if ($employeeId !== null) {
             // Use schedule-aware calculation
             $holidays = $this->holidayMapper->findHolidaysInRange($startDate, $endDate, $federalState);
@@ -898,7 +996,12 @@ class AbsenceService {
             if ($absence->getType() !== Absence::TYPE_VACATION) {
                 continue;
             }
-            if ($absence->getStatus() === Absence::STATUS_CANCELLED) {
+            // #443: only APPROVED + PENDING consume quota (matches this method's
+            // docstring and getVacationStats). Previously only CANCELLED was
+            // skipped, so a REJECTED request permanently ate quota and wrongly
+            // blocked later bookings / mis-classified Betriebsferien days.
+            if ($absence->getStatus() !== Absence::STATUS_APPROVED
+                && $absence->getStatus() !== Absence::STATUS_PENDING) {
                 continue;
             }
             if ($excludeId !== null && $absence->getId() === $excludeId) {
@@ -931,9 +1034,17 @@ class AbsenceService {
             $errors['scope'] = [$this->l->t('Halber Tag ist nur für einen einzelnen Tag möglich')];
         }
 
-        // Check for overlapping absences
+        // Check for overlapping absences. #443: only a STANDING absence
+        // (pending or approved) blocks — a REJECTED request means the employee is
+        // not actually absent (same reasoning blockedDatesInPeriod already
+        // applies). findOverlapping already excludes CANCELLED at the query level.
         $overlapping = $this->absenceMapper->findOverlapping($employeeId, $startDate, $endDate, $excludeId);
-        if (!empty($overlapping)) {
+        $blocking = array_filter(
+            $overlapping,
+            static fn (Absence $a): bool => $a->getStatus() === Absence::STATUS_APPROVED
+                || $a->getStatus() === Absence::STATUS_PENDING
+        );
+        if (!empty($blocking)) {
             $errors['startDate'] = ['Overlapping absence exists'];
         }
 

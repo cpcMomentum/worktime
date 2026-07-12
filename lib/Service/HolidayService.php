@@ -16,6 +16,7 @@ use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\Holiday;
 use OCA\WorkTime\Db\HolidayMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\DB\Exception as DbException;
 use Psr\Log\LoggerInterface;
 
 class HolidayService {
@@ -41,12 +42,52 @@ class HolidayService {
      */
     private const FRONLEICHNAM_STATES = ['BY', 'BW', 'HE', 'NW', 'RP', 'SL'];
 
+    /** @var array<string, true> memo of (year, state) combos already ensured this request */
+    private array $ensuredYearStates = [];
+
     public function __construct(
         private HolidayMapper $holidayMapper,
         private CompanySettingMapper $settingsMapper,
         private AuditLogService $auditLogService,
         private LoggerInterface $logger,
     ) {
+    }
+
+    /**
+     * #438: German public holidays are deterministic, but the database is only
+     * populated when an admin manually generates a (year, state) combination. If
+     * a vacation is booked over a holiday for a year/state that was never
+     * generated, the holiday is missing from the range query and gets counted as
+     * a vacation day. This ensures the relevant holidays exist on demand before
+     * any working-day calculation reads them — safe because generation is purely
+     * a function of year + state.
+     *
+     * Idempotent: only generates when nothing exists yet for the combo, and
+     * memoises checked combos so a request does not re-query per calculation.
+     */
+    public function ensureHolidaysForYear(int $year, string $federalState, string $currentUserId = ''): void {
+        $key = $year . '|' . $federalState;
+        if (isset($this->ensuredYearStates[$key])) {
+            return;
+        }
+        // Mark first so a generation failure does not retry on every call.
+        $this->ensuredYearStates[$key] = true;
+        // Guard on AUTO holidays, not "any row": a single manually-added holiday
+        // must not suppress generation of the deterministic set (#438 review).
+        if (!$this->holidayMapper->hasAutoForYearAndState($year, $federalState)) {
+            $this->generateHolidays($year, $federalState, $currentUserId);
+        }
+    }
+
+    /**
+     * #438: ensure holidays exist for every calendar year the range touches.
+     */
+    public function ensureHolidaysForRange(DateTime $startDate, DateTime $endDate, string $federalState, string $currentUserId = ''): void {
+        $firstYear = (int)$startDate->format('Y');
+        $lastYear = (int)$endDate->format('Y');
+        for ($year = $firstYear; $year <= $lastYear; $year++) {
+            $this->ensureHolidaysForYear($year, $federalState, $currentUserId);
+        }
     }
 
     /**
@@ -60,6 +101,7 @@ class HolidayService {
      * @return Holiday[]
      */
     public function findByMonth(int $year, int $month, string $federalState): array {
+        $this->ensureHolidaysForYear($year, $federalState);
         return $this->holidayMapper->findByMonth($year, $month, $federalState);
     }
 
@@ -210,7 +252,24 @@ class HolidayService {
         $holiday->setYear($year);
         $holiday->setCreatedAt(new DateTime());
 
-        return $this->holidayMapper->insert($holiday);
+        try {
+            return $this->holidayMapper->insert($holiday);
+        } catch (DbException $e) {
+            // #438 review: the (date, federal_state) unique index can already be
+            // taken by a manual holiday on the same date, or by a concurrent
+            // first-time generation. Treat as already present instead of failing.
+            if ($e->getReason() === DbException::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
+                try {
+                    return $this->holidayMapper->findByDateAndState($holiday->getDate(), $federalState);
+                } catch (DoesNotExistException) {
+                    // Conflicting row not yet visible to this transaction (e.g. an
+                    // uncommitted concurrent insert). Surface the original error
+                    // rather than an unrelated "not found".
+                    throw $e;
+                }
+            }
+            throw $e;
+        }
     }
 
     /**
@@ -241,6 +300,7 @@ class HolidayService {
      * @return Holiday[]
      */
     public function findHolidaysInRange(DateTime $startDate, DateTime $endDate, string $federalState): array {
+        $this->ensureHolidaysForRange($startDate, $endDate, $federalState);
         return $this->holidayMapper->findHolidaysInRange($startDate, $endDate, $federalState);
     }
 

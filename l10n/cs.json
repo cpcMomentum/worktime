@@ -477,7 +477,6 @@
 		"Scope muss zwischen 0 und 1 liegen": "Rozsah musí být mezi 0 a 1",
 		"Halber Tag ist nur für einen einzelnen Tag möglich": "Půlden je možný pouze pro jeden den",
 		"Halbtägige Abwesenheit (%s) und Zeiteintrag am selben Tag.": "Půldenní absence (%s) a záznam času ve stejný den.",
-		"Gültig-ab darf frühestens der 1. des aktuellen Monats sein": "Platnost-od může být nejdříve 1. den aktuálního měsíce",
 		"Ein Profil mit diesem Gültig-ab Datum existiert bereits": "Profil s tímto datem platnosti-od již existuje",
 		"Maximale tägliche Arbeitszeit ist %s Stunden (siehe Einstellungen)": "Maximální denní pracovní doba je %s hodin (viz nastavení)",
 		"Begründung erforderlich": "Odůvodnění je povinné",
@@ -620,7 +619,12 @@
 		"Urlaub ins Minus": "Dovolená do minusu",
 		"{name} – {vacation} Tage Urlaub + {overage} Tage {type}": "{name} – {vacation} dní dovolené + {overage} dní {type}",
 		"Betriebsschließung kann nur zentral über die Betriebsferien gesetzt werden": "Uzavření provozu lze nastavit pouze centrálně přes celozávodní dovolenou",
-		"Mitarbeiter mit bereits erfassten Zeiten im Zeitraum werden nicht gebucht, sondern Ihnen aufgelistet.": "Zaměstnanci s již zaznamenanými časy v daném období nebudou zaúčtováni, ale budou vám vypsáni."
+		"Mitarbeiter mit bereits erfassten Zeiten im Zeitraum werden nicht gebucht, sondern Ihnen aufgelistet.": "Zaměstnanci s již zaznamenanými časy v daném období nebudou zaúčtováni, ale budou vám vypsáni.",
+		"Teilweise gebucht – bereits eigene Abwesenheit im Zeitraum:": "Částečně zapsáno – vlastní nepřítomnost již v tomto období:",
+		"bereits eigene Abwesenheit im gesamten Zeitraum": "vlastní nepřítomnost již v celém období",
+		"{name} – {booked} Tage gebucht, {skipped} Tage bereits abwesend": "{name} – {booked} dní zapsáno, {skipped} dní již nepřítomen",
+		"Gültig-ab darf nicht in einen bereits genehmigten Zeitraum fallen. Frühestens möglich: %s": "Gültig-ab darf nicht in einen bereits genehmigten Zeitraum fallen. Frühestens möglich: %s",
+		"Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)": "Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)"
 	},
 	"pluralForm": "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;"
 }

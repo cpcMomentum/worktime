@@ -525,7 +525,6 @@ OC.L10N.register(
     "Scope muss zwischen 0 und 1 liegen" : "Scope must be between 0 and 1",
     "Halber Tag ist nur für einen einzelnen Tag möglich" : "Half day is only possible for a single day",
     "Halbtägige Abwesenheit (%s) und Zeiteintrag am selben Tag." : "Half-day absence (%s) and time entry on the same day.",
-    "Gültig-ab darf frühestens der 1. des aktuellen Monats sein" : "Valid-from must be no earlier than the 1st of the current month",
     "Ein Profil mit diesem Gültig-ab Datum existiert bereits" : "A profile with this valid-from date already exists",
     "Maximale tägliche Arbeitszeit ist %s Stunden (siehe Einstellungen)" : "Maximum daily working time is %s hours (see settings)",
     "Begründung erforderlich" : "Reason required",
@@ -621,6 +620,11 @@ OC.L10N.register(
     "Urlaub ins Minus" : "Vacation into negative",
     "{name} – {vacation} Tage Urlaub + {overage} Tage {type}" : "{name} – {vacation} days vacation + {overage} days {type}",
     "Betriebsschließung kann nur zentral über die Betriebsferien gesetzt werden" : "Company closure can only be set centrally via the company vacation settings",
-    "Mitarbeiter mit bereits erfassten Zeiten im Zeitraum werden nicht gebucht, sondern Ihnen aufgelistet." : "Employees with time entries already recorded in the period are not booked but listed for you."
+    "Mitarbeiter mit bereits erfassten Zeiten im Zeitraum werden nicht gebucht, sondern Ihnen aufgelistet." : "Employees with time entries already recorded in the period are not booked but listed for you.",
+    "Teilweise gebucht – bereits eigene Abwesenheit im Zeitraum:" : "Partially booked – own absence already in the period:",
+    "bereits eigene Abwesenheit im gesamten Zeitraum" : "own absence already covers the entire period",
+    "{name} – {booked} Tage gebucht, {skipped} Tage bereits abwesend" : "{name} – {booked} days booked, {skipped} days already absent",
+    "Gültig-ab darf nicht in einen bereits genehmigten Zeitraum fallen. Frühestens möglich: %s" : "Valid-from must not fall within an already approved period. Earliest possible: %s",
+    "Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)" : "Valid-from must not be before the entry date (%s)"
 },
 "nplurals=2; plural=(n != 1);");
