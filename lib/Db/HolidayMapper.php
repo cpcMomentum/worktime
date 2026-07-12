@@ -98,6 +98,27 @@ class HolidayMapper extends QBMapper {
         return (int)$count > 0;
     }
 
+    /**
+     * #438: whether AUTO-generated holidays (is_manual = 0) already exist for a
+     * (year, state). The lazy-ensure guard must use this rather than
+     * existsForYearAndState — a single pre-existing MANUAL holiday must not
+     * suppress generation of the deterministic set (Neujahr, Ostermontag, …).
+     */
+    public function hasAutoForYearAndState(int $year, string $federalState): bool {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select($qb->func()->count('id'))
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('year', $qb->createNamedParameter($year, IQueryBuilder::PARAM_INT)))
+            ->andWhere($qb->expr()->eq('federal_state', $qb->createNamedParameter($federalState)))
+            ->andWhere($qb->expr()->eq('is_manual', $qb->createNamedParameter(0, IQueryBuilder::PARAM_INT)));
+
+        $result = $qb->executeQuery();
+        $count = $result->fetchOne();
+        $result->closeCursor();
+
+        return (int)$count > 0;
+    }
+
     public function deleteByYearAndState(int $year, string $federalState): int {
         $qb = $this->db->getQueryBuilder();
         $qb->delete($this->getTableName())
