@@ -6,6 +6,7 @@ namespace OCA\WorkTime\Tests\Unit\Service;
 
 use DateTime;
 use OCA\WorkTime\Db\Employee;
+use OCA\WorkTime\Db\Holiday;
 use OCA\WorkTime\Db\OvertimePayoutMapper;
 use OCA\WorkTime\Service\AbsenceService;
 use OCA\WorkTime\Service\EmployeeService;
@@ -122,5 +123,50 @@ class OvertimeCalculationServiceTest extends TestCase {
 
         // 100 + 60 − 400 = -240
         $this->assertSame(-240, $service->getNetOvertimeMinutes(1, 2026));
+    }
+
+    // ---------------------------------------------------------------------
+    // #443 C: paid-absence credit must honour half-day holidays
+    // ---------------------------------------------------------------------
+
+    private function serviceWithDailyMinutes(int $dailyMinutes): OvertimeCalculationService {
+        $ws = $this->createMock(WorkScheduleService::class);
+        $ws->method('getDailyMinutesForDate')->willReturn($dailyMinutes);
+        return new OvertimeCalculationService(
+            $ws,
+            $this->createMock(YearlyCarryoverService::class),
+            $this->createMock(OvertimePayoutMapper::class),
+            $this->createMock(EmployeeService::class),
+            $this->createMock(TimeEntryService::class),
+            $this->createMock(AbsenceService::class),
+            $this->createMock(HolidayService::class),
+        );
+    }
+
+    private function holiday(string $date, float $scope): Holiday {
+        $h = new Holiday();
+        $h->setDate(new DateTime($date));
+        $h->setScopeValue($scope);
+        return $h;
+    }
+
+    private function absenceMinutes(OvertimeCalculationService $s, float $absenceScope, array $holidays): int {
+        $m = new \ReflectionMethod($s, 'calculateAbsenceMinutes');
+        $m->setAccessible(true);
+        // single day 2026-12-24, full-day paid absence over it
+        return $m->invoke($s, 1, new DateTime('2026-12-24'), new DateTime('2026-12-24'), $absenceScope, $holidays);
+    }
+
+    public function testHalfDayHolidayCreditsRemainingHalfToPaidAbsence(): void {
+        // 8h/day, full-day vacation over a half-holiday (scope 0.5): the reduced
+        // 240-min target must be balanced by 240 credited absence minutes, not 0.
+        $service = $this->serviceWithDailyMinutes(480);
+        $this->assertSame(240, $this->absenceMinutes($service, 1.0, [$this->holiday('2026-12-24', 0.5)]));
+    }
+
+    public function testFullDayHolidayCreditsZero(): void {
+        // Control: a full holiday (scope 1.0) still credits 0 (target is also 0).
+        $service = $this->serviceWithDailyMinutes(480);
+        $this->assertSame(0, $this->absenceMinutes($service, 1.0, [$this->holiday('2026-12-24', 1.0)]));
     }
 }

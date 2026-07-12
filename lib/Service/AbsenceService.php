@@ -704,6 +704,20 @@ class AbsenceService {
             throw new ForbiddenException('Can only approve pending absences');
         }
 
+        // #443: re-check the time-entry conflict at approval time. The create-time
+        // #360 guard cannot see entries booked AFTER the (still pending) absence,
+        // and TimeEntryService only blocks entries against ALREADY-approved
+        // absences — so the order "pending full-day absence → book entries →
+        // approve" would otherwise create an approved full-day absence coexisting
+        // with time entries on the same day, double-counted in the overtime
+        // calculation. Block the approval until the entries are removed.
+        $this->checkTimeEntryConflict(
+            $absence->getEmployeeId(),
+            $absence->getStartDate(),
+            $absence->getEndDate(),
+            $absence->getScopeValue()
+        );
+
         $absence->setStatus(Absence::STATUS_APPROVED);
         $absence->setApprovedBy($approverEmployeeId);
         $absence->setApprovedAt(new DateTime());
@@ -982,7 +996,12 @@ class AbsenceService {
             if ($absence->getType() !== Absence::TYPE_VACATION) {
                 continue;
             }
-            if ($absence->getStatus() === Absence::STATUS_CANCELLED) {
+            // #443: only APPROVED + PENDING consume quota (matches this method's
+            // docstring and getVacationStats). Previously only CANCELLED was
+            // skipped, so a REJECTED request permanently ate quota and wrongly
+            // blocked later bookings / mis-classified Betriebsferien days.
+            if ($absence->getStatus() !== Absence::STATUS_APPROVED
+                && $absence->getStatus() !== Absence::STATUS_PENDING) {
                 continue;
             }
             if ($excludeId !== null && $absence->getId() === $excludeId) {
@@ -1015,9 +1034,17 @@ class AbsenceService {
             $errors['scope'] = [$this->l->t('Halber Tag ist nur für einen einzelnen Tag möglich')];
         }
 
-        // Check for overlapping absences
+        // Check for overlapping absences. #443: only a STANDING absence
+        // (pending or approved) blocks — a REJECTED request means the employee is
+        // not actually absent (same reasoning blockedDatesInPeriod already
+        // applies). findOverlapping already excludes CANCELLED at the query level.
         $overlapping = $this->absenceMapper->findOverlapping($employeeId, $startDate, $endDate, $excludeId);
-        if (!empty($overlapping)) {
+        $blocking = array_filter(
+            $overlapping,
+            static fn (Absence $a): bool => $a->getStatus() === Absence::STATUS_APPROVED
+                || $a->getStatus() === Absence::STATUS_PENDING
+        );
+        if (!empty($blocking)) {
             $errors['startDate'] = ['Overlapping absence exists'];
         }
 

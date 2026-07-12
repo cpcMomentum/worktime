@@ -624,6 +624,24 @@ class TimeEntryServiceTest extends TestCase {
         $this->assertSame([], $this->service->dayWarnings([]));
     }
 
+    /**
+     * #443: a day split by a GAP whose working time exceeds 9h must warn. The
+     * break is taken as the 30-min gap, but §4 requires 45 min above 9h working
+     * time. Before the fix the gross-calibrated cutoff (9h + break6h) treated the
+     * gap-excluded span sum as if it still contained a break, so this genuinely
+     * >9h-net day escaped the 45-min classification.
+     */
+    public function testDayWarningsSplitByGapAboveNineNetWarns(): void {
+        // 08:00–13:00 (5h) + 13:30–18:00 (4.5h) = 9h30 working time, gap = 30 min.
+        $warnings = $this->service->dayWarnings([
+            $this->makeEntry('08:00', '13:00', 0),
+            $this->makeEntry('13:30', '18:00', 0),
+        ]);
+
+        $this->assertCount(1, $warnings);
+        $this->assertStringContainsString('Mindestpause', $warnings[0]);
+    }
+
     // ---------------------------------------------------------------------
     // #344: cross-month approval inbox (submitted months)
     // ---------------------------------------------------------------------
