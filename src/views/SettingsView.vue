@@ -2239,7 +2239,7 @@ export default {
 
 .carryover-table th,
 .carryover-table td {
-    padding: 8px 10px;
+    padding: 6px 8px;
     border-bottom: 1px solid var(--color-border);
     text-align: left;
     vertical-align: middle;
@@ -2253,12 +2253,14 @@ export default {
 }
 
 .carryover-input {
-    width: 80px !important;
+    width: 72px !important;
     text-align: right;
 }
 
 .carryover-note-cell {
-    min-width: 200px;
+    /* #440: schlanker halten, damit die Korrektur-Eingabefelder ohne
+       horizontalen Scroll erreichbar bleiben; waechst bei mehr Platz mit. */
+    min-width: 120px;
 }
 
 .carryover-note {
@@ -2296,7 +2298,9 @@ export default {
 }
 
 .carryover-actions {
-    white-space: nowrap;
+    /* #440: darf umbrechen statt die Spalte auf die volle Button-Breite zu
+       zwingen — spart horizontalen Platz auf schmalen Panels. */
+    white-space: normal;
 }
 
 .carryover-year-status {
