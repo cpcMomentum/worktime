@@ -538,7 +538,6 @@
 		"Scope muss zwischen 0 und 1 liegen": "Scope muss zwischen 0 und 1 liegen",
 		"Halber Tag ist nur für einen einzelnen Tag möglich": "Halber Tag ist nur für einen einzelnen Tag möglich",
 		"Halbtägige Abwesenheit (%s) und Zeiteintrag am selben Tag.": "Halbtägige Abwesenheit (%s) und Zeiteintrag am selben Tag.",
-		"Gültig-ab darf frühestens der 1. des aktuellen Monats sein": "Gültig-ab darf frühestens der 1. des aktuellen Monats sein",
 		"Ein Profil mit diesem Gültig-ab Datum existiert bereits": "Ein Profil mit diesem Gültig-ab Datum existiert bereits",
 		"Maximale tägliche Arbeitszeit ist %s Stunden (siehe Einstellungen)": "Maximale tägliche Arbeitszeit ist %s Stunden (siehe Einstellungen)",
 		"Begründung erforderlich": "Begründung erforderlich",
@@ -623,7 +622,9 @@
 		"Mitarbeiter mit bereits erfassten Zeiten im Zeitraum werden nicht gebucht, sondern Ihnen aufgelistet.": "Mitarbeiter mit bereits erfassten Zeiten im Zeitraum werden nicht gebucht, sondern Ihnen aufgelistet.",
 		"Teilweise gebucht – bereits eigene Abwesenheit im Zeitraum:": "Teilweise gebucht – bereits eigene Abwesenheit im Zeitraum:",
 		"bereits eigene Abwesenheit im gesamten Zeitraum": "bereits eigene Abwesenheit im gesamten Zeitraum",
-		"{name} – {booked} Tage gebucht, {skipped} Tage bereits abwesend": "{name} – {booked} Tage gebucht, {skipped} Tage bereits abwesend"
+		"{name} – {booked} Tage gebucht, {skipped} Tage bereits abwesend": "{name} – {booked} Tage gebucht, {skipped} Tage bereits abwesend",
+		"Gültig-ab darf nicht in einen bereits genehmigten Zeitraum fallen. Frühestens möglich: %s": "Gültig-ab darf nicht in einen bereits genehmigten Zeitraum fallen. Frühestens möglich: %s",
+		"Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)": "Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)"
 	},
 	"pluralForm": "nplurals=2; plural=(n != 1);"
 }
