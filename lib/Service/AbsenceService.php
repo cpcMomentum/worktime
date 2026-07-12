@@ -704,6 +704,20 @@ class AbsenceService {
             throw new ForbiddenException('Can only approve pending absences');
         }
 
+        // #443: re-check the time-entry conflict at approval time. The create-time
+        // #360 guard cannot see entries booked AFTER the (still pending) absence,
+        // and TimeEntryService only blocks entries against ALREADY-approved
+        // absences — so the order "pending full-day absence → book entries →
+        // approve" would otherwise create an approved full-day absence coexisting
+        // with time entries on the same day, double-counted in the overtime
+        // calculation. Block the approval until the entries are removed.
+        $this->checkTimeEntryConflict(
+            $absence->getEmployeeId(),
+            $absence->getStartDate(),
+            $absence->getEndDate(),
+            $absence->getScopeValue()
+        );
+
         $absence->setStatus(Absence::STATUS_APPROVED);
         $absence->setApprovedBy($approverEmployeeId);
         $absence->setApprovedAt(new DateTime());

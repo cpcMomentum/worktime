@@ -957,4 +957,33 @@ class AbsenceServiceTest extends TestCase {
         $errors = $this->validateOverlap(Absence::STATUS_PENDING);
         $this->assertArrayHasKey('startDate', $errors);
     }
+
+    // ---------------------------------------------------------------------
+    // #443 D: approving a full-day absence must re-check time-entry conflicts
+    // ---------------------------------------------------------------------
+
+    public function testApproveBlocksWhenTimeEntriesExistOnFullDayAbsence(): void {
+        $absence = $this->makeAbsence(Absence::TYPE_VACATION, Absence::STATUS_PENDING, new DateTime('2026-03-02'), new DateTime('2026-03-02'));
+        $this->absenceMapper->method('find')->willReturn($absence);
+        // A time entry was booked on the day while the absence was still pending.
+        $entry = new TimeEntry();
+        $entry->setDate(new DateTime('2026-03-02'));
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([$entry]);
+        // The approval must be refused — no status flip.
+        $this->absenceMapper->expects($this->never())->method('update');
+
+        $this->expectException(ValidationException::class);
+        $this->service->approve(99, 1, 'admin');
+    }
+
+    public function testApproveSucceedsWithoutTimeEntryConflict(): void {
+        // Control: no entries on the day → approval goes through.
+        $absence = $this->makeAbsence(Absence::TYPE_VACATION, Absence::STATUS_PENDING, new DateTime('2026-03-02'), new DateTime('2026-03-02'));
+        $this->absenceMapper->method('find')->willReturn($absence);
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]);
+        $this->absenceMapper->method('update')->willReturnArgument(0);
+
+        $result = $this->service->approve(99, 1, 'admin');
+        $this->assertSame(Absence::STATUS_APPROVED, $result->getStatus());
+    }
 }
