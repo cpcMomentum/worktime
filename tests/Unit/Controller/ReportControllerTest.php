@@ -296,4 +296,52 @@ class ReportControllerTest extends TestCase {
         $a = $this->vacationAbsence('2026-12-21', '2026-12-25', 1.0);
         $this->assertSame(3.0, $this->countInMonth($controller, $a, 2026, 12));
     }
+
+    // ---------------------------------------------------------------------
+    // #443 H: FZA daily-minutes hint must honour a non-5-day work week
+    // ---------------------------------------------------------------------
+
+    public function testOvertimeDailyMinutesHonoursWorkingDaysPerWeek(): void {
+        // 32h over a 4-day week → 480 min/day, not the flat weeklyHours/5 = 384.
+        $employee = new Employee();
+        $employee->setId(1);
+        $employee->setWeeklyHours('32');
+        $employee->setWorkingDaysPerWeek(4);
+
+        $employeeService = $this->createMock(EmployeeService::class);
+        $employeeService->method('find')->willReturn($employee);
+
+        $permissionService = $this->createMock(PermissionService::class);
+        $permissionService->method('canViewEmployee')->willReturn(true);
+
+        $carryover = $this->createMock(YearlyCarryoverService::class);
+        $carryover->method('getOvertimeCarryoverMinutes')->willReturn(0);
+        $payout = $this->createMock(OvertimePayoutService::class);
+        $payout->method('getPaidOutMinutes')->willReturn(0);
+
+        $controller = new ReportController(
+            $this->createMock(IRequest::class),
+            'admin',
+            $this->createMock(TimeEntryService::class),
+            $this->createMock(TimeEntryMapper::class),
+            $this->createMock(AbsenceMapper::class),
+            $this->createMock(AbsenceService::class),
+            $employeeService,
+            $this->createMock(HolidayService::class),
+            $permissionService,
+            $this->createMock(PdfService::class),
+            $this->createMock(WorkScheduleService::class),
+            $carryover,
+            $payout,
+            $this->createMock(OvertimeCalculationService::class),
+            $this->createMock(ProjectService::class),
+            $this->createMock(IL10N::class),
+        );
+
+        // Future year → the month loop breaks immediately, only dailyMinutes is computed.
+        $response = $controller->overtime(1, 2099);
+        $data = $response->getData();
+
+        $this->assertSame(480, $data['dailyMinutes']);
+    }
 }

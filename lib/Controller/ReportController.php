@@ -887,8 +887,10 @@ class ReportController extends BaseController {
                 'paidOutMinutes' => $paidOutMinutes,
                 'totalOvertimeMinutes' => $netOvertime,
                 'totalOvertimeHours' => round($netOvertime / 60, 2),
-                // Average daily target (weekly hours / 5), used for the Freizeitausgleich ≈ hours hint.
-                'dailyMinutes' => (int)round($employee->getWeeklyHours() / 5 * 60),
+                // Average daily target (weekly hours / working days per week),
+                // used for the Freizeitausgleich ≈ hours hint. Respects a
+                // non-5-day week (e.g. 32h/4 days → 480, not 384). See #443 H.
+                'dailyMinutes' => (int)round($employee->getWeeklyHours() / max(1, $employee->getWorkingDaysPerWeek()) * 60),
             ]);
         } catch (\Exception $e) {
             return $this->handleException($e);

@@ -42,7 +42,7 @@
                 <div class="kpi-num" :class="{ pos: displayOvertime > 0, neg: displayOvertime < 0 }">
                     {{ displayOvertime > 0 ? '+' : '' }}{{ absHoursLabel(displayOvertime) }} <small>h</small>
                 </div>
-                <div class="kpi-sub">{{ t('worktime', 'Stand heute') }}</div>
+                <div class="kpi-sub">{{ overtimeSubLabel }}</div>
             </div>
         </div>
 
@@ -213,6 +213,16 @@ export default {
                 return this.t('worktime', 'inkl. {days} Tage Übertrag', { days: this.vacationCarryover })
             }
             return ''
+        },
+        // #430: Die Überstunden-Card zeigt immer einen Jahres-Wert (kumulierter
+        // Kontostand bzw. Jahressaldo), nie den Monatswert. Das Sub-Label macht
+        // das explizit, damit es nicht mit dem Monats-Überstundenwert im PDF
+        // verwechselt wird.
+        overtimeSubLabel() {
+            if (this.period === 'year') {
+                return this.t('worktime', 'Jahressaldo {year}', { year: this.year })
+            }
+            return this.t('worktime', 'Jahressaldo · Stand heute')
         },
     },
     methods: {
