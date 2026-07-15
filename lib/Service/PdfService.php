@@ -718,7 +718,9 @@ class PdfService {
         $pdf->Ln(2);
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_HEADER);
         $overtimeMinutes = $statistics['overtimeMinutes'];
-        $overtimeLabel = $overtimeMinutes >= 0 ? 'Überstunden:' : 'Minusstunden:';
+        // Qualify with "(Monat)" so this month-only value is not confused with
+        // the cumulative year balance shown in the app tile (#430).
+        $overtimeLabel = $overtimeMinutes >= 0 ? 'Überstunden (Monat):' : 'Minusstunden (Monat):';
         $overtimeFormatted = $this->formatMinutes(abs($overtimeMinutes));
 
         if ($overtimeMinutes < 0) {

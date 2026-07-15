@@ -256,13 +256,15 @@ class OvertimeCalculationService {
             $workingDaysMonth = $this->workScheduleService->countWorkingDays($employeeId, $startDate, $monthEndDate, $holidays);
             $monthlyTargetMinutes = $this->workScheduleService->calculateTargetMinutes($employeeId, $startDate, $monthEndDate, $holidays);
 
-            // Count planned absences for display only
+            // Count planned absences for display only. Weight by the absence
+            // scope (0.5 for half days) so a half-day absence in a future month
+            // shows as 0.5, consistent with the non-future branch (see #443 G).
             $absenceDaysMonth = 0;
             foreach ($absences as $absence) {
                 if ($absence->isApproved()) {
                     $absenceStart = $absence->getStartDate() < $startDate ? $startDate : $absence->getStartDate();
                     $absenceEnd = $absence->getEndDate() > $monthEndDate ? $monthEndDate : $absence->getEndDate();
-                    $absenceDaysMonth += $this->workScheduleService->countWorkingDays($employeeId, $absenceStart, $absenceEnd, $holidays);
+                    $absenceDaysMonth += $this->workScheduleService->countWorkingDays($employeeId, $absenceStart, $absenceEnd, $holidays) * $absence->getScopeValue();
                 }
             }
 

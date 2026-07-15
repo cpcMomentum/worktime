@@ -114,6 +114,8 @@ OC.L10N.register(
     "Meine Abwesenheiten" : "Meine Abwesenheiten",
     "Monat genehmigt – gesperrt. Korrektur nur durch HR." : "Monat genehmigt – gesperrt. Korrektur nur durch HR.",
     "Noch nichts erfasst." : "Noch nichts erfasst.",
+    "Jahressaldo {year}" : "Jahressaldo {year}",
+    "Jahressaldo · Stand heute" : "Jahressaldo · Stand heute",
     "Soll (anteilig bis heute)" : "Soll (anteilig bis heute)",
     "Stand heute" : "Stand heute",
     "Tag" : "Tag",
