@@ -101,7 +101,6 @@
 		"Monat genehmigt – gesperrt. Korrektur nur durch HR.": "Month approved – locked. Corrections by HR only.",
 		"Noch nichts erfasst.": "Nothing recorded yet.",
 		"Jahressaldo {year}": "Year balance {year}",
-		"Jahressaldo · Stand heute": "Year balance · as of today",
 		"Soll (anteilig bis heute)": "Target (prorated up to today)",
 		"Stand heute": "As of today",
 		"Tag": "Day",
@@ -626,7 +625,8 @@
 		"bereits eigene Abwesenheit im gesamten Zeitraum": "own absence already covers the entire period",
 		"{name} – {booked} Tage gebucht, {skipped} Tage bereits abwesend": "{name} – {booked} days booked, {skipped} days already absent",
 		"Gültig-ab darf nicht in einen bereits genehmigten Zeitraum fallen. Frühestens möglich: %s": "Valid-from must not fall within an already approved period. Earliest possible: %s",
-		"Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)": "Valid-from must not be before the entry date (%s)"
+		"Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)": "Valid-from must not be before the entry date (%s)",
+		"Jahressaldo {year} · Stand heute": "Year balance {year} · as of today"
 	},
 	"pluralForm": "nplurals=2; plural=(n != 1);"
 }
