@@ -222,7 +222,7 @@ export default {
             if (this.period === 'year') {
                 return this.t('worktime', 'Jahressaldo {year}', { year: this.year })
             }
-            return this.t('worktime', 'Jahressaldo · Stand heute')
+            return this.t('worktime', 'Jahressaldo {year} · Stand heute', { year: this.year })
         },
     },
     methods: {

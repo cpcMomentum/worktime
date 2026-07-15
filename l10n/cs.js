@@ -627,6 +627,6 @@ OC.L10N.register(
     "Gültig-ab darf nicht in einen bereits genehmigten Zeitraum fallen. Frühestens möglich: %s" : "Gültig-ab darf nicht in einen bereits genehmigten Zeitraum fallen. Frühestens möglich: %s",
     "Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)" : "Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)",
     "Jahressaldo {year}" : "Roční saldo {year}",
-    "Jahressaldo · Stand heute" : "Roční saldo · ke dnešnímu dni"
+    "Jahressaldo {year} · Stand heute" : "Roční saldo {year} · ke dnešnímu dni"
 },
 "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;");

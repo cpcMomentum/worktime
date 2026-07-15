@@ -115,7 +115,6 @@ OC.L10N.register(
     "Monat genehmigt – gesperrt. Korrektur nur durch HR." : "Monat genehmigt – gesperrt. Korrektur nur durch HR.",
     "Noch nichts erfasst." : "Noch nichts erfasst.",
     "Jahressaldo {year}" : "Jahressaldo {year}",
-    "Jahressaldo · Stand heute" : "Jahressaldo · Stand heute",
     "Soll (anteilig bis heute)" : "Soll (anteilig bis heute)",
     "Stand heute" : "Stand heute",
     "Tag" : "Tag",
@@ -627,6 +626,7 @@ OC.L10N.register(
     "bereits eigene Abwesenheit im gesamten Zeitraum" : "bereits eigene Abwesenheit im gesamten Zeitraum",
     "{name} – {booked} Tage gebucht, {skipped} Tage bereits abwesend" : "{name} – {booked} Tage gebucht, {skipped} Tage bereits abwesend",
     "Gültig-ab darf nicht in einen bereits genehmigten Zeitraum fallen. Frühestens möglich: %s" : "Gültig-ab darf nicht in einen bereits genehmigten Zeitraum fallen. Frühestens möglich: %s",
-    "Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)" : "Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)"
+    "Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)" : "Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)",
+    "Jahressaldo {year} · Stand heute" : "Jahressaldo {year} · Stand heute"
 },
 "nplurals=2; plural=(n != 1);");
