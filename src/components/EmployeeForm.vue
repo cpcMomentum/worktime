@@ -125,6 +125,14 @@
                     :placeholder="t('worktime', 'Kein Vorgesetzter')"
                     label="label" />
             </div>
+            <div class="form-group">
+                <label for="deputy">{{ t('worktime', 'Stellvertreter') }} <InfoIcon>{{ t('worktime', 'Vertritt den Vorgesetzten bei der Genehmigung. Der Stellvertreter darf nur genehmigen, solange der Vorgesetzte abwesend ist.') }}</InfoIcon></label>
+                <NcSelect id="deputy"
+                    v-model="selectedDeputy"
+                    :options="supervisorOptions"
+                    :placeholder="t('worktime', 'Kein Stellvertreter')"
+                    label="label" />
+            </div>
         </div>
 
         <div class="form-row">
@@ -211,6 +219,7 @@ export default {
                 vacationDays: 30,
                 workingDaysPerWeek: 5,
                 supervisorId: null,
+                deputyId: null,
                 federalState: this.defaultFederalState,
                 entryDate: null,
                 exitDate: null,
@@ -284,6 +293,14 @@ export default {
                 this.form.supervisorId = value?.id || null
             },
         },
+        selectedDeputy: {
+            get() {
+                return this.supervisorOptions.find(s => s.id === this.form.deputyId) || null
+            },
+            set(value) {
+                this.form.deputyId = value?.id || null
+            },
+        },
         isValid() {
             const baseValid = (this.isEdit || this.form.userId)
                 && this.form.firstName.trim()
@@ -312,6 +329,7 @@ export default {
                         vacationDays: employee.vacationDays,
                         workingDaysPerWeek: employee.workingDaysPerWeek ?? 5,
                         supervisorId: employee.supervisorId,
+                        deputyId: employee.deputyId,
                         federalState: employee.federalState,
                         entryDate: employee.entryDate ? new Date(employee.entryDate) : null,
                         exitDate: employee.exitDate ? new Date(employee.exitDate) : null,
@@ -343,6 +361,7 @@ export default {
                 vacationDays: 30,
                 workingDaysPerWeek: 5,
                 supervisorId: null,
+                deputyId: null,
                 federalState: this.defaultFederalState,
                 entryDate: null,
                 exitDate: null,
@@ -364,6 +383,7 @@ export default {
                     vacationDays: this.form.vacationDays,
                     workingDaysPerWeek: this.form.workingDaysPerWeek,
                     supervisorId: this.form.supervisorId,
+                    deputyId: this.form.deputyId,
                     federalState: this.form.federalState,
                     entryDate: this.form.entryDate ? formatDateISO(this.form.entryDate) : null,
                     exitDate: this.form.exitDate ? formatDateISO(this.form.exitDate) : null,

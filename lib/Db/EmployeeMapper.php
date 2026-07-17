@@ -108,6 +108,23 @@ class EmployeeMapper extends QBMapper {
     }
 
     /**
+     * Active employees who have this employee assigned as their deputy (#343).
+     *
+     * @return Employee[]
+     */
+    public function findByDeputy(int $deputyId): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('deputy_id', $qb->createNamedParameter($deputyId, IQueryBuilder::PARAM_INT)))
+            ->andWhere($qb->expr()->eq('is_active', $qb->createNamedParameter(1, IQueryBuilder::PARAM_INT)))
+            ->orderBy('last_name', 'ASC')
+            ->addOrderBy('first_name', 'ASC');
+
+        return $this->findEntities($qb);
+    }
+
+    /**
      * @return Employee[]
      */
     public function findByFederalState(string $federalState): array {

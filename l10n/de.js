@@ -627,6 +627,9 @@ OC.L10N.register(
     "{name} – {booked} Tage gebucht, {skipped} Tage bereits abwesend" : "{name} – {booked} Tage gebucht, {skipped} Tage bereits abwesend",
     "Gültig-ab darf nicht in einen bereits genehmigten Zeitraum fallen. Frühestens möglich: %s" : "Gültig-ab darf nicht in einen bereits genehmigten Zeitraum fallen. Frühestens möglich: %s",
     "Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)" : "Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)",
-    "Jahressaldo {year} · Stand heute" : "Jahressaldo {year} · Stand heute"
+    "Jahressaldo {year} · Stand heute" : "Jahressaldo {year} · Stand heute",
+    "Stellvertreter" : "Stellvertreter",
+    "Vertritt den Vorgesetzten bei der Genehmigung. Der Stellvertreter darf nur genehmigen, solange der Vorgesetzte abwesend ist." : "Vertritt den Vorgesetzten bei der Genehmigung. Der Stellvertreter darf nur genehmigen, solange der Vorgesetzte abwesend ist.",
+    "Kein Stellvertreter" : "Kein Stellvertreter"
 },
 "nplurals=2; plural=(n != 1);");

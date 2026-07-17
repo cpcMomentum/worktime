@@ -146,4 +146,32 @@ class EmployeeServiceTest extends TestCase {
         $this->assertSame(31.5, (float)$result[0]->getWeeklyHours());
         $this->assertSame(28, $result[0]->getVacationDays());
     }
+
+    // ---------------------------------------------------------------------
+    // #343: deputy is persisted through the positional update() arg list
+    // ---------------------------------------------------------------------
+
+    public function testUpdatePersistsDeputyId(): void {
+        $this->employeeMapper->method('find')->with(2)->willReturn($this->makeEmployee(2, '40.00', 30));
+        $this->employeeMapper->method('update')->willReturnArgument(0);
+        $this->workScheduleService->method('getScheduleForDate')->willReturn($this->makeSchedule(8.0, 30));
+
+        $result = $this->service->update(
+            2, 'Erika', 'Musterfrau', null, null,
+            1, 'BY', null, null, true, 'admin', 5, 7
+        );
+
+        $this->assertSame(7, $result->getDeputyId());
+    }
+
+    public function testUpdateRejectsSelfDeputy(): void {
+        $this->employeeMapper->method('find')->with(2)->willReturn($this->makeEmployee(2, '40.00', 30));
+        $this->workScheduleService->method('getScheduleForDate')->willReturn($this->makeSchedule(8.0, 30));
+
+        $this->expectException(\OCA\WorkTime\Service\ValidationException::class);
+        $this->service->update(
+            2, 'Erika', 'Musterfrau', null, null,
+            null, 'BY', null, null, true, 'admin', 5, 2
+        );
+    }
 }

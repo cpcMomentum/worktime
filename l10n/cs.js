@@ -627,6 +627,9 @@ OC.L10N.register(
     "Gültig-ab darf nicht in einen bereits genehmigten Zeitraum fallen. Frühestens möglich: %s" : "Gültig-ab darf nicht in einen bereits genehmigten Zeitraum fallen. Frühestens möglich: %s",
     "Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)" : "Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)",
     "Jahressaldo {year}" : "Roční saldo {year}",
-    "Jahressaldo {year} · Stand heute" : "Roční saldo {year} · ke dnešnímu dni"
+    "Jahressaldo {year} · Stand heute" : "Roční saldo {year} · ke dnešnímu dni",
+    "Stellvertreter" : "Zástupce",
+    "Vertritt den Vorgesetzten bei der Genehmigung. Der Stellvertreter darf nur genehmigen, solange der Vorgesetzte abwesend ist." : "Zastupuje nadřízeného při schvalování. Zástupce může schvalovat pouze v době nepřítomnosti nadřízeného.",
+    "Kein Stellvertreter" : "Bez zástupce"
 },
 "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;");

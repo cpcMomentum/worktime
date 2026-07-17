@@ -146,7 +146,8 @@ class EmployeeService {
         string $federalState = 'BY',
         ?string $entryDate = null,
         string $currentUserId = '',
-        int $workingDaysPerWeek = 5
+        int $workingDaysPerWeek = 5,
+        ?int $deputyId = null
     ): Employee {
         // Validate
         $errors = $this->validate($userId, $firstName, $lastName, $federalState);
@@ -177,6 +178,7 @@ class EmployeeService {
         $employee->setWeeklyHours((string)$weeklyHours);
         $employee->setVacationDays($vacationDays);
         $employee->setSupervisorId($supervisorId);
+        $employee->setDeputyId($deputyId);
         $employee->setWorkingDaysPerWeek(max(1, min(7, $workingDaysPerWeek)));
         $employee->setFederalState($federalState);
 
@@ -217,7 +219,8 @@ class EmployeeService {
         ?string $exitDate = null,
         bool $isActive = true,
         string $currentUserId = '',
-        int $workingDaysPerWeek = 5
+        int $workingDaysPerWeek = 5,
+        ?int $deputyId = null
     ): Employee {
         $employee = $this->find($id);
         $oldValues = $employee->jsonSerialize();
@@ -233,6 +236,11 @@ class EmployeeService {
             throw ValidationException::fromSingleError('supervisorId', 'Employee cannot be their own supervisor');
         }
 
+        // A deputy cannot be the employee themselves (#343)
+        if ($deputyId === $id) {
+            throw ValidationException::fromSingleError('deputyId', 'Employee cannot be their own deputy');
+        }
+
         // weeklyHours and vacationDays are intentionally not set here: they are
         // owned by the work schedule profile and synced via
         // WorkScheduleService::syncEmployeeFromActiveSchedule. Surfacing them on
@@ -242,6 +250,7 @@ class EmployeeService {
         $employee->setEmail($email);
         $employee->setPersonnelNumber($personnelNumber);
         $employee->setSupervisorId($supervisorId);
+        $employee->setDeputyId($deputyId);
         $employee->setWorkingDaysPerWeek(max(1, min(7, $workingDaysPerWeek)));
         $employee->setFederalState($federalState);
 

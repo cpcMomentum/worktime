@@ -9,7 +9,9 @@ declare(strict_types=1);
 
 namespace OCA\WorkTime\Service;
 
+use DateTime;
 use OCA\WorkTime\AppInfo\Application;
+use OCA\WorkTime\Db\AbsenceMapper;
 use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\EmployeeMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -30,6 +32,7 @@ class PermissionService {
         private IConfig $config,
         private IGroupManager $groupManager,
         private EmployeeMapper $employeeMapper,
+        private AbsenceMapper $absenceMapper,
     ) {
     }
 
@@ -159,13 +162,83 @@ class PermissionService {
             return true;
         }
 
-        // Check if user is supervisor of the employee
         $userEmployee = $this->getEmployeeForUser($userId);
-        if ($userEmployee && $this->isEmployeeSupervisedBy($employeeId, $userEmployee->getId())) {
+        if (!$userEmployee) {
+            return false;
+        }
+
+        // Check if user is the direct supervisor of the employee
+        if ($this->isEmployeeSupervisedBy($employeeId, $userEmployee->getId())) {
+            return true;
+        }
+
+        // Deputy (#343): may approve for the employee only while the employee's
+        // direct supervisor is currently absent (subordinate fallback).
+        try {
+            $target = $this->employeeMapper->find($employeeId);
+        } catch (DoesNotExistException) {
+            return false;
+        }
+        if ($target->getDeputyId() === $userEmployee->getId()
+            && $target->getSupervisorId() !== null
+            && $this->isSupervisorAbsentToday($target->getSupervisorId())) {
             return true;
         }
 
         return false;
+    }
+
+    /**
+     * True if the given supervisor has an approved absence covering today (#343).
+     * Any approved absence (full or half day) counts as "absent" for the purpose
+     * of activating the deputy fallback.
+     */
+    public function isSupervisorAbsentToday(int $supervisorEmployeeId): bool {
+        $today = new DateTime('today');
+        foreach ($this->absenceMapper->findByEmployeeAndDate($supervisorEmployeeId, $today) as $absence) {
+            if ($absence->isApproved()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Employee ids a user may currently approve for (#343): their own direct
+     * team, plus deputized employees whose direct supervisor is absent today.
+     * Admin/HR get all active employees. Used to scope the approval queues;
+     * intentionally NOT used for calendar/evaluation visibility, so a deputy
+     * gains no permanent extra insight.
+     *
+     * @return int[]
+     */
+    public function getApprovableEmployeeIds(string $userId): array {
+        if ($this->isAdmin($userId) || $this->isHrManager($userId)) {
+            return array_map(
+                static fn (Employee $e): int => $e->getId(),
+                $this->employeeMapper->findAllActive()
+            );
+        }
+
+        $userEmployee = $this->getEmployeeForUser($userId);
+        if (!$userEmployee) {
+            return [];
+        }
+
+        $ids = array_map(
+            static fn (Employee $e): int => $e->getId(),
+            $this->employeeMapper->findBySupervisor($userEmployee->getId())
+        );
+
+        // Deputized employees whose direct supervisor is currently absent.
+        foreach ($this->employeeMapper->findByDeputy($userEmployee->getId()) as $deputized) {
+            $supervisorId = $deputized->getSupervisorId();
+            if ($supervisorId !== null && $this->isSupervisorAbsentToday($supervisorId)) {
+                $ids[] = $deputized->getId();
+            }
+        }
+
+        return array_values(array_unique($ids));
     }
 
     /**

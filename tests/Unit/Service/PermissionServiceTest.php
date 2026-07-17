@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace OCA\WorkTime\Tests\Unit\Service;
 
+use DateTime;
 use OCA\WorkTime\AppInfo\Application;
+use OCA\WorkTime\Db\Absence;
+use OCA\WorkTime\Db\AbsenceMapper;
 use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\EmployeeMapper;
 use OCA\WorkTime\Service\PermissionService;
@@ -19,16 +22,19 @@ class PermissionServiceTest extends TestCase {
     private IConfig $config;
     private IGroupManager $groupManager;
     private EmployeeMapper $employeeMapper;
+    private AbsenceMapper $absenceMapper;
 
     protected function setUp(): void {
         $this->config = $this->createMock(IConfig::class);
         $this->groupManager = $this->createMock(IGroupManager::class);
         $this->employeeMapper = $this->createMock(EmployeeMapper::class);
+        $this->absenceMapper = $this->createMock(AbsenceMapper::class);
 
         $this->service = new PermissionService(
             $this->config,
             $this->groupManager,
-            $this->employeeMapper
+            $this->employeeMapper,
+            $this->absenceMapper
         );
     }
 
@@ -36,7 +42,7 @@ class PermissionServiceTest extends TestCase {
      * Echte Employee-Entity statt Mock: getId() ist in der NC-Entity final und
      * daher nicht mockbar. setId()/setSupervisorId() füllen die Felder direkt.
      */
-    private function makeEmployee(?int $id = null, ?int $supervisorId = null): Employee {
+    private function makeEmployee(?int $id = null, ?int $supervisorId = null, ?int $deputyId = null): Employee {
         $employee = new Employee();
         if ($id !== null) {
             $employee->setId($id);
@@ -44,7 +50,16 @@ class PermissionServiceTest extends TestCase {
         if ($supervisorId !== null) {
             $employee->setSupervisorId($supervisorId);
         }
+        if ($deputyId !== null) {
+            $employee->setDeputyId($deputyId);
+        }
         return $employee;
+    }
+
+    private function approvedAbsence(): Absence {
+        $a = new Absence();
+        $a->setStatus(Absence::STATUS_APPROVED);
+        return $a;
     }
 
     public function testIsAdminReturnsTrueForAdmin(): void {
@@ -284,6 +299,67 @@ class PermissionServiceTest extends TestCase {
             ->willReturn($otherEmployee);
 
         $this->assertFalse($this->service->canApprove('regular_user', 2));
+    }
+
+    // ---------------------------------------------------------------------
+    // #343: deputy may approve only while the direct supervisor is absent
+    // ---------------------------------------------------------------------
+
+    public function testDeputyCanApproveWhenSupervisorAbsent(): void {
+        $deputy = $this->makeEmployee(5);
+        // Employee 2: supervisor 1, deputy 5
+        $target = $this->makeEmployee(2, 1, 5);
+
+        $this->groupManager->method('isAdmin')->willReturn(false);
+        $this->config->method('getAppValue')->willReturn('[]');
+        $this->employeeMapper->method('findByUserId')->with('deputy_user')->willReturn($deputy);
+        $this->employeeMapper->method('find')->with(2)->willReturn($target);
+        // Supervisor 1 has an approved absence today → deputy fallback active.
+        $this->absenceMapper->method('findByEmployeeAndDate')->willReturn([$this->approvedAbsence()]);
+
+        $this->assertTrue($this->service->canApprove('deputy_user', 2));
+    }
+
+    public function testDeputyCannotApproveWhenSupervisorPresent(): void {
+        $deputy = $this->makeEmployee(5);
+        $target = $this->makeEmployee(2, 1, 5);
+
+        $this->groupManager->method('isAdmin')->willReturn(false);
+        $this->config->method('getAppValue')->willReturn('[]');
+        $this->employeeMapper->method('findByUserId')->with('deputy_user')->willReturn($deputy);
+        $this->employeeMapper->method('find')->with(2)->willReturn($target);
+        // Supervisor not absent today → deputy has no approval right.
+        $this->absenceMapper->method('findByEmployeeAndDate')->willReturn([]);
+
+        $this->assertFalse($this->service->canApprove('deputy_user', 2));
+    }
+
+    public function testGetApprovableEmployeeIdsIncludesDeputizedWhenSupervisorAbsent(): void {
+        $deputy = $this->makeEmployee(5);
+        $deputized = $this->makeEmployee(2, 1, 5); // supervisor 1, deputy 5
+
+        $this->groupManager->method('isAdmin')->willReturn(false);
+        $this->config->method('getAppValue')->willReturn('[]');
+        $this->employeeMapper->method('findByUserId')->with('deputy_user')->willReturn($deputy);
+        $this->employeeMapper->method('findBySupervisor')->with(5)->willReturn([]); // no own team
+        $this->employeeMapper->method('findByDeputy')->with(5)->willReturn([$deputized]);
+        $this->absenceMapper->method('findByEmployeeAndDate')->willReturn([$this->approvedAbsence()]);
+
+        $this->assertSame([2], $this->service->getApprovableEmployeeIds('deputy_user'));
+    }
+
+    public function testGetApprovableEmployeeIdsExcludesDeputizedWhenSupervisorPresent(): void {
+        $deputy = $this->makeEmployee(5);
+        $deputized = $this->makeEmployee(2, 1, 5);
+
+        $this->groupManager->method('isAdmin')->willReturn(false);
+        $this->config->method('getAppValue')->willReturn('[]');
+        $this->employeeMapper->method('findByUserId')->with('deputy_user')->willReturn($deputy);
+        $this->employeeMapper->method('findBySupervisor')->with(5)->willReturn([]);
+        $this->employeeMapper->method('findByDeputy')->with(5)->willReturn([$deputized]);
+        $this->absenceMapper->method('findByEmployeeAndDate')->willReturn([]); // supervisor present
+
+        $this->assertSame([], $this->service->getApprovableEmployeeIds('deputy_user'));
     }
 
     public function testGetPermissionInfo(): void {
