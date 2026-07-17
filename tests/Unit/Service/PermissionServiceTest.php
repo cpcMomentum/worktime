@@ -386,6 +386,42 @@ class PermissionServiceTest extends TestCase {
         $this->assertFalse($info['isAdmin']);
         $this->assertTrue($info['isEmployee']);
         $this->assertEquals(5, $info['employeeId']);
+        $this->assertFalse($info['canApprove']);
+    }
+
+    public function testGetPermissionInfoCanApproveTrueForActiveDeputy(): void {
+        $deputy = $this->makeEmployee(5);
+        $deputized = $this->makeEmployee(2, 1, 5); // supervisor 1, deputy 5
+
+        $this->groupManager->method('isAdmin')->willReturn(false);
+        $this->config->method('getAppValue')->willReturn('[]');
+        $this->employeeMapper->method('existsByUserId')->willReturn(true);
+        $this->employeeMapper->method('findByUserId')->willReturn($deputy);
+        $this->employeeMapper->method('findBySupervisor')->with(5)->willReturn([]); // no own team
+        $this->employeeMapper->method('findByDeputy')->with(5)->willReturn([$deputized]);
+        $this->absenceMapper->method('findByEmployeeAndDate')->willReturn([$this->approvedAbsence()]);
+
+        $info = $this->service->getPermissionInfo('deputy_user');
+
+        $this->assertTrue($info['canApprove']);
+        $this->assertFalse($info['isSupervisor']);
+    }
+
+    public function testGetPermissionInfoCanApproveFalseForInactiveDeputy(): void {
+        $deputy = $this->makeEmployee(5);
+        $deputized = $this->makeEmployee(2, 1, 5);
+
+        $this->groupManager->method('isAdmin')->willReturn(false);
+        $this->config->method('getAppValue')->willReturn('[]');
+        $this->employeeMapper->method('existsByUserId')->willReturn(true);
+        $this->employeeMapper->method('findByUserId')->willReturn($deputy);
+        $this->employeeMapper->method('findBySupervisor')->with(5)->willReturn([]);
+        $this->employeeMapper->method('findByDeputy')->with(5)->willReturn([$deputized]);
+        $this->absenceMapper->method('findByEmployeeAndDate')->willReturn([]); // supervisor present
+
+        $info = $this->service->getPermissionInfo('deputy_user');
+
+        $this->assertFalse($info['canApprove']);
     }
 
     public function testGetHrManagers(): void {

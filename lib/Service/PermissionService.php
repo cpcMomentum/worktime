@@ -333,6 +333,13 @@ class PermissionService {
         $isEmployee = $this->isEmployee($userId);
         $employee = $this->getEmployeeForUser($userId);
 
+        // Deputy (#343): the Approvals tab must also open for a user who has no
+        // own team but is currently the active deputy for at least one employee
+        // whose direct supervisor is absent today. Without this, canApprove()
+        // per-employee would allow the approval, but the frontend route/tab
+        // (gated on this flag) would never let the deputy reach it.
+        $canApproveAsDeputy = $employee !== null && $this->hasActiveDeputyApprovals($employee->getId());
+
         return [
             'isAdmin' => $isAdmin,
             'isHrManager' => $isHrManager || $isAdmin,
@@ -344,8 +351,23 @@ class PermissionService {
             'canManageSettings' => $isAdmin,
             'canManageProjects' => $isAdmin || $isHrManager,
             'canManageHolidays' => $isAdmin || $isHrManager,
-            'canApprove' => $isAdmin || $isHrManager || $isSupervisor,
+            'canApprove' => $isAdmin || $isHrManager || $isSupervisor || $canApproveAsDeputy,
         ];
+    }
+
+    /**
+     * True if the given employee is currently the active deputy for at least
+     * one other employee (#343): assigned as deputy AND that employee's direct
+     * supervisor is absent today.
+     */
+    private function hasActiveDeputyApprovals(int $employeeId): bool {
+        foreach ($this->employeeMapper->findByDeputy($employeeId) as $deputized) {
+            $supervisorId = $deputized->getSupervisorId();
+            if ($supervisorId !== null && $this->isSupervisorAbsentToday($supervisorId)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
