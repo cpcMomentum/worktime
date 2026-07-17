@@ -628,8 +628,9 @@ OC.L10N.register(
     "Gültig-ab darf nicht in einen bereits genehmigten Zeitraum fallen. Frühestens möglich: %s" : "Valid-from must not fall within an already approved period. Earliest possible: %s",
     "Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)" : "Valid-from must not be before the entry date (%s)",
     "Jahressaldo {year} · Stand heute" : "Year balance {year} · as of today",
-    "Kein Stellvertreter" : "No deputy",
-    "Stellvertreter (Vertretung bei Abwesenheit)" : "Deputy (stand-in during absence)",
-    "Übernimmt die Genehmigungen dieser Person, solange sie selbst abwesend ist. Nur relevant, wenn diese Person als Vorgesetzter Anträge genehmigt: Der Stellvertreter darf dann das Team dieser Person genehmigen, solange sie abwesend ist." : "Takes over this person's approvals while they are absent. Only relevant if this person approves requests as a supervisor: the deputy may then approve for this person's team while they are away."
+    "Vertretung" : "Deputy",
+    "Meine Vertretung bei Genehmigungen" : "My deputy for approvals",
+    "Keine Vertretung" : "No deputy",
+    "Wählen Sie eine Person, die Ihre Genehmigungen für Ihr Team übernimmt, während Sie abwesend sind. Die Vertretung ist automatisch immer dann aktiv, wenn Sie laut WorkTime abwesend sind (z. B. im Urlaub). Einmal festgelegt, gilt sie für alle Ihre Abwesenheiten, bis Sie sie ändern." : "Choose a person who takes over your approvals for your team while you are absent. The deputy is automatically active whenever you are absent according to WorkTime (e.g. on vacation). Once set, it applies to all your absences until you change it."
 },
 "nplurals=2; plural=(n != 1);");

@@ -89,8 +89,7 @@ class EmployeeController extends BaseController {
         ?int $supervisorId = null,
         string $federalState = 'BY',
         ?string $entryDate = null,
-        int $workingDaysPerWeek = 5,
-        ?int $deputyId = null
+        int $workingDaysPerWeek = 5
     ): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
@@ -113,8 +112,7 @@ class EmployeeController extends BaseController {
                 $federalState,
                 $entryDate,
                 $this->userId,
-                $workingDaysPerWeek,
-                $deputyId
+                $workingDaysPerWeek
             );
 
             return $this->createdResponse($employee);
@@ -135,8 +133,7 @@ class EmployeeController extends BaseController {
         ?string $entryDate = null,
         ?string $exitDate = null,
         bool $isActive = true,
-        int $workingDaysPerWeek = 5,
-        ?int $deputyId = null
+        int $workingDaysPerWeek = 5
     ): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
@@ -159,8 +156,7 @@ class EmployeeController extends BaseController {
                 $exitDate,
                 $isActive,
                 $this->userId,
-                $workingDaysPerWeek,
-                $deputyId
+                $workingDaysPerWeek
             );
 
             return $this->successResponse($employee);
@@ -220,6 +216,31 @@ class EmployeeController extends BaseController {
                 $absenceDetail
             );
 
+            return $this->successResponse($employee);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    #[NoAdminRequired]
+    public function selectableEmployees(): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+
+        // Names of all active employees, for the deputy picker (#343). Any
+        // authenticated employee may fetch this (id + name only).
+        return $this->successResponse($this->employeeService->getSelectableColleagues());
+    }
+
+    #[NoAdminRequired]
+    public function updateMyDeputy(?int $deputyId = null): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+
+        try {
+            $employee = $this->employeeService->updateMyDeputy($this->userId, $deputyId);
             return $this->successResponse($employee);
         } catch (\Exception $e) {
             return $this->handleException($e);

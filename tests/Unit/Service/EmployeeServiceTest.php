@@ -148,30 +148,34 @@ class EmployeeServiceTest extends TestCase {
     }
 
     // ---------------------------------------------------------------------
-    // #343: deputy is persisted through the positional update() arg list
+    // #343: self-service — each user sets their own deputy
     // ---------------------------------------------------------------------
 
-    public function testUpdatePersistsDeputyId(): void {
-        $this->employeeMapper->method('find')->with(2)->willReturn($this->makeEmployee(2, '40.00', 30));
+    public function testUpdateMyDeputyPersistsDeputyId(): void {
+        $this->employeeMapper->method('findByUserId')->with('user2')->willReturn($this->makeEmployee(2, '40.00', 30));
         $this->employeeMapper->method('update')->willReturnArgument(0);
         $this->workScheduleService->method('getScheduleForDate')->willReturn($this->makeSchedule(8.0, 30));
 
-        $result = $this->service->update(
-            2, 'Erika', 'Musterfrau', null, null,
-            1, 'BY', null, null, true, 'admin', 5, 7
-        );
+        $result = $this->service->updateMyDeputy('user2', 7);
 
         $this->assertSame(7, $result->getDeputyId());
     }
 
-    public function testUpdateRejectsSelfDeputy(): void {
-        $this->employeeMapper->method('find')->with(2)->willReturn($this->makeEmployee(2, '40.00', 30));
+    public function testUpdateMyDeputyCanBeCleared(): void {
+        $this->employeeMapper->method('findByUserId')->with('user2')->willReturn($this->makeEmployee(2, '40.00', 30));
+        $this->employeeMapper->method('update')->willReturnArgument(0);
+        $this->workScheduleService->method('getScheduleForDate')->willReturn($this->makeSchedule(8.0, 30));
+
+        $result = $this->service->updateMyDeputy('user2', null);
+
+        $this->assertNull($result->getDeputyId());
+    }
+
+    public function testUpdateMyDeputyRejectsSelf(): void {
+        $this->employeeMapper->method('findByUserId')->with('user2')->willReturn($this->makeEmployee(2, '40.00', 30));
         $this->workScheduleService->method('getScheduleForDate')->willReturn($this->makeSchedule(8.0, 30));
 
         $this->expectException(\OCA\WorkTime\Service\ValidationException::class);
-        $this->service->update(
-            2, 'Erika', 'Musterfrau', null, null,
-            null, 'BY', null, null, true, 'admin', 5, 2
-        );
+        $this->service->updateMyDeputy('user2', 2);
     }
 }
