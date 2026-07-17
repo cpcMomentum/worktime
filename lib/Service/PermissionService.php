@@ -172,17 +172,25 @@ class PermissionService {
             return true;
         }
 
-        // Deputy (#343): may approve for the employee only while the employee's
-        // direct supervisor is currently absent (subordinate fallback).
+        // Deputy (#343): the deputy is set on the supervisor. The supervisor's
+        // deputy may approve for the supervisor's whole team, but only while
+        // that supervisor is currently absent (subordinate fallback).
         try {
             $target = $this->employeeMapper->find($employeeId);
         } catch (DoesNotExistException) {
             return false;
         }
-        if ($target->getDeputyId() === $userEmployee->getId()
-            && $target->getSupervisorId() !== null
-            && $this->isSupervisorAbsentToday($target->getSupervisorId())) {
-            return true;
+        $supervisorId = $target->getSupervisorId();
+        if ($supervisorId !== null) {
+            try {
+                $supervisor = $this->employeeMapper->find($supervisorId);
+            } catch (DoesNotExistException) {
+                return false;
+            }
+            if ($supervisor->getDeputyId() === $userEmployee->getId()
+                && $this->isSupervisorAbsentToday($supervisorId)) {
+                return true;
+            }
         }
 
         return false;
@@ -205,10 +213,11 @@ class PermissionService {
 
     /**
      * Employee ids a user may currently approve for (#343): their own direct
-     * team, plus deputized employees whose direct supervisor is absent today.
-     * Admin/HR get all active employees. Used to scope the approval queues;
-     * intentionally NOT used for calendar/evaluation visibility, so a deputy
-     * gains no permanent extra insight.
+     * team, plus — for every supervisor who named this user as their deputy and
+     * is absent today — that supervisor's whole team. Admin/HR get all active
+     * employees. Used to scope the approval queues; intentionally NOT used for
+     * calendar/evaluation visibility, so a deputy gains no permanent extra
+     * insight.
      *
      * @return int[]
      */
@@ -230,11 +239,13 @@ class PermissionService {
             $this->employeeMapper->findBySupervisor($userEmployee->getId())
         );
 
-        // Deputized employees whose direct supervisor is currently absent.
-        foreach ($this->employeeMapper->findByDeputy($userEmployee->getId()) as $deputized) {
-            $supervisorId = $deputized->getSupervisorId();
-            if ($supervisorId !== null && $this->isSupervisorAbsentToday($supervisorId)) {
-                $ids[] = $deputized->getId();
+        // For each supervisor who named this user as deputy and is absent today,
+        // add that supervisor's whole team.
+        foreach ($this->employeeMapper->findByDeputy($userEmployee->getId()) as $supervisor) {
+            if ($this->isSupervisorAbsentToday($supervisor->getId())) {
+                foreach ($this->employeeMapper->findBySupervisor($supervisor->getId()) as $member) {
+                    $ids[] = $member->getId();
+                }
             }
         }
 

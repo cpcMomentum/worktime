@@ -108,7 +108,8 @@ class EmployeeMapper extends QBMapper {
     }
 
     /**
-     * Active employees who have this employee assigned as their deputy (#343).
+     * Active employees who named this employee as their deputy (#343). Typically
+     * the supervisors this person stands in for while they are absent.
      *
      * @return Employee[]
      */

@@ -627,9 +627,9 @@
 		"Gültig-ab darf nicht in einen bereits genehmigten Zeitraum fallen. Frühestens möglich: %s": "Valid-from must not fall within an already approved period. Earliest possible: %s",
 		"Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)": "Valid-from must not be before the entry date (%s)",
 		"Jahressaldo {year} · Stand heute": "Year balance {year} · as of today",
-		"Stellvertreter": "Deputy",
-		"Vertritt den Vorgesetzten bei der Genehmigung. Der Stellvertreter darf nur genehmigen, solange der Vorgesetzte abwesend ist.": "Stands in for the supervisor on approvals. The deputy may only approve while the supervisor is absent.",
-		"Kein Stellvertreter": "No deputy"
+		"Kein Stellvertreter": "No deputy",
+		"Stellvertreter (Vertretung bei Abwesenheit)": "Deputy (stand-in during absence)",
+		"Übernimmt die Genehmigungen dieser Person, solange sie selbst abwesend ist. Nur relevant, wenn diese Person als Vorgesetzter Anträge genehmigt: Der Stellvertreter darf dann das Team dieser Person genehmigen, solange sie abwesend ist.": "Takes over this person's approvals while they are absent. Only relevant if this person approves requests as a supervisor: the deputy may then approve for this person's team while they are away."
 	},
 	"pluralForm": "nplurals=2; plural=(n != 1);"
 }

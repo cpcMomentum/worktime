@@ -627,9 +627,9 @@
 		"Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)": "Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)",
 		"Jahressaldo {year}": "Roční saldo {year}",
 		"Jahressaldo {year} · Stand heute": "Roční saldo {year} · ke dnešnímu dni",
-		"Stellvertreter": "Zástupce",
-		"Vertritt den Vorgesetzten bei der Genehmigung. Der Stellvertreter darf nur genehmigen, solange der Vorgesetzte abwesend ist.": "Zastupuje nadřízeného při schvalování. Zástupce může schvalovat pouze v době nepřítomnosti nadřízeného.",
-		"Kein Stellvertreter": "Bez zástupce"
+		"Kein Stellvertreter": "Bez zástupce",
+		"Stellvertreter (Vertretung bei Abwesenheit)": "Zástupce (zastupování při nepřítomnosti)",
+		"Übernimmt die Genehmigungen dieser Person, solange sie selbst abwesend ist. Nur relevant, wenn diese Person als Vorgesetzter Anträge genehmigt: Der Stellvertreter darf dann das Team dieser Person genehmigen, solange sie abwesend ist.": "Přebírá schvalování za tuto osobu po dobu její nepřítomnosti. Relevantní pouze tehdy, pokud tato osoba schvaluje žádosti jako nadřízený: zástupce pak může schvalovat za její tým po dobu její nepřítomnosti."
 	},
 	"pluralForm": "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;"
 }

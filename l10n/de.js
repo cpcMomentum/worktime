@@ -628,8 +628,8 @@ OC.L10N.register(
     "Gültig-ab darf nicht in einen bereits genehmigten Zeitraum fallen. Frühestens möglich: %s" : "Gültig-ab darf nicht in einen bereits genehmigten Zeitraum fallen. Frühestens möglich: %s",
     "Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)" : "Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)",
     "Jahressaldo {year} · Stand heute" : "Jahressaldo {year} · Stand heute",
-    "Stellvertreter" : "Stellvertreter",
-    "Vertritt den Vorgesetzten bei der Genehmigung. Der Stellvertreter darf nur genehmigen, solange der Vorgesetzte abwesend ist." : "Vertritt den Vorgesetzten bei der Genehmigung. Der Stellvertreter darf nur genehmigen, solange der Vorgesetzte abwesend ist.",
-    "Kein Stellvertreter" : "Kein Stellvertreter"
+    "Kein Stellvertreter" : "Kein Stellvertreter",
+    "Stellvertreter (Vertretung bei Abwesenheit)" : "Stellvertreter (Vertretung bei Abwesenheit)",
+    "Übernimmt die Genehmigungen dieser Person, solange sie selbst abwesend ist. Nur relevant, wenn diese Person als Vorgesetzter Anträge genehmigt: Der Stellvertreter darf dann das Team dieser Person genehmigen, solange sie abwesend ist." : "Übernimmt die Genehmigungen dieser Person, solange sie selbst abwesend ist. Nur relevant, wenn diese Person als Vorgesetzter Anträge genehmigt: Der Stellvertreter darf dann das Team dieser Person genehmigen, solange sie abwesend ist."
 },
 "nplurals=2; plural=(n != 1);");

@@ -125,8 +125,11 @@
                     :placeholder="t('worktime', 'Kein Vorgesetzter')"
                     label="label" />
             </div>
+        </div>
+
+        <div class="form-row">
             <div class="form-group">
-                <label for="deputy">{{ t('worktime', 'Stellvertreter') }} <InfoIcon>{{ t('worktime', 'Vertritt den Vorgesetzten bei der Genehmigung. Der Stellvertreter darf nur genehmigen, solange der Vorgesetzte abwesend ist.') }}</InfoIcon></label>
+                <label for="deputy">{{ t('worktime', 'Stellvertreter (Vertretung bei Abwesenheit)') }} <InfoIcon>{{ t('worktime', 'Übernimmt die Genehmigungen dieser Person, solange sie selbst abwesend ist. Nur relevant, wenn diese Person als Vorgesetzter Anträge genehmigt: Der Stellvertreter darf dann das Team dieser Person genehmigen, solange sie abwesend ist.') }}</InfoIcon></label>
                 <NcSelect id="deputy"
                     v-model="selectedDeputy"
                     :options="supervisorOptions"
