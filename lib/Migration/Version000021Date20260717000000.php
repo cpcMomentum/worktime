@@ -33,6 +33,10 @@ class Version000021Date20260717000000 extends SimpleMigrationStep {
 			]);
 		}
 
+		if (!$table->hasIndex('wt_emp_deputy_idx')) {
+			$table->addIndex(['deputy_id'], 'wt_emp_deputy_idx');
+		}
+
 		return $schema;
 	}
 }
