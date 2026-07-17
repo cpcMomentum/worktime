@@ -396,15 +396,15 @@ class PermissionServiceTest extends TestCase {
     }
 
     public function testGetPermissionInfoCanApproveTrueForActiveDeputy(): void {
-        $deputy = $this->makeEmployee(5);
-        $deputized = $this->makeEmployee(2, 1, 5); // supervisor 1, deputy 5
+        $deputyUser = $this->makeEmployee(5);
+        $supervisor = $this->makeEmployee(1, null, 5); // supervisor 1 named 5 as deputy
 
         $this->groupManager->method('isAdmin')->willReturn(false);
         $this->config->method('getAppValue')->willReturn('[]');
         $this->employeeMapper->method('existsByUserId')->willReturn(true);
-        $this->employeeMapper->method('findByUserId')->willReturn($deputy);
+        $this->employeeMapper->method('findByUserId')->willReturn($deputyUser);
         $this->employeeMapper->method('findBySupervisor')->with(5)->willReturn([]); // no own team
-        $this->employeeMapper->method('findByDeputy')->with(5)->willReturn([$deputized]);
+        $this->employeeMapper->method('findByDeputy')->with(5)->willReturn([$supervisor]);
         $this->absenceMapper->method('findByEmployeeAndDate')->willReturn([$this->approvedAbsence()]);
 
         $info = $this->service->getPermissionInfo('deputy_user');
@@ -414,15 +414,15 @@ class PermissionServiceTest extends TestCase {
     }
 
     public function testGetPermissionInfoCanApproveFalseForInactiveDeputy(): void {
-        $deputy = $this->makeEmployee(5);
-        $deputized = $this->makeEmployee(2, 1, 5);
+        $deputyUser = $this->makeEmployee(5);
+        $supervisor = $this->makeEmployee(1, null, 5);
 
         $this->groupManager->method('isAdmin')->willReturn(false);
         $this->config->method('getAppValue')->willReturn('[]');
         $this->employeeMapper->method('existsByUserId')->willReturn(true);
-        $this->employeeMapper->method('findByUserId')->willReturn($deputy);
+        $this->employeeMapper->method('findByUserId')->willReturn($deputyUser);
         $this->employeeMapper->method('findBySupervisor')->with(5)->willReturn([]);
-        $this->employeeMapper->method('findByDeputy')->with(5)->willReturn([$deputized]);
+        $this->employeeMapper->method('findByDeputy')->with(5)->willReturn([$supervisor]);
         $this->absenceMapper->method('findByEmployeeAndDate')->willReturn([]); // supervisor present
 
         $info = $this->service->getPermissionInfo('deputy_user');

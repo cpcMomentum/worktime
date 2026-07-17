@@ -368,13 +368,12 @@ class PermissionService {
 
     /**
      * True if the given employee is currently the active deputy for at least
-     * one other employee (#343): assigned as deputy AND that employee's direct
+     * one supervisor (#343): named as that supervisor's deputy AND that
      * supervisor is absent today.
      */
     private function hasActiveDeputyApprovals(int $employeeId): bool {
-        foreach ($this->employeeMapper->findByDeputy($employeeId) as $deputized) {
-            $supervisorId = $deputized->getSupervisorId();
-            if ($supervisorId !== null && $this->isSupervisorAbsentToday($supervisorId)) {
+        foreach ($this->employeeMapper->findByDeputy($employeeId) as $supervisor) {
+            if ($this->isSupervisorAbsentToday($supervisor->getId())) {
                 return true;
             }
         }
