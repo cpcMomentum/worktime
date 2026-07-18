@@ -98,6 +98,20 @@ class EmployeeService {
     /**
      * @return Employee[]
      */
+    /**
+     * Minimal id + name list of all active employees, for pickers such as the
+     * deputy selection (#343). No schedule enrichment, no sensitive fields —
+     * safe to expose to any authenticated employee.
+     *
+     * @return array<int, array{id: int, fullName: string}>
+     */
+    public function getSelectableColleagues(): array {
+        return array_map(
+            static fn (Employee $e): array => ['id' => $e->getId(), 'fullName' => $e->getFullName()],
+            $this->employeeMapper->findAllActive()
+        );
+    }
+
     public function findAllActive(): array {
         return $this->withActiveScheduleEach($this->employeeMapper->findAllActive());
     }
@@ -342,6 +356,33 @@ class EmployeeService {
         $employee = $this->employeeMapper->update($employee);
 
         // Audit log
+        $this->auditLogService->logUpdate($userId, 'employee', $employee->getId(), $oldValues, $employee->jsonSerialize());
+
+        return $employee;
+    }
+
+    /**
+     * Self-service: the current user sets (or clears) their own deputy who
+     * stands in for their approvals while they are absent (#343). A null value
+     * removes the deputy.
+     *
+     * @throws NotFoundException
+     * @throws ValidationException
+     */
+    public function updateMyDeputy(string $userId, ?int $deputyId): Employee {
+        $employee = $this->findByUserId($userId);
+        $oldValues = $employee->jsonSerialize();
+
+        // A user cannot be their own deputy.
+        if ($deputyId === $employee->getId()) {
+            throw ValidationException::fromSingleError('deputyId', 'You cannot be your own deputy');
+        }
+
+        $employee->setDeputyId($deputyId);
+        $employee->setUpdatedAt(new DateTime());
+
+        $employee = $this->employeeMapper->update($employee);
+
         $this->auditLogService->logUpdate($userId, 'employee', $employee->getId(), $oldValues, $employee->jsonSerialize());
 
         return $employee;

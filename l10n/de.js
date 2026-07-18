@@ -627,6 +627,10 @@ OC.L10N.register(
     "{name} – {booked} Tage gebucht, {skipped} Tage bereits abwesend" : "{name} – {booked} Tage gebucht, {skipped} Tage bereits abwesend",
     "Gültig-ab darf nicht in einen bereits genehmigten Zeitraum fallen. Frühestens möglich: %s" : "Gültig-ab darf nicht in einen bereits genehmigten Zeitraum fallen. Frühestens möglich: %s",
     "Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)" : "Gültig-ab darf nicht vor dem Eintrittsdatum liegen (%s)",
-    "Jahressaldo {year} · Stand heute" : "Jahressaldo {year} · Stand heute"
+    "Jahressaldo {year} · Stand heute" : "Jahressaldo {year} · Stand heute",
+    "Vertretung" : "Vertretung",
+    "Meine Vertretung bei Genehmigungen" : "Meine Vertretung bei Genehmigungen",
+    "Keine Vertretung" : "Keine Vertretung",
+    "Wählen Sie eine Person, die Ihre Genehmigungen für Ihr Team übernimmt, während Sie abwesend sind. Die Vertretung ist automatisch immer dann aktiv, wenn Sie laut WorkTime abwesend sind (z. B. im Urlaub). Einmal festgelegt, gilt sie für alle Ihre Abwesenheiten, bis Sie sie ändern." : "Wählen Sie eine Person, die Ihre Genehmigungen für Ihr Team übernimmt, während Sie abwesend sind. Die Vertretung ist automatisch immer dann aktiv, wenn Sie laut WorkTime abwesend sind (z. B. im Urlaub). Einmal festgelegt, gilt sie für alle Ihre Abwesenheiten, bis Sie sie ändern."
 },
 "nplurals=2; plural=(n != 1);");

@@ -469,8 +469,11 @@ class AbsenceController extends BaseController {
             // Admin/HR sees all pending
             $absences = $this->absenceService->findPendingForApproval(0);
         } elseif ($employee) {
-            // Supervisor sees their team's pending
-            $absences = $this->absenceService->findPendingForApproval($employee->getId());
+            // Supervisor sees their team's pending, plus deputized employees
+            // whose supervisor is currently absent (#343).
+            $absences = $this->absenceService->findPendingByEmployeeIds(
+                $this->permissionService->getApprovableEmployeeIds($this->userId)
+            );
         } else {
             $absences = [];
         }

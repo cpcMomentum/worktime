@@ -223,6 +223,31 @@ class EmployeeController extends BaseController {
     }
 
     #[NoAdminRequired]
+    public function selectableEmployees(): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+
+        // Names of all active employees, for the deputy picker (#343). Any
+        // authenticated employee may fetch this (id + name only).
+        return $this->successResponse($this->employeeService->getSelectableColleagues());
+    }
+
+    #[NoAdminRequired]
+    public function updateMyDeputy(?int $deputyId = null): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+
+        try {
+            $employee = $this->employeeService->updateMyDeputy($this->userId, $deputyId);
+            return $this->successResponse($employee);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    #[NoAdminRequired]
     public function availableUsers(): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;

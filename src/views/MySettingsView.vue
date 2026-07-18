@@ -76,6 +76,29 @@
                 </div>
             </div>
         </NcSettingsSection>
+
+        <NcSettingsSection v-if="isSupervisor"
+            :name="t('worktime', 'Vertretung')"
+            :description="t('worktime', 'Wählen Sie eine Person, die Ihre Genehmigungen für Ihr Team übernimmt, während Sie abwesend sind. Die Vertretung ist automatisch immer dann aktiv, wenn Sie laut WorkTime abwesend sind (z. B. im Urlaub). Einmal festgelegt, gilt sie für alle Ihre Abwesenheiten, bis Sie sie ändern.')">
+
+            <div class="settings-form">
+                <div class="form-group">
+                    <label for="deputy">{{ t('worktime', 'Meine Vertretung bei Genehmigungen') }}</label>
+                    <div class="visibility-row">
+                        <NcSelect id="deputy"
+                            v-model="selectedDeputy"
+                            :options="deputyOptions"
+                            :placeholder="t('worktime', 'Keine Vertretung')"
+                            :disabled="savingDeputy"
+                            label="label"
+                            class="visibility-select"
+                            @input="saveDeputy" />
+                        <NcLoadingIcon v-if="savingDeputy" :size="20" />
+                        <span v-if="deputySaved" class="saved-hint">{{ t('worktime', 'Gespeichert') }}</span>
+                    </div>
+                </div>
+            </div>
+        </NcSettingsSection>
     </div>
 </template>
 
@@ -86,6 +109,7 @@ import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import { mapGetters, mapActions } from 'vuex'
 import { showError } from '@nextcloud/dialogs'
 import InfoIcon from '../components/InfoIcon.vue'
+import EmployeeService from '../services/EmployeeService.js'
 
 export default {
     name: 'MySettingsView',
@@ -102,6 +126,7 @@ export default {
                 defaultEndTime: '',
                 absenceVisibility: 'none',
                 absenceDetail: 'hidden',
+                deputyId: null,
             },
             originalValues: {
                 defaultStartTime: '',
@@ -115,10 +140,28 @@ export default {
             visibilitySaved: false,
             savingDetail: false,
             detailSaved: false,
+            savingDeputy: false,
+            deputySaved: false,
+            colleagues: [],
         }
     },
     computed: {
         ...mapGetters('employees', ['currentEmployee']),
+        ...mapGetters('permissions', ['isSupervisor']),
+        deputyOptions() {
+            const myId = this.currentEmployee?.id
+            return this.colleagues
+                .filter(c => c.id !== myId)
+                .map(c => ({ id: c.id, label: c.fullName }))
+        },
+        selectedDeputy: {
+            get() {
+                return this.deputyOptions.find(o => o.id === this.form.deputyId) || null
+            },
+            set(value) {
+                this.form.deputyId = value?.id || null
+            },
+        },
         visibilityOptions() {
             return [
                 { id: 'none', label: this.t('worktime', 'Niemand') },
@@ -159,13 +202,18 @@ export default {
             },
         },
     },
+    async created() {
+        // Load colleagues (id + name only) for the deputy picker (#343).
+        this.colleagues = await EmployeeService.getSelectableEmployees() || []
+    },
     methods: {
-        ...mapActions('employees', ['updateMyDefaults']),
+        ...mapActions('employees', ['updateMyDefaults', 'updateMyDeputy']),
         loadFromEmployee(employee) {
             this.form.defaultStartTime = employee.defaultStartTime || '08:00'
             this.form.defaultEndTime = employee.defaultEndTime || '17:00'
             this.form.absenceVisibility = employee.absenceVisibility || 'none'
             this.form.absenceDetail = employee.absenceDetail || 'hidden'
+            this.form.deputyId = employee.deputyId ?? null
             this.originalValues.defaultStartTime = this.form.defaultStartTime
             this.originalValues.defaultEndTime = this.form.defaultEndTime
             this.originalValues.absenceVisibility = this.form.absenceVisibility
@@ -224,6 +272,20 @@ export default {
                 this.form.absenceDetail = this.originalValues.absenceDetail
             } finally {
                 this.savingDetail = false
+            }
+        },
+        async saveDeputy() {
+            this.savingDeputy = true
+            this.deputySaved = false
+            try {
+                await this.updateMyDeputy(this.form.deputyId)
+                this.deputySaved = true
+                setTimeout(() => { this.deputySaved = false }, 2000)
+            } catch (error) {
+                console.error('Failed to save deputy:', error)
+                showError(t('worktime', 'Fehler beim Speichern'))
+            } finally {
+                this.savingDeputy = false
             }
         },
     },

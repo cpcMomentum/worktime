@@ -89,6 +89,16 @@ class AbsenceService {
     }
 
     /**
+     * Pending absences for an explicit set of approvable employee ids (#343).
+     *
+     * @param int[] $employeeIds
+     * @return \OCA\WorkTime\Db\Absence[]
+     */
+    public function findPendingByEmployeeIds(array $employeeIds): array {
+        return $this->absenceMapper->findPendingByEmployeeIds($employeeIds);
+    }
+
+    /**
      * @throws NotFoundException
      */
     public function find(int $id): Absence {

@@ -49,14 +49,16 @@ return [
         // Employees API (specific routes before {id})
         ['name' => 'employee#me', 'url' => '/api/employees/me', 'verb' => 'GET'],
         ['name' => 'employee#updateMyDefaults', 'url' => '/api/employees/me/defaults', 'verb' => 'PUT'],
+        ['name' => 'employee#updateMyDeputy', 'url' => '/api/employees/me/deputy', 'verb' => 'PUT'],
+        ['name' => 'employee#selectableEmployees', 'url' => '/api/employees/selectable', 'verb' => 'GET'],
         ['name' => 'employee#team', 'url' => '/api/employees/team', 'verb' => 'GET'],
         ['name' => 'employee#federalStates', 'url' => '/api/employees/federal-states', 'verb' => 'GET'],
         ['name' => 'employee#availableUsers', 'url' => '/api/employees/available-users', 'verb' => 'GET'],
         ['name' => 'employee#index', 'url' => '/api/employees', 'verb' => 'GET'],
         ['name' => 'employee#create', 'url' => '/api/employees', 'verb' => 'POST'],
-        ['name' => 'employee#show', 'url' => '/api/employees/{id}', 'verb' => 'GET'],
-        ['name' => 'employee#update', 'url' => '/api/employees/{id}', 'verb' => 'PUT'],
-        ['name' => 'employee#destroy', 'url' => '/api/employees/{id}', 'verb' => 'DELETE'],
+        ['name' => 'employee#show', 'url' => '/api/employees/{id}', 'verb' => 'GET', 'requirements' => ['id' => '\d+']],
+        ['name' => 'employee#update', 'url' => '/api/employees/{id}', 'verb' => 'PUT', 'requirements' => ['id' => '\d+']],
+        ['name' => 'employee#destroy', 'url' => '/api/employees/{id}', 'verb' => 'DELETE', 'requirements' => ['id' => '\d+']],
 
         // Holidays API (specific routes before {id})
         ['name' => 'holiday#generate', 'url' => '/api/holidays/generate', 'verb' => 'POST'],

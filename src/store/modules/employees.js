@@ -122,6 +122,11 @@ const actions = {
         commit('SET_CURRENT_EMPLOYEE', employee)
         return employee
     },
+    async updateMyDeputy({ commit }, deputyId) {
+        const employee = await EmployeeService.updateMyDeputy(deputyId)
+        commit('SET_CURRENT_EMPLOYEE', employee)
+        return employee
+    },
 }
 
 export default {

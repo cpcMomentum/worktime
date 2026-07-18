@@ -89,4 +89,22 @@ export default {
             handleApiError(error)
         }
     },
+
+    async updateMyDeputy(deputyId) {
+        try {
+            const response = await api.put('/employees/me/deputy', { deputyId })
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
+    async getSelectableEmployees() {
+        try {
+            const response = await api.get('/employees/selectable')
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
 }

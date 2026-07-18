@@ -146,4 +146,36 @@ class EmployeeServiceTest extends TestCase {
         $this->assertSame(31.5, (float)$result[0]->getWeeklyHours());
         $this->assertSame(28, $result[0]->getVacationDays());
     }
+
+    // ---------------------------------------------------------------------
+    // #343: self-service — each user sets their own deputy
+    // ---------------------------------------------------------------------
+
+    public function testUpdateMyDeputyPersistsDeputyId(): void {
+        $this->employeeMapper->method('findByUserId')->with('user2')->willReturn($this->makeEmployee(2, '40.00', 30));
+        $this->employeeMapper->method('update')->willReturnArgument(0);
+        $this->workScheduleService->method('getScheduleForDate')->willReturn($this->makeSchedule(8.0, 30));
+
+        $result = $this->service->updateMyDeputy('user2', 7);
+
+        $this->assertSame(7, $result->getDeputyId());
+    }
+
+    public function testUpdateMyDeputyCanBeCleared(): void {
+        $this->employeeMapper->method('findByUserId')->with('user2')->willReturn($this->makeEmployee(2, '40.00', 30));
+        $this->employeeMapper->method('update')->willReturnArgument(0);
+        $this->workScheduleService->method('getScheduleForDate')->willReturn($this->makeSchedule(8.0, 30));
+
+        $result = $this->service->updateMyDeputy('user2', null);
+
+        $this->assertNull($result->getDeputyId());
+    }
+
+    public function testUpdateMyDeputyRejectsSelf(): void {
+        $this->employeeMapper->method('findByUserId')->with('user2')->willReturn($this->makeEmployee(2, '40.00', 30));
+        $this->workScheduleService->method('getScheduleForDate')->willReturn($this->makeSchedule(8.0, 30));
+
+        $this->expectException(\OCA\WorkTime\Service\ValidationException::class);
+        $this->service->updateMyDeputy('user2', 2);
+    }
 }

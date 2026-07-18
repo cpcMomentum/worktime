@@ -32,6 +32,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setVacationDays(int $vacationDays)
  * @method int|null getSupervisorId()
  * @method void setSupervisorId(?int $supervisorId)
+ * @method int|null getDeputyId()
+ * @method void setDeputyId(?int $deputyId)
  * @method string getFederalState()
  * @method void setFederalState(string $federalState)
  * @method DateTime|null getEntryDate()
@@ -83,6 +85,7 @@ class Employee extends Entity implements JsonSerializable {
     protected string $weeklyHours = '40.00';
     protected int $vacationDays = 30;
     protected ?int $supervisorId = null;
+    protected ?int $deputyId = null;
     protected string $federalState = 'BY';
     protected ?DateTime $entryDate = null;
     protected ?DateTime $exitDate = null;
@@ -99,6 +102,7 @@ class Employee extends Entity implements JsonSerializable {
         $this->addType('id', 'integer');
         $this->addType('vacationDays', 'integer');
         $this->addType('supervisorId', 'integer');
+        $this->addType('deputyId', 'integer');
         $this->addType('workingDaysPerWeek', 'integer');
         $this->addType('entryDate', 'datetime');
         $this->addType('exitDate', 'datetime');
@@ -140,6 +144,7 @@ class Employee extends Entity implements JsonSerializable {
             'vacationDays' => $this->vacationDays,
             'workingDaysPerWeek' => $this->workingDaysPerWeek,
             'supervisorId' => $this->supervisorId,
+            'deputyId' => $this->deputyId,
             'federalState' => $this->federalState,
             'federalStateName' => self::FEDERAL_STATES[$this->federalState] ?? $this->federalState,
             'entryDate' => $this->entryDate?->format('Y-m-d'),
