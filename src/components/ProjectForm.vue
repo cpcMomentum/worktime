@@ -139,10 +139,11 @@ export default {
             return this.form.name.trim().length > 0
         },
         employeeOptions() {
-            // Resting employees cannot book time, so they must not be assignable
-            // to projects (#486).
+            // Resting employees cannot be newly assigned to projects (#486), but an
+            // already-assigned resting employee must stay in the list — otherwise
+            // editing and saving the project would silently drop their membership.
             return this.employees
-                .filter(e => e.isActive)
+                .filter(e => e.isActive || this.form.memberIds.includes(e.id))
                 .map(e => ({
                     id: e.id,
                     label: `${e.firstName} ${e.lastName}`.trim() || e.userId,
