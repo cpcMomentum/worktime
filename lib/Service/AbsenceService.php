@@ -58,7 +58,13 @@ class AbsenceService {
      *
      * @throws ForbiddenException
      */
-    private function assertEmployeeNotResting(int $employeeId): void {
+    private function assertEmployeeNotResting(int $employeeId, bool $allowCorrection = false): void {
+        // HR/Admin correction (#148 override) stays possible — see the same
+        // reasoning in TimeEntryService::assertEmployeeNotResting().
+        if ($allowCorrection) {
+            return;
+        }
+
         try {
             $employee = $this->employeeMapper->find($employeeId);
         } catch (DoesNotExistException) {
@@ -147,7 +153,7 @@ class AbsenceService {
         ?string $reason = null,
         bool $allowLockedOverride = false
     ): Absence {
-        $this->assertEmployeeNotResting($employeeId);
+        $this->assertEmployeeNotResting($employeeId, $allowLockedOverride);
 
         $startDateObj = new DateTime($startDate);
         $endDateObj = new DateTime($endDate);
@@ -600,7 +606,7 @@ class AbsenceService {
         bool $allowLockedOverride = false
     ): Absence {
         $absence = $this->find($id);
-        $this->assertEmployeeNotResting($absence->getEmployeeId());
+        $this->assertEmployeeNotResting($absence->getEmployeeId(), $allowLockedOverride);
         $oldValues = $absence->jsonSerialize();
         $oldStart = clone $absence->getStartDate();
         $oldEnd = clone $absence->getEndDate();
@@ -695,7 +701,7 @@ class AbsenceService {
      */
     public function delete(int $id, string $currentUserId = '', ?string $reason = null, bool $allowLockedOverride = false): void {
         $absence = $this->find($id);
-        $this->assertEmployeeNotResting($absence->getEmployeeId());
+        $this->assertEmployeeNotResting($absence->getEmployeeId(), $allowLockedOverride);
 
         // Closed-month rules (#148): block employees, require a reason for HR corrections.
         $lockedMonths = $this->timeEntryService->lockedMonthsInRange($absence->getEmployeeId(), $absence->getStartDate(), $absence->getEndDate());

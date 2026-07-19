@@ -153,14 +153,15 @@ export default {
                 : this.t('worktime', '{scope} Tage', { scope })
         },
         readonly() {
-            // A resting employee (#486) cannot record anything, not even in
-            // correction mode — the server rejects it either way.
-            if (this.isResting) {
-                return true
-            }
-            // In HR correction mode the lock is bypassed (a reason is required on save).
+            // In HR correction mode the lock is bypassed (a reason is required on
+            // save). This also covers resting employees (#486): the server lets
+            // HR/Admin correct their past records, so the UI must not block it.
             if (this.isCorrectionMode) {
                 return false
+            }
+            // Outside correction mode a resting employee cannot record anything.
+            if (this.isResting) {
+                return true
             }
             return this.monthStatus === 'submitted' || this.monthStatus === 'approved'
         },

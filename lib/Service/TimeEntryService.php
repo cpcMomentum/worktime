@@ -59,7 +59,15 @@ class TimeEntryService {
      *
      * @throws ForbiddenException
      */
-    private function assertEmployeeNotResting(int $employeeId): void {
+    private function assertEmployeeNotResting(int $employeeId, bool $allowCorrection = false): void {
+        // HR/Admin correction (#148 override) stays possible: the resting state
+        // means the EMPLOYEE stops recording, not that a demonstrably wrong
+        // record must remain wrong forever. Such a correction still requires a
+        // reason and is written to the audit log.
+        if ($allowCorrection) {
+            return;
+        }
+
         try {
             $employee = $this->employeeMapper->find($employeeId);
         } catch (DoesNotExistException) {
@@ -127,7 +135,7 @@ class TimeEntryService {
         ?string $reason = null,
         bool $allowLockedOverride = false
     ): TimeEntry {
-        $this->assertEmployeeNotResting($employeeId);
+        $this->assertEmployeeNotResting($employeeId, $allowLockedOverride);
 
         $dateObj = new DateTime($date);
         $startTimeObj = DateTime::createFromFormat('H:i', $startTime) ?: null;
@@ -213,7 +221,7 @@ class TimeEntryService {
         bool $allowLockedOverride = false
     ): TimeEntry {
         $entry = $this->find($id);
-        $this->assertEmployeeNotResting($entry->getEmployeeId());
+        $this->assertEmployeeNotResting($entry->getEmployeeId(), $allowLockedOverride);
         $oldValues = $entry->jsonSerialize();
         $oldDate = clone $entry->getDate();
 
@@ -317,7 +325,7 @@ class TimeEntryService {
      */
     public function delete(int $id, string $currentUserId = '', ?string $reason = null, bool $allowLockedOverride = false): void {
         $entry = $this->find($id);
-        $this->assertEmployeeNotResting($entry->getEmployeeId());
+        $this->assertEmployeeNotResting($entry->getEmployeeId(), $allowLockedOverride);
 
         // Closed-month rules (#148): block employees, require a reason for HR corrections.
         $lockedMonths = $this->lockedMonthsInRange($entry->getEmployeeId(), $entry->getDate(), $entry->getDate());

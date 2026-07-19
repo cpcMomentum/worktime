@@ -175,6 +175,44 @@ class TimeEntryServiceTest extends TestCase {
     }
 
     /**
+     * HR/Admin correction stays possible for resting employees (#486 review):
+     * the resting state stops the EMPLOYEE from recording, it does not freeze a
+     * demonstrably wrong record forever. allowLockedOverride is set by the
+     * controller from canManageEmployees(), so admin and HR manager only.
+     */
+    public function testUpdateAllowedForRestingEmployeeWithHrOverride(): void {
+        $this->expectRestingEmployee();
+        $entry = new TimeEntry();
+        $entry->setId(7);
+        $entry->setEmployeeId(1);
+        $entry->setDate(new DateTime('2020-01-06'));
+        $entry->setStatus(TimeEntry::STATUS_DRAFT);
+        $this->timeEntryMapper->method('find')->willReturn($entry);
+        $this->timeEntryMapper->method('findByEmployeeAndDate')->willReturn([]);
+        $this->absenceMapper->method('findByEmployeeAndDate')->willReturn([]);
+        $this->timeEntryMapper->method('update')->willReturnArgument(0);
+
+        $result = $this->service->update(
+            7, '2020-01-06', '08:00', '16:00', 30, null, null, 'hr', 'Korrektur eines Zahlendrehers', true
+        );
+
+        $this->assertSame(450, $result->getWorkMinutes());
+    }
+
+    public function testDeleteAllowedForRestingEmployeeWithHrOverride(): void {
+        $this->expectRestingEmployee();
+        $entry = new TimeEntry();
+        $entry->setId(7);
+        $entry->setEmployeeId(1);
+        $entry->setDate(new DateTime('2020-01-06'));
+        $entry->setStatus(TimeEntry::STATUS_DRAFT);
+        $this->timeEntryMapper->method('find')->willReturn($entry);
+        $this->timeEntryMapper->expects($this->once())->method('delete');
+
+        $this->service->delete(7, 'hr', 'Eintrag war doppelt erfasst', true);
+    }
+
+    /**
      * Test break suggestion according to §4 ArbZG (German Working Hours Act)
      *
      * @dataProvider breakSuggestionProvider
