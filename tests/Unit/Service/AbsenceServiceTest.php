@@ -95,6 +95,76 @@ class AbsenceServiceTest extends TestCase {
         );
     }
 
+    /**
+     * An active employee for EmployeeMapper::find(). Needed because the resting
+     * guard (#486) reads getIsActive(), and an unconfigured mock would report 0
+     * and block every write path.
+     */
+    private function expectActiveEmployee(int $id = 1): Employee {
+        $employee = new Employee();
+        $employee->setId($id);
+        $employee->setIsActive(true);
+        $this->employeeMapper->method('find')->willReturn($employee);
+
+        return $employee;
+    }
+
+    private function expectRestingEmployee(int $id = 1): Employee {
+        $employee = new Employee();
+        $employee->setId($id);
+        $employee->setIsActive(false);
+        $employee->setLockedReason('Ausgeschieden');
+        $this->employeeMapper->method('find')->willReturn($employee);
+
+        return $employee;
+    }
+
+    /**
+     * Resting employees must not gain new absences (#486).
+     */
+    public function testCreateBlockedForRestingEmployee(): void {
+        $this->expectRestingEmployee();
+        $this->absenceMapper->expects($this->never())->method('insert');
+
+        $this->expectException(ForbiddenException::class);
+        $this->service->create(1, Absence::TYPE_VACATION, '2020-06-10', '2020-06-12');
+    }
+
+    public function testUpdateBlockedForRestingEmployee(): void {
+        $this->expectRestingEmployee();
+        $absence = $this->makeAbsence(
+            Absence::TYPE_VACATION,
+            Absence::STATUS_PENDING,
+            new DateTime('2020-06-10'),
+            new DateTime('2020-06-12')
+        );
+        $this->absenceMapper->method('find')->willReturn($absence);
+        $this->absenceMapper->expects($this->never())->method('update');
+
+        $this->expectException(ForbiddenException::class);
+        $this->service->update(99, Absence::TYPE_VACATION, '2020-06-10', '2020-06-12');
+    }
+
+    /**
+     * Cancelling stays open on purpose: an already-approved absence must remain
+     * settleable after the employee went resting (#486).
+     */
+    public function testCancelStillAllowedForRestingEmployee(): void {
+        $this->expectRestingEmployee();
+        $absence = $this->makeAbsence(
+            Absence::TYPE_VACATION,
+            Absence::STATUS_APPROVED,
+            new DateTime('2020-06-10'),
+            new DateTime('2020-06-12')
+        );
+        $this->absenceMapper->method('find')->willReturn($absence);
+        $this->absenceMapper->method('update')->willReturnArgument(0);
+
+        $result = $this->service->cancel(99, 'admin');
+
+        $this->assertSame(Absence::STATUS_CANCELLED, $result->getStatus());
+    }
+
     private function makeAbsence(string $type, string $status, DateTime $start, DateTime $end): Absence {
         $absence = new Absence();
         $absence->setId(99);
@@ -117,6 +187,7 @@ class AbsenceServiceTest extends TestCase {
     }
 
     public function testDeleteBlocksEmployeeInLockedMonth(): void {
+        $this->expectActiveEmployee();
         // A pending vacation in a past (locked) year must not be deletable by an
         // employee (no HR override, no reason).
         $absence = $this->makeAbsence(
@@ -133,6 +204,7 @@ class AbsenceServiceTest extends TestCase {
     }
 
     public function testDeleteRequiresReasonForHrInLockedMonth(): void {
+        $this->expectActiveEmployee();
         // HR override but no reason → still blocked.
         $absence = $this->makeAbsence(
             Absence::TYPE_VACATION,
@@ -151,6 +223,7 @@ class AbsenceServiceTest extends TestCase {
         // An APPROVED vacation in the current (not fully approved → open) month
         // must stay undeletable even for HR with a reason — the override only
         // bypasses the approved-block for CLOSED months. HR should cancel instead.
+        $this->expectActiveEmployee();
         $absence = $this->makeAbsence(
             Absence::TYPE_VACATION,
             Absence::STATUS_APPROVED,
@@ -168,6 +241,7 @@ class AbsenceServiceTest extends TestCase {
     }
 
     public function testDeleteApprovedSickAllowedInOpenMonth(): void {
+        $this->expectActiveEmployee();
         // Absence-specific bypass: APPROVED sick leave is informational and may be
         // deleted even though it is approved — the sick/child_sick exclusion lets
         // it through in an open month for everyone.
@@ -186,6 +260,7 @@ class AbsenceServiceTest extends TestCase {
     }
 
     public function testDeleteApprovedChildSickAllowedInOpenMonth(): void {
+        $this->expectActiveEmployee();
         // Same bypass for child-sick leave.
         $absence = $this->makeAbsence(
             Absence::TYPE_CHILD_SICK,
@@ -202,6 +277,7 @@ class AbsenceServiceTest extends TestCase {
     }
 
     public function testDeleteHrCorrectionInClosedMonthDeletesAndRecordsReason(): void {
+        $this->expectActiveEmployee();
         // HR deletes an approved vacation in a past (locked) year WITH a valid
         // reason: the override bypasses the approved-block, the deletion goes
         // through, the reason lands in the audit log and the month is reopened.
@@ -271,6 +347,7 @@ class AbsenceServiceTest extends TestCase {
      * blocked — the absence is never inserted.
      */
     public function testFullDayAbsenceBlockedWhenTimeEntriesExist(): void {
+        $this->expectActiveEmployee();
         $this->absenceMapper->method('findOverlapping')->willReturn([]);
 
         $entry = new TimeEntry();
@@ -301,6 +378,7 @@ class AbsenceServiceTest extends TestCase {
      * absence is inserted normally.
      */
     public function testHalfDayAbsenceAllowedDespiteTimeEntries(): void {
+        $this->expectActiveEmployee();
         $this->absenceMapper->method('findOverlapping')->willReturn([]);
 
         $entry = new TimeEntry();
@@ -887,6 +965,7 @@ class AbsenceServiceTest extends TestCase {
     }
 
     public function testCreateRejectsCompanyClosureType(): void {
+        $this->expectActiveEmployee();
         // Betriebsschließung ist nicht beantragbar — nur der zentrale Weg darf sie setzen.
         $this->absenceMapper->expects($this->never())->method('insert');
 

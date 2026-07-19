@@ -32,6 +32,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setVacationDays(int $vacationDays)
  * @method int|null getSupervisorId()
  * @method void setSupervisorId(?int $supervisorId)
+ * @method int|null getDeputyId()
+ * @method void setDeputyId(?int $deputyId)
  * @method string getFederalState()
  * @method void setFederalState(string $federalState)
  * @method DateTime|null getEntryDate()
@@ -39,6 +41,8 @@ use OCP\AppFramework\Db\Entity;
  * @method DateTime|null getExitDate()
  * @method void setExitDate(?DateTime $exitDate)
  * @method int getIsActive()
+ * @method string|null getLockedReason()
+ * @method void setLockedReason(?string $lockedReason)
  * @method DateTime getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
  * @method DateTime getUpdatedAt()
@@ -83,11 +87,13 @@ class Employee extends Entity implements JsonSerializable {
     protected string $weeklyHours = '40.00';
     protected int $vacationDays = 30;
     protected ?int $supervisorId = null;
+    protected ?int $deputyId = null;
     protected string $federalState = 'BY';
     protected ?DateTime $entryDate = null;
     protected ?DateTime $exitDate = null;
     protected int $workingDaysPerWeek = 5;
     protected int $isActive = 1;
+    protected ?string $lockedReason = null;
     protected ?DateTime $createdAt = null;
     protected ?DateTime $updatedAt = null;
     protected ?DateTime $defaultStartTime = null;
@@ -99,6 +105,7 @@ class Employee extends Entity implements JsonSerializable {
         $this->addType('id', 'integer');
         $this->addType('vacationDays', 'integer');
         $this->addType('supervisorId', 'integer');
+        $this->addType('deputyId', 'integer');
         $this->addType('workingDaysPerWeek', 'integer');
         $this->addType('entryDate', 'datetime');
         $this->addType('exitDate', 'datetime');
@@ -140,11 +147,13 @@ class Employee extends Entity implements JsonSerializable {
             'vacationDays' => $this->vacationDays,
             'workingDaysPerWeek' => $this->workingDaysPerWeek,
             'supervisorId' => $this->supervisorId,
+            'deputyId' => $this->deputyId,
             'federalState' => $this->federalState,
             'federalStateName' => self::FEDERAL_STATES[$this->federalState] ?? $this->federalState,
             'entryDate' => $this->entryDate?->format('Y-m-d'),
             'exitDate' => $this->exitDate?->format('Y-m-d'),
             'isActive' => (bool)$this->isActive,
+            'lockedReason' => $this->lockedReason,
             'createdAt' => $this->createdAt?->format('c'),
             'updatedAt' => $this->updatedAt?->format('c'),
             'defaultStartTime' => $this->defaultStartTime?->format('H:i'),

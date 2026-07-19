@@ -139,10 +139,15 @@ export default {
             return this.form.name.trim().length > 0
         },
         employeeOptions() {
-            return this.employees.map(e => ({
-                id: e.id,
-                label: `${e.firstName} ${e.lastName}`.trim() || e.userId,
-            }))
+            // Resting employees cannot be newly assigned to projects (#486), but an
+            // already-assigned resting employee must stay in the list — otherwise
+            // editing and saving the project would silently drop their membership.
+            return this.employees
+                .filter(e => e.isActive || this.form.memberIds.includes(e.id))
+                .map(e => ({
+                    id: e.id,
+                    label: `${e.firstName} ${e.lastName}`.trim() || e.userId,
+                }))
         },
         selectedMembers: {
             get() {

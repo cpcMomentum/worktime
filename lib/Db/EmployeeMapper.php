@@ -108,6 +108,43 @@ class EmployeeMapper extends QBMapper {
     }
 
     /**
+     * Active employees who named this employee as their deputy (#343). Typically
+     * the supervisors this person stands in for while they are absent.
+     *
+     * @return Employee[]
+     */
+    public function findByDeputy(int $deputyId): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('deputy_id', $qb->createNamedParameter($deputyId, IQueryBuilder::PARAM_INT)))
+            ->andWhere($qb->expr()->eq('is_active', $qb->createNamedParameter(1, IQueryBuilder::PARAM_INT)))
+            ->orderBy('last_name', 'ASC')
+            ->addOrderBy('first_name', 'ASC');
+
+        return $this->findEntities($qb);
+    }
+
+    /**
+     * Every employee who named this employee as their deputy, regardless of
+     * their own active state (#486). Used when putting someone into the resting
+     * state: all deputy references to them must be cleared, including those held
+     * by colleagues who are themselves already resting.
+     *
+     * @return Employee[]
+     */
+    public function findAllByDeputy(int $deputyId): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('deputy_id', $qb->createNamedParameter($deputyId, IQueryBuilder::PARAM_INT)))
+            ->orderBy('last_name', 'ASC')
+            ->addOrderBy('first_name', 'ASC');
+
+        return $this->findEntities($qb);
+    }
+
+    /**
      * @return Employee[]
      */
     public function findByFederalState(string $federalState): array {

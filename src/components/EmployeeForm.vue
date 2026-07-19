@@ -144,12 +144,6 @@
             </div>
         </div>
 
-        <div v-if="isEdit" class="form-group">
-            <NcCheckboxRadioSwitch :checked.sync="form.isActive">
-                {{ t('worktime', 'Aktiv') }} <InfoIcon>{{ t('worktime', 'Inaktive Mitarbeiter können keine Zeiten mehr erfassen und tauchen nicht in Auswahllisten auf. Ihre bisherigen Daten und Berichte bleiben erhalten.') }}</InfoIcon>
-            </NcCheckboxRadioSwitch>
-        </div>
-
         <WorkScheduleEditor v-if="isEdit && employee"
             :employee-id="employee.id"
             :entry-date="employee.entryDate || null"
@@ -170,7 +164,6 @@
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
 import WorkScheduleEditor from './WorkScheduleEditor.vue'
 import { mapGetters, mapActions } from 'vuex'
 import { formatDateISO } from '../utils/dateUtils.js'
@@ -183,7 +176,6 @@ export default {
         NcButton,
         NcSelect,
         NcDateTimePicker,
-        NcCheckboxRadioSwitch,
         WorkScheduleEditor,
     },
     props: {
@@ -214,7 +206,6 @@ export default {
                 federalState: this.defaultFederalState,
                 entryDate: null,
                 exitDate: null,
-                isActive: true,
             },
         }
     },
@@ -315,7 +306,6 @@ export default {
                         federalState: employee.federalState,
                         entryDate: employee.entryDate ? new Date(employee.entryDate) : null,
                         exitDate: employee.exitDate ? new Date(employee.exitDate) : null,
-                        isActive: employee.isActive,
                     }
                 } else {
                     this.resetForm()
@@ -346,7 +336,6 @@ export default {
                 federalState: this.defaultFederalState,
                 entryDate: null,
                 exitDate: null,
-                isActive: true,
             }
         },
         cancel() {
@@ -367,7 +356,6 @@ export default {
                     federalState: this.form.federalState,
                     entryDate: this.form.entryDate ? formatDateISO(this.form.entryDate) : null,
                     exitDate: this.form.exitDate ? formatDateISO(this.form.exitDate) : null,
-                    isActive: this.form.isActive,
                 }
 
                 if (this.isEdit) {

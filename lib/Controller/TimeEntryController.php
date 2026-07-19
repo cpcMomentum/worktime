@@ -75,10 +75,9 @@ class TimeEntryController extends BaseController {
             return $authError;
         }
 
-        $employeeIds = array_map(
-            static fn($employee) => $employee->getId(),
-            $this->permissionService->getTeamMembers($this->userId)
-        );
+        // Approvable scope: own team, plus deputized employees whose supervisor
+        // is currently absent (#343).
+        $employeeIds = $this->permissionService->getApprovableEmployeeIds($this->userId);
 
         return $this->successResponse($this->timeEntryService->findSubmittedMonths($employeeIds));
     }

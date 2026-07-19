@@ -41,6 +41,8 @@
                     :employees="employees"
                     @correct="startCorrection"
                     @edit="editEmployee"
+                    @rest="handleSetResting"
+                    @reactivate="handleReactivate"
                     @delete="handleDeleteEmployee" />
 
                 <NcModal v-if="showEmployeeForm"
@@ -786,6 +788,7 @@ import { getFilePickerBuilder, FilePickerType, DialogBuilder } from '@nextcloud/
 import { mapGetters, mapActions } from 'vuex'
 import SettingsService from '../services/SettingsService.js'
 import HolidayService from '../services/HolidayService.js'
+import EmployeeService from '../services/EmployeeService.js'
 import EmployeeForm from '../components/EmployeeForm.vue'
 import EmployeeList from '../components/EmployeeList.vue'
 import BetriebsferienSettings from '../components/BetriebsferienSettings.vue'
@@ -1271,6 +1274,24 @@ export default {
                     ? this.t('worktime', 'Mitarbeiter aktualisiert')
                     : this.t('worktime', 'Mitarbeiter erstellt')
             )
+        },
+        async handleSetResting({ employee, reason }) {
+            try {
+                await EmployeeService.setResting(employee.id, true, reason || null)
+                await this.$store.dispatch('employees/fetchEmployees', true)
+                showSuccessMessage(this.t('worktime', 'Mitarbeiter ruhend gesetzt'))
+            } catch (error) {
+                showErrorMessage(error.message)
+            }
+        },
+        async handleReactivate(employee) {
+            try {
+                await EmployeeService.setResting(employee.id, false)
+                await this.$store.dispatch('employees/fetchEmployees', true)
+                showSuccessMessage(this.t('worktime', 'Mitarbeiter reaktiviert'))
+            } catch (error) {
+                showErrorMessage(error.message)
+            }
         },
         async handleDeleteEmployee(employee) {
             try {

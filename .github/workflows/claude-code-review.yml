@@ -91,8 +91,11 @@ jobs:
           # Auth: OAuth Token bevorzugt (claude_code_oauth_token).
           # Alternative: anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          # Erlaubt Claude Bot als Trigger (wenn claude.yml PRs erstellt/pusht)
-          allowed_bots: "claude[bot],github-actions[bot]"
+          # Erlaubt Claude Bot als Trigger (wenn claude.yml PRs erstellt/pusht).
+          # dependabot[bot] MUSS mit drin sein, sonst bricht die Action bei jedem
+          # Dependabot-PR mit "Workflow initiated by non-human actor" ab und der
+          # PR bleibt dauerhaft ungereviewt (aufgefallen an #482, 16.07.2026).
+          allowed_bots: "claude[bot],github-actions[bot],dependabot[bot]"
           show_full_output: true
           prompt: |
             Du bist ein Code-Reviewer.
@@ -167,7 +170,7 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          allowed_bots: "claude[bot],github-actions[bot]"
+          allowed_bots: "claude[bot],github-actions[bot],dependabot[bot]"
           show_full_output: true
           prompt: |
             Du bist ein RELEASE-Reviewer für einen Nextcloud-App-Release-PR.
@@ -228,3 +231,35 @@ jobs:
         run: |
           echo "::error::Claude-Review wurde still uebersprungen (Workflow-Validierung gegen main). Workflow-Datei develop/main synchronisieren und Run neu starten."
           exit 1
+
+      - name: Hinweis am PR wenn das Review fehlgeschlagen ist
+        # Ein abgebrochener Review-Job hinterlaesst am PR sonst NICHTS: kein
+        # Kommentar, und wer nur auf die Bot-Kommentare schaut, haelt den PR
+        # faelschlich fuer ungeprueft-aber-unauffaellig. Am 16.07.2026 blieb so
+        # der Dependabot-PR #482 drei Tage ohne Review liegen, ohne dass es
+        # jemandem auffiel. Dieser Schritt macht die Luecke am PR sichtbar.
+        # Laeuft NICHT bei cancelled() — der Race-Guard oben bricht bewusst ab.
+        # NO_REVIEW enthaelt bewusst weder APPROVED noch NEEDS_FIX, damit der
+        # Zyklus-Zaehler oben davon unberuehrt bleibt.
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          BODY=$(cat <<EOF
+          ### Claude Code Review — fehlgeschlagen
+
+          Der Review-Lauf ist abgebrochen, es liegt **kein Review-Ergebnis** fuer diesen Stand vor.
+          Dieser PR gilt damit als **ungeprueft** — nicht mergen, ohne das aufzuloesen.
+
+          [Zum fehlgeschlagenen Run](${RUN_URL})
+
+          Naechste Schritte:
+          - Run neu starten (gh run rerun RUN-ID --failed)
+          - Bleibt es dabei: Workflow-Datei zwischen develop und main abgleichen, die Action validiert gegen den Default-Branch
+
+          **Status: NO_REVIEW**
+          EOF
+          )
+          gh pr comment "${PR_NUMBER}" --body "${BODY}"

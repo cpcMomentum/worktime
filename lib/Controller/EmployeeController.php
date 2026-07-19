@@ -132,7 +132,6 @@ class EmployeeController extends BaseController {
         string $federalState = 'BY',
         ?string $entryDate = null,
         ?string $exitDate = null,
-        bool $isActive = true,
         int $workingDaysPerWeek = 5
     ): JSONResponse {
         if ($authError = $this->requireAuth()) {
@@ -154,7 +153,6 @@ class EmployeeController extends BaseController {
                 $federalState,
                 $entryDate,
                 $exitDate,
-                $isActive,
                 $this->userId,
                 $workingDaysPerWeek
             );
@@ -178,6 +176,53 @@ class EmployeeController extends BaseController {
         try {
             $this->employeeService->delete($id, $this->userId);
             return $this->deletedResponse();
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    /**
+     * Preview what happens when this employee is put into the resting state:
+     * which colleagues lose them as deputy, and which team members lose them as
+     * supervisor (#486). Read-only, feeds the confirmation dialog.
+     */
+    #[NoAdminRequired]
+    public function restingImpact(int $id): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+
+        if (!$this->permissionService->canManageEmployees($this->userId)) {
+            return $this->forbiddenResponse();
+        }
+
+        try {
+            return $this->successResponse($this->employeeService->getRestingImpact($id));
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    /**
+     * Put an employee into the resting state or return them to normal
+     * operation (#486).
+     */
+    #[NoAdminRequired]
+    public function setResting(int $id, bool $resting, ?string $reason = null): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+
+        if (!$this->permissionService->canManageEmployees($this->userId)) {
+            return $this->forbiddenResponse();
+        }
+
+        try {
+            $employee = $resting
+                ? $this->employeeService->setResting($id, $reason, $this->userId)
+                : $this->employeeService->reactivate($id, $this->userId);
+
+            return $this->successResponse($employee);
         } catch (\Exception $e) {
             return $this->handleException($e);
         }
@@ -216,6 +261,31 @@ class EmployeeController extends BaseController {
                 $absenceDetail
             );
 
+            return $this->successResponse($employee);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    #[NoAdminRequired]
+    public function selectableEmployees(): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+
+        // Names of all active employees, for the deputy picker (#343). Any
+        // authenticated employee may fetch this (id + name only).
+        return $this->successResponse($this->employeeService->getSelectableColleagues());
+    }
+
+    #[NoAdminRequired]
+    public function updateMyDeputy(?int $deputyId = null): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+
+        try {
+            $employee = $this->employeeService->updateMyDeputy($this->userId, $deputyId);
             return $this->successResponse($employee);
         } catch (\Exception $e) {
             return $this->handleException($e);

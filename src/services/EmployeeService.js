@@ -81,9 +81,49 @@ export default {
         }
     },
 
+    /**
+     * Preview which colleagues are affected when this employee is put to rest
+     * (#486): deputy links that get cleared, team members losing a supervisor.
+     */
+    async getRestingImpact(id) {
+        try {
+            const response = await api.get(`/employees/${id}/resting-impact`)
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
+    async setResting(id, resting, reason = null) {
+        try {
+            const response = await api.put(`/employees/${id}/resting`, { resting, reason })
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
     async updateMyDefaults(data) {
         try {
             const response = await api.put('/employees/me/defaults', data)
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
+    async updateMyDeputy(deputyId) {
+        try {
+            const response = await api.put('/employees/me/deputy', { deputyId })
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
+    async getSelectableEmployees() {
+        try {
+            const response = await api.get('/employees/selectable')
             return response.data
         } catch (error) {
             handleApiError(error)

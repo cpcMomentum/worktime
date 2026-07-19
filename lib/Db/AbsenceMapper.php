@@ -257,6 +257,29 @@ class AbsenceMapper extends QBMapper {
     }
 
     /**
+     * Pending absences for an explicit set of employee ids (#343). Used for the
+     * approver queue when the scope is not a single supervisor's team but a
+     * computed set (own team plus deputized employees whose supervisor is away).
+     *
+     * @param int[] $employeeIds
+     * @return Absence[]
+     */
+    public function findPendingByEmployeeIds(array $employeeIds): array {
+        if ($employeeIds === []) {
+            return [];
+        }
+
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('status', $qb->createNamedParameter(Absence::STATUS_PENDING)))
+            ->andWhere($qb->expr()->in('employee_id', $qb->createNamedParameter($employeeIds, IQueryBuilder::PARAM_INT_ARRAY)))
+            ->orderBy('start_date', 'ASC');
+
+        return $this->findEntities($qb);
+    }
+
+    /**
      * Laufende und zukuenftige Krankmeldungen (sick, child_sick) fuer "Zur Kenntnisnahme"-Liste.
      * Filter: approved, type in sick/child_sick, end_date >= heute.
      *
