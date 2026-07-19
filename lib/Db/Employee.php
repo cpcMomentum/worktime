@@ -41,6 +41,8 @@ use OCP\AppFramework\Db\Entity;
  * @method DateTime|null getExitDate()
  * @method void setExitDate(?DateTime $exitDate)
  * @method int getIsActive()
+ * @method string|null getLockedReason()
+ * @method void setLockedReason(?string $lockedReason)
  * @method DateTime getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
  * @method DateTime getUpdatedAt()
@@ -91,6 +93,7 @@ class Employee extends Entity implements JsonSerializable {
     protected ?DateTime $exitDate = null;
     protected int $workingDaysPerWeek = 5;
     protected int $isActive = 1;
+    protected ?string $lockedReason = null;
     protected ?DateTime $createdAt = null;
     protected ?DateTime $updatedAt = null;
     protected ?DateTime $defaultStartTime = null;
@@ -150,6 +153,7 @@ class Employee extends Entity implements JsonSerializable {
             'entryDate' => $this->entryDate?->format('Y-m-d'),
             'exitDate' => $this->exitDate?->format('Y-m-d'),
             'isActive' => (bool)$this->isActive,
+            'lockedReason' => $this->lockedReason,
             'createdAt' => $this->createdAt?->format('c'),
             'updatedAt' => $this->updatedAt?->format('c'),
             'defaultStartTime' => $this->defaultStartTime?->format('H:i'),

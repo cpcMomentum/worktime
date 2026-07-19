@@ -20,6 +20,9 @@ use Psr\Log\LoggerInterface;
 
 class EmployeeService {
 
+    /** Matches the locked_reason column width (Version000022). */
+    private const MAX_LOCKED_REASON_LENGTH = 500;
+
     public function __construct(
         private EmployeeMapper $employeeMapper,
         private WorkScheduleMapper $workScheduleMapper,
@@ -229,7 +232,6 @@ class EmployeeService {
         string $federalState = 'BY',
         ?string $entryDate = null,
         ?string $exitDate = null,
-        bool $isActive = true,
         string $currentUserId = '',
         int $workingDaysPerWeek = 5
     ): Employee {
@@ -262,12 +264,112 @@ class EmployeeService {
         $employee->setEntryDate($entryDate ? new DateTime($entryDate) : null);
         $employee->setExitDate($exitDate ? new DateTime($exitDate) : null);
 
-        $employee->setIsActive($isActive);
+        // isActive is intentionally not set here: the resting state is owned by
+        // setResting()/reactivate(), which also clear deputy references (#486).
         $employee->setUpdatedAt(new DateTime());
 
         $employee = $this->withActiveSchedule($this->employeeMapper->update($employee));
 
         // Audit log
+        if ($currentUserId) {
+            $this->auditLogService->logUpdate($currentUserId, 'employee', $employee->getId(), $oldValues, $employee->jsonSerialize());
+        }
+
+        return $employee;
+    }
+
+    /**
+     * Who is affected when this employee is put into the resting state (#486).
+     *
+     * Deputy references are cleared automatically, team members are not: their
+     * supervisor link is left alone so the admin can decide, but they are
+     * reported here so the confirmation dialog can name them.
+     *
+     * @throws NotFoundException
+     * @return array{deputyFor: array<int, array{id: int, fullName: string}>, supervisorOf: array<int, array{id: int, fullName: string}>}
+     */
+    public function getRestingImpact(int $id): array {
+        $this->find($id); // ensure the employee exists
+
+        $toName = static fn (Employee $e): array => ['id' => $e->getId(), 'fullName' => $e->getFullName()];
+
+        return [
+            'deputyFor' => array_values(array_map($toName, $this->employeeMapper->findAllByDeputy($id))),
+            'supervisorOf' => array_values(array_map($toName, $this->employeeMapper->findBySupervisor($id))),
+        ];
+    }
+
+    /**
+     * Put an employee into the resting state: no new time entries or absences,
+     * gone from pickers and operational lists, but still visible and
+     * exportable (#486, decision in #424).
+     *
+     * Any deputy references to this employee are cleared, because a resting
+     * deputy cannot approve anything and would leave the colleague believing
+     * they still have a stand-in.
+     *
+     * @throws NotFoundException
+     * @throws ValidationException
+     */
+    public function setResting(int $id, ?string $reason, string $currentUserId = ''): Employee {
+        $employee = $this->find($id);
+        $oldValues = $employee->jsonSerialize();
+
+        $reason = $reason !== null ? trim($reason) : null;
+        if ($reason !== null && mb_strlen($reason) > self::MAX_LOCKED_REASON_LENGTH) {
+            throw ValidationException::fromSingleError(
+                'reason',
+                'Reason must not exceed ' . self::MAX_LOCKED_REASON_LENGTH . ' characters'
+            );
+        }
+
+        foreach ($this->employeeMapper->findAllByDeputy($id) as $dependent) {
+            $dependentOld = $dependent->jsonSerialize();
+            $dependent->setDeputyId(null);
+            $dependent->setUpdatedAt(new DateTime());
+            $this->employeeMapper->update($dependent);
+
+            if ($currentUserId) {
+                $this->auditLogService->logUpdate(
+                    $currentUserId,
+                    'employee',
+                    $dependent->getId(),
+                    $dependentOld,
+                    $dependent->jsonSerialize(),
+                );
+            }
+        }
+
+        $employee->setIsActive(false);
+        $employee->setLockedReason($reason === '' ? null : $reason);
+        $employee->setUpdatedAt(new DateTime());
+
+        $employee = $this->withActiveSchedule($this->employeeMapper->update($employee));
+
+        if ($currentUserId) {
+            $this->auditLogService->logUpdate($currentUserId, 'employee', $employee->getId(), $oldValues, $employee->jsonSerialize());
+        }
+
+        return $employee;
+    }
+
+    /**
+     * Return a resting employee to normal operation (#486). Deputy references
+     * cleared on resting are not restored: the colleagues chose a new stand-in
+     * or none, and silently reinstating an old one would be surprising.
+     *
+     * @throws NotFoundException
+     */
+    public function reactivate(int $id, string $currentUserId = ''): Employee {
+        $employee = $this->find($id);
+        $oldValues = $employee->jsonSerialize();
+
+        $employee->setIsActive(true);
+        $employee->setLockedReason(null);
+        $employee->setUpdatedAt(new DateTime());
+
+        $employee = $this->withActiveSchedule($this->employeeMapper->update($employee));
+
         if ($currentUserId) {
             $this->auditLogService->logUpdate($currentUserId, 'employee', $employee->getId(), $oldValues, $employee->jsonSerialize());
         }

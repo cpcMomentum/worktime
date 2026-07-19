@@ -91,6 +91,15 @@
 				</NcButton>
 			</div>
 
+			<!-- Ruhender Mitarbeiter (#486): lesend, aber keine Erfassung mehr -->
+			<div v-if="isResting" class="resting-banner">
+				<SleepIcon :size="20" />
+				<span class="resting-banner__text">
+					{{ t('worktime', 'Ihr Profil ist ruhend gestellt. Sie können Ihre bisherigen Daten weiterhin einsehen und exportieren, aber keine neuen Zeiten oder Abwesenheiten erfassen.') }}
+					<small v-if="restingReason">{{ t('worktime', 'Grund: {reason}', { reason: restingReason }) }}</small>
+				</span>
+			</div>
+
 			<div v-if="!hasEmployees && canManageSettings && $route.path !== '/settings'" class="no-employee-warning">
 				<NcEmptyContent :name="t('worktime', 'Willkommen bei WorkTime')">
 					<template #icon>
@@ -141,6 +150,7 @@ import AlertIcon from 'vue-material-design-icons/Alert.vue'
 import ShieldIcon from 'vue-material-design-icons/Shield.vue'
 import ChartBarIcon from 'vue-material-design-icons/ChartBar.vue'
 import WrenchIcon from 'vue-material-design-icons/Wrench.vue'
+import SleepIcon from 'vue-material-design-icons/Sleep.vue'
 import { mapGetters, mapActions } from 'vuex'
 import { isNavVisible } from './router/access.js'
 
@@ -163,9 +173,23 @@ export default {
 		ShieldIcon,
 		ChartBarIcon,
 		WrenchIcon,
+		SleepIcon,
 	},
 	computed: {
 		...mapGetters('permissions', ['permissions', 'isEmployee', 'hasEmployees', 'canManageSettings', 'canApprove', 'isCorrectionMode', 'correctionEmployeeName']),
+		...mapGetters('employees', ['currentEmployee']),
+
+		/**
+		 * A resting employee (#486) keeps read access to their own history but
+		 * cannot record anything. Say so once, at the top, instead of letting
+		 * them discover it through failing saves.
+		 */
+		isResting() {
+			return this.currentEmployee !== null && this.currentEmployee.isActive === false
+		},
+		restingReason() {
+			return this.currentEmployee?.lockedReason || ''
+		},
 	},
 	created() {
 		this.initializeApp()
@@ -208,6 +232,25 @@ export default {
 	align-items: center;
 	height: 100%;
 	padding: 40px;
+}
+
+.resting-banner {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 12px 16px 0;
+	padding: 10px 16px;
+	background: var(--color-background-dark);
+	border: 1px solid var(--color-border-dark, var(--color-border));
+	border-left: 4px solid var(--color-text-maxcontrast);
+	border-radius: var(--border-radius-large, 8px);
+	color: var(--color-main-text);
+}
+
+.resting-banner__text small {
+	display: block;
+	font-weight: normal;
+	color: var(--color-text-maxcontrast);
 }
 
 .correction-banner {

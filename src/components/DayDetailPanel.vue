@@ -136,6 +136,7 @@ export default {
     },
     computed: {
         ...mapGetters('permissions', ['isCorrectionMode']),
+        ...mapGetters('employees', ['currentEmployee']),
         dayTitle() {
             return formatDateWithWeekday(this.day.date)
         },
@@ -152,13 +153,25 @@ export default {
                 : this.t('worktime', '{scope} Tage', { scope })
         },
         readonly() {
-            // In HR correction mode the lock is bypassed (a reason is required on save).
+            // In HR correction mode the lock is bypassed (a reason is required on
+            // save). This also covers resting employees (#486): the server lets
+            // HR/Admin correct their past records, so the UI must not block it.
             if (this.isCorrectionMode) {
                 return false
             }
+            // Outside correction mode a resting employee cannot record anything.
+            if (this.isResting) {
+                return true
+            }
             return this.monthStatus === 'submitted' || this.monthStatus === 'approved'
         },
+        isResting() {
+            return this.currentEmployee !== null && this.currentEmployee.isActive === false
+        },
         lockedMessage() {
+            if (this.isResting) {
+                return this.t('worktime', 'Profil ruhend – keine Erfassung möglich.')
+            }
             if (this.monthStatus === 'approved') {
                 return this.t('worktime', 'Monat genehmigt – gesperrt. Korrektur nur durch HR.')
             }

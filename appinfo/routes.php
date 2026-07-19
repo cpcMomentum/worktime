@@ -56,6 +56,8 @@ return [
         ['name' => 'employee#availableUsers', 'url' => '/api/employees/available-users', 'verb' => 'GET'],
         ['name' => 'employee#index', 'url' => '/api/employees', 'verb' => 'GET'],
         ['name' => 'employee#create', 'url' => '/api/employees', 'verb' => 'POST'],
+        ['name' => 'employee#restingImpact', 'url' => '/api/employees/{id}/resting-impact', 'verb' => 'GET', 'requirements' => ['id' => '\d+']],
+        ['name' => 'employee#setResting', 'url' => '/api/employees/{id}/resting', 'verb' => 'PUT', 'requirements' => ['id' => '\d+']],
         ['name' => 'employee#show', 'url' => '/api/employees/{id}', 'verb' => 'GET', 'requirements' => ['id' => '\d+']],
         ['name' => 'employee#update', 'url' => '/api/employees/{id}', 'verb' => 'PUT', 'requirements' => ['id' => '\d+']],
         ['name' => 'employee#destroy', 'url' => '/api/employees/{id}', 'verb' => 'DELETE', 'requirements' => ['id' => '\d+']],

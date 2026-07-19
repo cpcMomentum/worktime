@@ -73,7 +73,9 @@
             <div class="absence-card">
             <div class="list-head">
                 <h3 class="list-title">{{ t('worktime', 'Meine Abwesenheiten') }}</h3>
-                <NcButton type="primary" @click="startCreate">
+                <NcButton v-if="!isResting"
+                    type="primary"
+                    @click="startCreate">
                     <template #icon>
                         <PlusIcon :size="20" />
                     </template>
@@ -234,6 +236,11 @@ export default {
     computed: {
         ...mapGetters('absences', ['absences', 'absenceTypes', 'vacationStats', 'loading']),
         ...mapGetters('permissions', ['activeEmployeeId', 'isCorrectionMode']),
+        ...mapGetters('employees', ['currentEmployee']),
+        // Ruhende Mitarbeiter (#486) koennen nichts mehr beantragen.
+        isResting() {
+            return this.currentEmployee !== null && this.currentEmployee.isActive === false
+        },
         thisYear() {
             return getCurrentYear()
         },
