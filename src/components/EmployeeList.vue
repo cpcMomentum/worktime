@@ -181,13 +181,20 @@ export default {
             this.impactLoading = true
 
             try {
-                this.impact = await EmployeeService.getRestingImpact(employee.id)
+                const impact = await EmployeeService.getRestingImpact(employee.id)
+                if (this.employeeToRest === employee) {
+                    this.impact = impact
+                }
             } catch (e) {
                 // The dialog stays usable without the preview; the server-side
                 // clearing happens regardless of what we managed to show here.
-                this.impact = null
+                if (this.employeeToRest === employee) {
+                    this.impact = null
+                }
             } finally {
-                this.impactLoading = false
+                if (this.employeeToRest === employee) {
+                    this.impactLoading = false
+                }
             }
         },
         closeRestingDialog() {

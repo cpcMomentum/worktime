@@ -223,6 +223,7 @@ class AbsenceServiceTest extends TestCase {
         // An APPROVED vacation in the current (not fully approved → open) month
         // must stay undeletable even for HR with a reason — the override only
         // bypasses the approved-block for CLOSED months. HR should cancel instead.
+        $this->expectActiveEmployee();
         $absence = $this->makeAbsence(
             Absence::TYPE_VACATION,
             Absence::STATUS_APPROVED,

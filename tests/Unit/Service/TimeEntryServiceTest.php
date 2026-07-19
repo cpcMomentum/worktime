@@ -400,6 +400,7 @@ class TimeEntryServiceTest extends TestCase {
         // An APPROVED entry in the current (not fully approved → not locked) month
         // must stay undeletable even for HR — the override only bypasses the block
         // for closed months. HR should reopen/reject instead.
+        $this->expectActiveEmployee();
         $year = (int)(new DateTime())->format('Y');
         $entry = new TimeEntry();
         $entry->setId(99);
