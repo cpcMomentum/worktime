@@ -7,6 +7,25 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-07-19
+
+### Added
+- **Ruhende Mitarbeiter (#486)**: Mitarbeiter, die vorübergehend oder dauerhaft nicht mehr erfassen, lassen sich jetzt auf „Ruhend" setzen — für Elternzeit und Mutterschutz genauso wie für Langzeiterkrankung oder Ausscheiden. Ruhende Mitarbeiter können keine Zeiten und Abwesenheiten mehr erfassen, bleiben aber in der Mitarbeiterverwaltung sichtbar, und ihre bisherigen Daten lassen sich weiterhin einsehen und exportieren. Der Grund wird am Mitarbeiter hinterlegt und dem Betroffenen als Hinweis angezeigt. Beim Ruhendsetzen weist ein Dialog aus, wer davon betroffen ist: Vertretungszuordnungen auf diese Person werden automatisch gestrichen, Teammitglieder ohne Vorgesetzten werden namentlich genannt. Personalverwaltung und Administration können weiterhin Korrekturen an zurückliegenden Einträgen vornehmen.
+- **Vertretung bei Abwesenheit (#343)**: Jeder legt in „Meine Einstellungen → Vertretung" selbst fest, wer ihn vertritt. Ist ein Vorgesetzter abwesend, darf seine Vertretung die Anträge seines Teams genehmigen. Die Vertretung ist automatisch auf die Dauer der erfassten Abwesenheit begrenzt — einmal setzen genügt, ein separates Datum ist nicht nötig.
+
+### Changed
+- **Überstunden-Bezeichnungen eindeutig (#430)**: Die Kachel „Überstunden" zeigte den Jahressaldo, das PDF hingegen den Monatswert — bei gleicher Beschriftung. Beide sind jetzt eindeutig benannt („Jahressaldo · Stand heute" beziehungsweise „Überstunden (Monat)"). An der Berechnung ändert sich nichts.
+
+### Fixed
+- **Halbtags-Abwesenheiten in Zukunftsmonaten (#443)**: Ein halber Urlaubstag in einem noch nicht begonnenen Monat wurde in der Vorausschau als ganzer Tag gewertet.
+- **Freizeitausgleich-Hinweis bei abweichender Wochenstruktur (#443)**: Der Tageshinweis zum Freizeitausgleich rechnete fest mit fünf Arbeitstagen und stimmte damit für Teilzeitkräfte mit anderer Wochenstruktur nicht.
+
+### Security
+- **Deaktivierte Mitarbeiter konnten weiter erfassen (#486)**: Die Mitarbeiterverwaltung stellte in Aussicht, dass inaktive Mitarbeiter keine Zeiten mehr erfassen können. Tatsächlich wurden sie lediglich aus Auswahllisten ausgeblendet, während Erfassen, Ändern und Löschen unverändert möglich blieb. Der Schutz greift jetzt serverseitig.
+
+### Hinweis zum Update
+Mitarbeiter, die bisher auf „inaktiv" gesetzt waren, gelten nach dem Update als ruhend und können keine Zeiten mehr erfassen. Das entspricht dem, was die Oberfläche bereits zugesagt hatte. Wer weiterhin erfassen soll, wird über die Mitarbeiterverwaltung reaktiviert.
+
 ## [0.14.0] - 2026-07-12
 
 ### Changed
