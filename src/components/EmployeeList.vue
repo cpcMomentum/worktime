@@ -24,8 +24,11 @@
                     <td>{{ employee.federalStateName }}</td>
                     <td>
                         <span :class="['status-badge', employee.isActive ? 'active' : 'inactive']">
-                            {{ employee.isActive ? t('worktime', 'Aktiv') : t('worktime', 'Inaktiv') }}
+                            {{ employee.isActive ? t('worktime', 'Aktiv') : t('worktime', 'Ruhend') }}
                         </span>
+                        <div v-if="!employee.isActive && employee.lockedReason" class="locked-reason">
+                            {{ employee.lockedReason }}
+                        </div>
                     </td>
                     <td class="actions-col">
                         <NcButton type="tertiary"
@@ -34,6 +37,15 @@
                             @click="$emit('correct', employee)">
                             <template #icon>
                                 <Wrench :size="20" />
+                            </template>
+                        </NcButton>
+                        <NcButton type="tertiary"
+                            :aria-label="employee.isActive ? t('worktime', 'Ruhend setzen') : t('worktime', 'Reaktivieren')"
+                            :title="employee.isActive ? t('worktime', 'Mitarbeiter ruhend setzen: keine neue Erfassung mehr, Daten bleiben einsehbar') : t('worktime', 'Mitarbeiter wieder aktiv setzen')"
+                            @click="employee.isActive ? confirmResting(employee) : $emit('reactivate', employee)">
+                            <template #icon>
+                                <SleepIcon v-if="employee.isActive" :size="20" />
+                                <SleepOffIcon v-else :size="20" />
                             </template>
                         </NcButton>
                         <NcButton type="tertiary"
@@ -63,6 +75,42 @@
             </template>
         </NcEmptyContent>
 
+        <NcDialog v-if="showRestingDialog"
+            :name="t('worktime', 'Mitarbeiter ruhend setzen?')"
+            @close="closeRestingDialog">
+            <p>{{ t('worktime', '"{name}" kann dann keine Zeiten und Abwesenheiten mehr erfassen. Bestehende Daten bleiben einsehbar und exportierbar.', { name: employeeToRest?.fullName }) }}</p>
+
+            <NcTextField :value.sync="restingReason"
+                :label="t('worktime', 'Grund (optional)')"
+                :placeholder="t('worktime', 'z. B. Elternzeit, Langzeiterkrankung, ausgeschieden')" />
+
+            <p v-if="impactLoading" class="impact-loading">{{ t('worktime', 'Auswirkungen werden geprüft …') }}</p>
+
+            <div v-if="impact && impact.deputyFor.length > 0" class="impact-block">
+                <strong>{{ t('worktime', 'Vertretung wird gestrichen bei:') }}</strong>
+                <ul>
+                    <li v-for="person in impact.deputyFor" :key="'d' + person.id">{{ person.fullName }}</li>
+                </ul>
+            </div>
+
+            <div v-if="impact && impact.supervisorOf.length > 0" class="impact-block impact-warning">
+                <strong>{{ t('worktime', 'Diese Mitarbeiter haben dann keinen Vorgesetzten mehr:') }}</strong>
+                <ul>
+                    <li v-for="person in impact.supervisorOf" :key="'s' + person.id">{{ person.fullName }}</li>
+                </ul>
+                <p>{{ t('worktime', 'Ihre Genehmigungen laufen dann nur noch über Admin oder Personalverwaltung.') }}</p>
+            </div>
+
+            <template #actions>
+                <NcButton type="tertiary" @click="closeRestingDialog">
+                    {{ t('worktime', 'Abbrechen') }}
+                </NcButton>
+                <NcButton type="primary" @click="restingConfirmed">
+                    {{ t('worktime', 'Ruhend setzen') }}
+                </NcButton>
+            </template>
+        </NcDialog>
+
         <NcDialog v-if="showDeleteDialog"
             :name="t('worktime', 'Mitarbeiter löschen?')"
             @close="showDeleteDialog = false">
@@ -84,10 +132,14 @@
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
+import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Close from 'vue-material-design-icons/Close.vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import Wrench from 'vue-material-design-icons/Wrench.vue'
+import SleepIcon from 'vue-material-design-icons/Sleep.vue'
+import SleepOffIcon from 'vue-material-design-icons/SleepOff.vue'
+import EmployeeService from '../services/EmployeeService.js'
 
 export default {
     name: 'EmployeeList',
@@ -95,10 +147,13 @@ export default {
         NcButton,
         NcEmptyContent,
         NcDialog,
+        NcTextField,
         Pencil,
         Close,
         AccountGroup,
         Wrench,
+        SleepIcon,
+        SleepOffIcon,
     },
     props: {
         employees: {
@@ -110,9 +165,41 @@ export default {
         return {
             showDeleteDialog: false,
             employeeToDelete: null,
+            showRestingDialog: false,
+            employeeToRest: null,
+            restingReason: '',
+            impact: null,
+            impactLoading: false,
         }
     },
     methods: {
+        async confirmResting(employee) {
+            this.employeeToRest = employee
+            this.restingReason = ''
+            this.impact = null
+            this.showRestingDialog = true
+            this.impactLoading = true
+
+            try {
+                this.impact = await EmployeeService.getRestingImpact(employee.id)
+            } catch (e) {
+                // The dialog stays usable without the preview; the server-side
+                // clearing happens regardless of what we managed to show here.
+                this.impact = null
+            } finally {
+                this.impactLoading = false
+            }
+        },
+        closeRestingDialog() {
+            this.showRestingDialog = false
+            this.employeeToRest = null
+            this.restingReason = ''
+            this.impact = null
+        },
+        restingConfirmed() {
+            this.$emit('rest', { employee: this.employeeToRest, reason: this.restingReason })
+            this.closeRestingDialog()
+        },
         confirmDelete(employee) {
             this.employeeToDelete = employee
             this.showDeleteDialog = true
@@ -164,7 +251,7 @@ export default {
 }
 
 th.actions-col {
-    width: 6.5rem;
+    width: 9rem;
     text-align: center;
 }
 
@@ -194,5 +281,29 @@ td.actions-col {
 .delete-warning {
     color: var(--color-error-text);
     font-size: 0.9em;
+}
+
+.locked-reason {
+    font-size: 0.85em;
+    color: var(--color-text-maxcontrast);
+    margin-top: 2px;
+}
+
+.impact-loading {
+    color: var(--color-text-maxcontrast);
+    font-size: 0.9em;
+}
+
+.impact-block {
+    margin-top: 12px;
+}
+
+.impact-block ul {
+    margin: 4px 0 0 16px;
+    list-style: disc;
+}
+
+.impact-warning {
+    color: var(--color-error-text);
 }
 </style>

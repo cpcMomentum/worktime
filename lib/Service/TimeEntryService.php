@@ -50,6 +50,30 @@ class TimeEntryService {
     }
 
     /**
+     * Resting employees must not gain new or changed time entries (#486).
+     *
+     * Enforced here rather than in the controller because the controllers do not
+     * share a guard and callers such as background jobs bypass them entirely.
+     * Approving and rejecting are deliberately NOT guarded: an employee who goes
+     * resting mid-month must still be closeable by their supervisor.
+     *
+     * @throws ForbiddenException
+     */
+    private function assertEmployeeNotResting(int $employeeId): void {
+        try {
+            $employee = $this->employeeMapper->find($employeeId);
+        } catch (DoesNotExistException) {
+            return; // absent employee is handled by the regular validation paths
+        }
+
+        if (!$employee->getIsActive()) {
+            throw new ForbiddenException(
+                $this->l->t('Für ruhende Mitarbeiter können keine Zeiten erfasst oder geändert werden.')
+            );
+        }
+    }
+
+    /**
      * @return TimeEntry[]
      */
     public function findByEmployee(int $employeeId): array {
@@ -103,6 +127,8 @@ class TimeEntryService {
         ?string $reason = null,
         bool $allowLockedOverride = false
     ): TimeEntry {
+        $this->assertEmployeeNotResting($employeeId);
+
         $dateObj = new DateTime($date);
         $startTimeObj = DateTime::createFromFormat('H:i', $startTime) ?: null;
         $endTimeObj = DateTime::createFromFormat('H:i', $endTime) ?: null;
@@ -187,6 +213,7 @@ class TimeEntryService {
         bool $allowLockedOverride = false
     ): TimeEntry {
         $entry = $this->find($id);
+        $this->assertEmployeeNotResting($entry->getEmployeeId());
         $oldValues = $entry->jsonSerialize();
         $oldDate = clone $entry->getDate();
 
@@ -290,6 +317,7 @@ class TimeEntryService {
      */
     public function delete(int $id, string $currentUserId = '', ?string $reason = null, bool $allowLockedOverride = false): void {
         $entry = $this->find($id);
+        $this->assertEmployeeNotResting($entry->getEmployeeId());
 
         // Closed-month rules (#148): block employees, require a reason for HR corrections.
         $lockedMonths = $this->lockedMonthsInRange($entry->getEmployeeId(), $entry->getDate(), $entry->getDate());
@@ -330,6 +358,7 @@ class TimeEntryService {
      */
     public function submit(int $id, string $currentUserId = ''): TimeEntry {
         $entry = $this->find($id);
+        $this->assertEmployeeNotResting($entry->getEmployeeId());
         $oldValues = $entry->jsonSerialize();
 
         if ($entry->getStatus() !== TimeEntry::STATUS_DRAFT && $entry->getStatus() !== TimeEntry::STATUS_REJECTED) {
@@ -362,6 +391,7 @@ class TimeEntryService {
      * @return array{submitted: int, skipped: int}
      */
     public function submitMonth(int $employeeId, int $year, int $month, string $currentUserId = ''): array {
+        $this->assertEmployeeNotResting($employeeId);
         $entries = $this->findByEmployeeAndMonth($employeeId, $year, $month);
 
         $submitted = 0;

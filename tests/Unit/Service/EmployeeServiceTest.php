@@ -71,6 +71,66 @@ class EmployeeServiceTest extends TestCase {
         return $schedule;
     }
 
+    /**
+     * Putting an employee to rest must clear every deputy reference pointing at
+     * them (#486): a resting deputy cannot approve anything, and leaving the
+     * link would make colleagues believe they still have a stand-in.
+     */
+    public function testSetRestingClearsDeputyReferences(): void {
+        $resting = $this->makeEmployee(3, '40.00', 30);
+        $colleague = $this->makeEmployee(4, '40.00', 30);
+        $colleague->setDeputyId(3);
+
+        $this->employeeMapper->method('find')->willReturn($resting);
+        $this->workScheduleService->method('getScheduleForDate')
+            ->willReturn($this->makeSchedule(8.0, 30));
+        $this->employeeMapper->method('findAllByDeputy')->with(3)->willReturn([$colleague]);
+
+        $updated = [];
+        $this->employeeMapper->method('update')->willReturnCallback(
+            function (Employee $e) use (&$updated): Employee {
+                $updated[] = $e;
+                return $e;
+            }
+        );
+
+        $result = $this->service->setResting(3, 'Elternzeit', 'admin');
+
+        $this->assertNull($colleague->getDeputyId(), 'deputy reference must be cleared');
+        $this->assertSame(0, $result->getIsActive());
+        $this->assertSame('Elternzeit', $result->getLockedReason());
+        $this->assertContains($colleague, $updated);
+    }
+
+    public function testSetRestingNormalisesBlankReasonToNull(): void {
+        $employee = $this->makeEmployee(3, '40.00', 30);
+        $this->employeeMapper->method('find')->willReturn($employee);
+        $this->workScheduleService->method('getScheduleForDate')
+            ->willReturn($this->makeSchedule(8.0, 30));
+        $this->employeeMapper->method('findAllByDeputy')->willReturn([]);
+        $this->employeeMapper->method('update')->willReturnArgument(0);
+
+        $result = $this->service->setResting(3, '   ', 'admin');
+
+        $this->assertNull($result->getLockedReason());
+    }
+
+    public function testReactivateClearsLockedReason(): void {
+        $employee = $this->makeEmployee(3, '40.00', 30);
+        $employee->setIsActive(false);
+        $employee->setLockedReason('Elternzeit');
+
+        $this->employeeMapper->method('find')->willReturn($employee);
+        $this->workScheduleService->method('getScheduleForDate')
+            ->willReturn($this->makeSchedule(8.0, 30));
+        $this->employeeMapper->method('update')->willReturnArgument(0);
+
+        $result = $this->service->reactivate(3, 'admin');
+
+        $this->assertSame(1, $result->getIsActive());
+        $this->assertNull($result->getLockedReason());
+    }
+
     public function testCreateRejectsZeroWeeklyHours(): void {
         // weeklyHours = 0 would create a zero-hour initial schedule (0/5 per day),
         // which collapses every working-day/absence-day calculation to 0. Must be

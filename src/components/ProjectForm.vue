@@ -139,10 +139,14 @@ export default {
             return this.form.name.trim().length > 0
         },
         employeeOptions() {
-            return this.employees.map(e => ({
-                id: e.id,
-                label: `${e.firstName} ${e.lastName}`.trim() || e.userId,
-            }))
+            // Resting employees cannot book time, so they must not be assignable
+            // to projects (#486).
+            return this.employees
+                .filter(e => e.isActive)
+                .map(e => ({
+                    id: e.id,
+                    label: `${e.firstName} ${e.lastName}`.trim() || e.userId,
+                }))
         },
         selectedMembers: {
             get() {
