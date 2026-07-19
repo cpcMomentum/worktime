@@ -649,6 +649,7 @@ OC.L10N.register(
     "Ihr Profil ist ruhend gestellt. Sie können Ihre bisherigen Daten weiterhin einsehen und exportieren, aber keine neuen Zeiten oder Abwesenheiten erfassen." : "Ihr Profil ist ruhend gestellt. Sie können Ihre bisherigen Daten weiterhin einsehen und exportieren, aber keine neuen Zeiten oder Abwesenheiten erfassen.",
     "Grund: {reason}" : "Grund: {reason}",
     "Für ruhende Mitarbeiter können keine Zeiten erfasst oder geändert werden." : "Für ruhende Mitarbeiter können keine Zeiten erfasst oder geändert werden.",
-    "Für ruhende Mitarbeiter können keine Abwesenheiten erfasst oder geändert werden." : "Für ruhende Mitarbeiter können keine Abwesenheiten erfasst oder geändert werden."
+    "Für ruhende Mitarbeiter können keine Abwesenheiten erfasst oder geändert werden." : "Für ruhende Mitarbeiter können keine Abwesenheiten erfasst oder geändert werden.",
+    "Profil ruhend – keine Erfassung möglich." : "Profil ruhend – keine Erfassung möglich."
 },
 "nplurals=2; plural=(n != 1);");

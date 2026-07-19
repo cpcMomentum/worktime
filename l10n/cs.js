@@ -649,6 +649,7 @@ OC.L10N.register(
     "Mitarbeiter ruhend gesetzt" : "Mitarbeiter ruhend gesetzt",
     "Mitarbeiter reaktiviert" : "Mitarbeiter reaktiviert",
     "Für ruhende Mitarbeiter können keine Abwesenheiten erfasst oder geändert werden." : "Für ruhende Mitarbeiter können keine Abwesenheiten erfasst oder geändert werden.",
-    "Für ruhende Mitarbeiter können keine Zeiten erfasst oder geändert werden." : "Für ruhende Mitarbeiter können keine Zeiten erfasst oder geändert werden."
+    "Für ruhende Mitarbeiter können keine Zeiten erfasst oder geändert werden." : "Für ruhende Mitarbeiter können keine Zeiten erfasst oder geändert werden.",
+    "Profil ruhend – keine Erfassung möglich." : "Profil ruhend – keine Erfassung möglich."
 },
 "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;");

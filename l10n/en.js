@@ -649,6 +649,7 @@ OC.L10N.register(
     "Ihr Profil ist ruhend gestellt. Sie können Ihre bisherigen Daten weiterhin einsehen und exportieren, aber keine neuen Zeiten oder Abwesenheiten erfassen." : "Your profile is set to resting. You can still view and export your existing data, but you cannot record new times or absences.",
     "Grund: {reason}" : "Reason: {reason}",
     "Für ruhende Mitarbeiter können keine Zeiten erfasst oder geändert werden." : "Times cannot be recorded or changed for resting employees.",
-    "Für ruhende Mitarbeiter können keine Abwesenheiten erfasst oder geändert werden." : "Absences cannot be recorded or changed for resting employees."
+    "Für ruhende Mitarbeiter können keine Abwesenheiten erfasst oder geändert werden." : "Absences cannot be recorded or changed for resting employees.",
+    "Profil ruhend – keine Erfassung möglich." : "Profile resting – recording not possible."
 },
 "nplurals=2; plural=(n != 1);");

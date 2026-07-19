@@ -223,10 +223,14 @@ export default {
 <style scoped>
 .employee-list {
     margin-top: 16px;
+    /* Die vierte Aktion (#486) sprengt bei schmalem Fenster die Breite —
+       die Tabelle scrollt in sich statt die Seite zu verschieben. */
+    overflow-x: auto;
 }
 
 .employees-table {
     width: 100%;
+    min-width: 56rem;
     border-collapse: collapse;
 }
 
