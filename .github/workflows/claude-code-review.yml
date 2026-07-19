@@ -6,8 +6,22 @@ on:
 
 jobs:
   claude-review:
-    # Only review non-draft PRs
-    if: github.event.pull_request.draft == false
+    # Nur nicht-Draft-PRs reviewen.
+    #
+    # Dependabot-PRs ausgenommen (19.07.2026): GitHub reicht regulaere
+    # Actions-Secrets bei dependabot-getriggerten Laeufen bewusst NICHT durch —
+    # Dependabot-PRs werden von Inhalten fremder Pakete beeinflusst. Das Review
+    # scheiterte dort deshalb dauerhaft an einem leeren
+    # CLAUDE_CODE_OAUTH_TOKEN. Das Token als Dependabot-Secret zu hinterlegen
+    # waere moeglich, wuerde aber genau diese Schutzmassnahme aushebeln — fuer
+    # einen Nutzen nahe null, weil ein Versionsbump in package-lock.json nichts
+    # hergibt, was die Test-Jobs nicht schon abdecken. Die laufen weiter.
+    #
+    # Bewusst ueber user.login statt github.actor: bei einem Rerun waere actor
+    # der Mensch, der neu gestartet hat, nicht der PR-Autor.
+    if: |
+      github.event.pull_request.draft == false
+      && github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -92,9 +106,9 @@ jobs:
           # Alternative: anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           # Erlaubt Claude Bot als Trigger (wenn claude.yml PRs erstellt/pusht).
-          # dependabot[bot] MUSS mit drin sein, sonst bricht die Action bei jedem
-          # Dependabot-PR mit "Workflow initiated by non-human actor" ab und der
-          # PR bleibt dauerhaft ungereviewt (aufgefallen an #482, 16.07.2026).
+          # dependabot[bot] bleibt gelistet, obwohl der Job fuer Dependabot-PRs
+          # oben gar nicht mehr startet: schadet nicht und haelt fest, dass der
+          # Fall geprueft wurde (siehe Job-Kommentar).
           allowed_bots: "claude[bot],github-actions[bot],dependabot[bot]"
           show_full_output: true
           prompt: |
