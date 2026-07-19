@@ -20,6 +20,9 @@ use Psr\Log\LoggerInterface;
 
 class EmployeeService {
 
+    /** Matches the locked_reason column width (Version000022). */
+    private const MAX_LOCKED_REASON_LENGTH = 500;
+
     public function __construct(
         private EmployeeMapper $employeeMapper,
         private WorkScheduleMapper $workScheduleMapper,
@@ -329,6 +332,13 @@ class EmployeeService {
         }
 
         $reason = $reason !== null ? trim($reason) : null;
+        if ($reason !== null && mb_strlen($reason) > self::MAX_LOCKED_REASON_LENGTH) {
+            throw ValidationException::fromSingleError(
+                'reason',
+                'Reason must not exceed ' . self::MAX_LOCKED_REASON_LENGTH . ' characters'
+            );
+        }
+
         $employee->setIsActive(false);
         $employee->setLockedReason($reason === '' ? null : $reason);
         $employee->setUpdatedAt(new DateTime());

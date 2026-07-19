@@ -35,7 +35,7 @@ class Version000022Date20260719000000 extends SimpleMigrationStep {
 		if (!$table->hasColumn('locked_reason')) {
 			$table->addColumn('locked_reason', Types::STRING, [
 				'notnull' => false,
-				'length' => 255,
+				'length' => 500,
 			]);
 		}
 

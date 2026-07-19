@@ -81,6 +81,7 @@
             <p>{{ t('worktime', '"{name}" kann dann keine Zeiten und Abwesenheiten mehr erfassen. Bestehende Daten bleiben einsehbar und exportierbar.', { name: employeeToRest?.fullName }) }}</p>
 
             <NcTextField :value.sync="restingReason"
+                maxlength="500"
                 :label="t('worktime', 'Grund (optional)')"
                 :placeholder="t('worktime', 'z. B. Elternzeit, Langzeiterkrankung, ausgeschieden')" />
 
