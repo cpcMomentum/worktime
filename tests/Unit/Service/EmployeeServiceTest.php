@@ -127,6 +127,11 @@ class EmployeeServiceTest extends TestCase {
         $colleague->setDeputyId(3);
 
         $this->employeeMapper->method('find')->willReturn($resting);
+        // find() enriches via withActiveSchedule(); without this stub the mocked
+        // schedule returns null and the entity setter throws a TypeError before
+        // the validation under test is ever reached.
+        $this->workScheduleService->method('getScheduleForDate')
+            ->willReturn($this->makeSchedule(8.0, 30));
         $this->employeeMapper->method('findAllByDeputy')->with(3)->willReturn([$colleague]);
         $this->employeeMapper->expects($this->never())->method('update');
 
