@@ -91,8 +91,11 @@ jobs:
           # Auth: OAuth Token bevorzugt (claude_code_oauth_token).
           # Alternative: anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          # Erlaubt Claude Bot als Trigger (wenn claude.yml PRs erstellt/pusht)
-          allowed_bots: "claude[bot],github-actions[bot]"
+          # Erlaubt Claude Bot als Trigger (wenn claude.yml PRs erstellt/pusht).
+          # dependabot[bot] MUSS mit drin sein, sonst bricht die Action bei jedem
+          # Dependabot-PR mit "Workflow initiated by non-human actor" ab und der
+          # PR bleibt dauerhaft ungereviewt (aufgefallen an #482, 16.07.2026).
+          allowed_bots: "claude[bot],github-actions[bot],dependabot[bot]"
           show_full_output: true
           prompt: |
             Du bist ein Code-Reviewer.
@@ -167,7 +170,7 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          allowed_bots: "claude[bot],github-actions[bot]"
+          allowed_bots: "claude[bot],github-actions[bot],dependabot[bot]"
           show_full_output: true
           prompt: |
             Du bist ein RELEASE-Reviewer für einen Nextcloud-App-Release-PR.
