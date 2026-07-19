@@ -309,10 +309,19 @@ class EmployeeService {
      * they still have a stand-in.
      *
      * @throws NotFoundException
+     * @throws ValidationException
      */
     public function setResting(int $id, ?string $reason, string $currentUserId = ''): Employee {
         $employee = $this->find($id);
         $oldValues = $employee->jsonSerialize();
+
+        $reason = $reason !== null ? trim($reason) : null;
+        if ($reason !== null && mb_strlen($reason) > self::MAX_LOCKED_REASON_LENGTH) {
+            throw ValidationException::fromSingleError(
+                'reason',
+                'Reason must not exceed ' . self::MAX_LOCKED_REASON_LENGTH . ' characters'
+            );
+        }
 
         foreach ($this->employeeMapper->findAllByDeputy($id) as $dependent) {
             $dependentOld = $dependent->jsonSerialize();
@@ -329,14 +338,6 @@ class EmployeeService {
                     $dependent->jsonSerialize(),
                 );
             }
-        }
-
-        $reason = $reason !== null ? trim($reason) : null;
-        if ($reason !== null && mb_strlen($reason) > self::MAX_LOCKED_REASON_LENGTH) {
-            throw ValidationException::fromSingleError(
-                'reason',
-                'Reason must not exceed ' . self::MAX_LOCKED_REASON_LENGTH . ' characters'
-            );
         }
 
         $employee->setIsActive(false);

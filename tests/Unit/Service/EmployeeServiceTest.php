@@ -11,6 +11,7 @@ use OCA\WorkTime\Db\WorkSchedule;
 use OCA\WorkTime\Db\WorkScheduleMapper;
 use OCA\WorkTime\Service\AuditLogService;
 use OCA\WorkTime\Service\EmployeeService;
+use OCA\WorkTime\Service\ValidationException;
 use OCA\WorkTime\Service\WorkScheduleService;
 use OCP\IUserManager;
 use PHPUnit\Framework\TestCase;
@@ -113,6 +114,24 @@ class EmployeeServiceTest extends TestCase {
         $result = $this->service->setResting(3, '   ', 'admin');
 
         $this->assertNull($result->getLockedReason());
+    }
+
+    /**
+     * A too-long reason must be rejected before any deputy reference is
+     * cleared: otherwise a failed setResting() call would leave colleagues'
+     * deputy links wiped while the employee itself stays active.
+     */
+    public function testSetRestingRejectsOverlongReasonBeforeClearingDeputies(): void {
+        $resting = $this->makeEmployee(3, '40.00', 30);
+        $colleague = $this->makeEmployee(4, '40.00', 30);
+        $colleague->setDeputyId(3);
+
+        $this->employeeMapper->method('find')->willReturn($resting);
+        $this->employeeMapper->method('findAllByDeputy')->with(3)->willReturn([$colleague]);
+        $this->employeeMapper->expects($this->never())->method('update');
+
+        $this->expectException(ValidationException::class);
+        $this->service->setResting(3, str_repeat('x', 501), 'admin');
     }
 
     public function testReactivateClearsLockedReason(): void {
