@@ -1032,14 +1032,20 @@ class AbsenceService {
      * portion of all approved + pending vacation entries (#439). May be
      * negative after an OVERAGE_NEGATIVE booking (#15 Stufe 2).
      *
-     * #500: the quota must match the figure the employee sees. The overview
-     * (AbsenceController::vacationStats) adds the previous-year carryover on top
-     * of the base entitlement; the quota check ignored it, so a request the
-     * overview showed as covered was rejected. Add the carryover, rounded the
-     * same way the overview rounds it.
+     * The quota must match the figure the employee sees, built in
+     * AbsenceController::vacationStats() as schedule-aware base entitlement plus
+     * previous-year carryover:
+     *  - #500: add the carryover, rounded the same way the overview rounds it.
+     *  - #501: take the base from the year's own work-schedule profile
+     *    (getVacationDaysForYear) instead of the employee cache field. The cache
+     *    only ever holds today's profile, so checking a past year with a
+     *    different profile — or a year whose future-dated profile has not yet
+     *    synced the cache — used the wrong base while the overview showed the
+     *    right one. This is the single point both remainingVacationDays callers
+     *    (checkVacationQuota and the Betriebsferien splitPeriod) share.
      */
     private function remainingVacationDays(int $employeeId, int $year, string $federalState, ?int $excludeId = null): float {
-        $baseEntitlement = (float)$this->employeeMapper->find($employeeId)->getVacationDays();
+        $baseEntitlement = (float)$this->workScheduleService->getVacationDaysForYear($employeeId, $year);
         $carryover = $this->carryoverService->getVacationCarryoverDays($employeeId, $year);
         $totalVacationDays = $baseEntitlement + (float)(int)round($carryover);
 
