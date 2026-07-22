@@ -48,6 +48,8 @@ class AbsenceServiceTest extends TestCase {
     private WorkScheduleService $workScheduleService;
     private HolidayService $holidayService;
     private YearlyCarryoverService $carryoverService;
+    /** @var array<int,int> Per-year override for getVacationDaysForYear (#501). */
+    private array $scheduleEntitlementByYear = [];
     private LoggerInterface $logger;
     private IL10N $l;
 
@@ -96,6 +98,18 @@ class AbsenceServiceTest extends TestCase {
             $this->carryoverService,
             $this->logger,
             $this->l
+        );
+
+        // #501: remainingVacationDays() now takes the base entitlement from the
+        // year's work-schedule profile (getVacationDaysForYear), not the employee
+        // cache field. Every existing test was written under the invariant that
+        // the two are equal, so mirror the employee's cached vacation_days here.
+        // A test that needs a genuine year-over-year divergence fills
+        // $scheduleEntitlementByYear[$year] to override a single year.
+        $this->scheduleEntitlementByYear = [];
+        $this->workScheduleService->method('getVacationDaysForYear')->willReturnCallback(
+            fn(int $employeeId, int $year): int => $this->scheduleEntitlementByYear[$year]
+                ?? $this->employeeMapper->find($employeeId)->getVacationDays()
         );
     }
 
@@ -1050,6 +1064,23 @@ class AbsenceServiceTest extends TestCase {
 
         // 30 + round(15.5) = 30 + 16 = 46, nothing used.
         $this->assertSame(46.0, $this->remaining(2026));
+    }
+
+    public function testRemainingVacationUsesTheYearsOwnEntitlement(): void {
+        // #501: the employee's cache field holds today's profile (30), but in
+        // 2024 the profile granted only 20 days. The quota for a 2024 request
+        // must use 20 — the same figure the overview shows for 2024 — not the
+        // cached 30. The buggy code returned 30 and would wave through requests
+        // the overview shows as over budget.
+        $emp = new Employee();
+        $emp->setId(1);
+        $emp->setVacationDays(30); // cache = today's profile
+        $this->employeeMapper->method('find')->willReturn($emp);
+        // In 2024 the profile granted only 20 days, unlike today's cached 30.
+        $this->scheduleEntitlementByYear = [2024 => 20];
+        $this->absenceMapper->method('findByEmployeeAndYear')->willReturn([]);
+
+        $this->assertSame(20.0, $this->remaining(2024));
     }
 
     // ---------------------------------------------------------------------
