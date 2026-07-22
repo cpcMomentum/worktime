@@ -22,6 +22,7 @@ use OCA\WorkTime\Service\ProjectService;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCA\WorkTime\Service\ValidationException;
 use OCA\WorkTime\Service\WorkScheduleService;
+use OCA\WorkTime\Service\YearlyCarryoverService;
 use OCP\IL10N;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -46,6 +47,7 @@ class AbsenceServiceTest extends TestCase {
     private NotificationService $notificationService;
     private WorkScheduleService $workScheduleService;
     private HolidayService $holidayService;
+    private YearlyCarryoverService $carryoverService;
     private LoggerInterface $logger;
     private IL10N $l;
 
@@ -58,6 +60,7 @@ class AbsenceServiceTest extends TestCase {
         $this->notificationService = $this->createMock(NotificationService::class);
         $this->workScheduleService = $this->createMock(WorkScheduleService::class);
         $this->holidayService = $this->createMock(HolidayService::class);
+        $this->carryoverService = $this->createMock(YearlyCarryoverService::class);
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->l = $this->createMock(IL10N::class);
         $this->l->method('t')->willReturnCallback(
@@ -90,6 +93,7 @@ class AbsenceServiceTest extends TestCase {
             $this->notificationService,
             $this->workScheduleService,
             $this->holidayService,
+            $this->carryoverService,
             $this->logger,
             $this->l
         );
@@ -1011,6 +1015,41 @@ class AbsenceServiceTest extends TestCase {
             ->willReturn([$this->vacation(Absence::STATUS_APPROVED, '2026-03-02', '2026-03-06', '5.00')]);
 
         $this->assertSame(25.0, $this->remaining(2026));
+    }
+
+    // ---------------------------------------------------------------------
+    // #500: the request-time quota must include the previous-year carryover,
+    // exactly like the overview the employee sees. Without it a request the
+    // overview shows as covered was wrongly rejected.
+    // ---------------------------------------------------------------------
+
+    public function testRemainingVacationIncludesCarryover(): void {
+        // Reporter's case: 30 base + 16 carryover − 27 approved = 19 remaining.
+        // The buggy code returned 30 − 27 = 3 and blocked the request.
+        $emp = new Employee();
+        $emp->setId(1);
+        $emp->setVacationDays(30);
+        $this->employeeMapper->method('find')->willReturn($emp);
+        $this->carryoverService->method('getVacationCarryoverDays')->willReturn(16.0);
+        $this->absenceMapper->method('findByEmployeeAndYear')
+            ->willReturn([$this->vacation(Absence::STATUS_APPROVED, '2026-01-05', '2026-02-10', '27.00')]);
+
+        $this->assertSame(19.0, $this->remaining(2026));
+    }
+
+    public function testRemainingVacationRoundsCarryoverLikeOverview(): void {
+        // The overview rounds the carryover to a whole day before showing it
+        // (AbsenceController::vacationStats). The quota must round identically,
+        // otherwise the block and the displayed number disagree again.
+        $emp = new Employee();
+        $emp->setId(1);
+        $emp->setVacationDays(30);
+        $this->employeeMapper->method('find')->willReturn($emp);
+        $this->carryoverService->method('getVacationCarryoverDays')->willReturn(15.5);
+        $this->absenceMapper->method('findByEmployeeAndYear')->willReturn([]);
+
+        // 30 + round(15.5) = 30 + 16 = 46, nothing used.
+        $this->assertSame(46.0, $this->remaining(2026));
     }
 
     // ---------------------------------------------------------------------
