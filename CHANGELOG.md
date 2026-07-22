@@ -7,6 +7,12 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.15.1] - 2026-07-22
+
+### Fixed
+- **Urlaubsantrag trotz ausreichendem Guthaben abgelehnt (#500)**: Beim Beantragen von Urlaub wurde der Jahresübertrag aus dem Vorjahr nicht berücksichtigt. Die Urlaubsübersicht zählte ihn zum Guthaben dazu, die Prüfung beim Beantragen jedoch nicht — dadurch wurde ein Antrag abgelehnt, obwohl die Übersicht genügend freie Tage auswies. Beide rechnen jetzt gleich.
+- **Falscher Urlaubsanspruch bei geändertem Arbeitszeitprofil (#501)**: Die Prüfung beim Beantragen von Urlaub und beim zentralen Eintragen von Betriebsferien legte immer den heute gültigen Urlaubsanspruch zugrunde. Für ein zurückliegendes Jahr mit anderem Arbeitszeitprofil, oder unmittelbar nach einem zukünftig gültigen Profilwechsel, wich das vom tatsächlichen Anspruch des jeweiligen Jahres ab — den die Urlaubsübersicht bereits korrekt anzeigte. Prüfung und Anzeige verwenden jetzt durchgehend den jahresgenauen Anspruch.
+
 ## [0.15.0] - 2026-07-19
 
 ### Added
