@@ -44,6 +44,7 @@ class AbsenceService {
         private NotificationService $notificationService,
         private WorkScheduleService $workScheduleService,
         private HolidayService $holidayService,
+        private YearlyCarryoverService $carryoverService,
         private LoggerInterface $logger,
         private IL10N $l,
     ) {
@@ -1030,9 +1031,17 @@ class AbsenceService {
      * Remaining vacation days of one calendar year: quota minus the in-year
      * portion of all approved + pending vacation entries (#439). May be
      * negative after an OVERAGE_NEGATIVE booking (#15 Stufe 2).
+     *
+     * #500: the quota must match the figure the employee sees. The overview
+     * (AbsenceController::vacationStats) adds the previous-year carryover on top
+     * of the base entitlement; the quota check ignored it, so a request the
+     * overview showed as covered was rejected. Add the carryover, rounded the
+     * same way the overview rounds it.
      */
     private function remainingVacationDays(int $employeeId, int $year, string $federalState, ?int $excludeId = null): float {
-        $totalVacationDays = (float)$this->employeeMapper->find($employeeId)->getVacationDays();
+        $baseEntitlement = (float)$this->employeeMapper->find($employeeId)->getVacationDays();
+        $carryover = $this->carryoverService->getVacationCarryoverDays($employeeId, $year);
+        $totalVacationDays = $baseEntitlement + (float)(int)round($carryover);
 
         $usedDays = 0.0;
         foreach ($this->absenceMapper->findByEmployeeAndYear($employeeId, $year) as $absence) {
