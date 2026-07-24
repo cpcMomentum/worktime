@@ -7,6 +7,11 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.15.2] - 2026-07-24
+
+### Fixed
+- **Interner Serverfehler beim Öffnen der App nach einem Update**: Auf manchen aktualisierten Instanzen ließ sich die Zeiterfassung nicht mehr öffnen (interner Serverfehler), weil eine mit der Vertretungsfunktion (0.15.0) eingeführte Datenbankspalte fehlte, obwohl die zugehörige Datenbankänderung als angewendet vermerkt war. Eine neue, wiederholsichere Datenbankänderung trägt die fehlende Spalte samt Index nachträglich nach. Auf korrekt eingerichteten Instanzen ändert sich nichts.
+
 ## [0.15.1] - 2026-07-22
 
 ### Fixed
