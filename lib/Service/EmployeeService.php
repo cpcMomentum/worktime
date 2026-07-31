@@ -163,13 +163,16 @@ class EmployeeService {
         string $federalState = 'BY',
         ?string $entryDate = null,
         string $currentUserId = '',
-        int $workingDaysPerWeek = 5
+        int $workingDaysPerWeek = 5,
+        ?float $vacationDaysUsed = null
     ): Employee {
         // Validate
         $errors = $this->validate($userId, $firstName, $lastName, $federalState);
         if (!empty($errors)) {
             throw new ValidationException($errors);
         }
+
+        $this->validateVacationDaysUsed($vacationDaysUsed, $entryDate);
 
         // Weekly hours must be > 0: the initial work schedule is derived from them
         // (weeklyHours / 5). A value of 0 would produce a zero-hour profile, which
@@ -200,6 +203,8 @@ class EmployeeService {
         if ($entryDate) {
             $employee->setEntryDate(new DateTime($entryDate));
         }
+
+        $employee->setVacationDaysUsed(self::normalizeVacationDaysUsed($vacationDaysUsed));
 
         $employee->setIsActive(true);
         $employee->setCreatedAt(new DateTime());
@@ -233,7 +238,8 @@ class EmployeeService {
         ?string $entryDate = null,
         ?string $exitDate = null,
         string $currentUserId = '',
-        int $workingDaysPerWeek = 5
+        int $workingDaysPerWeek = 5,
+        ?float $vacationDaysUsed = null
     ): Employee {
         $employee = $this->find($id);
         $oldValues = $employee->jsonSerialize();
@@ -243,6 +249,8 @@ class EmployeeService {
         if (!empty($errors)) {
             throw new ValidationException($errors);
         }
+
+        $this->validateVacationDaysUsed($vacationDaysUsed, $entryDate);
 
         // Prevent circular supervisor reference
         if ($supervisorId === $id) {
@@ -263,6 +271,7 @@ class EmployeeService {
 
         $employee->setEntryDate($entryDate ? new DateTime($entryDate) : null);
         $employee->setExitDate($exitDate ? new DateTime($exitDate) : null);
+        $employee->setVacationDaysUsed(self::normalizeVacationDaysUsed($vacationDaysUsed));
 
         // isActive is intentionally not set here: the resting state is owned by
         // setResting()/reactivate(), which also clear deputy references (#486).
@@ -488,6 +497,48 @@ class EmployeeService {
         $this->auditLogService->logUpdate($userId, 'employee', $employee->getId(), $oldValues, $employee->jsonSerialize());
 
         return $employee;
+    }
+
+    /**
+     * #522: Im Eintrittsjahr bereits verbrauchte Urlaubstage.
+     *
+     * Der Wert wirkt ausschliesslich im Eintrittsjahr, deshalb ist er ohne
+     * Eintrittsdatum wirkungslos — das wird abgewiesen statt still geschluckt,
+     * sonst traegt ein Admin eine Zahl ein, die nirgends ankommt.
+     *
+     * @throws ValidationException
+     */
+    private function validateVacationDaysUsed(?float $vacationDaysUsed, ?string $entryDate): void {
+        if ($vacationDaysUsed === null) {
+            return;
+        }
+
+        if ($vacationDaysUsed < 0 || $vacationDaysUsed > 366) {
+            throw ValidationException::fromSingleError(
+                'vacationDaysUsed',
+                'Vacation days already used must be between 0 and 366'
+            );
+        }
+
+        if ($vacationDaysUsed > 0 && !$entryDate) {
+            throw ValidationException::fromSingleError(
+                'vacationDaysUsed',
+                'Vacation days already used require an entry date'
+            );
+        }
+    }
+
+    /**
+     * Null und 0 sind rechnerisch gleichbedeutend — beides wird als "kein Wert
+     * hinterlegt" (NULL) abgelegt, damit Bestandsdatensaetze und bewusst
+     * geleerte Felder identisch aussehen.
+     */
+    private static function normalizeVacationDaysUsed(?float $vacationDaysUsed): ?string {
+        if ($vacationDaysUsed === null || $vacationDaysUsed <= 0) {
+            return null;
+        }
+
+        return number_format($vacationDaysUsed, 1, '.', '');
     }
 
     /**

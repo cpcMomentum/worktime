@@ -144,6 +144,18 @@
             </div>
         </div>
 
+        <div v-if="entryYear" class="form-row">
+            <div class="form-group">
+                <label for="vacationDaysUsed">{{ t('worktime', 'Davon {year} bereits verbraucht', { year: entryYear }) }} <InfoIcon>{{ t('worktime', 'Urlaubstage, die im Eintrittsjahr bereits genommen wurden — beim vorherigen Arbeitgeber oder vor der Umstellung auf diese App. Sie werden nur vom Anspruch des Eintrittsjahres abgezogen. Ab dem Folgejahr gilt wieder der volle Jahresanspruch. Halbe Tage sind möglich.') }}</InfoIcon></label>
+                <input id="vacationDaysUsed"
+                    v-model="form.vacationDaysUsed"
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    class="input-field input-small">
+            </div>
+        </div>
+
         <WorkScheduleEditor v-if="isEdit && employee"
             :employee-id="employee.id"
             :entry-date="employee.entryDate || null"
@@ -206,6 +218,7 @@ export default {
                 federalState: this.defaultFederalState,
                 entryDate: null,
                 exitDate: null,
+                vacationDaysUsed: null,
             },
         }
     },
@@ -213,6 +226,24 @@ export default {
         ...mapGetters('employees', ['employees', 'federalStates', 'availableUsers']),
         isEdit() {
             return !!this.employee
+        },
+        /**
+         * Jahr des Eintritts — der neue Verbrauchswert gilt ausschliesslich fuer
+         * dieses eine Jahr, deshalb wird es im Label mitgenannt (#522).
+         */
+        entryYear() {
+            return this.form.entryDate ? new Date(this.form.entryDate).getFullYear() : null
+        },
+        /**
+         * Leeres Feld heisst "nichts hinterlegt", nicht 0 — beides rechnet gleich,
+         * aber null haelt Bestandsdatensaetze unangetastet.
+         */
+        normalizedVacationDaysUsed() {
+            const value = this.form.vacationDaysUsed
+            if (value === null || value === '' || Number.isNaN(Number(value))) {
+                return null
+            }
+            return Number(value) > 0 ? Number(value) : null
         },
         userOptions() {
             return this.availableUsers.map(u => ({
@@ -306,6 +337,7 @@ export default {
                         federalState: employee.federalState,
                         entryDate: employee.entryDate ? new Date(employee.entryDate) : null,
                         exitDate: employee.exitDate ? new Date(employee.exitDate) : null,
+                        vacationDaysUsed: employee.vacationDaysUsed ?? null,
                     }
                 } else {
                     this.resetForm()
@@ -336,6 +368,7 @@ export default {
                 federalState: this.defaultFederalState,
                 entryDate: null,
                 exitDate: null,
+                vacationDaysUsed: null,
             }
         },
         cancel() {
@@ -356,6 +389,7 @@ export default {
                     federalState: this.form.federalState,
                     entryDate: this.form.entryDate ? formatDateISO(this.form.entryDate) : null,
                     exitDate: this.form.exitDate ? formatDateISO(this.form.exitDate) : null,
+                    vacationDaysUsed: this.entryYear ? this.normalizedVacationDaysUsed : null,
                 }
 
                 if (this.isEdit) {
