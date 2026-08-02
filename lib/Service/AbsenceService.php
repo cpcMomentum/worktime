@@ -276,10 +276,10 @@ class AbsenceService {
         $startDateObj = new DateTime($startDate);
         $endDateObj = new DateTime($endDate);
         if ($startDateObj > $endDateObj) {
-            throw new ValidationException(['endDate' => ['End date must be after start date']]);
+            throw new ValidationException(['endDate' => [$this->l->t('Enddatum muss nach dem Startdatum liegen')]]);
         }
         if (!in_array($overageHandling, self::OVERAGE_OPTIONS, true)) {
-            throw new ValidationException(['overageHandling' => ['Invalid overage handling option']]);
+            throw new ValidationException(['overageHandling' => [$this->l->t('Ungültige Option für den Umgang mit fehlendem Resturlaub')]]);
         }
 
         $employees = [];
@@ -1017,10 +1017,12 @@ class AbsenceService {
             $remaining = $this->remainingVacationDays($employeeId, $year, $federalState, $excludeId);
             if ($requestedInYear > $remaining) {
                 throw new ValidationException([
-                    'vacationQuota' => [sprintf(
-                        'Not enough vacation days. Available: %.1f, requested: %.1f.',
-                        max(0, $remaining),
-                        $requestedInYear
+                    'vacationQuota' => [$this->l->t(
+                        'Nicht genügend Urlaubstage. Verfügbar: %s, beantragt: %s.',
+                        [
+                            number_format(max(0, $remaining), 1, '.', ''),
+                            number_format($requestedInYear, 1, '.', ''),
+                        ]
                     )],
                 ]);
             }
@@ -1100,11 +1102,11 @@ class AbsenceService {
         $errors = [];
 
         if (!array_key_exists($type, Absence::TYPES)) {
-            $errors['type'] = ['Invalid absence type'];
+            $errors['type'] = [$this->l->t('Ungültige Abwesenheitsart')];
         }
 
         if ($startDate > $endDate) {
-            $errors['endDate'] = ['End date must be after start date'];
+            $errors['endDate'] = [$this->l->t('Enddatum muss nach dem Startdatum liegen')];
         }
 
         // Scope must be between 0 and 1
@@ -1128,7 +1130,7 @@ class AbsenceService {
                 || $a->getStatus() === Absence::STATUS_PENDING
         );
         if (!empty($blocking)) {
-            $errors['startDate'] = ['Overlapping absence exists'];
+            $errors['startDate'] = [$this->l->t('Es existiert bereits eine Abwesenheit in diesem Zeitraum')];
         }
 
         return $errors;
