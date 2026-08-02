@@ -7,6 +7,19 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.15.3] - 2026-08-02
+
+### Added
+- **Bereits verbrauchte Urlaubstage beim Eintritt erfassen (#522)**: Wer unterjährig in die App aufgenommen wird — nach einem Firmenwechsel oder bei der Umstellung auf WorkTime —, bekam bisher den vollen Jahresurlaub gutgeschrieben, auch wenn davon längst Tage genommen waren. Im Mitarbeiter-Formular lässt sich jetzt direkt unter dem Eintrittsdatum eintragen, wie viele Urlaubstage in diesem Jahr bereits verbraucht sind. Der Wert gilt ausschließlich für das Eintrittsjahr, halbe Tage sind möglich, und ab dem Folgejahr greift automatisch wieder der volle Jahresanspruch. Die Urlaubsübersicht weist den Abzug als eigene Zeile aus. Bestehende Mitarbeiter sind nicht betroffen.
+
+### Fixed
+- **Mitarbeiter konnte sein eigenes Arbeitszeitprofil nicht abrufen (#526)**: Die Schnittstelle `GET api/employees/{id}/schedules` verlangte Verwaltungsrechte und verweigerte deshalb auch den Zugriff auf die eigenen Daten. In der Weboberfläche fiel das nicht auf, da das Arbeitszeitprofil dort nur in der Mitarbeiterverwaltung angezeigt wird; angebundene Anwendungen konnten das eigene Profil jedoch gar nicht lesen. Lesend greift jetzt dieselbe Prüfung wie an vergleichbaren Stellen: eigene Daten, Unterstellte, Personalverwaltung und Administration. Änderungen am Profil bleiben der Verwaltung vorbehalten.
+- **Meldungen bei Abwesenheiten erschienen auf Englisch (#528)**: Wurde ein Urlaubsantrag abgelehnt, weil das Kontingent nicht reicht, erschien die Meldung auch bei deutscher Oberfläche auf Englisch. Betroffen waren sechs Hinweise rund um das Beantragen von Abwesenheiten; sie sind jetzt übersetzt.
+
+### Changed (intern)
+- Jahresanspruch, Vorjahresübertrag und der neue Eintrittsjahr-Abzug werden an einer zentralen Stelle zusammengeführt. Urlaubsübersicht, Prüfung beim Beantragen, Betriebsferien und Jahresbericht rechnen dadurch nachweislich identisch.
+- Aktualisierung dreier Entwicklungs-Abhängigkeiten. Keine Auswirkung auf die Funktion.
+
 ## [0.15.2] - 2026-07-24
 
 ### Fixed
