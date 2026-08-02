@@ -580,6 +580,69 @@ class AbsenceServiceTest extends TestCase {
     }
 
     // ---------------------------------------------------------------------
+    // #528: Validierungsmeldungen laufen ueber die Uebersetzung
+    // ---------------------------------------------------------------------
+
+    /**
+     * Die Kontingentmeldung wurde frueher per sprintf() hartkodiert und erschien
+     * dadurch auch bei deutscher Oberflaeche auf Englisch. Der Test prueft das
+     * Ergebnis: die Meldung kommt aus dem Uebersetzungskatalog und traegt beide
+     * Zahlen. Der IL10N-Mock in setUp() gibt den Quelltext zurueck und fuellt
+     * die %s-Platzhalter — kommt der Text nicht durch t(), fehlen die Zahlen.
+     */
+    public function testQuotaMessageIsTranslatedAndCarriesBothNumbers(): void {
+        $employee = new Employee();
+        $employee->setId(1);
+        $employee->setFederalState('BW');
+        $employee->setVacationDays(10);
+        $employee->setIsActive(true);
+        $this->employeeMapper->method('find')->willReturn($employee);
+        $this->carryoverService->method('getVacationCarryoverDays')->willReturn(0.0);
+        $this->absenceMapper->method('findByEmployeeAndYear')->willReturn([]);
+        $this->absenceMapper->method('findOverlapping')->willReturn([]);
+        $this->absenceMapper->method('insert')->willReturnArgument(0);
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]);
+        $this->timeEntryMapper->method('getMonthlyStatusSummary')->willReturn(
+            ['draft' => 0, 'submitted' => 0, 'approved' => 0, 'rejected' => 0]
+        );
+        $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
+        $this->workScheduleService->method('countWorkingDays')->willReturn(12.0);
+
+        try {
+            $this->service->create(1, Absence::TYPE_VACATION, '2026-09-01', '2026-09-16', null, 'BW');
+            $this->fail('Expected the quota check to reject the request');
+        } catch (ValidationException $e) {
+            $message = $e->getFieldErrors('vacationQuota')[0];
+            $this->assertStringContainsString('Urlaubstage', $message, 'Meldung kommt nicht aus dem Katalog');
+            $this->assertStringContainsString('10.0', $message, 'Verfuegbare Tage fehlen');
+            $this->assertStringContainsString('12.0', $message, 'Beantragte Tage fehlen');
+            $this->assertStringNotContainsString('%s', $message, 'Platzhalter nicht ersetzt');
+        }
+    }
+
+    /**
+     * Gegenprobe fuer die uebrigen umgestellten Meldungen: ueberlappende
+     * Abwesenheit meldet sich ebenfalls deutsch.
+     */
+    public function testOverlapMessageIsTranslated(): void {
+        $this->expectActiveEmployee();
+        $existing = $this->makeAbsence(
+            Absence::TYPE_VACATION,
+            Absence::STATUS_APPROVED,
+            new DateTime('2026-09-01'),
+            new DateTime('2026-09-03')
+        );
+        $this->absenceMapper->method('findOverlapping')->willReturn([$existing]);
+
+        try {
+            $this->service->create(1, Absence::TYPE_VACATION, '2026-09-02', '2026-09-04');
+            $this->fail('Expected the overlap check to reject the request');
+        } catch (ValidationException $e) {
+            $this->assertStringContainsString('Abwesenheit', $e->getFieldErrors('startDate')[0]);
+        }
+    }
+
+    // ---------------------------------------------------------------------
     // #522: im Eintrittsjahr bereits verbrauchte Urlaubstage
     // ---------------------------------------------------------------------
 
