@@ -26,13 +26,27 @@ class WorkScheduleController extends BaseController {
         parent::__construct($request, $userId);
     }
 
+    /**
+     * #526: Lesen ist bewusst schwaecher geschuetzt als Schreiben. Vorher stand
+     * hier canManageEmployees() — dieselbe Huerde wie fuer create/update/destroy
+     * weiter unten. Damit kam ein Mitarbeiter nicht einmal an sein EIGENES
+     * Arbeitszeitprofil, weil die eigene Mitarbeiter-ID in der Pruefung gar
+     * nicht vorkam. In der Weboberflaeche faellt das nie auf: der Profil-Editor
+     * haengt im Mitarbeiter-Formular, das ohnehin nur Admin/HR erreichen. Ueber
+     * die API war es ein harter Blocker.
+     *
+     * canViewEmployee() deckt die drei sinnvollen Faelle ab (Admin/HR, eigene
+     * Daten, Unterstellte) und ist das, was vergleichbare Lese-Endpunkte
+     * ohnehin verwenden — AbsenceController::vacationStats() etwa.
+     * Schreibend bleibt es bei canManageEmployees().
+     */
     #[NoAdminRequired]
     public function index(int $employeeId): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
         }
 
-        if (!$this->permissionService->canManageEmployees($this->userId)) {
+        if (!$this->permissionService->canViewEmployee($this->userId, $employeeId)) {
             return $this->forbiddenResponse();
         }
 
