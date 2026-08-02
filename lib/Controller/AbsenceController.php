@@ -386,18 +386,21 @@ class AbsenceController extends BaseController {
                 $year = (int)(new \DateTime())->format('Y');
             }
 
-            // Schedule-aware base entitlement + previous-year carryover,
-            // consistent with the monthly/yearly report (ReportController).
+            // Base entitlement, carryover and the entry-year deduction are
+            // combined in AbsenceService::effectiveVacationDays() so overview,
+            // quota check and yearly report cannot drift apart (#500, #501, #522).
             $baseEntitlement = $this->workScheduleService->getVacationDaysForYear($employeeId, $year);
             $carryover = $this->carryoverService->getVacationCarryoverDays($employeeId, $year);
+            $used = $this->absenceService->vacationDaysUsedInYear($employeeId, $year);
 
             $stats = $this->absenceService->getVacationStats(
                 $employeeId,
                 $year,
-                $baseEntitlement + (int)round($carryover)
+                $this->absenceService->effectiveVacationDays($employeeId, $year)
             );
             $stats['entitlement'] = $baseEntitlement;
             $stats['carryover'] = $carryover;
+            $stats['usedBeforeEntry'] = $used;
 
             return $this->successResponse($stats);
         } catch (\Exception $e) {

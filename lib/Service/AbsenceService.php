@@ -276,10 +276,10 @@ class AbsenceService {
         $startDateObj = new DateTime($startDate);
         $endDateObj = new DateTime($endDate);
         if ($startDateObj > $endDateObj) {
-            throw new ValidationException(['endDate' => ['End date must be after start date']]);
+            throw new ValidationException(['endDate' => [$this->l->t('Enddatum muss nach dem Startdatum liegen')]]);
         }
         if (!in_array($overageHandling, self::OVERAGE_OPTIONS, true)) {
-            throw new ValidationException(['overageHandling' => ['Invalid overage handling option']]);
+            throw new ValidationException(['overageHandling' => [$this->l->t('Ungültige Option für den Umgang mit fehlendem Resturlaub')]]);
         }
 
         $employees = [];
@@ -846,7 +846,7 @@ class AbsenceService {
     /**
      * Get vacation statistics for an employee in a given year
      */
-    public function getVacationStats(int $employeeId, int $year, int $totalVacationDays): array {
+    public function getVacationStats(int $employeeId, int $year, float $totalVacationDays): array {
         $federalState = $this->employeeMapper->find($employeeId)->getFederalState();
 
         // Overlap query + per-year day split (#439): a vacation spanning the year
@@ -1017,10 +1017,12 @@ class AbsenceService {
             $remaining = $this->remainingVacationDays($employeeId, $year, $federalState, $excludeId);
             if ($requestedInYear > $remaining) {
                 throw new ValidationException([
-                    'vacationQuota' => [sprintf(
-                        'Not enough vacation days. Available: %.1f, requested: %.1f.',
-                        max(0, $remaining),
-                        $requestedInYear
+                    'vacationQuota' => [$this->l->t(
+                        'Nicht genügend Urlaubstage. Verfügbar: %s, beantragt: %s.',
+                        [
+                            number_format(max(0, $remaining), 1, '.', ''),
+                            number_format($requestedInYear, 1, '.', ''),
+                        ]
                     )],
                 ]);
             }
@@ -1028,26 +1030,51 @@ class AbsenceService {
     }
 
     /**
+     * The vacation quota of one calendar year, as every part of the app must see
+     * it. This is the single place where the three components are combined:
+     *
+     *  - base entitlement from the year's own work-schedule profile
+     *    (#501 — the employee cache field only ever holds today's profile),
+     *  - plus the previous-year carryover (#500), rounded to whole days the way
+     *    it has always been rounded here,
+     *  - minus the days already used in the entry year (#522).
+     *
+     * Callers (vacation overview, quota check when requesting, Betriebsferien,
+     * yearly report) used to assemble this themselves and drifted apart; #500 and
+     * #501 were both symptoms of exactly that.
+     */
+    public function effectiveVacationDays(int $employeeId, int $year): float {
+        $baseEntitlement = (float)$this->workScheduleService->getVacationDaysForYear($employeeId, $year);
+        $carryover = (float)(int)round($this->carryoverService->getVacationCarryoverDays($employeeId, $year));
+
+        return $baseEntitlement + $carryover - $this->vacationDaysUsedInYear($employeeId, $year);
+    }
+
+    /**
+     * #522: days already used in the year the employee joined — at a previous
+     * employer, or before the company moved to this app. The value belongs to
+     * that one year only; every later year gets the full entitlement.
+     *
+     * Deliberately exact: unlike the carryover above, half days are not rounded.
+     */
+    public function vacationDaysUsedInYear(int $employeeId, int $year): float {
+        $employee = $this->employeeMapper->find($employeeId);
+        $entryDate = $employee->getEntryDate();
+
+        if ($entryDate === null || (int)$entryDate->format('Y') !== $year) {
+            return 0.0;
+        }
+
+        return $employee->getVacationDaysUsedFloat();
+    }
+
+    /**
      * Remaining vacation days of one calendar year: quota minus the in-year
      * portion of all approved + pending vacation entries (#439). May be
      * negative after an OVERAGE_NEGATIVE booking (#15 Stufe 2).
-     *
-     * The quota must match the figure the employee sees, built in
-     * AbsenceController::vacationStats() as schedule-aware base entitlement plus
-     * previous-year carryover:
-     *  - #500: add the carryover, rounded the same way the overview rounds it.
-     *  - #501: take the base from the year's own work-schedule profile
-     *    (getVacationDaysForYear) instead of the employee cache field. The cache
-     *    only ever holds today's profile, so checking a past year with a
-     *    different profile — or a year whose future-dated profile has not yet
-     *    synced the cache — used the wrong base while the overview showed the
-     *    right one. This is the single point both remainingVacationDays callers
-     *    (checkVacationQuota and the Betriebsferien splitPeriod) share.
      */
     private function remainingVacationDays(int $employeeId, int $year, string $federalState, ?int $excludeId = null): float {
-        $baseEntitlement = (float)$this->workScheduleService->getVacationDaysForYear($employeeId, $year);
-        $carryover = $this->carryoverService->getVacationCarryoverDays($employeeId, $year);
-        $totalVacationDays = $baseEntitlement + (float)(int)round($carryover);
+        $totalVacationDays = $this->effectiveVacationDays($employeeId, $year);
 
         $usedDays = 0.0;
         foreach ($this->absenceMapper->findByEmployeeAndYear($employeeId, $year) as $absence) {
@@ -1075,11 +1102,11 @@ class AbsenceService {
         $errors = [];
 
         if (!array_key_exists($type, Absence::TYPES)) {
-            $errors['type'] = ['Invalid absence type'];
+            $errors['type'] = [$this->l->t('Ungültige Abwesenheitsart')];
         }
 
         if ($startDate > $endDate) {
-            $errors['endDate'] = ['End date must be after start date'];
+            $errors['endDate'] = [$this->l->t('Enddatum muss nach dem Startdatum liegen')];
         }
 
         // Scope must be between 0 and 1
@@ -1103,7 +1130,7 @@ class AbsenceService {
                 || $a->getStatus() === Absence::STATUS_PENDING
         );
         if (!empty($blocking)) {
-            $errors['startDate'] = ['Overlapping absence exists'];
+            $errors['startDate'] = [$this->l->t('Es existiert bereits eine Abwesenheit in diesem Zeitraum')];
         }
 
         return $errors;

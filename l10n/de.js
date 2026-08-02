@@ -650,6 +650,14 @@ OC.L10N.register(
     "Grund: {reason}" : "Grund: {reason}",
     "Für ruhende Mitarbeiter können keine Zeiten erfasst oder geändert werden." : "Für ruhende Mitarbeiter können keine Zeiten erfasst oder geändert werden.",
     "Für ruhende Mitarbeiter können keine Abwesenheiten erfasst oder geändert werden." : "Für ruhende Mitarbeiter können keine Abwesenheiten erfasst oder geändert werden.",
-    "Profil ruhend – keine Erfassung möglich." : "Profil ruhend – keine Erfassung möglich."
+    "Profil ruhend – keine Erfassung möglich." : "Profil ruhend – keine Erfassung möglich.",
+    "Davon {year} bereits verbraucht" : "Davon {year} bereits verbraucht",
+    "Urlaubstage, die im Eintrittsjahr bereits genommen wurden — beim vorherigen Arbeitgeber oder vor der Umstellung auf diese App. Sie werden nur vom Anspruch des Eintrittsjahres abgezogen. Ab dem Folgejahr gilt wieder der volle Jahresanspruch. Halbe Tage sind möglich." : "Urlaubstage, die im Eintrittsjahr bereits genommen wurden — beim vorherigen Arbeitgeber oder vor der Umstellung auf diese App. Sie werden nur vom Anspruch des Eintrittsjahres abgezogen. Ab dem Folgejahr gilt wieder der volle Jahresanspruch. Halbe Tage sind möglich.",
+    "Vor Eintritt verbraucht" : "Vor Eintritt verbraucht",
+    "Nicht genügend Urlaubstage. Verfügbar: %s, beantragt: %s." : "Nicht genügend Urlaubstage. Verfügbar: %s, beantragt: %s.",
+    "Enddatum muss nach dem Startdatum liegen" : "Enddatum muss nach dem Startdatum liegen",
+    "Ungültige Option für den Umgang mit fehlendem Resturlaub" : "Ungültige Option für den Umgang mit fehlendem Resturlaub",
+    "Ungültige Abwesenheitsart" : "Ungültige Abwesenheitsart",
+    "Es existiert bereits eine Abwesenheit in diesem Zeitraum" : "Es existiert bereits eine Abwesenheit in diesem Zeitraum"
 },
 "nplurals=2; plural=(n != 1);");

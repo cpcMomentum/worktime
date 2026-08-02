@@ -649,7 +649,15 @@
 		"Mitarbeiter reaktiviert": "Mitarbeiter reaktiviert",
 		"Für ruhende Mitarbeiter können keine Abwesenheiten erfasst oder geändert werden.": "Für ruhende Mitarbeiter können keine Abwesenheiten erfasst oder geändert werden.",
 		"Für ruhende Mitarbeiter können keine Zeiten erfasst oder geändert werden.": "Für ruhende Mitarbeiter können keine Zeiten erfasst oder geändert werden.",
-		"Profil ruhend – keine Erfassung möglich.": "Profil ruhend – keine Erfassung möglich."
+		"Profil ruhend – keine Erfassung möglich.": "Profil ruhend – keine Erfassung möglich.",
+		"Davon {year} bereits verbraucht": "Z toho již vyčerpáno v roce {year}",
+		"Urlaubstage, die im Eintrittsjahr bereits genommen wurden — beim vorherigen Arbeitgeber oder vor der Umstellung auf diese App. Sie werden nur vom Anspruch des Eintrittsjahres abgezogen. Ab dem Folgejahr gilt wieder der volle Jahresanspruch. Halbe Tage sind möglich.": "Dny dovolené již vyčerpané v roce nástupu — u předchozího zaměstnavatele nebo před přechodem na tuto aplikaci. Odečítají se pouze z nároku roku nástupu. Od následujícího roku opět platí plný roční nárok. Půldny jsou možné.",
+		"Vor Eintritt verbraucht": "Vyčerpáno před nástupem",
+		"Nicht genügend Urlaubstage. Verfügbar: %s, beantragt: %s.": "Nedostatek dnů dovolené. K dispozici: %s, požadováno: %s.",
+		"Enddatum muss nach dem Startdatum liegen": "Datum konce musí být po datu začátku",
+		"Ungültige Option für den Umgang mit fehlendem Resturlaub": "Neplatná volba pro nedostatek zbývající dovolené",
+		"Ungültige Abwesenheitsart": "Neplatný typ nepřítomnosti",
+		"Es existiert bereits eine Abwesenheit in diesem Zeitraum": "V tomto období již existuje nepřítomnost"
 	},
 	"pluralForm": "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;"
 }

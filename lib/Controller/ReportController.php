@@ -796,15 +796,16 @@ class ReportController extends BaseController {
                 $totalOvertimeMinutes += $stats['overtimeMinutes'];
             }
 
-            // Vacation stats - use schedule-aware vacation days + carryover
-            $vacationDaysForYear = $this->workScheduleService->getVacationDaysForYear($empId, $year);
+            // Vacation stats — same combined quota as overview and quota check
+            // (#500, #501, #522), assembled in AbsenceService.
             $vacationCarryover = $this->carryoverService->getVacationCarryoverDays($empId, $year);
             $vacationStats = $this->absenceService->getVacationStats(
                 $empId,
                 $year,
-                $vacationDaysForYear + (int)round($vacationCarryover)
+                $this->absenceService->effectiveVacationDays($empId, $year)
             );
             $vacationStats['carryover'] = $vacationCarryover;
+            $vacationStats['usedBeforeEntry'] = $this->absenceService->vacationDaysUsedInYear($empId, $year);
 
             // Overtime carryover
             $overtimeCarryover = $this->carryoverService->getOvertimeCarryoverMinutes($empId, $year);
