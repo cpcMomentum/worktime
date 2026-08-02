@@ -41,6 +41,10 @@
                         <span class="substat__l">{{ t('worktime', 'Übertrag Vorjahr') }}</span>
                         <span class="substat__v">{{ vacationCarryover !== 0 ? vacationCarryover : '–' }}</span>
                     </div>
+                    <div v-if="vacationUsedBeforeEntry > 0" class="substat">
+                        <span class="substat__l">{{ t('worktime', 'Vor Eintritt verbraucht') }}</span>
+                        <span class="substat__v">−{{ vacationUsedBeforeEntry }}</span>
+                    </div>
                 </div>
             </section>
 
@@ -258,7 +262,16 @@ export default {
         },
         vacationBase() {
             if (!this.vacationStats) return 0
+            // #522: seit dem Abzug im Eintrittsjahr laesst sich der Anspruch nicht
+            // mehr aus total minus Übertrag zurückrechnen — das Backend liefert
+            // ihn deshalb als eigenen Wert.
+            if (this.vacationStats.entitlement !== undefined && this.vacationStats.entitlement !== null) {
+                return this.vacationStats.entitlement
+            }
             return Math.round((this.vacationStats.total ?? 0) - (this.vacationStats.carryover ?? 0))
+        },
+        vacationUsedBeforeEntry() {
+            return this.vacationStats?.usedBeforeEntry ?? 0
         },
         overtimeSaldoMin() {
             return this.overtime?.totalOvertimeMinutes ?? 0

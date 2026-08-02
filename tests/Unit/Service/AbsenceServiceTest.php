@@ -580,6 +580,146 @@ class AbsenceServiceTest extends TestCase {
     }
 
     // ---------------------------------------------------------------------
+    // #522: im Eintrittsjahr bereits verbrauchte Urlaubstage
+    // ---------------------------------------------------------------------
+
+    /**
+     * @param string|null $used DECIMAL(4,1) wie aus der DB, null = nichts hinterlegt
+     */
+    private function entryYearEmployee(int $vacationDays, ?string $entryDate, ?string $used): Employee {
+        $employee = new Employee();
+        $employee->setId(1);
+        $employee->setFederalState('BW');
+        $employee->setVacationDays($vacationDays);
+        $employee->setIsActive(true);
+        if ($entryDate !== null) {
+            $employee->setEntryDate(new DateTime($entryDate));
+        }
+        $employee->setVacationDaysUsed($used);
+
+        $this->employeeMapper->method('find')->willReturn($employee);
+        $this->carryoverService->method('getVacationCarryoverDays')->willReturn(0.0);
+
+        return $employee;
+    }
+
+    public function testEntryYearQuotaIsReducedByAlreadyUsedDays(): void {
+        $this->entryYearEmployee(30, '2026-08-01', '12.5');
+
+        $this->assertSame(17.5, $this->service->effectiveVacationDays(1, 2026));
+    }
+
+    /**
+     * Halbe Tage muessen exakt durchschlagen — der Vorjahresuebertrag rundet an
+     * derselben Stelle auf ganze Tage, dieser Wert ausdruecklich nicht.
+     */
+    public function testEntryYearDeductionKeepsHalfDaysExact(): void {
+        $this->entryYearEmployee(30, '2026-08-01', '0.5');
+
+        $this->assertSame(29.5, $this->service->effectiveVacationDays(1, 2026));
+    }
+
+    /**
+     * Der Wert gehoert ausschliesslich ins Eintrittsjahr. Ab dem Folgejahr gilt
+     * wieder der volle Jahresanspruch — sonst haette der Mitarbeiter dauerhaft
+     * zu wenig Urlaub, ohne dass es jemandem auffaellt.
+     */
+    public function testYearAfterEntryGetsFullEntitlement(): void {
+        $this->entryYearEmployee(30, '2026-08-01', '12.5');
+
+        $this->assertSame(30.0, $this->service->effectiveVacationDays(1, 2027));
+    }
+
+    public function testYearBeforeEntryIsUnaffected(): void {
+        $this->entryYearEmployee(30, '2026-08-01', '12.5');
+
+        $this->assertSame(30.0, $this->service->effectiveVacationDays(1, 2025));
+    }
+
+    public function testWithoutEntryDateNothingIsDeducted(): void {
+        $this->entryYearEmployee(30, null, '12.5');
+
+        $this->assertSame(30.0, $this->service->effectiveVacationDays(1, 2026));
+    }
+
+    public function testBestandsdatenOhneWertRechnenWieBisher(): void {
+        $this->entryYearEmployee(30, '2026-08-01', null);
+
+        $this->assertSame(30.0, $this->service->effectiveVacationDays(1, 2026));
+    }
+
+    /**
+     * Uebertrag und Verbrauch greifen gemeinsam: Anspruch + gerundeter Uebertrag
+     * minus exaktem Verbrauch.
+     */
+    public function testCarryoverAndEntryYearDeductionCombine(): void {
+        $employee = new Employee();
+        $employee->setId(1);
+        $employee->setFederalState('BW');
+        $employee->setVacationDays(30);
+        $employee->setIsActive(true);
+        $employee->setEntryDate(new DateTime('2026-08-01'));
+        $employee->setVacationDaysUsed('12.5');
+        $this->employeeMapper->method('find')->willReturn($employee);
+        $this->carryoverService->method('getVacationCarryoverDays')->willReturn(5.0);
+
+        $this->assertSame(22.5, $this->service->effectiveVacationDays(1, 2026));
+    }
+
+    /**
+     * Der eigentliche Zweck: die Kontingentpruefung beim Beantragen muss den
+     * Abzug kennen, nicht nur die Anzeige. 20 beantragte Tage passen in 30, aber
+     * nicht mehr in die verbleibenden 17,5.
+     */
+    public function testRequestingMoreThanTheReducedQuotaIsRejected(): void {
+        $this->entryYearEmployee(30, '2026-08-01', '12.5');
+
+        $this->absenceMapper->method('findByEmployeeAndYear')->willReturn([]);
+        $this->absenceMapper->method('findOverlapping')->willReturn([]);
+        // Bewusst gestubbt, obwohl hier nichts eingefuegt werden darf: faellt der
+        // Abzug weg, soll der Test an fail() scheitern und nicht an einem
+        // TypeError aus dem ungestubbten Mapper.
+        $this->absenceMapper->method('insert')->willReturnArgument(0);
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]);
+        $this->timeEntryMapper->method('getMonthlyStatusSummary')->willReturn(
+            ['draft' => 0, 'submitted' => 0, 'approved' => 0, 'rejected' => 0]
+        );
+        $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
+        $this->workScheduleService->method('countWorkingDays')->willReturn(20.0);
+
+        try {
+            $this->service->create(1, Absence::TYPE_VACATION, '2026-09-01', '2026-09-28', null, 'BW');
+            $this->fail('Expected the quota check to reject the request');
+        } catch (ValidationException $e) {
+            // Auf das Quota-Feld festnageln: der Test soll nicht versehentlich
+            // von einer anderen Validierung gruen gehalten werden.
+            $this->assertTrue($e->hasError('vacationQuota'), 'Expected a vacationQuota error, got: ' . json_encode($e->getErrors()));
+            $this->assertStringContainsString('17.5', $e->getFieldErrors('vacationQuota')[0]);
+        }
+    }
+
+    /**
+     * Gegenprobe: dieselbe Buchung passt, wenn nichts verbraucht ist.
+     */
+    public function testRequestingWithinTheFullQuotaIsAccepted(): void {
+        $this->entryYearEmployee(30, '2026-08-01', null);
+
+        $this->absenceMapper->method('findByEmployeeAndYear')->willReturn([]);
+        $this->absenceMapper->method('findOverlapping')->willReturn([]);
+        $this->absenceMapper->method('insert')->willReturnArgument(0);
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]);
+        $this->timeEntryMapper->method('getMonthlyStatusSummary')->willReturn(
+            ['draft' => 0, 'submitted' => 0, 'approved' => 0, 'rejected' => 0]
+        );
+        $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
+        $this->workScheduleService->method('countWorkingDays')->willReturn(20.0);
+
+        $absence = $this->service->create(1, Absence::TYPE_VACATION, '2026-09-01', '2026-09-28', null, 'BW');
+
+        $this->assertSame(Absence::TYPE_VACATION, $absence->getType());
+    }
+
+    // ---------------------------------------------------------------------
     // #15: Betriebsferien — zentrale Urlaubsbuchung für alle/ausgewählte MA
     // ---------------------------------------------------------------------
 

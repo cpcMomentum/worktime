@@ -650,6 +650,9 @@ OC.L10N.register(
     "Grund: {reason}" : "Reason: {reason}",
     "Für ruhende Mitarbeiter können keine Zeiten erfasst oder geändert werden." : "Times cannot be recorded or changed for resting employees.",
     "Für ruhende Mitarbeiter können keine Abwesenheiten erfasst oder geändert werden." : "Absences cannot be recorded or changed for resting employees.",
-    "Profil ruhend – keine Erfassung möglich." : "Profile resting – recording not possible."
+    "Profil ruhend – keine Erfassung möglich." : "Profile resting – recording not possible.",
+    "Davon {year} bereits verbraucht" : "Of which already used in {year}",
+    "Urlaubstage, die im Eintrittsjahr bereits genommen wurden — beim vorherigen Arbeitgeber oder vor der Umstellung auf diese App. Sie werden nur vom Anspruch des Eintrittsjahres abgezogen. Ab dem Folgejahr gilt wieder der volle Jahresanspruch. Halbe Tage sind möglich." : "Vacation days already taken in the year of joining — at a previous employer or before moving to this app. They are deducted from the entitlement of the joining year only. From the following year the full annual entitlement applies again. Half days are possible.",
+    "Vor Eintritt verbraucht" : "Used before joining"
 },
 "nplurals=2; plural=(n != 1);");

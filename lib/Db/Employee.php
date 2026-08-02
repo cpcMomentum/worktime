@@ -30,6 +30,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setWeeklyHours(string $weeklyHours)
  * @method int getVacationDays()
  * @method void setVacationDays(int $vacationDays)
+ * @method string|null getVacationDaysUsed()
+ * @method void setVacationDaysUsed(?string $vacationDaysUsed)
  * @method int|null getSupervisorId()
  * @method void setSupervisorId(?int $supervisorId)
  * @method int|null getDeputyId()
@@ -86,6 +88,7 @@ class Employee extends Entity implements JsonSerializable {
     protected ?string $email = null;
     protected string $weeklyHours = '40.00';
     protected int $vacationDays = 30;
+    protected ?string $vacationDaysUsed = null;
     protected ?int $supervisorId = null;
     protected ?int $deputyId = null;
     protected string $federalState = 'BY';
@@ -127,6 +130,14 @@ class Employee extends Entity implements JsonSerializable {
     }
 
     /**
+     * #522: Urlaubstage, die im Eintrittsjahr bereits verbraucht waren.
+     * Null (kein Wert hinterlegt) und 0 sind rechnerisch gleichbedeutend.
+     */
+    public function getVacationDaysUsedFloat(): float {
+        return $this->vacationDaysUsed === null ? 0.0 : (float)$this->vacationDaysUsed;
+    }
+
+    /**
      * @deprecated Use WorkScheduleService::getDailyMinutesForDate() instead.
      * This assumes a 5-day week which is incorrect for part-time employees.
      */
@@ -145,6 +156,7 @@ class Employee extends Entity implements JsonSerializable {
             'email' => $this->email,
             'weeklyHours' => (float)$this->weeklyHours,
             'vacationDays' => $this->vacationDays,
+            'vacationDaysUsed' => $this->vacationDaysUsed === null ? null : (float)$this->vacationDaysUsed,
             'workingDaysPerWeek' => $this->workingDaysPerWeek,
             'supervisorId' => $this->supervisorId,
             'deputyId' => $this->deputyId,
