@@ -20,20 +20,20 @@ use OCP\Migration\SimpleMigrationStep;
  */
 class Version000010Date20260411000000 extends SimpleMigrationStep {
 
-    public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
-        /** @var ISchemaWrapper $schema */
-        $schema = $schemaClosure();
+	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
+		/** @var ISchemaWrapper $schema */
+		$schema = $schemaClosure();
 
-        $table = $schema->getTable('wt_employees');
+		$table = $schema->getTable('wt_employees');
 
-        if (!$table->hasColumn('absence_visibility')) {
-            $table->addColumn('absence_visibility', Types::STRING, [
-                'notnull' => true,
-                'length' => 16,
-                'default' => 'all',
-            ]);
-        }
+		if (!$table->hasColumn('absence_visibility')) {
+			$table->addColumn('absence_visibility', Types::STRING, [
+				'notnull' => true,
+				'length' => 16,
+				'default' => 'all',
+			]);
+		}
 
-        return $schema;
-    }
+		return $schema;
+	}
 }
