@@ -19,7 +19,7 @@ if [ -n "$CONFLICT_STAGED" ]; then
     CONFLICT_VIOLATIONS=""
     for file in $CONFLICT_STAGED; do
         [ -f "$file" ] || continue
-        MATCHES=$(git show ":$file" | grep -nE '^(<{7,}|={7,}|>{7,})' || true)
+        MATCHES=$(git show ":$file" | grep -nE '^(<{7,}|={7,}|>{7,}|[|]{7,})' || true)
         if [ -n "$MATCHES" ]; then
             CONFLICT_VIOLATIONS="${CONFLICT_VIOLATIONS}${file}:
 ${MATCHES}
@@ -90,7 +90,7 @@ if [ -n "$SECRET_STAGED" ]; then
         # Treffer zusammenfuehren und je Zeile nur einmal melden — a und b
         # greifen beim Leak-Fall beide.
         M=$( {
-            printf '%s' "$CONTENT" | grep -nE 'Authorization:[[:space:]]*Token[[:space:]]+[0-9a-f]{40}' || true
+            printf '%s' "$CONTENT" | grep -niE 'Authorization:[[:space:]]*Token[[:space:]]+[0-9a-f]{40}' || true
             printf '%s' "$CONTENT" | grep -niE '(token|secret|api[_-]?key|passwor[dt])["'"'"']?[[:space:]]*[:=]+[[:space:]]*["'"'"']?[0-9a-f]{32,}' || true
             printf '%s' "$CONTENT" | grep -nE '^-----BEGIN [A-Z ]*PRIVATE KEY-----' || true
         } | sort -t: -k1,1n -u || true)
