@@ -45,7 +45,7 @@ Quelltext entsprechen = offene Übersetzungs-Schulden.
 
 ### Durchgesetzt durch
 
-- **Pre-Commit-Hook** (`.githooks/pre-commit`, Check 3) — bei Änderungen an
+- **Pre-Commit-Hook** (`.githooks/pre-commit`, Check 2) — bei Änderungen an
   Code-/Katalog-Dateien.
 - **CI** (`.github/workflows/l10n-check.yml`) — bei Push/PR.
 
