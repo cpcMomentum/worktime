@@ -12,7 +12,8 @@
         "lint:fix": "eslint --ext .js,.vue src --fix",
         "test": "jest",
         "l10n:check": "node scripts/l10n-check.mjs",
-        "l10n:fix": "node scripts/l10n-check.mjs --fix"
+        "l10n:fix": "node scripts/l10n-check.mjs --fix",
+        "prepare": "git config core.hooksPath .githooks || true"
     },
     "repository": {
         "type": "git",
