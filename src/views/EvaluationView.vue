@@ -142,7 +142,7 @@
                     :class="{ on: selectedProjects.has(p.id) }"
                     :style="chipStyle(p)"
                     @click="toggleProject(p.id)">
-                    <span class="ev-cdot" :style="{ background: selectedProjects.has(p.id) ? textColorOn(p.color) : (p.color || 'var(--color-border-dark)') }" />
+                    <span class="ev-cdot" :style="{ background: selectedProjects.has(p.id) ? (p.color ? textColorOn(p.color) : 'var(--color-primary-element-text)') : (p.color || 'var(--color-border-dark)') }" />
                     <span>{{ p.name }}</span>
                     <span v-if="p.customer" class="ev-ccust">· {{ p.customer }}</span>
                     <span v-if="selectedProjects.has(p.id)" class="ev-x">×</span>
