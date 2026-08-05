@@ -6,6 +6,7 @@ namespace OCA\WorkTime\Tests\Unit\Service;
 
 use DateTime;
 use OCA\WorkTime\Db\Absence;
+use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\Holiday;
 use OCA\WorkTime\Db\ProjectMapper;
 use OCA\WorkTime\Db\TimeEntry;
@@ -225,5 +226,57 @@ class PdfServiceTest extends TestCase {
         $this->assertSame('-', $row['start']);
         $this->assertSame('', $row['note']);
         $this->assertTrue($row['fill']);
+    }
+
+    // --- Archive path sanitising (#537) -----------------------------------
+
+    private function archiveFolderPath(string $lastName, string $firstName, int $year = 2026): string {
+        $employee = new Employee();
+        $employee->setLastName($lastName);
+        $employee->setFirstName($firstName);
+
+        $method = new ReflectionMethod(PdfService::class, 'buildArchiveFolderPath');
+        $method->setAccessible(true);
+
+        return $method->invoke($this->service, '/WorkTime/Archiv', $employee, $year);
+    }
+
+    public function testArchivePathKeepsOrdinaryNames(): void {
+        $this->assertSame(
+            'WorkTime/Archiv/2026/Testfall_Lea',
+            $this->archiveFolderPath('Testfall', 'Lea')
+        );
+    }
+
+    public function testArchivePathKeepsUmlautsReadable(): void {
+        // The folder is meant to be found by a human in the Files app.
+        $this->assertSame(
+            'WorkTime/Archiv/2026/Müller-Lüdenscheidt_Jörg',
+            $this->archiveFolderPath('Müller-Lüdenscheidt', 'Jörg')
+        );
+    }
+
+    public function testArchivePathStripsTraversalSequences(): void {
+        $path = $this->archiveFolderPath('../../etc', 'passwd');
+
+        $this->assertStringNotContainsString('..', $path);
+        $this->assertSame('WorkTime/Archiv/2026/______etc_passwd', $path);
+    }
+
+    public function testArchivePathStripsSlashes(): void {
+        $path = $this->archiveFolderPath('Fremd/Ordner', 'Lea');
+
+        // Exactly two slashes after the archive root: year and employee folder.
+        $this->assertSame('WorkTime/Archiv/2026/Fremd_Ordner_Lea', $path);
+    }
+
+    public function testArchivePathNeverCollapsesToEmptySegment(): void {
+        // A name made only of stripped characters would otherwise move the file
+        // one directory level up.
+        // "..." becomes three underscores, "/" becomes one, plus the separator.
+        $path = $this->archiveFolderPath('...', '/');
+
+        $this->assertSame('WorkTime/Archiv/2026/_____', $path);
+        $this->assertStringNotContainsString('//', $path);
     }
 }

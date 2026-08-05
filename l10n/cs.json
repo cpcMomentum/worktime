@@ -657,7 +657,11 @@
 		"Enddatum muss nach dem Startdatum liegen": "Datum konce musí být po datu začátku",
 		"Ungültige Option für den Umgang mit fehlendem Resturlaub": "Neplatná volba pro nedostatek zbývající dovolené",
 		"Ungültige Abwesenheitsart": "Neplatný typ nepřítomnosti",
-		"Es existiert bereits eine Abwesenheit in diesem Zeitraum": "V tomto období již existuje nepřítomnost"
+		"Es existiert bereits eine Abwesenheit in diesem Zeitraum": "V tomto období již existuje nepřítomnost",
+		"Ungültiges Datum. Erwartet wird das Format JJJJ-MM-TT.": "Neplatné datum. Očekávaný formát je RRRR-MM-DD.",
+		"Ungültiger Zeitraum. Monat muss zwischen 1 und 12 liegen, Jahr zwischen 2000 und 2100.": "Neplatné období. Měsíc musí být mezi 1 a 12, rok mezi 2000 a 2100.",
+		"Start- und Enddatum sind erforderlich": "Datum začátku a konce jsou povinné",
+		"Genehmigungsdaten konnten nicht vollständig geladen werden. Die Liste ist möglicherweise unvollständig.": "Data ke schválení se nepodařilo načíst celá. Seznam může být neúplný."
 	},
 	"pluralForm": "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;"
 }

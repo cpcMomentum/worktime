@@ -39,6 +39,7 @@ class Notifier implements INotifier {
 
 		$l = $this->l10nFactory->get(Application::APP_ID, $languageCode);
 		$params = $notification->getSubjectParameters();
+		$monthYear = $this->formatMonthYear($params, $languageCode);
 
 		switch ($notification->getSubject()) {
 			case 'absence_submitted':
@@ -115,7 +116,7 @@ class Notifier implements INotifier {
 						'%1$s hat Zeiteinträge für %2$s zur Genehmigung eingereicht',
 						[
 							$params['employeeName'],
-							$params['monthYear'],
+							$monthYear,
 						]
 					)
 				);
@@ -125,7 +126,7 @@ class Notifier implements INotifier {
 				$notification->setParsedSubject(
 					$l->t(
 						'Deine Zeiteinträge für %s wurden genehmigt',
-						[$params['monthYear']]
+						[$monthYear]
 					)
 				);
 				break;
@@ -134,7 +135,7 @@ class Notifier implements INotifier {
 				$notification->setParsedSubject(
 					$l->t(
 						'Deine Zeiteinträge für %s wurden abgelehnt',
-						[$params['monthYear']]
+						[$monthYear]
 					)
 				);
 				break;
@@ -144,14 +145,14 @@ class Notifier implements INotifier {
 					$notification->setParsedSubject(
 						$l->t(
 							'Die Genehmigung deiner Zeiteinträge für %1$s wurde zurückgenommen (Grund: %2$s). Bitte erneut einreichen.',
-							[$params['monthYear'], $params['reason']]
+							[$monthYear, $params['reason']]
 						)
 					);
 				} else {
 					$notification->setParsedSubject(
 						$l->t(
 							'Die Genehmigung deiner Zeiteinträge für %s wurde zurückgenommen. Bitte erneut einreichen.',
-							[$params['monthYear']]
+							[$monthYear]
 						)
 					);
 				}
@@ -161,7 +162,7 @@ class Notifier implements INotifier {
 				$notification->setParsedSubject(
 					$l->t(
 						'PDF-Archivierung für %1$s (%2$s) ist fehlgeschlagen',
-						[$params['employeeName'], $params['monthYear']]
+						[$params['employeeName'], $monthYear]
 					)
 				);
 				if (!empty($params['error'])) {
@@ -183,5 +184,47 @@ class Notifier implements INotifier {
 		);
 
 		return $notification;
+	}
+
+	/**
+	 * Month and year in the recipient's language (#537).
+	 *
+	 * Notifications written before this change carry a pre-rendered German
+	 * `monthYear` string and are still sitting in the notification table. They
+	 * keep their old text rather than breaking — a missing parameter would make
+	 * prepare() fail and hide the whole entry from the panel.
+	 *
+	 * @param array<string, mixed> $params
+	 */
+	private function formatMonthYear(array $params, string $languageCode): string {
+		if (isset($params['monthYear'])) {
+			return (string)$params['monthYear'];
+		}
+
+		$month = (int)($params['month'] ?? 0);
+		$year = (int)($params['year'] ?? 0);
+		if ($month < 1 || $month > 12) {
+			return (string)$year;
+		}
+
+		if (class_exists(\IntlDateFormatter::class)) {
+			$formatter = new \IntlDateFormatter(
+				$languageCode,
+				\IntlDateFormatter::LONG,
+				\IntlDateFormatter::NONE,
+				null,
+				null,
+				// Standalone month name ("März"), not the genitive form some
+				// languages use inside a full date.
+				'LLLL yyyy'
+			);
+			$formatted = $formatter->format(mktime(0, 0, 0, $month, 1, $year));
+			if ($formatted !== false) {
+				return $formatted;
+			}
+		}
+
+		// Without intl a numeric month still says which month is meant.
+		return sprintf('%02d/%04d', $month, $year);
 	}
 }
