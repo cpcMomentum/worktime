@@ -662,6 +662,8 @@ OC.L10N.register(
     "Ungültiges Datum. Erwartet wird das Format JJJJ-MM-TT." : "Neplatné datum. Očekávaný formát je RRRR-MM-DD.",
     "Ungültiger Zeitraum. Monat muss zwischen 1 und 12 liegen, Jahr zwischen 2000 und 2100." : "Neplatné období. Měsíc musí být mezi 1 a 12, rok mezi 2000 a 2100.",
     "Start- und Enddatum sind erforderlich" : "Datum začátku a konce jsou povinné",
-    "Genehmigungsdaten konnten nicht vollständig geladen werden. Die Liste ist möglicherweise unvollständig." : "Data ke schválení se nepodařilo načíst celá. Seznam může být neúplný."
+    "Genehmigungsdaten konnten nicht vollständig geladen werden. Die Liste ist möglicherweise unvollständig." : "Data ke schválení se nepodařilo načíst celá. Seznam může být neúplný.",
+    "Farbe wählen" : "Vybrat barvu",
+    "Kennzeichnet das Projekt in Listen und in der Auswertung. Neben der Palette sind auch eigene Farben möglich." : "Označuje projekt v seznamech a ve vyhodnocení. Kromě palety lze zvolit i vlastní barvy."
 },
 "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;");

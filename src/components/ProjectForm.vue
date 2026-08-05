@@ -45,18 +45,32 @@
         </div>
 
         <div class="form-group">
-            <label for="projectColor">{{ t('worktime', 'Farbe') }}</label>
+            <label class="form-group-label">{{ t('worktime', 'Farbe') }}</label>
             <div class="color-picker-row">
-                <input id="projectColor"
-                    v-model="form.color"
-                    type="color"
-                    class="color-input">
+                <!-- NcColorPicker statt <input type="color">: Letzteres oeffnet auf
+                     macOS den Farbdialog des Betriebssystems, den die Seite nicht
+                     wieder schliessen kann (#548). Der Default-Slot ist der
+                     Trigger des Popovers. -->
+                <NcColorPicker v-model="form.color"
+                    clearable
+                    advanced-fields
+                    @submit="onColorSubmit">
+                    <button type="button"
+                        class="color-trigger"
+                        :style="colorTriggerStyle">
+                        <span v-if="form.color">{{ form.color.toUpperCase() }}</span>
+                        <span v-else>{{ t('worktime', 'Farbe wählen') }}</span>
+                    </button>
+                </NcColorPicker>
                 <NcButton v-if="form.color"
                     type="tertiary"
                     @click="form.color = null">
                     {{ t('worktime', 'Zurücksetzen') }}
                 </NcButton>
             </div>
+            <p class="field-hint">
+                {{ t('worktime', 'Kennzeichnet das Projekt in Listen und in der Auswertung. Neben der Palette sind auch eigene Farben möglich.') }}
+            </p>
         </div>
 
         <div class="form-group">
@@ -98,8 +112,10 @@
 <script>
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
+import NcColorPicker from '@nextcloud/vue/dist/Components/NcColorPicker.js'
 import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import { mapActions, mapGetters } from 'vuex'
+import { nextUnusedColor, textColorOn } from '../utils/colorUtils.js'
 import { showSuccessMessage, showErrorMessage } from '../utils/errorHandler.js'
 
 export default {
@@ -107,6 +123,7 @@ export default {
     components: {
         NcButton,
         NcCheckboxRadioSwitch,
+        NcColorPicker,
         NcSelect,
     },
     props: {
@@ -132,8 +149,19 @@ export default {
     },
     computed: {
         ...mapGetters('employees', ['employees']),
+        ...mapGetters('projects', ['projects']),
         isEdit() {
             return !!this.project
+        },
+        colorTriggerStyle() {
+            if (!this.form.color) return {}
+            // Textfarbe folgt der Helligkeit, sonst ist der Hexwert auf hellen
+            // Palettenfarben nicht lesbar (#548).
+            return {
+                background: this.form.color,
+                borderColor: this.form.color,
+                color: textColorOn(this.form.color),
+            }
         },
         isValid() {
             return this.form.name.trim().length > 0
@@ -202,12 +230,20 @@ export default {
                 code: null,
                 description: null,
                 customer: null,
-                color: null,
+                // Beim Anlegen vorbelegen, damit niemand ueber die Farbe
+                // nachdenken muss. Erst wenn die Palette ausgeschoepft ist,
+                // wiederholen sich Farben (#548).
+                color: nextUnusedColor(this.projects),
                 isActive: true,
                 isBillable: true,
                 allEmployees: true,
                 memberIds: [],
             }
+        },
+        onColorSubmit(color) {
+            // NcColorPicker meldet die Auswahl zusaetzlich per submit; ohne
+            // Wert bedeutet das "geleert".
+            this.form.color = color || null
         },
         cancel() {
             this.$emit('cancel')
@@ -317,13 +353,31 @@ export default {
     gap: 8px;
 }
 
-.color-input {
-    width: 48px;
+/* Trigger des NcColorPicker-Popovers. Zeigt die aktuelle Farbe als Flaeche;
+   die Schriftfarbe folgt der Helligkeit, damit der Hexwert auf Gold und
+   Whiskey genauso lesbar bleibt wie auf Lila (#548). */
+.color-trigger {
+    min-width: 96px;
     height: 36px;
-    padding: 2px;
+    padding: 0 12px;
     border: 1px solid var(--color-border);
     border-radius: var(--border-radius);
+    background: var(--color-main-background);
+    color: var(--color-main-text);
     cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+
+.color-trigger:hover {
+    border-color: var(--color-primary-element);
+}
+
+.field-hint {
+    margin: 4px 0 0;
+    color: var(--color-text-maxcontrast);
+    font-size: 0.9em;
 }
 
 .form-actions {
