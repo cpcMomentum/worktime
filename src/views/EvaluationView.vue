@@ -140,9 +140,9 @@
                     :key="'p' + p.id"
                     class="ev-chip"
                     :class="{ on: selectedProjects.has(p.id) }"
-                    :style="selectedProjects.has(p.id) ? { background: p.color, borderColor: p.color } : {}"
+                    :style="chipStyle(p)"
                     @click="toggleProject(p.id)">
-                    <span class="ev-cdot" :style="{ background: selectedProjects.has(p.id) ? '#fff' : (p.color || 'var(--color-border-dark)') }" />
+                    <span class="ev-cdot" :style="{ background: selectedProjects.has(p.id) ? textColorOn(p.color) : (p.color || 'var(--color-border-dark)') }" />
                     <span>{{ p.name }}</span>
                     <span v-if="p.customer" class="ev-ccust">· {{ p.customer }}</span>
                     <span v-if="selectedProjects.has(p.id)" class="ev-x">×</span>
@@ -324,6 +324,7 @@ import TeamYearTable from '../components/TeamYearTable.vue'
 import ReportService from '../services/ReportService.js'
 import { formatMinutes } from '../utils/timeUtils.js'
 import { formatDate as formatDateUtil, getMonthName } from '../utils/dateUtils.js'
+import { textColorOn } from '../utils/colorUtils.js'
 import { showErrorMessage } from '../utils/errorHandler.js'
 
 export default {
@@ -533,6 +534,37 @@ export default {
         this.refresh()
     },
     methods: {
+        textColorOn,
+        /**
+         * Der aktive Filter-Chip nimmt die Projektfarbe als Hintergrund. Die
+         * Schriftfarbe muss der Helligkeit folgen — festes Weiss ergab auf
+         * hellen Farben unlesbare Beschriftungen, bei Gold 1,65:1 statt der
+         * geforderten 4,5:1 (#548). Weil die Farbe frei waehlbar bleibt,
+         * laesst sich das nicht ueber eine engere Palette loesen.
+         *
+         * @param {object} project Projekt mit optionaler Farbe
+         * @return {object} Style-Bindung fuer den Chip
+         */
+        chipStyle(project) {
+            if (!this.selectedProjects.has(project.id)) return {}
+
+            // Projekt ohne Farbe: der aktive Zustand kam vorher gar nicht an,
+            // weil .ev-chip.on nur die Schrift auf Weiss setzte — auf dem
+            // unveraenderten hellen Hintergrund also weiss auf weiss.
+            if (!project.color) {
+                return {
+                    background: 'var(--color-primary-element)',
+                    borderColor: 'var(--color-primary-element)',
+                    color: 'var(--color-primary-element-text)',
+                }
+            }
+
+            return {
+                background: project.color,
+                borderColor: project.color,
+                color: textColorOn(project.color),
+            }
+        },
         async loadTeamReport() {
             this.teamLoading = true
             try {
@@ -790,13 +822,19 @@ export default {
     background: var(--color-background-hover);
 }
 
+/* Farbe und Schriftfarbe kommen aus chipStyle() — die Schrift muss der
+   Helligkeit der Projektfarbe folgen, festes Weiss war auf hellen Farben
+   unlesbar (#548). */
 .ev-chip.on {
     border-color: transparent;
-    color: #fff;
 }
 
+/* Erbt die berechnete Schriftfarbe des Chips und daempft sie, statt fest
+   halbtransparentes Weiss zu setzen — das war auf hellen Projektfarben
+   unlesbar (#548). */
 .ev-chip.on .ev-ccust {
-    color: rgba(255, 255, 255, 0.85);
+    color: inherit;
+    opacity: 0.85;
 }
 
 .ev-chip--all.on {
