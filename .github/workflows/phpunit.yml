@@ -1,10 +1,20 @@
 name: phpunit
 
 # Backend-Test-Gate (worktime#405, #21). Laeuft die Unit-Suite container-frei
-# gegen die nextcloud/ocp-Stubs (tests/bootstrap-unit.php) — in einer Matrix
-# ueber PHP und die in info.xml deklarierten Nextcloud-Versionen. Die NC-Matrix
-# wird AUS info.xml abgeleitet (#21): ein max-version-Bump zieht die getesteten
-# ocp-Versionen automatisch mit, ohne diesen Workflow anzufassen.
+# gegen die nextcloud/ocp-Stubs (tests/bootstrap-unit.php): ein Job je PHP-
+# Version, der intern ueber ALLE in info.xml deklarierten Nextcloud-Versionen
+# iteriert. Die NC-Liste wird AUS info.xml abgeleitet (#21) — ein max-version-
+# Bump zieht die getesteten ocp-Versionen automatisch mit.
+#
+# Warum Schleife statt Matrix ueber ocp: GitHub rundet JEDEN Job auf eine volle
+# Minute auf. Eine Einzelkombination lief ~14s, die 2x3-Matrix plus versions-Job
+# kostete also 7 abgerechnete Minuten fuer ~1,5 Minuten Rechenzeit. Zwei Jobs
+# decken dieselben Kombinationen ab und kosten ein Viertel.
+#
+# Nebeneffekt, der einen latenten Fehler behebt: die Job-Namen sind jetzt stabil
+# ("PHP 8.2"/"PHP 8.4") statt von min/max-version abhaengig. Vorher haette ein
+# min-version-Bump den Required-Status-Check "PHP 8.2 / ocp ^32.0" verschwinden
+# lassen — und damit JEDEN PR gegen develop dauerhaft blockiert.
 
 on:
   push:
@@ -13,41 +23,24 @@ on:
   # Workflow immer melden, sonst blockiert ein nie-startender Check den Merge.
   pull_request:
 
+# Ueberholte Laeufe desselben PRs abbrechen. Auf main/develop NICHT abbrechen,
+# damit jeder Commit dort seinen eigenen Status behaelt.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 
 jobs:
-  # Leitet die zu testenden nextcloud/ocp-Versionen aus info.xml ab
-  # (<nextcloud min-version max-version/>). NC 32-33 -> ["^32.0","^33.0"].
-  versions:
-    runs-on: ubuntu-latest
-    outputs:
-      ocp: ${{ steps.derive.outputs.ocp }}
-    steps:
-      - uses: actions/checkout@v4
-      - id: derive
-        name: NC-Versionen aus info.xml ableiten
-        run: |
-          line=$(grep -oE '<nextcloud[^>]*/>' appinfo/info.xml)
-          min=$(printf '%s' "$line" | grep -oE 'min-version="[0-9]+"' | grep -oE '[0-9]+')
-          max=$(printf '%s' "$line" | grep -oE 'max-version="[0-9]+"' | grep -oE '[0-9]+')
-          if [ -z "$min" ] || [ -z "$max" ]; then
-            echo "::error::Konnte min/max-version nicht aus info.xml lesen"; exit 1
-          fi
-          ocp=$(seq "$min" "$max" | sed 's/.*/"^&.0"/' | paste -sd, -)
-          echo "ocp=[$ocp]" >> "$GITHUB_OUTPUT"
-          echo "Abgeleitete ocp-Matrix: [$ocp]"
-
   phpunit:
-    needs: versions
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        # PHP-Raender des unterstuetzten Bereichs; NC/ocp aus info.xml (#21).
+        # PHP-Raender des unterstuetzten Bereichs; NC/ocp kommt aus info.xml.
         php-version: ['8.2', '8.4']
-        ocp-version: ${{ fromJson(needs.versions.outputs.ocp) }}
-    name: PHP ${{ matrix.php-version }} / ocp ${{ matrix.ocp-version }}
+    name: PHP ${{ matrix.php-version }}
     steps:
       - uses: actions/checkout@v4
 
@@ -58,11 +51,46 @@ jobs:
           coverage: none
           tools: composer:v2
 
-      - name: nextcloud/ocp auf ${{ matrix.ocp-version }} pinnen
-        run: composer require --dev --no-update "nextcloud/ocp:${{ matrix.ocp-version }}"
+      # Leitet die zu testenden nextcloud/ocp-Versionen aus info.xml ab
+      # (<nextcloud min-version max-version/>). NC 32-34 -> "^32.0 ^33.0 ^34.0".
+      - name: NC-Versionen aus info.xml ableiten
+        id: derive
+        run: |
+          line=$(grep -oE '<nextcloud[^>]*/>' appinfo/info.xml)
+          min=$(printf '%s' "$line" | grep -oE 'min-version="[0-9]+"' | grep -oE '[0-9]+')
+          max=$(printf '%s' "$line" | grep -oE 'max-version="[0-9]+"' | grep -oE '[0-9]+')
+          if [ -z "$min" ] || [ -z "$max" ]; then
+            echo "::error::Konnte min/max-version nicht aus info.xml lesen"; exit 1
+          fi
+          ocp=$(seq "$min" "$max" | sed 's/.*/^&.0/' | paste -sd' ' -)
+          echo "ocp=$ocp" >> "$GITHUB_OUTPUT"
+          echo "Abgeleitete ocp-Versionen: $ocp"
 
-      - name: Abhaengigkeiten installieren
-        run: composer update --no-interaction --no-progress --prefer-dist
-
-      - name: Unit-Tests
-        run: composer test
+      # Der abgeleitete Wert geht ueber env in die Shell, nicht per ${{ }}-
+      # Interpolation ins Skript: info.xml ist in einem PR aenderbar, direkte
+      # Interpolation waere eine Script-Injection-Luecke.
+      - name: Unit-Tests gegen alle ocp-Versionen
+        env:
+          OCP_VERSIONS: ${{ steps.derive.outputs.ocp }}
+        run: |
+          failed=""
+          for ocp in $OCP_VERSIONS; do
+            echo "::group::ocp $ocp"
+            # Bewusst kein Abbruch beim ersten Fehler: sonst verdeckt eine
+            # kaputte Version das Ergebnis aller folgenden (entspricht dem
+            # fail-fast: false der bisherigen Matrix).
+            if composer require --dev --no-update "nextcloud/ocp:$ocp" \
+              && composer update --no-interaction --no-progress --prefer-dist \
+              && composer test; then
+              echo "ocp $ocp: OK"
+            else
+              echo "::error::Unit-Tests fehlgeschlagen fuer PHP ${{ matrix.php-version }} / ocp $ocp"
+              failed="$failed $ocp"
+            fi
+            echo "::endgroup::"
+          done
+          if [ -n "$failed" ]; then
+            echo "::error::Fehlgeschlagene ocp-Versionen:$failed"
+            exit 1
+          fi
+          echo "Alle ocp-Versionen gruen: $OCP_VERSIONS"

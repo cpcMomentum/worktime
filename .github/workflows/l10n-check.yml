@@ -16,6 +16,10 @@ on:
       - 'l10n/**'
       - 'scripts/l10n-check.mjs'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   l10n-check:
     runs-on: ubuntu-latest
