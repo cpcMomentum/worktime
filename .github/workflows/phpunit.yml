@@ -22,6 +22,10 @@ on:
   # Laeuft auf ALLEN PRs (kein paths-Filter): als Required-Status-Check muss der
   # Workflow immer melden, sonst blockiert ein nie-startender Check den Merge.
   pull_request:
+  # Manuelles Nachtriggern: bei GitHub-Actions-Stoerungen werden Webhook-
+  # Trigger gedrosselt (Incident 06.08.2026), dann ist das Gate sonst nicht
+  # ausloesbar. Auch fuer Reruns nach Flakes nuetzlich.
+  workflow_dispatch: {}
 
 # Ueberholte Laeufe desselben PRs abbrechen. Auf main/develop NICHT abbrechen,
 # damit jeder Commit dort seinen eigenen Status behaelt.
