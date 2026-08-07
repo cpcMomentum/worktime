@@ -657,7 +657,13 @@
 		"Enddatum muss nach dem Startdatum liegen": "End date must be after start date",
 		"Ungültige Option für den Umgang mit fehlendem Resturlaub": "Invalid option for handling insufficient remaining vacation",
 		"Ungültige Abwesenheitsart": "Invalid absence type",
-		"Es existiert bereits eine Abwesenheit in diesem Zeitraum": "An absence already exists in this period"
+		"Es existiert bereits eine Abwesenheit in diesem Zeitraum": "An absence already exists in this period",
+		"Ungültiges Datum. Erwartet wird das Format JJJJ-MM-TT.": "Invalid date. Expected format is YYYY-MM-DD.",
+		"Ungültiger Zeitraum. Monat muss zwischen 1 und 12 liegen, Jahr zwischen 2000 und 2100.": "Invalid period. Month must be between 1 and 12, year between 2000 and 2100.",
+		"Start- und Enddatum sind erforderlich": "Start and end date are required",
+		"Genehmigungsdaten konnten nicht vollständig geladen werden. Die Liste ist möglicherweise unvollständig.": "Approval data could not be loaded completely. The list may be incomplete.",
+		"Farbe wählen": "Choose colour",
+		"Kennzeichnet das Projekt in Listen und in der Auswertung. Neben der Palette sind auch eigene Farben möglich.": "Identifies the project in lists and in the evaluation. Custom colours are possible alongside the palette."
 	},
 	"pluralForm": "nplurals=2; plural=(n != 1);"
 }

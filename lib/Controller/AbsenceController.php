@@ -59,13 +59,9 @@ class AbsenceController extends BaseController {
     }
 
     #[NoAdminRequired]
-    public function show(mixed $id): JSONResponse {
-        // Handle route conflict: if $id is not numeric, this might be a misrouted request
-        if (!is_numeric($id)) {
-            return $this->successResponse(['error' => 'Invalid ID'], 400);
-        }
-        $id = (int) $id;
-
+    public function show(int $id): JSONResponse {
+        // The `\d+` requirement on absence#show already keeps non-numeric ids
+        // from reaching this method, so no manual guard is needed here (#537).
         if ($authError = $this->requireAuth()) {
             return $authError;
         }

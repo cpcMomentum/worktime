@@ -16,14 +16,14 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Notification\IManager as INotificationManager;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Notifications are created here but rendered in the Notifier, once per
+ * recipient and in that recipient's language. Anything language-dependent
+ * therefore has to travel as raw data (month, year) rather than as a
+ * pre-rendered string — a German month name baked in here would reach an
+ * English or Czech recipient unchanged (#537).
+ */
 class NotificationService {
-
-	private const MONTH_NAMES = [
-		1 => 'Januar', 2 => 'Februar', 3 => 'März',
-		4 => 'April', 5 => 'Mai', 6 => 'Juni',
-		7 => 'Juli', 8 => 'August', 9 => 'September',
-		10 => 'Oktober', 11 => 'November', 12 => 'Dezember',
-	];
 
 	public function __construct(
 		private INotificationManager $notificationManager,
@@ -81,11 +81,10 @@ class NotificationService {
 				return;
 			}
 
-			$monthYear = (self::MONTH_NAMES[$month] ?? (string)$month) . ' ' . $year;
-
 			$notification = $this->createNotification('time_entries_submitted', $supervisorUserId, [
 				'employeeName' => $employee->getFullName(),
-				'monthYear' => $monthYear,
+				'month' => $month,
+				'year' => $year,
 			]);
 			$notification->setObject('time_entry', $employeeId . '-' . $year . '-' . $month);
 
@@ -116,10 +115,10 @@ class NotificationService {
 	 */
 	public function notifyArchiveFailed(string $recipientUserId, int $employeeId, string $employeeName, int $year, int $month, string $error): void {
 		try {
-			$monthYear = (self::MONTH_NAMES[$month] ?? (string)$month) . ' ' . $year;
 			$notification = $this->createNotification('archive_failed', $recipientUserId, [
 				'employeeName' => $employeeName,
-				'monthYear' => $monthYear,
+				'month' => $month,
+				'year' => $year,
 				'error' => $error,
 			]);
 			$notification->setObject('archive', $employeeId . '-' . $year . '-' . $month);
@@ -178,10 +177,10 @@ class NotificationService {
 	private function sendTimeEntryDecisionNotification(int $employeeId, int $year, int $month, string $subject, string $reason = ''): void {
 		try {
 			$employee = $this->employeeMapper->find($employeeId);
-			$monthYear = (self::MONTH_NAMES[$month] ?? (string)$month) . ' ' . $year;
 
 			$notification = $this->createNotification($subject, $employee->getUserId(), [
-				'monthYear' => $monthYear,
+				'month' => $month,
+				'year' => $year,
 				'reason' => $reason,
 			]);
 			$notification->setObject('time_entry', $employeeId . '-' . $year . '-' . $month);

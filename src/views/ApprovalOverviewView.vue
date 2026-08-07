@@ -448,12 +448,18 @@ export default {
             this.pendingMonths = results[1].status === 'fulfilled' ? (results[1].value || []) : []
             this.informationalAbsences = results[2].status === 'fulfilled' ? (results[2].value || []) : []
             this.archiveConfigured = results[3].status === 'fulfilled' ? !!(results[3].value?.configured) : false
+            // A failed request leaves its list empty, which looks exactly like
+            // "nothing to approve". Say so instead of showing a silent gap (#537).
+            const failed = results.some(r => r.status === 'rejected')
             results.forEach((r, i) => {
                 if (r.status === 'rejected') {
                     const names = ['getPending', 'getPendingMonths', 'getInformational', 'getArchiveStatus']
                     console.error(`Failed: ${names[i]}`, r.reason)
                 }
             })
+            if (failed) {
+                showError(t('worktime', 'Genehmigungsdaten konnten nicht vollständig geladen werden. Die Liste ist möglicherweise unvollständig.'))
+            }
             this.loading = false
         },
         async approveAbsence(absenceId) {

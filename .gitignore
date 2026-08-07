@@ -25,6 +25,9 @@ npm-debug.log*
 .env
 .env.local
 
+# Claude Code: lokale Secrets (z.B. NC_APPSTORE_TOKEN), siehe .claude/techstack.md
+.claude/settings.local.json
+
 # Composer (vendor/ and composer.lock are committed for deployment)
 
 # Package lock (keep package-lock.json for reproducible builds)

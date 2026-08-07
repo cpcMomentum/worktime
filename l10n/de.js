@@ -658,6 +658,12 @@ OC.L10N.register(
     "Enddatum muss nach dem Startdatum liegen" : "Enddatum muss nach dem Startdatum liegen",
     "Ungültige Option für den Umgang mit fehlendem Resturlaub" : "Ungültige Option für den Umgang mit fehlendem Resturlaub",
     "Ungültige Abwesenheitsart" : "Ungültige Abwesenheitsart",
-    "Es existiert bereits eine Abwesenheit in diesem Zeitraum" : "Es existiert bereits eine Abwesenheit in diesem Zeitraum"
+    "Es existiert bereits eine Abwesenheit in diesem Zeitraum" : "Es existiert bereits eine Abwesenheit in diesem Zeitraum",
+    "Ungültiges Datum. Erwartet wird das Format JJJJ-MM-TT." : "Ungültiges Datum. Erwartet wird das Format JJJJ-MM-TT.",
+    "Ungültiger Zeitraum. Monat muss zwischen 1 und 12 liegen, Jahr zwischen 2000 und 2100." : "Ungültiger Zeitraum. Monat muss zwischen 1 und 12 liegen, Jahr zwischen 2000 und 2100.",
+    "Start- und Enddatum sind erforderlich" : "Start- und Enddatum sind erforderlich",
+    "Genehmigungsdaten konnten nicht vollständig geladen werden. Die Liste ist möglicherweise unvollständig." : "Genehmigungsdaten konnten nicht vollständig geladen werden. Die Liste ist möglicherweise unvollständig.",
+    "Farbe wählen" : "Farbe wählen",
+    "Kennzeichnet das Projekt in Listen und in der Auswertung. Neben der Palette sind auch eigene Farben möglich." : "Kennzeichnet das Projekt in Listen und in der Auswertung. Neben der Palette sind auch eigene Farben möglich."
 },
 "nplurals=2; plural=(n != 1);");

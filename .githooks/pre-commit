@@ -19,7 +19,7 @@ if [ -n "$CONFLICT_STAGED" ]; then
     CONFLICT_VIOLATIONS=""
     for file in $CONFLICT_STAGED; do
         [ -f "$file" ] || continue
-        MATCHES=$(git show ":$file" | grep -nE '^(<{7,}|={7,}|>{7,})' || true)
+        MATCHES=$(git show ":$file" | grep -nE '^(<{7,}|={7,}|>{7,}|[|]{7,})' || true)
         if [ -n "$MATCHES" ]; then
             CONFLICT_VIOLATIONS="${CONFLICT_VIOLATIONS}${file}:
 ${MATCHES}
@@ -57,7 +57,66 @@ if [ -n "$L10N_RELEVANT" ]; then
     fi
 fi
 
-# --- Check 3: OCP-only API usage in PHP files ---
+# --- Check 3: Secrets in staged files (worktime#538) ---
+# Anlass: der App-Store-Token stand von 04/2026 bis 08/2026 hartkodiert in
+# contractmanager/.claude/techstack.md — in einem oeffentlichen Repo
+# (contractmanager#308). GitHubs Secret Scanning faengt das NICHT: es gibt kein
+# Nextcloud-Muster, und ein blanker 40-Zeichen-Hex-String ist von einem
+# Commit-Hash nicht zu unterscheiden.
+#
+# Deshalb kontextgebunden statt "40 Hex" allein — sonst schlaegt jeder
+# Commit-Hash in CHANGELOG.md oder composer.lock an.
+#
+# Steht bewusst VOR Check 4: der laeuft nur bei PHP-Dateien und beendet den
+# Hook sonst frueh. Der Leak kam ueber eine .md-Datei.
+SECRET_STAGED=$(git diff --cached --name-only --diff-filter=ACM || true)
+if [ -n "$SECRET_STAGED" ]; then
+    SECRET_VIOLATIONS=""
+    for file in $SECRET_STAGED; do
+        [ -f "$file" ] || continue
+        # appinfo/signature.json ist eine generierte Liste aus Dateipfaden und
+        # SHA-512-Hashes. Pfade wie vendor/doctrine/lexer/src/Token.php neben
+        # einem Hash sehen wie ein Geheimnis aus, sind aber keins — und die
+        # Datei wird bei JEDEM Release neu erzeugt.
+        case "$file" in
+            appinfo/signature.json) continue ;;
+        esac
+        CONTENT=$(git show ":$file" 2>/dev/null || true)
+        [ -n "$CONTENT" ] || continue
+
+        # a) App-Store-Token im Authorization-Header (der belegte Fall)
+        # b) langer Hex-Wert auf einer Zeile, die ihn als Geheimnis ausweist
+        # c) private Schluessel (Signaturzertifikate gehoeren nach ~/.nextcloud/)
+        # Treffer zusammenfuehren und je Zeile nur einmal melden — a und b
+        # greifen beim Leak-Fall beide.
+        M=$( {
+            printf '%s' "$CONTENT" | grep -niE 'Authorization:[[:space:]]*Token[[:space:]]+[0-9a-f]{40}' || true
+            printf '%s' "$CONTENT" | grep -niE '(token|secret|api[_-]?key|passwor[dt])["'"'"']?[[:space:]]*[:=]+[[:space:]]*["'"'"']?[0-9a-f]{32,}' || true
+            printf '%s' "$CONTENT" | grep -nE '^-----BEGIN [A-Z ]*PRIVATE KEY-----' || true
+        } | sort -t: -k1,1n -u || true)
+
+        if [ -n "$M" ]; then
+            SECRET_VIOLATIONS="${SECRET_VIOLATIONS}${file}:
+${M}
+
+"
+        fi
+    done
+
+    if [ -n "$SECRET_VIOLATIONS" ]; then
+        printf '\033[0;31m[Secret Check] BLOCKED\033[0m\n\n'
+        printf 'Moeglicher Zugangsschluessel in einer gestagten Datei.\n\n'
+        printf 'Secrets gehoeren nach .claude/settings.local.json (gitignored),\n'
+        printf 'im Code stattdessen die Variable lesen, z.B. $NC_APPSTORE_TOKEN.\n'
+        printf 'Private Schluessel gehoeren nach ~/.nextcloud/certificates/.\n\n'
+        printf '%s' "$SECRET_VIOLATIONS"
+        printf 'Fehlalarm? Dann Muster in .githooks/pre-commit schaerfen —\n'
+        printf 'nicht den Hook mit --no-verify umgehen.\n'
+        exit 1
+    fi
+fi
+
+# --- Check 4: OCP-only API usage in PHP files ---
 PATTERN='(^|[^A-Za-z])OC_[A-Z][a-zA-Z_]*::|\\OC::|\\OC\\[A-Z]|^use OC\\[A-Z]|^use OC;'
 
 STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.php$' || true)
