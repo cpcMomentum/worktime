@@ -1,0 +1,96 @@
+name: close linked issues on develop
+
+# GitHub wertet "Fixes #NNN" nur beim Merge in den DEFAULT-Branch aus — das ist
+# hier `main`. Entwickelt und gemergt wird aber nach `develop`, weshalb die
+# Schluesselwoerter wirkungslos bleiben und Issues nach der Umsetzung offen
+# stehen.
+#
+# In diesem Repo hat das bislang nichts gekostet: Von 49 per Schluesselwort
+# referenzierten Issues in gemergten develop-PRs stand am 07.08.2026 keines
+# mehr offen — sie wurden von Hand geschlossen. Dieser Workflow ist hier also
+# Absicherung, nicht Aufraeumen: Handpflege haelt, bis sie einmal vergessen
+# wird, und dann faellt es niemandem auf.
+#
+# Dieser Workflow holt das nach: Er liest die Schluesselwoerter aus Titel und
+# Text des gemergten PR und schliesst die referenzierten Issues mit einem
+# Kommentar, der auf PR und Merge-Commit verweist.
+#
+# Bewusst NICHT geloest, indem der Default-Branch auf `develop` umgestellt wird:
+# das aendert, was Besucher zuerst sehen, und die Dependabot-PRs zielen auf
+# `main`. Das Release-Modell bleibt so, wie es ist.
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [develop]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  close:
+    # Nur bei echtem Merge, nicht beim blossen Schliessen eines PR.
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Referenzierte Issues schliessen
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request
+            const haystack = `${pr.title}\n\n${pr.body || ''}`
+
+            // Die Schluesselwoerter, die GitHub selbst auswertet — plus die
+            // deutschen Entsprechungen, weil die PR-Texte in diesem Repo deutsch
+            // sind und "Behebt #212" sonst wirkungslos bliebe.
+            //
+            // Die deutschen Woerter stehen in BEIDEN Schreibweisen: mit ss und
+            // mit Eszett. Vorher gab es nur die ss-Form — wer "Schliesst #4"
+            // schreibt (also das, was ein deutscher Text natuerlicherweise
+            // enthaelt), traf das Muster nicht, und das Issue blieb offen.
+            // Aufgefallen am 07.08.2026 in projektwerk#4; dort meldete der
+            // Workflow trotzdem "success". Der Fehlschlag ist also still —
+            // dieselbe Klasse von Fehler, gegen die dieser Workflow gebaut ist.
+            const pattern = /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?|behebt|behebe[nt]?|behoben|schlie(?:ss|ß)t|geschlossen|l(?:oe|ö)st|gel(?:oe|ö)st|umgesetzt)(?:\s+(?:durch|in))?\s*:?\s+#(\d+)/gi
+            const numbers = [...new Set(
+              [...haystack.matchAll(pattern)].map(m => Number(m[1]))
+            )]
+
+            if (numbers.length === 0) {
+              core.info('Keine Issue-Referenz im PR gefunden.')
+              return
+            }
+            core.info(`Referenziert: ${numbers.map(n => '#' + n).join(', ')}`)
+
+            for (const issue_number of numbers) {
+              try {
+                const { data: issue } = await github.rest.issues.get({
+                  ...context.repo, issue_number,
+                })
+
+                // Pull Requests sind ebenfalls Issues in der API — ein PR, der
+                // auf einen anderen PR verweist, darf den nicht schliessen.
+                if (issue.pull_request) {
+                  core.info(`#${issue_number} ist ein PR, uebersprungen.`)
+                  continue
+                }
+                if (issue.state === 'closed') {
+                  core.info(`#${issue_number} ist bereits geschlossen.`)
+                  continue
+                }
+
+                await github.rest.issues.createComment({
+                  ...context.repo, issue_number,
+                  body: `Geschlossen durch #${pr.number}, gemergt nach \`develop\` (${pr.merge_commit_sha}).`,
+                })
+                await github.rest.issues.update({
+                  ...context.repo, issue_number, state: 'closed', state_reason: 'completed',
+                })
+                core.info(`#${issue_number} geschlossen.`)
+              } catch (error) {
+                // Ein unauffindbares oder fremdes Issue darf den Lauf nicht
+                // abbrechen — die uebrigen Referenzen sollen trotzdem greifen.
+                core.warning(`#${issue_number} konnte nicht geschlossen werden: ${error.message}`)
+              }
+            }
