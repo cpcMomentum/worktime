@@ -57,6 +57,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          EVENT_ACTION: ${{ github.event.action }}
         run: |
           # Count previous Claude review comments
           REVIEW_COUNT=$(gh api "/repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" \
@@ -71,8 +72,32 @@ jobs:
 
           echo "Review cycles so far: ${REVIEW_COUNT}, Last status: ${LAST_STATUS}"
 
+          # Ob ueberhaupt reviewt wird — an EINER Stelle entschieden.
+          #
+          # Bis zum 10.08.2026 stand die Bedingung viermal wortgleich in den
+          # Step-Bedingungen, und sie fragte nur, ob je ein APPROVED fiel — nicht,
+          # ob seither neuer Code kam. Nach der ersten Freigabe wurde deshalb
+          # jeder weitere Push STILL uebersprungen, und der Check meldete gruen.
+          # In projektwerk#81 ist so ein Nachtrags-Commit ungeprueft nach develop
+          # gelangt (14-Sekunden-Lauf statt der ueblichen Minuten); die drei
+          # Befunde darin mussten spaeter von Hand gesucht werden
+          # (projektwerk#82). Ein uebersprungenes Review sieht am PR genauso aus
+          # wie ein bestandenes — das ist der eigentliche Schaden.
+          #
+          # `synchronize` heisst: neue Commits am PR. Dann wird geprueft, egal
+          # was vorher galt. Die Obergrenze von drei Zyklen deckelt die Kosten
+          # unveraendert.
+          if [ "${REVIEW_COUNT}" -lt 3 ] \
+             && { [ "${EVENT_ACTION}" = "synchronize" ] || [ "${LAST_STATUS}" != "APPROVED" ]; }; then
+            echo "run=true" >> $GITHUB_OUTPUT
+            echo "Review laeuft."
+          else
+            echo "run=false" >> $GITHUB_OUTPUT
+            echo "Review wird uebersprungen (Zyklen: ${REVIEW_COUNT}, letzter Status: ${LAST_STATUS}, Ereignis: ${EVENT_ACTION})."
+          fi
+
       - name: Minimize outdated Claude reviews
-        if: steps.cycles.outputs.count < 3 && steps.cycles.outputs.last_status != 'APPROVED'
+        if: steps.cycles.outputs.run == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -90,7 +115,7 @@ jobs:
           done
 
       - name: Checkout repository
-        if: steps.cycles.outputs.count < 3 && steps.cycles.outputs.last_status != 'APPROVED'
+        if: steps.cycles.outputs.run == 'true'
         uses: actions/checkout@v6
         with:
           # Volle Historie: der Reviewer berechnet den PR-Diff via base...HEAD,
@@ -103,7 +128,7 @@ jobs:
         # Feature PRs (against develop). Release PRs (release/* -> main) get a
         # dedicated release-readiness review below instead — their diff is the whole
         # accumulated release, whose code was already reviewed on the feature PRs.
-        if: steps.cycles.outputs.count < 3 && steps.cycles.outputs.last_status != 'APPROVED' && !startsWith(github.head_ref, 'release/')
+        if: steps.cycles.outputs.run == 'true' && !startsWith(github.head_ref, 'release/')
         uses: anthropics/claude-code-action@v1
         with:
           # Auth: OAuth Token bevorzugt (claude_code_oauth_token).
@@ -184,7 +209,7 @@ jobs:
         # line-by-line (that happened on the feature PRs). Comment-only — never
         # edit/commit/push: the release tarball may already be signed, and an
         # auto-fix commit would desync signature.json + the uploaded tarball.
-        if: steps.cycles.outputs.count < 3 && steps.cycles.outputs.last_status != 'APPROVED' && startsWith(github.head_ref, 'release/')
+        if: steps.cycles.outputs.run == 'true' && startsWith(github.head_ref, 'release/')
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
