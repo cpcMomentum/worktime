@@ -1,152 +1,32 @@
 #!/usr/bin/env bash
-# Pre-commit hook: Enforce OCP-only API usage in PHP files.
+# Pre-Commit-Pruefungen der App-Flotte.
 #
-# Blocks commits that introduce usage of internal \OC_*, \OC::, \OC\ namespace
-# or "use OC\..." imports. Only OCP\ and OCA\ are public and stable.
+# Die Logik liegt in nc-app-tooling, damit sie nicht wieder fuenffach
+# auseinanderlaeuft (contractmanager#339). Diese Datei ist nur der Aufruf und
+# soll in allen Apps identisch sein — Aenderungen gehoeren ins Werkzeug.
 #
-# Rationale: OC_App::getAppPath() was deprecated since NC 11 and removed in
-# NC 33, which caused live user installations to crash on upgrade (worktime#88,
-# contractmanager#86). The OCP-only rule is documented in CLAUDE.md and
-# .claude/dev.md but was previously only enforced manually.
+#   1. Merge-Konfliktmarker      3. l10n-Katalog-Konsistenz
+#   2. Zugangsschluessel          4. OCP-only
 #
-# Override (strongly discouraged): git commit --no-verify
+# Umgehung (nicht empfohlen): git commit --no-verify
 
 set -euo pipefail
 
-# --- Check 1: Conflict markers in staged files ---
-CONFLICT_STAGED=$(git diff --cached --name-only --diff-filter=ACM || true)
-if [ -n "$CONFLICT_STAGED" ]; then
-    CONFLICT_VIOLATIONS=""
-    for file in $CONFLICT_STAGED; do
-        [ -f "$file" ] || continue
-        MATCHES=$(git show ":$file" | grep -nE '^(<{7,}|={7,}|>{7,}|[|]{7,})' || true)
-        if [ -n "$MATCHES" ]; then
-            CONFLICT_VIOLATIONS="${CONFLICT_VIOLATIONS}${file}:
-${MATCHES}
-
-"
-        fi
-    done
-
-    if [ -n "$CONFLICT_VIOLATIONS" ]; then
-        printf '\033[0;31m[Conflict-Marker Check] BLOCKED\033[0m\n\n'
-        printf 'Git merge conflict markers detected in staged files.\n'
-        printf '(See RCA: docs/rca/release-v062-broken.md — conflict markers in JS broke v0.6.2 release.)\n\n'
-        printf '%s' "$CONFLICT_VIOLATIONS"
-        exit 1
-    fi
-fi
-
-# --- Check 2: l10n-Katalog-Konsistenz (worktime#259) ---
-# Quelle der Wahrheit sind die t()/->t()-Aufrufe im Code. Bei Aenderungen an
-# Code- oder Katalog-Dateien pruefen, dass die Kataloge nicht driften
-# (fehlende/tote Keys, .js != .json). Beheben: npm run l10n:fix
-L10N_RELEVANT=$(git diff --cached --name-only --diff-filter=ACM \
-    | grep -E '^(src/|lib/|templates/|appinfo/|l10n/).*\.(js|ts|vue|php|json)$' || true)
-if [ -n "$L10N_RELEVANT" ]; then
-    if ! command -v node >/dev/null 2>&1; then
-        printf '\033[0;33m[l10n Check] uebersprungen (node nicht gefunden)\033[0m\n'
-    elif [ ! -x node_modules/.bin/nc-l10n-check ]; then
-        # Das Werkzeug kommt aus nc-app-tooling und liegt erst nach `npm install`
-        # vor. Ohne diesen Zweig braeche der Hook mit einer Meldung ab, die nicht
-        # sagt, was zu tun ist.
-        printf '\033[0;33m[l10n Check] uebersprungen — nc-l10n-check fehlt.\033[0m\n'
-        printf 'Einmalig  npm install  ausfuehren; im CI laeuft die Pruefung ohnehin.\n'
-    elif ! node_modules/.bin/nc-l10n-check; then
-        printf '\033[0;31m[l10n Check] BLOCKED\033[0m\n\n'
-        printf 'Uebersetzungskataloge sind inkonsistent zum Code.\n'
-        printf 'Beheben:  npm run l10n:fix   (dann en/cs uebersetzen und stagen)\n\n'
-        printf 'Override (NOT recommended): git commit --no-verify\n'
-        exit 1
-    fi
-fi
-
-# --- Check 3: Secrets in staged files (worktime#538) ---
-# Anlass: der App-Store-Token stand von 04/2026 bis 08/2026 hartkodiert in
-# contractmanager/.claude/techstack.md — in einem oeffentlichen Repo
-# (contractmanager#308). GitHubs Secret Scanning faengt das NICHT: es gibt kein
-# Nextcloud-Muster, und ein blanker 40-Zeichen-Hex-String ist von einem
-# Commit-Hash nicht zu unterscheiden.
-#
-# Deshalb kontextgebunden statt "40 Hex" allein — sonst schlaegt jeder
-# Commit-Hash in CHANGELOG.md oder composer.lock an.
-#
-# Steht bewusst VOR Check 4: der laeuft nur bei PHP-Dateien und beendet den
-# Hook sonst frueh. Der Leak kam ueber eine .md-Datei.
-SECRET_STAGED=$(git diff --cached --name-only --diff-filter=ACM || true)
-if [ -n "$SECRET_STAGED" ]; then
-    SECRET_VIOLATIONS=""
-    for file in $SECRET_STAGED; do
-        [ -f "$file" ] || continue
-        # appinfo/signature.json ist eine generierte Liste aus Dateipfaden und
-        # SHA-512-Hashes. Pfade wie vendor/doctrine/lexer/src/Token.php neben
-        # einem Hash sehen wie ein Geheimnis aus, sind aber keins — und die
-        # Datei wird bei JEDEM Release neu erzeugt.
-        case "$file" in
-            appinfo/signature.json) continue ;;
-        esac
-        CONTENT=$(git show ":$file" 2>/dev/null || true)
-        [ -n "$CONTENT" ] || continue
-
-        # a) App-Store-Token im Authorization-Header (der belegte Fall)
-        # b) langer Hex-Wert auf einer Zeile, die ihn als Geheimnis ausweist
-        # c) private Schluessel (Signaturzertifikate gehoeren nach ~/.nextcloud/)
-        # Treffer zusammenfuehren und je Zeile nur einmal melden — a und b
-        # greifen beim Leak-Fall beide.
-        M=$( {
-            printf '%s' "$CONTENT" | grep -niE 'Authorization:[[:space:]]*Token[[:space:]]+[0-9a-f]{40}' || true
-            printf '%s' "$CONTENT" | grep -niE '(token|secret|api[_-]?key|passwor[dt])["'"'"']?[[:space:]]*[:=]+[[:space:]]*["'"'"']?[0-9a-f]{32,}' || true
-            printf '%s' "$CONTENT" | grep -nE '^-----BEGIN [A-Z ]*PRIVATE KEY-----' || true
-        } | sort -t: -k1,1n -u || true)
-
-        if [ -n "$M" ]; then
-            SECRET_VIOLATIONS="${SECRET_VIOLATIONS}${file}:
-${M}
-
-"
-        fi
-    done
-
-    if [ -n "$SECRET_VIOLATIONS" ]; then
-        printf '\033[0;31m[Secret Check] BLOCKED\033[0m\n\n'
-        printf 'Moeglicher Zugangsschluessel in einer gestagten Datei.\n\n'
-        printf 'Secrets gehoeren nach .claude/settings.local.json (gitignored),\n'
-        printf 'im Code stattdessen die Variable lesen, z.B. $NC_APPSTORE_TOKEN.\n'
-        printf 'Private Schluessel gehoeren nach ~/.nextcloud/certificates/.\n\n'
-        printf '%s' "$SECRET_VIOLATIONS"
-        printf 'Fehlalarm? Dann Muster in .githooks/pre-commit schaerfen —\n'
-        printf 'nicht den Hook mit --no-verify umgehen.\n'
-        exit 1
-    fi
-fi
-
-# --- Check 4: OCP-only API usage in PHP files ---
-PATTERN='(^|[^A-Za-z])OC_[A-Z][a-zA-Z_]*::|\\OC::|\\OC\\[A-Z]|^use OC\\[A-Z]|^use OC;'
-
-STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.php$' || true)
-if [ -z "$STAGED" ]; then
+if ! command -v node >/dev/null 2>&1; then
+    printf '\033[0;33m[Pre-Commit] uebersprungen (node nicht gefunden)\033[0m\n'
     exit 0
 fi
 
-VIOLATIONS=""
-for file in $STAGED; do
-    [ -f "$file" ] || continue
-    MATCHES=$(git show ":$file" | grep -nE "$PATTERN" || true)
-    if [ -n "$MATCHES" ]; then
-        VIOLATIONS="${VIOLATIONS}${file}:
-${MATCHES}
-
-"
-    fi
-done
-
-if [ -n "$VIOLATIONS" ]; then
-    printf '\033[0;31m[OCP-API Check] BLOCKED\033[0m\n\n'
-    printf 'Internal OC_*/\\OC\\ API usage detected. Use \\OCP\\ instead.\n'
-    printf '(See worktime#88, contractmanager#86 — OC_App::getAppPath was removed in NC 33.)\n\n'
-    printf '%s' "$VIOLATIONS"
-    printf 'Override (NOT recommended): git commit --no-verify\n'
+# Bewusst blockierend statt ueberspringend: ohne das Werkzeug liefe auch die
+# Secret-Pruefung nicht mehr, und die lief frueher ohne jede Abhaengigkeit. Ein
+# stillschweigend uebersprungener Schutz ist genau das Muster, das wir hier
+# abschaffen. Behebbar in zehn Sekunden.
+if [ ! -x node_modules/.bin/nc-pre-commit ]; then
+    printf '\033[0;31m[Pre-Commit] BLOCKED — nc-pre-commit fehlt.\033[0m\n\n'
+    printf 'Die Pruefungen kommen aus nc-app-tooling und liegen erst nach\n'
+    printf 'einem Install vor:\n\n    npm install\n\n'
+    printf 'Bewusst blockierend: sonst waere auch die Secret-Pruefung stumm.\n'
     exit 1
 fi
 
-exit 0
+exec node_modules/.bin/nc-pre-commit
