@@ -200,8 +200,7 @@ class EmployeeDeletionServiceTest extends TestCase {
      */
     public function testAuditRowsAboutTheEmployeesRecordsArePurgedToo(): void {
         $this->stubNoColleagues();
-        // The three tables this test does not model in detail.
-        $this->yearlyCarryoverMapper->method('deleteByEmployeeId')->willReturn(0);
+        // The two tables this test does not model in detail.
         $this->projectEmployeeMapper->method('deleteByEmployeeId')->willReturn(0);
         $this->archiveQueueMapper->method('deleteByEmployeeId')->willReturn(0);
 
@@ -213,19 +212,20 @@ class EmployeeDeletionServiceTest extends TestCase {
         $this->stubIdsUntilDeleted($this->absenceMapper, [7]);
         $this->stubIdsUntilDeleted($this->overtimePayoutMapper, []);
         $this->stubIdsUntilDeleted($this->workScheduleMapper, [1]);
+        $this->stubIdsUntilDeleted($this->yearlyCarryoverMapper, [9]);
 
         $this->auditLogMapper->method('deleteForEmployee')->willReturn(1);
-        $this->auditLogMapper->expects($this->exactly(4))
+        $this->auditLogMapper->expects($this->exactly(5))
             ->method('deleteForEntities')
             ->willReturnCallback(function (string $type, array $ids): int {
-                $this->assertContains($type, ['time_entry', 'absence', 'overtime_payout', 'work_schedule']);
+                $this->assertContains($type, ['time_entry', 'absence', 'overtime_payout', 'work_schedule', 'yearly_carryover']);
                 return count($ids);
             });
 
         $removed = $this->makeService()->delete($this->makeEmployee(), 'admin');
 
-        // 1 own row + 3 time entries + 1 absence + 0 payouts + 1 schedule
-        $this->assertSame(6, $removed['auditLogs']);
+        // 1 own row + 3 time entries + 1 absence + 0 payouts + 1 schedule + 1 carryover
+        $this->assertSame(7, $removed['auditLogs']);
     }
 
     /**
@@ -314,7 +314,7 @@ class EmployeeDeletionServiceTest extends TestCase {
 
         $impact = $this->makeService()->getImpact($this->makeEmployee());
 
-        $this->assertSame(['jdoe', 'jdoe', 'jdoe', 'jdoe'], $seenExclusions);
+        $this->assertSame(['jdoe', 'jdoe', 'jdoe', 'jdoe', 'jdoe'], $seenExclusions);
         $this->assertSame(5, $impact['counts']['auditLogs']);
     }
 

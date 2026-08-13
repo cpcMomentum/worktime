@@ -99,10 +99,10 @@ class EmployeeDeletionService {
     /**
      * Ids of the audit-logged records that hang off this employee.
      *
-     * Only these four entity types are written to the audit log with an
-     * employee-scoped id (verified against the logCreate/logUpdate/logDelete
-     * calls in the services). Carryovers and project assignments are not
-     * audited at all, so they have nothing to purge.
+     * Only these five entity types are written to the audit log with an
+     * own-row id (verified against the logCreate/logUpdate/logDelete calls in
+     * the services). Project assignments are not audited at all, so they have
+     * nothing to purge.
      *
      * @return array<string, int[]>
      */
@@ -113,6 +113,7 @@ class EmployeeDeletionService {
             AuditLog::ENTITY_OVERTIME_PAYOUT => $this->overtimePayoutMapper->findIdsByEmployeeId($employeeId),
             // Logged as a plain string, there is no ENTITY_ constant for it.
             'work_schedule' => $this->workScheduleMapper->findIdsByEmployeeId($employeeId),
+            'yearly_carryover' => $this->yearlyCarryoverMapper->findIdsByEmployeeId($employeeId),
         ];
     }
 
