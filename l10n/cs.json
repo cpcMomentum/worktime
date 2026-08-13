@@ -663,7 +663,18 @@
 		"Start- und Enddatum sind erforderlich": "Datum začátku a konce jsou povinné",
 		"Genehmigungsdaten konnten nicht vollständig geladen werden. Die Liste ist möglicherweise unvollständig.": "Data ke schválení se nepodařilo načíst celá. Seznam může být neúplný.",
 		"Farbe wählen": "Vybrat barvu",
-		"Kennzeichnet das Projekt in Listen und in der Auswertung. Neben der Palette sind auch eigene Farben möglich.": "Označuje projekt v seznamech a ve vyhodnocení. Kromě palety lze zvolit i vlastní barvy."
+		"Kennzeichnet das Projekt in Listen und in der Auswertung. Neben der Palette sind auch eigene Farben möglich.": "Označuje projekt v seznamech a ve vyhodnocení. Kromě palety lze zvolit i vlastní barvy.",
+		"Umfang wird ermittelt …": "Umfang wird ermittelt …",
+		"Mitgelöscht werden:": "Mitgelöscht werden:",
+		"Zu diesem Mitarbeiter sind keine weiteren Daten erfasst.": "Zu diesem Mitarbeiter sind keine weiteren Daten erfasst.",
+		"Diese Aktion kann nicht rückgängig gemacht werden. Für Arbeitszeitnachweise können Aufbewahrungspflichten gelten — prüfen Sie das, bevor Sie löschen.": "Diese Aktion kann nicht rückgängig gemacht werden. Für Arbeitszeitnachweise können Aufbewahrungspflichten gelten — prüfen Sie das, bevor Sie löschen.",
+		"Für ausgeschiedene Mitarbeiter ist meist „Ruhend setzen\" richtig: Die Erfassung wird beendet, die Daten bleiben einsehbar und exportierbar.": "Für ausgeschiedene Mitarbeiter ist meist „Ruhend setzen\" richtig: Die Erfassung wird beendet, die Daten bleiben einsehbar und exportierbar.",
+		"Zeiteinträge": "Zeiteinträge",
+		"Jahresüberträge": "Jahresüberträge",
+		"Überstunden-Auszahlungen": "Überstunden-Auszahlungen",
+		"Projektzuordnungen": "Projektzuordnungen",
+		"Archiv-Aufträge": "Archiv-Aufträge",
+		"Protokolleinträge": "Protokolleinträge"
 	},
 	"pluralForm": "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;"
 }

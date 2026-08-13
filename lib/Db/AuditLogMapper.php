@@ -13,6 +13,7 @@ use DateTime;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
+use OCP\DB\QueryBuilder\ICompositeExpression;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 
@@ -154,5 +155,137 @@ class AuditLogMapper extends QBMapper {
             ->where($qb->expr()->lt('created_at', $qb->createNamedParameter($date, IQueryBuilder::PARAM_DATETIME_MUTABLE)));
 
         return $qb->executeStatement();
+    }
+
+    /**
+     * Remove the audit trail belonging to one employee (#424).
+     *
+     * The log knows a person two ways and both are personal data: rows they
+     * caused (`user_id`) and rows recorded about them (`entity_type`/
+     * `entity_id`). A single OR condition covers both without counting the
+     * overlap twice — a row where someone edited their own record matches on
+     * both sides.
+     *
+     * @return int Number of rows actually removed.
+     */
+    public function deleteForEmployee(string $userId, int $employeeId): int {
+        $qb = $this->db->getQueryBuilder();
+        $qb->delete($this->getTableName())
+            ->where($this->belongsToEmployee($qb, $userId, $employeeId));
+
+        return $qb->executeStatement();
+    }
+
+    public function countForEmployee(string $userId, int $employeeId): int {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select($qb->func()->count('id'))
+            ->from($this->getTableName())
+            ->where($this->belongsToEmployee($qb, $userId, $employeeId));
+
+        $result = $qb->executeQuery();
+        $count = $result->fetchOne();
+        $result->closeCursor();
+
+        return (int)$count;
+    }
+
+    /**
+     * Remove log rows recorded about specific child records (#424).
+     *
+     * The employee's own trail is not the whole story: a row like
+     * "admin created time_entry 42" carries that entry's date and working
+     * hours in its payload, so it stays personal data about the deleted person
+     * even though it names neither them nor their user id.
+     *
+     * `$excludeUserId` keeps this disjoint from {@see countForEmployee}: a row
+     * the employee wrote about their own record matches both conditions, and
+     * adding the two counts would report it twice. The preview said 13 where
+     * the database held 12 until this was excluded. Deletion is unaffected by
+     * the overlap — the row is already gone by then — but both paths take the
+     * same argument so the predicates cannot drift apart.
+     *
+     * @param int[] $entityIds
+     * @return int Number of rows actually removed.
+     */
+    public function deleteForEntities(string $entityType, array $entityIds, ?string $excludeUserId = null): int {
+        return $this->forEntities(
+            $entityType,
+            $entityIds,
+            $excludeUserId,
+            static fn (IQueryBuilder $qb): int => $qb->executeStatement(),
+            true,
+        );
+    }
+
+    /**
+     * @param int[] $entityIds
+     */
+    public function countForEntities(string $entityType, array $entityIds, ?string $excludeUserId = null): int {
+        return $this->forEntities(
+            $entityType,
+            $entityIds,
+            $excludeUserId,
+            function (IQueryBuilder $qb): int {
+                $result = $qb->executeQuery();
+                $count = (int)$result->fetchOne();
+                $result->closeCursor();
+
+                return $count;
+            },
+            false,
+        );
+    }
+
+    /**
+     * Shared body for the two methods above so their WHERE clauses stay identical.
+     *
+     * Chunked: a long-serving employee can have thousands of entries, and an
+     * unbounded IN list runs into the placeholder limit of the backend.
+     *
+     * @param int[] $entityIds
+     * @param callable(IQueryBuilder): int $run
+     */
+    private function forEntities(
+        string $entityType,
+        array $entityIds,
+        ?string $excludeUserId,
+        callable $run,
+        bool $isDelete,
+    ): int {
+        if (empty($entityIds)) {
+            return 0;
+        }
+
+        $total = 0;
+        foreach (array_chunk($entityIds, 500) as $chunk) {
+            $qb = $this->db->getQueryBuilder();
+
+            if ($isDelete) {
+                $qb->delete($this->getTableName());
+            } else {
+                $qb->select($qb->func()->count('id'))->from($this->getTableName());
+            }
+
+            $qb->where($qb->expr()->eq('entity_type', $qb->createNamedParameter($entityType)))
+                ->andWhere($qb->expr()->in('entity_id', $qb->createNamedParameter($chunk, IQueryBuilder::PARAM_INT_ARRAY)));
+
+            if ($excludeUserId !== null) {
+                $qb->andWhere($qb->expr()->neq('user_id', $qb->createNamedParameter($excludeUserId)));
+            }
+
+            $total += $run($qb);
+        }
+
+        return $total;
+    }
+
+    private function belongsToEmployee(IQueryBuilder $qb, string $userId, int $employeeId): ICompositeExpression {
+        return $qb->expr()->orX(
+            $qb->expr()->eq('user_id', $qb->createNamedParameter($userId)),
+            $qb->expr()->andX(
+                $qb->expr()->eq('entity_type', $qb->createNamedParameter('employee')),
+                $qb->expr()->eq('entity_id', $qb->createNamedParameter($employeeId, IQueryBuilder::PARAM_INT)),
+            ),
+        );
     }
 }
