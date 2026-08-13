@@ -14,7 +14,11 @@ on:
       - 'templates/**'
       - 'appinfo/**'
       - 'l10n/**'
-      - 'scripts/l10n-check.mjs'
+      # Der Pruefer liegt nicht mehr im Repo, sondern kommt aus nc-app-tooling.
+      # Die gepinnte Version steht jetzt hier — ohne diese beiden Pfade wuerde
+      # ein Versions-Bump des Pruefers keinen Lauf ausloesen.
+      - 'package.json'
+      - 'package-lock.json'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
