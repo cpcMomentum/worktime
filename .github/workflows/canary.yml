@@ -1,14 +1,12 @@
 name: canary (next NC)
 
-# Fruehwarnung gegen die Entwicklungsversion von Nextcloud (worktime#21).
-# Laeuft die Unit-Suite gegen nextcloud/ocp:dev-master (= naechstes NC-Major)
-# und beantwortet die Frage "bricht das kommende NC etwas bei uns, bevor es
-# released ist". BEWUSST ein eigener Workflow und KEIN Required-Status-Check:
-# wird er rot, ist das eine sichtbare Warnung — blockiert aber niemals einen
-# Merge (das Gate sind allein die phpunit-Matrix + node).
+# Fruehwarnung gegen die Entwicklungsversion von Nextcloud (worktime#21):
+# laeuft die Unit-Suite gegen nextcloud/ocp:dev-master und warnt, bevor ein
+# kommendes NC-Major etwas bricht. BEWUSST kein Required-Status-Check.
 #
-# dev-master verlangt PHP >= 8.3 (NC 35 droppt 8.2), daher 8.4 + Anheben des
-# composer-Platform-Pins (der sonst auf 8.2 fixiert und dev-master ausschliesst).
+# Die Schritte liegen in nc-app-tooling, damit sie nicht fuenfmal
+# auseinanderlaufen (#339). Hier stehen nur die Ausloeser — die weiss die App
+# selbst am besten — und der Aufruf.
 
 on:
   schedule:
@@ -27,26 +25,4 @@ concurrency:
 
 jobs:
   canary:
-    name: ocp dev-master
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup PHP 8.4
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          coverage: none
-          tools: composer:v2
-
-      - name: Platform-Pin auf 8.4 anheben (dev-master droppt PHP 8.2)
-        run: composer config platform.php 8.4
-
-      - name: nextcloud/ocp auf dev-master setzen
-        run: composer require --dev --no-update "nextcloud/ocp:dev-master"
-
-      - name: Abhaengigkeiten installieren
-        run: composer update --no-interaction --no-progress --prefer-dist
-
-      - name: Unit-Tests gegen die NC-Entwicklungsversion
-        run: composer test
+    uses: cpcMomentum/nc-app-tooling/.github/workflows/canary.yml@v1.5.0
