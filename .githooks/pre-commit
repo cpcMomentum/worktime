@@ -42,18 +42,22 @@ fi
 # Code- oder Katalog-Dateien pruefen, dass die Kataloge nicht driften
 # (fehlende/tote Keys, .js != .json). Beheben: npm run l10n:fix
 L10N_RELEVANT=$(git diff --cached --name-only --diff-filter=ACM \
-    | grep -E '^(src/|lib/|templates/|appinfo/|l10n/).*\.(js|vue|php|json)$' || true)
+    | grep -E '^(src/|lib/|templates/|appinfo/|l10n/).*\.(js|ts|vue|php|json)$' || true)
 if [ -n "$L10N_RELEVANT" ]; then
-    if command -v node >/dev/null 2>&1; then
-        if ! node scripts/l10n-check.mjs; then
-            printf '\033[0;31m[l10n Check] BLOCKED\033[0m\n\n'
-            printf 'Uebersetzungskataloge sind inkonsistent zum Code.\n'
-            printf 'Beheben:  npm run l10n:fix   (dann en/cs uebersetzen und stagen)\n\n'
-            printf 'Override (NOT recommended): git commit --no-verify\n'
-            exit 1
-        fi
-    else
+    if ! command -v node >/dev/null 2>&1; then
         printf '\033[0;33m[l10n Check] uebersprungen (node nicht gefunden)\033[0m\n'
+    elif [ ! -x node_modules/.bin/nc-l10n-check ]; then
+        # Das Werkzeug kommt aus nc-app-tooling und liegt erst nach `npm install`
+        # vor. Ohne diesen Zweig braeche der Hook mit einer Meldung ab, die nicht
+        # sagt, was zu tun ist.
+        printf '\033[0;33m[l10n Check] uebersprungen — nc-l10n-check fehlt.\033[0m\n'
+        printf 'Einmalig  npm install  ausfuehren; im CI laeuft die Pruefung ohnehin.\n'
+    elif ! node_modules/.bin/nc-l10n-check; then
+        printf '\033[0;31m[l10n Check] BLOCKED\033[0m\n\n'
+        printf 'Uebersetzungskataloge sind inkonsistent zum Code.\n'
+        printf 'Beheben:  npm run l10n:fix   (dann en/cs uebersetzen und stagen)\n\n'
+        printf 'Override (NOT recommended): git commit --no-verify\n'
+        exit 1
     fi
 fi
 

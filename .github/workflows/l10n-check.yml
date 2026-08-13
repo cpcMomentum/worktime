@@ -14,7 +14,11 @@ on:
       - 'templates/**'
       - 'appinfo/**'
       - 'l10n/**'
-      - 'scripts/l10n-check.mjs'
+      # Der Pruefer liegt nicht mehr im Repo, sondern kommt aus nc-app-tooling.
+      # Die gepinnte Version steht jetzt hier — ohne diese beiden Pfade wuerde
+      # ein Versions-Bump des Pruefers keinen Lauf ausloesen.
+      - 'package.json'
+      - 'package-lock.json'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -28,5 +32,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      # Der Pruefer kommt aus nc-app-tooling und liegt erst nach dem Install vor.
+      # Bewusst der normale Install statt eines direkten Griffs zum Tag: die
+      # gepinnte Version steht in package.json, und die soll die einzige Stelle
+      # bleiben. Ein Tag im Workflow waere eine zweite, die beim naechsten Bump
+      # stillschweigend zurueckfaellt.
+      - name: Abhaengigkeiten installieren
+        run: npm install --no-audit --no-fund
+
       - name: l10n-Kataloge gegen Code pruefen
-        run: node scripts/l10n-check.mjs
+        run: npm run l10n:check
