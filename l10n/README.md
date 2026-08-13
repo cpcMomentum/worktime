@@ -18,7 +18,7 @@ deutschen Quelltext. Weil die Kataloge früher von Hand gepflegt wurden, sind si
 gedriftet — fehlende Keys, tote Keys, `.js` und `.json` liefen auseinander
 (siehe Lehre aus dem 0.12.0-Review, worktime#394 / #259).
 
-## Der Wächter: `scripts/l10n-check.mjs`
+## Der Wächter: `nc-l10n-check` (aus [nc-app-tooling](https://github.com/cpcMomentum/nc-app-tooling))
 
 Die **Wahrheit** sind die Übersetzungsaufrufe im Code:
 

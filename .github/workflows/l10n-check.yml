@@ -14,7 +14,8 @@ on:
       - 'templates/**'
       - 'appinfo/**'
       - 'l10n/**'
-      - 'scripts/l10n-check.mjs'
+      - 'package.json'
+      - 'package-lock.json'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
