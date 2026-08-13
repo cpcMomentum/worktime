@@ -25,6 +25,57 @@ class ProjectMapper extends QBMapper {
     }
 
     /**
+     * Projekte nach Projektcode ordnen (#550).
+     *
+     * Vorher lief alles nach Name, wodurch die Codes in den Auswahlfeldern
+     * zufaellig verstreut wirkten — sie waren gar nicht der Sortierschluessel.
+     *
+     * Die Regel ist bewusst dreiteilig, weil die Codes gemischt sind:
+     * rein numerische Codes werden numerisch verglichen (sonst stuende 1024
+     * vor 98), alphanumerische kommen dahinter, und Projekte ohne Code ganz
+     * zuletzt. Damit bleibt auch die Konvention wirksam, interne Toepfe ueber
+     * Codes wie ZZX/ZZY/ZZZ ans Ende zu schieben.
+     *
+     * Warum in PHP und nicht per ORDER BY: die Zeichenkettensortierung der
+     * Datenbank haette dasselbe Laengenproblem, und `code` ist nullable — die
+     * Einordnung von NULL unterscheidet sich zwischen PostgreSQL (hinten),
+     * MySQL und SQLite (vorn). Bei dieser Datenmenge ist das unkritisch und
+     * ueber alle unterstuetzten Datenbanken gleich.
+     *
+     * @param Project[] $projects
+     * @return Project[]
+     */
+    public static function sortByCode(array $projects): array {
+        usort($projects, static function (Project $a, Project $b): int {
+            $codeA = trim((string)$a->getCode());
+            $codeB = trim((string)$b->getCode());
+
+            if ($codeA === '' || $codeB === '') {
+                // Ohne Code nach hinten; sind beide ohne, entscheidet der Name.
+                if ($codeA === $codeB) {
+                    return strcasecmp($a->getName(), $b->getName());
+                }
+                return $codeA === '' ? 1 : -1;
+            }
+
+            $numericA = ctype_digit($codeA);
+            $numericB = ctype_digit($codeB);
+
+            if ($numericA && $numericB) {
+                $cmp = (int)$codeA <=> (int)$codeB;
+            } elseif ($numericA !== $numericB) {
+                $cmp = $numericA ? -1 : 1;
+            } else {
+                $cmp = strcasecmp($codeA, $codeB);
+            }
+
+            return $cmp !== 0 ? $cmp : strcasecmp($a->getName(), $b->getName());
+        });
+
+        return $projects;
+    }
+
+    /**
      * @throws DoesNotExistException
      * @throws MultipleObjectsReturnedException
      */
@@ -46,7 +97,9 @@ class ProjectMapper extends QBMapper {
             ->from($this->getTableName())
             ->orderBy('name', 'ASC');
 
-        return $this->findEntities($qb);
+        // name als stabile Grundordnung; die eigentliche Reihenfolge macht
+        // sortByCode() (#550).
+        return self::sortByCode($this->findEntities($qb));
     }
 
     /**
@@ -59,7 +112,9 @@ class ProjectMapper extends QBMapper {
             ->where($qb->expr()->eq('is_active', $qb->createNamedParameter(1, IQueryBuilder::PARAM_INT)))
             ->orderBy('name', 'ASC');
 
-        return $this->findEntities($qb);
+        // name als stabile Grundordnung; die eigentliche Reihenfolge macht
+        // sortByCode() (#550).
+        return self::sortByCode($this->findEntities($qb));
     }
 
     /**
@@ -86,7 +141,9 @@ class ProjectMapper extends QBMapper {
             ->andWhere($qb->expr()->eq('is_billable', $qb->createNamedParameter(1, IQueryBuilder::PARAM_INT)))
             ->orderBy('name', 'ASC');
 
-        return $this->findEntities($qb);
+        // name als stabile Grundordnung; die eigentliche Reihenfolge macht
+        // sortByCode() (#550).
+        return self::sortByCode($this->findEntities($qb));
     }
 
     public function existsByCode(string $code, ?int $excludeId = null): bool {
