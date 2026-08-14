@@ -97,7 +97,7 @@
         </p>
 
         <div class="form-row">
-            <div class="form-group">
+            <div v-if="!isEdit" class="form-group">
                 <label for="workingDaysPerWeek">{{ t('worktime', 'Arbeitstage pro Woche') }} <InfoIcon>{{ t('worktime', 'An wie vielen Tagen pro Woche wird gearbeitet? Daraus und aus den Wochenstunden ergibt sich das tägliche Soll. Beispiel: 40 Std. auf 5 Tage = 8 Std./Tag, 30 Std. auf 4 Tage = 7,5 Std./Tag.') }}</InfoIcon></label>
                 <input id="workingDaysPerWeek"
                     v-model.number="form.workingDaysPerWeek"
@@ -105,6 +105,13 @@
                     min="1"
                     max="7"
                     class="input-field input-small">
+            </div>
+            <div v-else class="form-group">
+                <label>{{ t('worktime', 'Arbeitstage pro Woche') }} <InfoIcon>{{ t('worktime', 'Aktuell gültiger Wert aus dem Arbeitszeitprofil. Zum Ändern unten das Profil bearbeiten oder ein neues anlegen.') }}</InfoIcon></label>
+                <input :value="form.workingDaysPerWeek"
+                    type="text"
+                    class="input-field input-small"
+                    disabled>
             </div>
         </div>
 

@@ -35,13 +35,16 @@ class EmployeeService {
     }
 
     /**
-     * Copy the weeklyHours and vacationDays from a work schedule onto the
-     * employee. The work schedule is the single source of truth for these
-     * values; the entity is mutated in memory only and never persisted here.
+     * Copy the weeklyHours, vacationDays and workingDaysPerWeek from a work
+     * schedule onto the employee, so the (denormalised) top fields in the editor
+     * mirror the currently valid profile (#571). The work schedule is the single
+     * source of truth; the entity is mutated in memory only and never persisted
+     * here.
      */
     private function applyScheduleValues(Employee $employee, WorkSchedule $schedule): Employee {
         $employee->setWeeklyHours((string)$schedule->getWeeklyHours());
         $employee->setVacationDays($schedule->getVacationDays());
+        $employee->setWorkingDaysPerWeek($schedule->getWorkingDaysPerWeek());
         return $employee;
     }
 
