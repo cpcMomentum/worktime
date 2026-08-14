@@ -388,9 +388,6 @@ class EmployeeService {
     }
 
     /**
-     * @throws NotFoundException
-     */
-    /**
      * What a deletion would remove, for the confirmation dialog (#424).
      *
      * @throws NotFoundException
