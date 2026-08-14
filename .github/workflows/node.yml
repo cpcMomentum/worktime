@@ -45,7 +45,11 @@ jobs:
       # ausgelieferten Bundle stehen.
       - name: Bundle aktuell
         if: github.event_name == 'pull_request'
-        run: npx --no-install nc-bundle-check "origin/${{ github.base_ref }}"
+        env:
+          # Nicht direkt in run: interpolieren — ein Branch-Name kann
+          # Shell-Metazeichen enthalten (Script-Injection).
+          BASE_REF: ${{ github.base_ref }}
+        run: npx --no-install nc-bundle-check "origin/$BASE_REF"
 
       - name: ESLint
         run: npm run lint
