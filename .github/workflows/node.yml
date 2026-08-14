@@ -23,6 +23,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Volle Historie: der Bundle-Check diffst gegen den Ziel-Branch
+          # und braucht die Merge-Base.
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -31,6 +35,17 @@ jobs:
 
       - name: Abhaengigkeiten installieren
         run: npm ci
+
+      # Faengt vergessene Frontend-Builds. Kein Byte-Diff — der Build ist in der
+      # CI nicht reproduzierbar (contractmanager#251): der Lock wird verworfen
+      # und die Node-Version weicht ab, ein Rebuild ohne Quelltextaenderung
+      # erzeugt schon andere Minifier-Kuerzel. Stattdessen: wurden Eingaben
+      # geaendert, ohne dass sich js/ und css/ geaendert haben? Genau so blieb
+      # bei contractmanager#327 eine verwundbare Abhaengigkeit im
+      # ausgelieferten Bundle stehen.
+      - name: Bundle aktuell
+        if: github.event_name == 'pull_request'
+        run: npx --no-install nc-bundle-check "origin/${{ github.base_ref }}"
 
       - name: ESLint
         run: npm run lint
