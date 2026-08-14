@@ -669,7 +669,7 @@ OC.L10N.register(
     "Mitgelöscht werden:" : "Mitgelöscht werden:",
     "Zu diesem Mitarbeiter sind keine weiteren Daten erfasst." : "Zu diesem Mitarbeiter sind keine weiteren Daten erfasst.",
     "Diese Aktion kann nicht rückgängig gemacht werden. Für Arbeitszeitnachweise können Aufbewahrungspflichten gelten — prüfen Sie das, bevor Sie löschen." : "Diese Aktion kann nicht rückgängig gemacht werden. Für Arbeitszeitnachweise können Aufbewahrungspflichten gelten — prüfen Sie das, bevor Sie löschen.",
-    "Für ausgeschiedene Mitarbeiter ist meist „Ruhend setzen\" richtig: Die Erfassung wird beendet, die Daten bleiben einsehbar und exportierbar." : "Für ausgeschiedene Mitarbeiter ist meist „Ruhend setzen\" richtig: Die Erfassung wird beendet, die Daten bleiben einsehbar und exportierbar.",
+    "Für ausgeschiedene Mitarbeiter ist meist „Ruhend setzen“ richtig: Die Erfassung wird beendet, die Daten bleiben einsehbar und exportierbar." : "Für ausgeschiedene Mitarbeiter ist meist „Ruhend setzen“ richtig: Die Erfassung wird beendet, die Daten bleiben einsehbar und exportierbar.",
     "Zeiteinträge" : "Zeiteinträge",
     "Jahresüberträge" : "Jahresüberträge",
     "Überstunden-Auszahlungen" : "Überstunden-Auszahlungen",

@@ -669,7 +669,7 @@ OC.L10N.register(
     "Mitgelöscht werden:" : "Deleted along with it:",
     "Zu diesem Mitarbeiter sind keine weiteren Daten erfasst." : "No further data is recorded for this employee.",
     "Diese Aktion kann nicht rückgängig gemacht werden. Für Arbeitszeitnachweise können Aufbewahrungspflichten gelten — prüfen Sie das, bevor Sie löschen." : "This action cannot be undone. Retention obligations may apply to working time records — check this before deleting.",
-    "Für ausgeschiedene Mitarbeiter ist meist „Ruhend setzen\" richtig: Die Erfassung wird beendet, die Daten bleiben einsehbar und exportierbar." : "For employees who have left, \"Set to resting\" is usually the right choice: time tracking ends, the data stays visible and exportable.",
+    "Für ausgeschiedene Mitarbeiter ist meist „Ruhend setzen“ richtig: Die Erfassung wird beendet, die Daten bleiben einsehbar und exportierbar." : "For employees who have left, \"Set to resting\" is usually the right choice: time tracking ends, the data stays visible and exportable.",
     "Zeiteinträge" : "Time entries",
     "Jahresüberträge" : "Annual carryovers",
     "Überstunden-Auszahlungen" : "Overtime payouts",

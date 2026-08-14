@@ -153,7 +153,7 @@
             </NcNoteCard>
 
             <NcNoteCard type="info">
-                {{ t('worktime', 'Für ausgeschiedene Mitarbeiter ist meist „Ruhend setzen" richtig: Die Erfassung wird beendet, die Daten bleiben einsehbar und exportierbar.') }}
+                {{ t('worktime', 'Für ausgeschiedene Mitarbeiter ist meist „Ruhend setzen“ richtig: Die Erfassung wird beendet, die Daten bleiben einsehbar und exportierbar.') }}
             </NcNoteCard>
 
             <template #actions>
