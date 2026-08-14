@@ -415,7 +415,7 @@ td.actions-col {
    schlaegt sonst `.deletion-counts` (0,0,1,0) und die Punkte blieben stehen
    (#424). */
 .impact-block ul.deletion-counts {
-    margin: 4px 0 0 0;
+    margin: 4px 0 16px 0;
     list-style: none;
     max-width: 22rem;
 }
@@ -430,10 +430,5 @@ td.actions-col {
 .deletion-count {
     font-variant-numeric: tabular-nums;
     font-weight: 600;
-}
-
-/* Ohne das steht die erste NcNoteCard direkt auf der letzten Zahlenzeile. */
-.impact-block ul.deletion-counts {
-    margin-bottom: 16px;
 }
 </style>
