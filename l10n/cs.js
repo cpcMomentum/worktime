@@ -630,7 +630,6 @@ OC.L10N.register(
     "Vertretung" : "Zastupování",
     "Meine Vertretung bei Genehmigungen" : "Můj zástupce pro schvalování",
     "Keine Vertretung" : "Bez zástupce",
-    "Wählen Sie eine Person, die Ihre Genehmigungen für Ihr Team übernimmt, während Sie abwesend sind. Die Vertretung ist automatisch immer dann aktiv, wenn Sie laut WorkTime abwesend sind (z. B. im Urlaub). Einmal festgelegt, gilt sie für alle Ihre Abwesenheiten, bis Sie sie ändern." : "Vyberte osobu, která za vás převezme schvalování pro váš tým během vaší nepřítomnosti. Zástupce je automaticky aktivní vždy, když jste podle WorkTime nepřítomni (např. na dovolené). Jednou nastavený platí pro všechny vaše nepřítomnosti, dokud jej nezměníte.",
     "Ihr Profil ist ruhend gestellt. Sie können Ihre bisherigen Daten weiterhin einsehen und exportieren, aber keine neuen Zeiten oder Abwesenheiten erfassen." : "Ihr Profil ist ruhend gestellt. Sie können Ihre bisherigen Daten weiterhin einsehen und exportieren, aber keine neuen Zeiten oder Abwesenheiten erfassen.",
     "Grund: {reason}" : "Grund: {reason}",
     "Ruhend" : "Ruhend",
@@ -675,6 +674,9 @@ OC.L10N.register(
     "Überstunden-Auszahlungen" : "Überstunden-Auszahlungen",
     "Projektzuordnungen" : "Projektzuordnungen",
     "Archiv-Aufträge" : "Archiv-Aufträge",
-    "Protokolleinträge" : "Protokolleinträge"
+    "Protokolleinträge" : "Protokolleinträge",
+    "Gedacht für Elternzeit, Mutterschutz, Langzeiterkrankung oder Ausscheiden. Der Mitarbeiter bleibt in der Verwaltung sichtbar und sieht seine eigenen Daten weiterhin, kann aber nichts mehr erfassen. Personalverwaltung und Administration können zurückliegende Einträge weiterhin korrigieren. Jederzeit umkehrbar." : "Gedacht für Elternzeit, Mutterschutz, Langzeiterkrankung oder Ausscheiden. Der Mitarbeiter bleibt in der Verwaltung sichtbar und sieht seine eigenen Daten weiterhin, kann aber nichts mehr erfassen. Personalverwaltung und Administration können zurückliegende Einträge weiterhin korrigieren. Jederzeit umkehrbar.",
+    "Wählen Sie eine Person, die Ihre Genehmigungen für Ihr Team übernimmt, während Sie abwesend sind. Die Vertretung wird automatisch aktiv, sobald für Sie eine Abwesenheit genehmigt ist (z. B. Urlaub oder Krankheit) — ohne genehmigte Abwesenheit greift sie nicht. Einmal festgelegt, gilt sie für alle Ihre Abwesenheiten, bis Sie sie ändern." : "Wählen Sie eine Person, die Ihre Genehmigungen für Ihr Team übernimmt, während Sie abwesend sind. Die Vertretung wird automatisch aktiv, sobald für Sie eine Abwesenheit genehmigt ist (z. B. Urlaub oder Krankheit) — ohne genehmigte Abwesenheit greift sie nicht. Einmal festgelegt, gilt sie für alle Ihre Abwesenheiten, bis Sie sie ändern.",
+    "Ein genehmigter Monat ist festgeschrieben, damit Auswertungen und Nachweise stabil bleiben. Personalverwaltung und Administration können ihn dennoch korrigieren: Die Änderung verlangt eine Begründung, wird protokolliert, und der Monat geht anschließend zurück zur erneuten Genehmigung." : "Ein genehmigter Monat ist festgeschrieben, damit Auswertungen und Nachweise stabil bleiben. Personalverwaltung und Administration können ihn dennoch korrigieren: Die Änderung verlangt eine Begründung, wird protokolliert, und der Monat geht anschließend zurück zur erneuten Genehmigung."
 },
 "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;");

@@ -630,7 +630,6 @@ OC.L10N.register(
     "Vertretung" : "Deputy",
     "Meine Vertretung bei Genehmigungen" : "My deputy for approvals",
     "Keine Vertretung" : "No deputy",
-    "Wählen Sie eine Person, die Ihre Genehmigungen für Ihr Team übernimmt, während Sie abwesend sind. Die Vertretung ist automatisch immer dann aktiv, wenn Sie laut WorkTime abwesend sind (z. B. im Urlaub). Einmal festgelegt, gilt sie für alle Ihre Abwesenheiten, bis Sie sie ändern." : "Choose a person who takes over your approvals for your team while you are absent. The deputy is automatically active whenever you are absent according to WorkTime (e.g. on vacation). Once set, it applies to all your absences until you change it.",
     "Ruhend" : "Resting",
     "Ruhend setzen" : "Set to resting",
     "Reaktivieren" : "Reactivate",
@@ -675,6 +674,9 @@ OC.L10N.register(
     "Überstunden-Auszahlungen" : "Overtime payouts",
     "Projektzuordnungen" : "Project assignments",
     "Archiv-Aufträge" : "Archive jobs",
-    "Protokolleinträge" : "Audit log entries"
+    "Protokolleinträge" : "Audit log entries",
+    "Gedacht für Elternzeit, Mutterschutz, Langzeiterkrankung oder Ausscheiden. Der Mitarbeiter bleibt in der Verwaltung sichtbar und sieht seine eigenen Daten weiterhin, kann aber nichts mehr erfassen. Personalverwaltung und Administration können zurückliegende Einträge weiterhin korrigieren. Jederzeit umkehrbar." : "Intended for parental leave, maternity protection, long-term illness or leaving the company. The employee stays visible in the administration and can still see their own data, but can no longer record anything. HR and administration can still correct past entries. Reversible at any time.",
+    "Wählen Sie eine Person, die Ihre Genehmigungen für Ihr Team übernimmt, während Sie abwesend sind. Die Vertretung wird automatisch aktiv, sobald für Sie eine Abwesenheit genehmigt ist (z. B. Urlaub oder Krankheit) — ohne genehmigte Abwesenheit greift sie nicht. Einmal festgelegt, gilt sie für alle Ihre Abwesenheiten, bis Sie sie ändern." : "Choose a person who takes over your approvals for your team while you are away. The deputy becomes active automatically as soon as an absence has been approved for you (e.g. holiday or sickness) — without an approved absence it does not take effect. Once set, it applies to all your absences until you change it.",
+    "Ein genehmigter Monat ist festgeschrieben, damit Auswertungen und Nachweise stabil bleiben. Personalverwaltung und Administration können ihn dennoch korrigieren: Die Änderung verlangt eine Begründung, wird protokolliert, und der Monat geht anschließend zurück zur erneuten Genehmigung." : "An approved month is locked so that reports and records stay stable. HR and administration can still correct it: the change requires a reason, is logged, and the month then goes back for renewed approval."
 },
 "nplurals=2; plural=(n != 1);");
