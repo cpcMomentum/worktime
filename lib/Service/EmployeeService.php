@@ -28,6 +28,7 @@ class EmployeeService {
         private WorkScheduleMapper $workScheduleMapper,
         private WorkScheduleService $workScheduleService,
         private AuditLogService $auditLogService,
+        private EmployeeDeletionService $deletionService,
         private IUserManager $userManager,
         private LoggerInterface $logger,
     ) {
@@ -387,20 +388,31 @@ class EmployeeService {
     }
 
     /**
+     * What a deletion would remove, for the confirmation dialog (#424).
+     *
      * @throws NotFoundException
+     * @return array{
+     *     counts: array<string, int>,
+     *     deputyFor: list<array{id: int, fullName: string}>,
+     *     supervisorOf: list<array{id: int, fullName: string}>
+     * }
      */
-    public function delete(int $id, string $currentUserId = ''): void {
-        $employee = $this->find($id);
+    public function getDeletionImpact(int $id): array {
+        return $this->deletionService->getImpact($this->find($id));
+    }
 
-        // Audit log
-        if ($currentUserId) {
-            $this->auditLogService->logDelete($currentUserId, 'employee', $employee->getId(), $employee->jsonSerialize());
-        }
-
-        // Delete associated work schedules
-        $this->workScheduleMapper->deleteByEmployeeId($id);
-
-        $this->employeeMapper->delete($employee);
+    /**
+     * Delete an employee and every record attached to them (#424).
+     *
+     * The cleanup itself lives in {@see EmployeeDeletionService}: it is the one
+     * place that has to know all employee-scoped tables, and keeping it there
+     * means a new table gets one obvious home instead of being forgotten.
+     *
+     * @throws NotFoundException
+     * @return array<string, int> Rows actually removed, per table.
+     */
+    public function delete(int $id, string $currentUserId = ''): array {
+        return $this->deletionService->delete($this->find($id), $currentUserId);
     }
 
     /**

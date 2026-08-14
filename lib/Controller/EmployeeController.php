@@ -186,6 +186,28 @@ class EmployeeController extends BaseController {
     }
 
     /**
+     * Preview what a deletion removes: the record count per table plus the
+     * colleagues who lose this employee as supervisor or deputy (#424).
+     * Read-only, feeds the confirmation dialog.
+     */
+    #[NoAdminRequired]
+    public function deletionImpact(int $id): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+
+        if (!$this->permissionService->canManageEmployees($this->userId)) {
+            return $this->forbiddenResponse();
+        }
+
+        try {
+            return $this->successResponse($this->employeeService->getDeletionImpact($id));
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    /**
      * Preview what happens when this employee is put into the resting state:
      * which colleagues lose them as deputy, and which team members lose them as
      * supervisor (#486). Read-only, feeds the confirmation dialog.

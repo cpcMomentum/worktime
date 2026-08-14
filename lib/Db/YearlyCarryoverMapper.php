@@ -102,10 +102,52 @@ class YearlyCarryoverMapper extends QBMapper {
         return $this->findEntity($qb);
     }
 
-    public function deleteByEmployeeId(int $employeeId): void {
+    /**
+     * @return int Number of rows actually removed (#424).
+     */
+    public function deleteByEmployeeId(int $employeeId): int {
         $qb = $this->db->getQueryBuilder();
         $qb->delete($this->getTableName())
             ->where($qb->expr()->eq('employee_id', $qb->createNamedParameter($employeeId, IQueryBuilder::PARAM_INT)));
-        $qb->executeStatement();
+
+        return $qb->executeStatement();
+    }
+
+    public function countByEmployeeId(int $employeeId): int {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select($qb->func()->count('id'))
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('employee_id', $qb->createNamedParameter($employeeId, IQueryBuilder::PARAM_INT)));
+
+        $result = $qb->executeQuery();
+        $count = $result->fetchOne();
+        $result->closeCursor();
+
+        return (int)$count;
+    }
+
+    /**
+     * Ids only: the audit purge in #424 needs to know which rows belonged to
+     * this employee, and loading full entities for that would pull thousands
+     * of records just to read one column.
+     *
+     * @return int[]
+     */
+    public function findIdsByEmployeeId(int $employeeId): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('id')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('employee_id', $qb->createNamedParameter($employeeId, IQueryBuilder::PARAM_INT)));
+
+        $result = $qb->executeQuery();
+        $ids = [];
+        // fetch() statt fetchFirstColumn(): letzteres gibt es in OCP erst ab
+        // NC 33, die App unterstuetzt aber ab NC 32 (info.xml min-version).
+        while ($row = $result->fetch()) {
+            $ids[] = (int)$row['id'];
+        }
+        $result->closeCursor();
+
+        return $ids;
     }
 }

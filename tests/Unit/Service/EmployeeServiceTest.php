@@ -10,6 +10,7 @@ use OCA\WorkTime\Db\EmployeeMapper;
 use OCA\WorkTime\Db\WorkSchedule;
 use OCA\WorkTime\Db\WorkScheduleMapper;
 use OCA\WorkTime\Service\AuditLogService;
+use OCA\WorkTime\Service\EmployeeDeletionService;
 use OCA\WorkTime\Service\EmployeeService;
 use OCA\WorkTime\Service\ValidationException;
 use OCA\WorkTime\Service\WorkScheduleService;
@@ -28,6 +29,7 @@ class EmployeeServiceTest extends TestCase {
     private EmployeeMapper $employeeMapper;
     private WorkScheduleMapper $workScheduleMapper;
     private WorkScheduleService $workScheduleService;
+    private EmployeeDeletionService $deletionService;
     private AuditLogService $auditLogService;
     private IUserManager $userManager;
     private LoggerInterface $logger;
@@ -37,6 +39,7 @@ class EmployeeServiceTest extends TestCase {
         $this->workScheduleMapper = $this->createMock(WorkScheduleMapper::class);
         $this->workScheduleService = $this->createMock(WorkScheduleService::class);
         $this->auditLogService = $this->createMock(AuditLogService::class);
+        $this->deletionService = $this->createMock(EmployeeDeletionService::class);
         $this->userManager = $this->createMock(IUserManager::class);
         $this->logger = $this->createMock(LoggerInterface::class);
 
@@ -45,6 +48,7 @@ class EmployeeServiceTest extends TestCase {
             $this->workScheduleMapper,
             $this->workScheduleService,
             $this->auditLogService,
+            $this->deletionService,
             $this->userManager,
             $this->logger,
         );

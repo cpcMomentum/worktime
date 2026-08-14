@@ -664,6 +664,17 @@ OC.L10N.register(
     "Start- und Enddatum sind erforderlich" : "Start and end date are required",
     "Genehmigungsdaten konnten nicht vollständig geladen werden. Die Liste ist möglicherweise unvollständig." : "Approval data could not be loaded completely. The list may be incomplete.",
     "Farbe wählen" : "Choose colour",
-    "Kennzeichnet das Projekt in Listen und in der Auswertung. Neben der Palette sind auch eigene Farben möglich." : "Identifies the project in lists and in the evaluation. Custom colours are possible alongside the palette."
+    "Kennzeichnet das Projekt in Listen und in der Auswertung. Neben der Palette sind auch eigene Farben möglich." : "Identifies the project in lists and in the evaluation. Custom colours are possible alongside the palette.",
+    "Umfang wird ermittelt …" : "Determining scope …",
+    "Mitgelöscht werden:" : "Deleted along with it:",
+    "Zu diesem Mitarbeiter sind keine weiteren Daten erfasst." : "No further data is recorded for this employee.",
+    "Diese Aktion kann nicht rückgängig gemacht werden. Für Arbeitszeitnachweise können Aufbewahrungspflichten gelten — prüfen Sie das, bevor Sie löschen." : "This action cannot be undone. Retention obligations may apply to working time records — check this before deleting.",
+    "Für ausgeschiedene Mitarbeiter ist meist „Ruhend setzen“ richtig: Die Erfassung wird beendet, die Daten bleiben einsehbar und exportierbar." : "For employees who have left, \"Set to resting\" is usually the right choice: time tracking ends, the data stays visible and exportable.",
+    "Zeiteinträge" : "Time entries",
+    "Jahresüberträge" : "Annual carryovers",
+    "Überstunden-Auszahlungen" : "Overtime payouts",
+    "Projektzuordnungen" : "Project assignments",
+    "Archiv-Aufträge" : "Archive jobs",
+    "Protokolleinträge" : "Audit log entries"
 },
 "nplurals=2; plural=(n != 1);");
