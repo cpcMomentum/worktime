@@ -78,7 +78,10 @@
         <NcDialog v-if="showRestingDialog"
             :name="t('worktime', 'Mitarbeiter ruhend setzen?')"
             @close="closeRestingDialog">
-            <p>{{ t('worktime', '"{name}" kann dann keine Zeiten und Abwesenheiten mehr erfassen. Bestehende Daten bleiben einsehbar und exportierbar.', { name: employeeToRest?.fullName }) }}</p>
+            <p>
+                {{ t('worktime', '"{name}" kann dann keine Zeiten und Abwesenheiten mehr erfassen. Bestehende Daten bleiben einsehbar und exportierbar.', { name: employeeToRest?.fullName }) }}
+                <InfoIcon>{{ t('worktime', 'Gedacht für Elternzeit, Mutterschutz, Langzeiterkrankung oder Ausscheiden. Der Mitarbeiter bleibt in der Verwaltung sichtbar und sieht seine eigenen Daten weiterhin, kann aber nichts mehr erfassen. Personalverwaltung und Administration können zurückliegende Einträge weiterhin korrigieren. Jederzeit umkehrbar.') }}</InfoIcon>
+            </p>
 
             <NcTextField :value.sync="restingReason"
                 maxlength="500"
@@ -174,6 +177,7 @@ import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
 import NcNoteCard from '@nextcloud/vue/dist/Components/NcNoteCard.js'
 import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
+import InfoIcon from './InfoIcon.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Close from 'vue-material-design-icons/Close.vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
@@ -190,6 +194,7 @@ export default {
         NcDialog,
         NcNoteCard,
         NcTextField,
+        InfoIcon,
         Pencil,
         Close,
         AccountGroup,

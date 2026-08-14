@@ -630,7 +630,6 @@ OC.L10N.register(
     "Vertretung" : "Vertretung",
     "Meine Vertretung bei Genehmigungen" : "Meine Vertretung bei Genehmigungen",
     "Keine Vertretung" : "Keine Vertretung",
-    "Wählen Sie eine Person, die Ihre Genehmigungen für Ihr Team übernimmt, während Sie abwesend sind. Die Vertretung ist automatisch immer dann aktiv, wenn Sie laut WorkTime abwesend sind (z. B. im Urlaub). Einmal festgelegt, gilt sie für alle Ihre Abwesenheiten, bis Sie sie ändern." : "Wählen Sie eine Person, die Ihre Genehmigungen für Ihr Team übernimmt, während Sie abwesend sind. Die Vertretung ist automatisch immer dann aktiv, wenn Sie laut WorkTime abwesend sind (z. B. im Urlaub). Einmal festgelegt, gilt sie für alle Ihre Abwesenheiten, bis Sie sie ändern.",
     "Ruhend" : "Ruhend",
     "Ruhend setzen" : "Ruhend setzen",
     "Reaktivieren" : "Reaktivieren",
@@ -675,6 +674,9 @@ OC.L10N.register(
     "Überstunden-Auszahlungen" : "Überstunden-Auszahlungen",
     "Projektzuordnungen" : "Projektzuordnungen",
     "Archiv-Aufträge" : "Archiv-Aufträge",
-    "Protokolleinträge" : "Protokolleinträge"
+    "Protokolleinträge" : "Protokolleinträge",
+    "Gedacht für Elternzeit, Mutterschutz, Langzeiterkrankung oder Ausscheiden. Der Mitarbeiter bleibt in der Verwaltung sichtbar und sieht seine eigenen Daten weiterhin, kann aber nichts mehr erfassen. Personalverwaltung und Administration können zurückliegende Einträge weiterhin korrigieren. Jederzeit umkehrbar." : "Gedacht für Elternzeit, Mutterschutz, Langzeiterkrankung oder Ausscheiden. Der Mitarbeiter bleibt in der Verwaltung sichtbar und sieht seine eigenen Daten weiterhin, kann aber nichts mehr erfassen. Personalverwaltung und Administration können zurückliegende Einträge weiterhin korrigieren. Jederzeit umkehrbar.",
+    "Wählen Sie eine Person, die Ihre Genehmigungen für Ihr Team übernimmt, während Sie abwesend sind. Die Vertretung wird automatisch aktiv, sobald für Sie eine Abwesenheit genehmigt ist (z. B. Urlaub oder Krankheit) — ohne genehmigte Abwesenheit greift sie nicht. Einmal festgelegt, gilt sie für alle Ihre Abwesenheiten, bis Sie sie ändern." : "Wählen Sie eine Person, die Ihre Genehmigungen für Ihr Team übernimmt, während Sie abwesend sind. Die Vertretung wird automatisch aktiv, sobald für Sie eine Abwesenheit genehmigt ist (z. B. Urlaub oder Krankheit) — ohne genehmigte Abwesenheit greift sie nicht. Einmal festgelegt, gilt sie für alle Ihre Abwesenheiten, bis Sie sie ändern.",
+    "Ein genehmigter Monat ist festgeschrieben, damit Auswertungen und Nachweise stabil bleiben. Personalverwaltung und Administration können ihn dennoch korrigieren: Die Änderung verlangt eine Begründung, wird protokolliert, und der Monat geht anschließend zurück zur erneuten Genehmigung." : "Ein genehmigter Monat ist festgeschrieben, damit Auswertungen und Nachweise stabil bleiben. Personalverwaltung und Administration können ihn dennoch korrigieren: Die Änderung verlangt eine Begründung, wird protokolliert, und der Monat geht anschließend zurück zur erneuten Genehmigung."
 },
 "nplurals=2; plural=(n != 1);");
