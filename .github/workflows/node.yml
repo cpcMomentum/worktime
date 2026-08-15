@@ -43,8 +43,13 @@ jobs:
       # geaendert, ohne dass sich js/ und css/ geaendert haben? Genau so blieb
       # bei contractmanager#327 eine verwundbare Abhaengigkeit im
       # ausgelieferten Bundle stehen.
-      - name: Bundle aktuell
+      # Nicht blockierend, bis nc-app-tooling#1 steht: der Check raet, statt zu
+      # messen — „Quelle geaendert, Bundle unveraendert" ist bei reinen Typ- und
+      # Kommentaraenderungen ein korrekter Zustand. Das Signal bleibt sichtbar,
+      # haelt aber niemanden auf.
+      - name: Bundle aktuell (Hinweis, siehe nc-app-tooling#1)
         if: github.event_name == 'pull_request'
+        continue-on-error: true
         env:
           # Nicht direkt in run: interpolieren — ein Branch-Name kann
           # Shell-Metazeichen enthalten (Script-Injection).
