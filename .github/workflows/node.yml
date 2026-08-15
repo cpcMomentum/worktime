@@ -23,38 +23,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          # Volle Historie: der Bundle-Check diffst gegen den Ziel-Branch
-          # und braucht die Merge-Base.
-          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Abhaengigkeiten installieren
         run: npm ci
-
-      # Faengt vergessene Frontend-Builds. Kein Byte-Diff — der Build ist in der
-      # CI nicht reproduzierbar (contractmanager#251): der Lock wird verworfen
-      # und die Node-Version weicht ab, ein Rebuild ohne Quelltextaenderung
-      # erzeugt schon andere Minifier-Kuerzel. Stattdessen: wurden Eingaben
-      # geaendert, ohne dass sich js/ und css/ geaendert haben? Genau so blieb
-      # bei contractmanager#327 eine verwundbare Abhaengigkeit im
-      # ausgelieferten Bundle stehen.
-      # Nicht blockierend, bis nc-app-tooling#1 steht: der Check raet, statt zu
-      # messen — „Quelle geaendert, Bundle unveraendert" ist bei reinen Typ- und
-      # Kommentaraenderungen ein korrekter Zustand. Das Signal bleibt sichtbar,
-      # haelt aber niemanden auf.
-      - name: Bundle aktuell (Hinweis, siehe nc-app-tooling#1)
-        if: github.event_name == 'pull_request'
-        continue-on-error: true
-        env:
-          # Nicht direkt in run: interpolieren — ein Branch-Name kann
-          # Shell-Metazeichen enthalten (Script-Injection).
-          BASE_REF: ${{ github.base_ref }}
-        run: npx --no-install nc-bundle-check "origin/$BASE_REF"
 
       - name: ESLint
         run: npm run lint
@@ -64,3 +40,24 @@ jobs:
 
       - name: Produktions-Build
         run: npm run build
+
+      # Der eigentliche Frische-Test: passt das eingecheckte Bundle zu den
+      # Quellen? Der Schritt darueber hat gerade neu gebaut -- weicht js/ oder
+      # css/ jetzt vom Commit ab, wurde beim Aendern der Quellen der Build
+      # vergessen. Genau so blieb bei contractmanager#327 eine verwundbare
+      # dompurify-Version im ausgelieferten Bundle stehen.
+      #
+      # Gemessen statt geraten. Der Vorgaenger (nc-bundle-check) schloss aus
+      # "src/ geaendert, js/ nicht" auf eine Absicht und lag bei reinen Typ- und
+      # Kommentaraenderungen falsch; sein Ausweg [skip bundle-check] hebelte ihn
+      # ganz aus. Beides faellt hiermit weg (nc-app-tooling#1).
+      #
+      # Traegt, weil der Build byte-reproduzierbar ist: alle fuenf Apps bauen
+      # unter Linux mit npm 11 aus dem auf macOS erzeugten Lockfile
+      # byte-identisch (nachgemessen 15.08.2026, Node 20/22/24 einzeln).
+      - name: Bundle passt zum Quellstand
+        run: |
+          if ! git diff --exit-code -- js/ css/; then
+            echo "::error::Das eingecheckte Bundle passt nicht zu den Quellen. Bitte 'npm run build' laufen lassen und das Ergebnis mitcommitten."
+            exit 1
+          fi
