@@ -141,6 +141,84 @@ class WorkScheduleServiceTest extends TestCase {
     }
 
     // ---------------------------------------------------------------------
+    // #573: Zwölftelung bei Ein-/Austritt mitten im Jahr
+    // ---------------------------------------------------------------------
+
+    /**
+     * #573: joining mid-year only accrues leave for the employed part of the
+     * year. Entry 1 Jul with a full-time 5-day/30 profile yields ~15, not the
+     * full 30 the old full-year window granted via the default gap-fill.
+     */
+    public function testEntryMidYearProratesEntitlement(): void {
+        $pastYear = (int)(new DateTime())->format('Y') - 1;
+        $this->employeeMapper->method('find')
+            ->willReturn($this->employeeWithEntryDate($pastYear . '-07-01'));
+        $this->mapper->method('findByEmployeeAndDateRange')
+            ->willReturn([$this->scheduleAt($pastYear . '-07-01', 30, 5)]);
+
+        $entitlement = $this->service->getVacationEntitlementForYear(1, $pastYear);
+
+        $this->assertGreaterThan(0.0, $entitlement);
+        $this->assertLessThan(30.0, $entitlement);
+        $this->assertEqualsWithDelta(15.0, $entitlement, 1.0);
+    }
+
+    /**
+     * #573: leaving mid-year only accrues leave up to the exit date. A 5-day/30
+     * profile valid all year with exit 30 Jun yields ~15, not 30.
+     */
+    public function testExitMidYearProratesEntitlement(): void {
+        $pastYear = (int)(new DateTime())->format('Y') - 1;
+        $employee = $this->employeeWithEntryDate(null);
+        $employee->setExitDate(new DateTime($pastYear . '-06-30'));
+        $this->employeeMapper->method('find')->willReturn($employee);
+        $this->mapper->method('findByEmployeeAndDateRange')
+            ->willReturn([$this->scheduleAt(($pastYear - 5) . '-01-01', 30, 5)]);
+
+        $entitlement = $this->service->getVacationEntitlementForYear(1, $pastYear);
+
+        $this->assertGreaterThan(0.0, $entitlement);
+        $this->assertLessThan(30.0, $entitlement);
+        $this->assertEqualsWithDelta(15.0, $entitlement, 1.0);
+    }
+
+    /**
+     * #573 + #571 compose: entry 1 Apr, then a pensum change to full time on
+     * 1 Jul. Only Apr-Dec accrues, and within that the 4-day and 5-day segments
+     * are weighted separately (~21), clearly below the old full-year 30 and
+     * below a full year of either single profile.
+     */
+    public function testEntryAndPensumChangeComposeInSameYear(): void {
+        $pastYear = (int)(new DateTime())->format('Y') - 1;
+        $this->employeeMapper->method('find')
+            ->willReturn($this->employeeWithEntryDate($pastYear . '-04-01'));
+        $this->mapper->method('findByEmployeeAndDateRange')->willReturn([
+            $this->scheduleAt($pastYear . '-04-01', 24, 4), // Apr-Jun: 4-day week
+            $this->scheduleAt($pastYear . '-07-01', 30, 5), // Jul-Dec: full time
+        ]);
+
+        $entitlement = $this->service->getVacationEntitlementForYear(1, $pastYear);
+
+        $this->assertLessThan(24.0, $entitlement);
+        $this->assertEqualsWithDelta(21.0, $entitlement, 3.0);
+    }
+
+    /**
+     * #573: an employee who only joins in a later year accrues nothing for this
+     * year, even if a profile row exists.
+     */
+    public function testNotEmployedDuringYearYieldsZero(): void {
+        $pastYear = (int)(new DateTime())->format('Y') - 1;
+        $this->employeeMapper->method('find')
+            ->willReturn($this->employeeWithEntryDate(($pastYear + 1) . '-01-01'));
+        $this->mapper->method('findByEmployeeAndDateRange')
+            ->willReturn([$this->scheduleAt(($pastYear + 1) . '-01-01', 30, 5)]);
+
+        $this->assertSame(0.0, $this->service->getVacationEntitlementForYear(1, $pastYear));
+        $this->assertSame(0, $this->service->getVacationDaysForYear(1, $pastYear));
+    }
+
+    // ---------------------------------------------------------------------
     // #453: Rückdatierung von Arbeitszeitprofilen
     // ---------------------------------------------------------------------
 
