@@ -401,15 +401,32 @@ class WorkScheduleService {
      * #281 avoided a blend - it disagreed with the per-profile editor - is
      * resolved by reading each profile's value as its own full-year entitlement
      * and labelling the year total as a distinct figure.
+     *
+     * #573: the accrual window is additionally clipped to the employee's entry
+     * and exit dates, so a mid-year entry or exit prorates the entitlement
+     * (§ 5 Abs. 1 BUrlG). The denominator stays the full year, so the same
+     * working-day weighting handles employment period and pensum change alike.
      */
     public function getVacationEntitlementForYear(int $employeeId, int $year): float {
         $yearStart = new DateTime("$year-01-01");
         $yearEnd = new DateTime("$year-12-31");
 
+        // Only accrue leave for the part of the year the employee is actually
+        // employed (#573). The § 4 waiting period and the statutory/contractual
+        // split are deliberately not modelled: the whole entitlement is prorated
+        // uniformly.
+        [$windowStart, $windowEnd] = $this->employmentWindow($employeeId, $yearStart, $yearEnd);
+        if ($windowStart > $windowEnd) {
+            return 0.0; // not employed at any point during the year
+        }
+
         $total = 0.0;
-        foreach ($this->buildSegments($employeeId, $yearStart, $yearEnd) as $segment) {
+        foreach ($this->buildSegments($employeeId, $windowStart, $windowEnd) as $segment) {
             /** @var WorkSchedule $schedule */
             $schedule = $segment['schedule'];
+            // Denominator is the full year of this pattern, so the segment's
+            // share reflects both a shorter employment period and a smaller
+            // day pattern.
             $workingDaysFullYear = $this->countScheduledWorkingDays($schedule, $yearStart, $yearEnd);
             if ($workingDaysFullYear <= 0) {
                 continue; // a profile without working days carries no entitlement
@@ -419,6 +436,44 @@ class WorkScheduleService {
         }
 
         return $total;
+    }
+
+    /**
+     * The [start, end] sub-window of [yearStart, yearEnd] during which the
+     * employee is employed, clipped by entry and exit date (#573). A null entry
+     * or exit date means already/still employed on that side. If the employee
+     * only joined in a later year, or had already left before this year, the
+     * window is empty (start > end) and no entitlement accrues.
+     *
+     * @return array{0: DateTime, 1: DateTime}
+     */
+    private function employmentWindow(int $employeeId, DateTime $yearStart, DateTime $yearEnd): array {
+        $start = clone $yearStart;
+        $end = clone $yearEnd;
+
+        try {
+            $employee = $this->employeeMapper->find($employeeId);
+        } catch (DoesNotExistException) {
+            return [$start, $end]; // no employee record: fall back to the full year
+        }
+
+        $entry = $employee->getEntryDate();
+        if ($entry !== null) {
+            $entry = (clone $entry)->setTime(0, 0, 0);
+            if ($entry > $start) {
+                $start = $entry;
+            }
+        }
+
+        $exit = $employee->getExitDate();
+        if ($exit !== null) {
+            $exit = (clone $exit)->setTime(0, 0, 0);
+            if ($exit < $end) {
+                $end = $exit;
+            }
+        }
+
+        return [$start, $end];
     }
 
     /**
