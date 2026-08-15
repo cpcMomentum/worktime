@@ -266,4 +266,101 @@ class EmployeeServiceTest extends TestCase {
         $this->expectException(\OCA\WorkTime\Service\ValidationException::class);
         $this->service->updateMyDeputy('user2', 2);
     }
+
+    // ---------------------------------------------------------------------
+    // #573: workingDaysPerWeek is owned by the profile day pattern
+    // ---------------------------------------------------------------------
+
+    /**
+     * The initial work schedule must honour the requested working days per week
+     * (#573): a 4-day week produces a Mon-Thu profile at weeklyHours / 4, not the
+     * old hard-coded Mon-Fri at weeklyHours / 5.
+     */
+    public function testCreateInitialScheduleHonoursWorkingDaysPerWeek(): void {
+        $this->employeeMapper->method('existsByUserId')->willReturn(false);
+        $this->employeeMapper->method('insert')->willReturnCallback(
+            function (Employee $e): Employee {
+                $e->setId(9);
+                return $e;
+            }
+        );
+
+        $captured = null;
+        $this->workScheduleMapper->method('insert')->willReturnCallback(
+            function (WorkSchedule $s) use (&$captured): WorkSchedule {
+                $captured = $s;
+                return $s;
+            }
+        );
+
+        // 30h across 4 days => 7.5h on Mon-Thu, nothing Fri-Sun.
+        $this->service->create('user9', 'Nina', 'Vier', null, null, 30.0, 24, null, 'BY', null, 'admin', 4);
+
+        $this->assertNotNull($captured, 'initial work schedule must be persisted');
+        $this->assertSame(7.5, (float)$captured->getMonHours());
+        $this->assertSame(7.5, (float)$captured->getTueHours());
+        $this->assertSame(7.5, (float)$captured->getWedHours());
+        $this->assertSame(7.5, (float)$captured->getThuHours());
+        $this->assertSame(0.0, (float)$captured->getFriHours());
+        $this->assertSame(0.0, (float)$captured->getSatHours());
+        $this->assertSame(0.0, (float)$captured->getSunHours());
+        $this->assertSame(4, $captured->getWorkingDaysPerWeek());
+    }
+
+    /**
+     * A 5-day week keeps the previous Mon-Fri / weeklyHours-÷-5 behaviour
+     * unchanged (regression guard for the default path).
+     */
+    public function testCreateInitialScheduleFiveDayWeekUnchanged(): void {
+        $this->employeeMapper->method('existsByUserId')->willReturn(false);
+        $this->employeeMapper->method('insert')->willReturnCallback(
+            function (Employee $e): Employee {
+                $e->setId(10);
+                return $e;
+            }
+        );
+
+        $captured = null;
+        $this->workScheduleMapper->method('insert')->willReturnCallback(
+            function (WorkSchedule $s) use (&$captured): WorkSchedule {
+                $captured = $s;
+                return $s;
+            }
+        );
+
+        $this->service->create('user10', 'Erik', 'Fünf', null, null, 40.0, 30, null, 'BY', null, 'admin', 5);
+
+        $this->assertNotNull($captured);
+        $this->assertSame(8.0, (float)$captured->getMonHours());
+        $this->assertSame(8.0, (float)$captured->getFriHours());
+        $this->assertSame(0.0, (float)$captured->getSatHours());
+        $this->assertSame(5, $captured->getWorkingDaysPerWeek());
+    }
+
+    /**
+     * update() no longer accepts workingDaysPerWeek from the client (#573). The
+     * value surfaced on the returned employee must come from the active profile's
+     * day pattern (here 4 days), never a stale persisted entity value.
+     */
+    public function testUpdateDerivesWorkingDaysPerWeekFromProfile(): void {
+        $employee = $this->makeEmployee(5, '30.00', 24);
+        $employee->setWorkingDaysPerWeek(7); // stale value that must be ignored
+        $this->employeeMapper->method('find')->willReturn($employee);
+        $this->employeeMapper->method('update')->willReturnArgument(0);
+
+        $fourDay = new WorkSchedule();
+        $fourDay->setMonHours('7.50');
+        $fourDay->setTueHours('7.50');
+        $fourDay->setWedHours('7.50');
+        $fourDay->setThuHours('7.50');
+        $fourDay->setFriHours('0.00');
+        $fourDay->setSatHours('0.00');
+        $fourDay->setSunHours('0.00');
+        $fourDay->setVacationDays(24);
+        $this->workScheduleService->method('getScheduleForDate')->willReturn($fourDay);
+
+        $result = $this->service->update(5, 'Nina', 'Vier', null, null, null, 'BY', null, null, 'admin', null);
+
+        $this->assertSame(4, $result->getWorkingDaysPerWeek());
+    }
 }

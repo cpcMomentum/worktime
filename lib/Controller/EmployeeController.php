@@ -134,7 +134,6 @@ class EmployeeController extends BaseController {
         string $federalState = 'BY',
         ?string $entryDate = null,
         ?string $exitDate = null,
-        int $workingDaysPerWeek = 5,
         ?float $vacationDaysUsed = null
     ): JSONResponse {
         if ($authError = $this->requireAuth()) {
@@ -157,7 +156,6 @@ class EmployeeController extends BaseController {
                 $entryDate,
                 $exitDate,
                 $this->userId,
-                $workingDaysPerWeek,
                 $vacationDaysUsed
             );
 

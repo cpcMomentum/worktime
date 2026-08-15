@@ -242,7 +242,6 @@ class EmployeeService {
         ?string $entryDate = null,
         ?string $exitDate = null,
         string $currentUserId = '',
-        int $workingDaysPerWeek = 5,
         ?float $vacationDaysUsed = null
     ): Employee {
         $employee = $this->find($id);
@@ -261,16 +260,18 @@ class EmployeeService {
             throw ValidationException::fromSingleError('supervisorId', 'Employee cannot be their own supervisor');
         }
 
-        // weeklyHours and vacationDays are intentionally not set here: they are
-        // owned by the work schedule profile and synced via
-        // WorkScheduleService::syncEmployeeFromActiveSchedule. Surfacing them on
-        // read happens in withActiveSchedule().
+        // weeklyHours, vacationDays and workingDaysPerWeek are intentionally not
+        // set here: they are owned by the work schedule profile and mirrored onto
+        // the employee via applyScheduleValues() on every read (withActiveSchedule).
+        // #573: workingDaysPerWeek used to be written from the client payload here,
+        // a dead control path - the field is derived from the profile day pattern
+        // and the editor shows it read-only since #571, so the persisted value was
+        // always shadowed on the next read anyway.
         $employee->setFirstName($firstName);
         $employee->setLastName($lastName);
         $employee->setEmail($email);
         $employee->setPersonnelNumber($personnelNumber);
         $employee->setSupervisorId($supervisorId);
-        $employee->setWorkingDaysPerWeek(max(1, min(7, $workingDaysPerWeek)));
         $employee->setFederalState($federalState);
 
         $employee->setEntryDate($entryDate ? new DateTime($entryDate) : null);
@@ -561,19 +562,30 @@ class EmployeeService {
      */
     private function createInitialWorkSchedule(Employee $employee): void {
         try {
-            $dailyHours = round((float)$employee->getWeeklyHours() / 5, 2);
+            // Respect the requested number of working days per week instead of
+            // always assuming Mon-Fri (#573): the first N weekdays are worked at
+            // weeklyHours / N, the remaining days are off. N=5 reproduces the
+            // previous Mon-Fri behaviour unchanged.
+            $workingDays = max(1, min(7, $employee->getWorkingDaysPerWeek()));
+            $dailyHours = round((float)$employee->getWeeklyHours() / $workingDays, 2);
+            $formatted = number_format($dailyHours, 2, '.', '');
             $validFrom = $employee->getEntryDate() ?? new DateTime('2020-01-01');
+
+            $hours = array_fill(0, 7, '0.00');
+            for ($i = 0; $i < $workingDays; $i++) {
+                $hours[$i] = $formatted;
+            }
 
             $schedule = new \OCA\WorkTime\Db\WorkSchedule();
             $schedule->setEmployeeId($employee->getId());
             $schedule->setValidFrom($validFrom);
-            $schedule->setMonHours(number_format($dailyHours, 2, '.', ''));
-            $schedule->setTueHours(number_format($dailyHours, 2, '.', ''));
-            $schedule->setWedHours(number_format($dailyHours, 2, '.', ''));
-            $schedule->setThuHours(number_format($dailyHours, 2, '.', ''));
-            $schedule->setFriHours(number_format($dailyHours, 2, '.', ''));
-            $schedule->setSatHours('0.00');
-            $schedule->setSunHours('0.00');
+            $schedule->setMonHours($hours[0]);
+            $schedule->setTueHours($hours[1]);
+            $schedule->setWedHours($hours[2]);
+            $schedule->setThuHours($hours[3]);
+            $schedule->setFriHours($hours[4]);
+            $schedule->setSatHours($hours[5]);
+            $schedule->setSunHours($hours[6]);
             $schedule->setVacationDays($employee->getVacationDays());
             $schedule->setCreatedAt(new DateTime());
             $schedule->setUpdatedAt(new DateTime());
