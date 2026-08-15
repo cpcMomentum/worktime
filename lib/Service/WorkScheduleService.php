@@ -453,11 +453,8 @@ class WorkScheduleService {
 
         try {
             $employee = $this->employeeMapper->find($employeeId);
-        } catch (\Exception) {
+        } catch (DoesNotExistException) {
             return [$start, $end]; // no employee record: fall back to the full year
-        }
-        if (!$employee instanceof Employee) {
-            return [$start, $end];
         }
 
         $entry = $employee->getEntryDate();
