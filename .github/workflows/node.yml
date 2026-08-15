@@ -55,9 +55,17 @@ jobs:
       # Traegt, weil der Build byte-reproduzierbar ist: alle fuenf Apps bauen
       # unter Linux mit npm 11 aus dem auf macOS erzeugten Lockfile
       # byte-identisch (nachgemessen 15.08.2026, Node 20/22/24 einzeln).
+      #
+      # git status statt git diff: der Diff sieht nur getrackte Dateien. Bei
+      # worktime und rechnungswerk tragen die Chunks Content-Hashes im Namen --
+      # ein neu entstandener Chunk kaeme als UNTRACKED daher und rutschte
+      # durch, waehrend die alte Datei unveraendert daneben liegen bleibt.
+      # status --porcelain erfasst geaendert, geloescht und neu.
       - name: Bundle passt zum Quellstand
         run: |
-          if ! git diff --exit-code -- js/ css/; then
+          ABWEICHUNG=$(git status --porcelain -- js/ css/)
+          if [ -n "$ABWEICHUNG" ]; then
+            echo "$ABWEICHUNG"
             echo "::error::Das eingecheckte Bundle passt nicht zu den Quellen. Bitte 'npm run build' laufen lassen und das Ergebnis mitcommitten."
             exit 1
           fi
