@@ -76,6 +76,40 @@ class WorkScheduleService {
     }
 
     /**
+     * Schedule to SHOW for an employee today (#581).
+     *
+     * Unlike getScheduleForDate(), which returns the synthetic 40h/30 default as
+     * soon as no profile is active *today*, this prefers the employee's earliest
+     * profile when they only have future-dated ones - e.g. a new hire whose entry
+     * date (and therefore the initial profile's valid_from) lies ahead. Without
+     * this, the overview would show 40h/30 until the entry date is reached and the
+     * employee could appear to have more leave than they do.
+     *
+     * Display only: the calculation paths (buildSegments, calculateTargetMinutes)
+     * keep using getScheduleForDate() unchanged, so Soll and entitlement - which
+     * already clip by entry/exit date elsewhere - are untouched.
+     */
+    public function getDisplaySchedule(int $employeeId): WorkSchedule {
+        try {
+            return $this->mapper->findForDate($employeeId, new DateTime());
+        } catch (DoesNotExistException) {
+            // No profile active today - fall back to the earliest one if any exist.
+        }
+
+        $schedules = $this->mapper->findByEmployeeId($employeeId);
+        if (!empty($schedules)) {
+            usort(
+                $schedules,
+                static fn (WorkSchedule $a, WorkSchedule $b): int => $a->getValidFrom() <=> $b->getValidFrom(),
+            );
+            return $schedules[0];
+        }
+
+        // Truly profile-less employee: keep the synthetic default.
+        return $this->getScheduleForDate($employeeId, new DateTime());
+    }
+
+    /**
      * @throws ValidationException
      */
     public function create(

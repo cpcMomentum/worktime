@@ -56,7 +56,9 @@ class EmployeeService {
     private function withActiveSchedule(Employee $employee): Employee {
         return $this->applyScheduleValues(
             $employee,
-            $this->workScheduleService->getScheduleForDate($employee->getId(), new DateTime()),
+            // #581: show the earliest profile for a not-yet-started employee
+            // instead of the synthetic 40h/30 default.
+            $this->workScheduleService->getDisplaySchedule($employee->getId()),
         );
     }
 
@@ -78,7 +80,7 @@ class EmployeeService {
         return array_map(
             fn (Employee $e): Employee => isset($active[$e->getId()])
                 ? $this->applyScheduleValues($e, $active[$e->getId()])
-                : $this->withActiveSchedule($e), // schedule-less employee: use default fallback
+                : $this->withActiveSchedule($e), // no profile active today: resolve via getDisplaySchedule (#581)
             $employees,
         );
     }

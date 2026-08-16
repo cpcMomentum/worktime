@@ -87,7 +87,7 @@ class EmployeeServiceTest extends TestCase {
         $colleague->setDeputyId(3);
 
         $this->employeeMapper->method('find')->willReturn($resting);
-        $this->workScheduleService->method('getScheduleForDate')
+        $this->workScheduleService->method('getDisplaySchedule')
             ->willReturn($this->makeSchedule(8.0, 30));
         $this->employeeMapper->method('findAllByDeputy')->with(3)->willReturn([$colleague]);
 
@@ -110,7 +110,7 @@ class EmployeeServiceTest extends TestCase {
     public function testSetRestingNormalisesBlankReasonToNull(): void {
         $employee = $this->makeEmployee(3, '40.00', 30);
         $this->employeeMapper->method('find')->willReturn($employee);
-        $this->workScheduleService->method('getScheduleForDate')
+        $this->workScheduleService->method('getDisplaySchedule')
             ->willReturn($this->makeSchedule(8.0, 30));
         $this->employeeMapper->method('findAllByDeputy')->willReturn([]);
         $this->employeeMapper->method('update')->willReturnArgument(0);
@@ -134,7 +134,7 @@ class EmployeeServiceTest extends TestCase {
         // find() enriches via withActiveSchedule(); without this stub the mocked
         // schedule returns null and the entity setter throws a TypeError before
         // the validation under test is ever reached.
-        $this->workScheduleService->method('getScheduleForDate')
+        $this->workScheduleService->method('getDisplaySchedule')
             ->willReturn($this->makeSchedule(8.0, 30));
         $this->employeeMapper->method('findAllByDeputy')->with(3)->willReturn([$colleague]);
         $this->employeeMapper->expects($this->never())->method('update');
@@ -149,7 +149,7 @@ class EmployeeServiceTest extends TestCase {
         $employee->setLockedReason('Elternzeit');
 
         $this->employeeMapper->method('find')->willReturn($employee);
-        $this->workScheduleService->method('getScheduleForDate')
+        $this->workScheduleService->method('getDisplaySchedule')
             ->willReturn($this->makeSchedule(8.0, 30));
         $this->employeeMapper->method('update')->willReturnArgument(0);
 
@@ -174,7 +174,7 @@ class EmployeeServiceTest extends TestCase {
         // Cache holds 40h / 30 days, but the schedule active today is 31.5h / 28 days.
         $this->employeeMapper->method('find')
             ->willReturn($this->makeEmployee(6, '40.00', 30));
-        $this->workScheduleService->method('getScheduleForDate')
+        $this->workScheduleService->method('getDisplaySchedule')
             ->willReturn($this->makeSchedule(6.3, 28)); // 6.3 * 5 = 31.5
 
         $employee = $this->service->find(6);
@@ -185,11 +185,11 @@ class EmployeeServiceTest extends TestCase {
 
     public function testFindIgnoresFutureProfileForOverview(): void {
         // Active profile today = 31.5h; a future-dated 40h profile must not leak
-        // into the overview. getScheduleForDate already returns the active one.
+        // into the overview. getDisplaySchedule returns the active one.
         $this->employeeMapper->method('find')
             ->willReturn($this->makeEmployee(6, '40.00', 30));
-        $this->workScheduleService->method('getScheduleForDate')
-            ->with(6, $this->isInstanceOf(DateTime::class))
+        $this->workScheduleService->method('getDisplaySchedule')
+            ->with(6)
             ->willReturn($this->makeSchedule(6.3, 28));
 
         $employee = $this->service->find(6);
@@ -242,7 +242,7 @@ class EmployeeServiceTest extends TestCase {
     public function testUpdateMyDeputyPersistsDeputyId(): void {
         $this->employeeMapper->method('findByUserId')->with('user2')->willReturn($this->makeEmployee(2, '40.00', 30));
         $this->employeeMapper->method('update')->willReturnArgument(0);
-        $this->workScheduleService->method('getScheduleForDate')->willReturn($this->makeSchedule(8.0, 30));
+        $this->workScheduleService->method('getDisplaySchedule')->willReturn($this->makeSchedule(8.0, 30));
 
         $result = $this->service->updateMyDeputy('user2', 7);
 
@@ -252,7 +252,7 @@ class EmployeeServiceTest extends TestCase {
     public function testUpdateMyDeputyCanBeCleared(): void {
         $this->employeeMapper->method('findByUserId')->with('user2')->willReturn($this->makeEmployee(2, '40.00', 30));
         $this->employeeMapper->method('update')->willReturnArgument(0);
-        $this->workScheduleService->method('getScheduleForDate')->willReturn($this->makeSchedule(8.0, 30));
+        $this->workScheduleService->method('getDisplaySchedule')->willReturn($this->makeSchedule(8.0, 30));
 
         $result = $this->service->updateMyDeputy('user2', null);
 
@@ -261,7 +261,7 @@ class EmployeeServiceTest extends TestCase {
 
     public function testUpdateMyDeputyRejectsSelf(): void {
         $this->employeeMapper->method('findByUserId')->with('user2')->willReturn($this->makeEmployee(2, '40.00', 30));
-        $this->workScheduleService->method('getScheduleForDate')->willReturn($this->makeSchedule(8.0, 30));
+        $this->workScheduleService->method('getDisplaySchedule')->willReturn($this->makeSchedule(8.0, 30));
 
         $this->expectException(\OCA\WorkTime\Service\ValidationException::class);
         $this->service->updateMyDeputy('user2', 2);
@@ -357,7 +357,7 @@ class EmployeeServiceTest extends TestCase {
         $fourDay->setSatHours('0.00');
         $fourDay->setSunHours('0.00');
         $fourDay->setVacationDays(24);
-        $this->workScheduleService->method('getScheduleForDate')->willReturn($fourDay);
+        $this->workScheduleService->method('getDisplaySchedule')->willReturn($fourDay);
 
         $result = $this->service->update(5, 'Nina', 'Vier', null, null, null, 'BY', null, null, 'admin', null);
 
