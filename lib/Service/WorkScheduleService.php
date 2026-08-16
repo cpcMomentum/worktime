@@ -456,6 +456,58 @@ class WorkScheduleService {
     }
 
     /**
+     * Whole-day Teilurlaub for a genuine new hire's entry year (#590, § 5).
+     */
+    public function getVacationDaysForEntryYear(int $employeeId, int $year): int {
+        return (int)round($this->getProratedEntitlementForEntryYear($employeeId, $year));
+    }
+
+    /**
+     * Exact (unrounded) Teilurlaub for the entry year: like
+     * getVacationEntitlementForYear, but the accrual window starts at the
+     * employee's entry date (§ 5 - a mid-year new hire only accrues leave for the
+     * months actually employed). The denominator stays the full year, so each
+     * profile is weighted by employed-working-days / full-year-working-days, and
+     * a pensum change within the entry year (#571) composes correctly.
+     *
+     * Only the START (entry) is clipped here, not the exit - the exit year
+     * (§ 5c) is handled separately (#591). Used only when the employee is NOT
+     * flagged as a takeover (vacation_transferred); see
+     * AbsenceService::effectiveVacationDays.
+     */
+    private function getProratedEntitlementForEntryYear(int $employeeId, int $year): float {
+        $yearStart = new DateTime("$year-01-01");
+        $yearEnd = new DateTime("$year-12-31");
+
+        $windowStart = clone $yearStart;
+        try {
+            $entry = $this->employeeMapper->find($employeeId)->getEntryDate();
+            if ($entry !== null) {
+                $entry = (clone $entry)->setTime(0, 0, 0);
+                if ($entry > $windowStart) {
+                    $windowStart = $entry;
+                }
+            }
+        } catch (DoesNotExistException) {
+            // No employee record: fall back to the full year (no clipping).
+        }
+
+        $total = 0.0;
+        foreach ($this->buildSegments($employeeId, $windowStart, $yearEnd) as $segment) {
+            /** @var WorkSchedule $schedule */
+            $schedule = $segment['schedule'];
+            $workingDaysFullYear = $this->countScheduledWorkingDays($schedule, $yearStart, $yearEnd);
+            if ($workingDaysFullYear <= 0) {
+                continue;
+            }
+            $workingDaysInSegment = $this->countScheduledWorkingDays($schedule, $segment['start'], $segment['end']);
+            $total += $schedule->getVacationDays() * $workingDaysInSegment / $workingDaysFullYear;
+        }
+
+        return $total;
+    }
+
+    /**
      * Scheduled working days of one profile's day pattern within [start, end],
      * inclusive. No holiday adjustment - see getVacationEntitlementForYear.
      */

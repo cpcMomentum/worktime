@@ -51,6 +51,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setUpdatedAt(DateTime $updatedAt)
  * @method int getWorkingDaysPerWeek()
  * @method void setWorkingDaysPerWeek(int $workingDaysPerWeek)
+ * @method bool getVacationTransferred()
+ * @method void setVacationTransferred(bool $vacationTransferred)
  * @method DateTime|null getDefaultStartTime()
  * @method void setDefaultStartTime(?DateTime $defaultStartTime)
  * @method DateTime|null getDefaultEndTime()
@@ -95,6 +97,7 @@ class Employee extends Entity implements JsonSerializable {
     protected ?DateTime $entryDate = null;
     protected ?DateTime $exitDate = null;
     protected int $workingDaysPerWeek = 5;
+    protected bool $vacationTransferred = false;
     protected int $isActive = 1;
     protected ?string $lockedReason = null;
     protected ?DateTime $createdAt = null;
@@ -110,6 +113,7 @@ class Employee extends Entity implements JsonSerializable {
         $this->addType('supervisorId', 'integer');
         $this->addType('deputyId', 'integer');
         $this->addType('workingDaysPerWeek', 'integer');
+        $this->addType('vacationTransferred', 'boolean');
         $this->addType('entryDate', 'datetime');
         $this->addType('exitDate', 'datetime');
         $this->addType('isActive', 'integer');
@@ -158,6 +162,7 @@ class Employee extends Entity implements JsonSerializable {
             'vacationDays' => $this->vacationDays,
             'vacationDaysUsed' => $this->vacationDaysUsed === null ? null : (float)$this->vacationDaysUsed,
             'workingDaysPerWeek' => $this->workingDaysPerWeek,
+            'vacationTransferred' => (bool)$this->vacationTransferred,
             'supervisorId' => $this->supervisorId,
             'deputyId' => $this->deputyId,
             'federalState' => $this->federalState,

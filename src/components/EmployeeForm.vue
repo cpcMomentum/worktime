@@ -153,7 +153,18 @@
 
         <div v-if="entryYear" class="form-row">
             <div class="form-group">
-                <label for="vacationDaysUsed">{{ t('worktime', 'Davon {year} bereits verbraucht', { year: entryYear }) }} <InfoIcon>{{ t('worktime', 'Urlaubstage, die im Eintrittsjahr bereits genommen wurden — beim vorherigen Arbeitgeber oder vor der Umstellung auf diese App. Sie werden nur vom Anspruch des Eintrittsjahres abgezogen. Ab dem Folgejahr gilt wieder der volle Jahresanspruch. Halbe Tage sind möglich.') }}</InfoIcon></label>
+                <NcCheckboxRadioSwitch :checked.sync="form.vacationTransferred">
+                    {{ t('worktime', 'Resturlaub aus vorheriger Beschäftigung übernehmen') }}
+                </NcCheckboxRadioSwitch>
+                <p class="field-hint">
+                    {{ t('worktime', 'An: der volle Jahresanspruch gilt, abzüglich der bereits genommenen Tage (interner Wechsel, Umstieg auf diese App). Aus: echte Neueinstellung — nur anteilig für die Monate ab Eintritt (Teilurlaub).') }}
+                </p>
+            </div>
+        </div>
+
+        <div v-if="entryYear" class="form-row">
+            <div class="form-group">
+                <label for="vacationDaysUsed">{{ t('worktime', 'Davon {year} anderswo bereits gewährt/genommen', { year: entryYear }) }} <InfoIcon>{{ t('worktime', 'Urlaubstage, die im Eintrittsjahr bereits genommen oder ausbezahlt wurden — beim vorherigen Arbeitgeber oder vor der Umstellung auf diese App. Bei Übernahme werden sie vom vollen Anspruch abgezogen, bei Neueinstellung begrenzen sie den anteiligen Anspruch (§ 6). Ab dem Folgejahr gilt wieder der volle Jahresanspruch. Halbe Tage sind möglich.') }}</InfoIcon></label>
                 <input id="vacationDaysUsed"
                     v-model="form.vacationDaysUsed"
                     type="number"
@@ -183,6 +194,7 @@
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js'
+import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
 import WorkScheduleEditor from './WorkScheduleEditor.vue'
 import { mapGetters, mapActions } from 'vuex'
 import { formatDateISO } from '../utils/dateUtils.js'
@@ -195,6 +207,7 @@ export default {
         NcButton,
         NcSelect,
         NcDateTimePicker,
+        NcCheckboxRadioSwitch,
         WorkScheduleEditor,
     },
     props: {
@@ -226,6 +239,7 @@ export default {
                 entryDate: null,
                 exitDate: null,
                 vacationDaysUsed: null,
+                vacationTransferred: false,
             },
         }
     },
@@ -345,6 +359,7 @@ export default {
                         entryDate: employee.entryDate ? new Date(employee.entryDate) : null,
                         exitDate: employee.exitDate ? new Date(employee.exitDate) : null,
                         vacationDaysUsed: employee.vacationDaysUsed ?? null,
+                        vacationTransferred: employee.vacationTransferred ?? false,
                     }
                 } else {
                     this.resetForm()
@@ -376,6 +391,7 @@ export default {
                 entryDate: null,
                 exitDate: null,
                 vacationDaysUsed: null,
+                vacationTransferred: false,
             }
         },
         cancel() {
@@ -397,6 +413,7 @@ export default {
                     entryDate: this.form.entryDate ? formatDateISO(this.form.entryDate) : null,
                     exitDate: this.form.exitDate ? formatDateISO(this.form.exitDate) : null,
                     vacationDaysUsed: this.entryYear ? this.normalizedVacationDaysUsed : null,
+                    vacationTransferred: this.entryYear ? this.form.vacationTransferred : false,
                 }
 
                 if (this.isEdit) {

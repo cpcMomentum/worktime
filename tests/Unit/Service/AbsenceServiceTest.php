@@ -659,6 +659,10 @@ class AbsenceServiceTest extends TestCase {
             $employee->setEntryDate(new DateTime($entryDate));
         }
         $employee->setVacationDaysUsed($used);
+        // #522/#590: these cases model a takeover/continuation (leave carried over,
+        // days already used elsewhere) -> full entitlement minus used, as before.
+        // A genuine new hire (Teilurlaub) is covered separately below.
+        $employee->setVacationTransferred(true);
 
         $this->employeeMapper->method('find')->willReturn($employee);
         $this->carryoverService->method('getVacationCarryoverDays')->willReturn(0.0);
@@ -723,10 +727,66 @@ class AbsenceServiceTest extends TestCase {
         $employee->setIsActive(true);
         $employee->setEntryDate(new DateTime('2026-08-01'));
         $employee->setVacationDaysUsed('12.5');
+        $employee->setVacationTransferred(true);
         $this->employeeMapper->method('find')->willReturn($employee);
         $this->carryoverService->method('getVacationCarryoverDays')->willReturn(5.0);
 
         $this->assertSame(22.5, $this->service->effectiveVacationDays(1, 2026));
+    }
+
+    // ---------------------------------------------------------------------
+    // #590: echter Neuzugang im Eintrittsjahr -> Teilurlaub (kein Übernahme)
+    // ---------------------------------------------------------------------
+
+    private function newHireEmployee(?string $used): Employee {
+        $employee = new Employee();
+        $employee->setId(1);
+        $employee->setFederalState('BW');
+        $employee->setVacationDays(30);
+        $employee->setIsActive(true);
+        $employee->setEntryDate(new DateTime('2026-08-01'));
+        $employee->setVacationDaysUsed($used);
+        $employee->setVacationTransferred(false); // genuine new hire
+        $this->employeeMapper->method('find')->willReturn($employee);
+        $this->carryoverService->method('getVacationCarryoverDays')->willReturn(0.0);
+        // Teilurlaub Aug-Dez ~ 13 (5/12 * 30)
+        $this->workScheduleService->method('getVacationDaysForEntryYear')->willReturn(13);
+        return $employee;
+    }
+
+    /** S1: Berufseinsteiger, nichts anderswo -> Teilurlaub 13, nicht 30. */
+    public function testNewHireGetsProratedEntitlement(): void {
+        $this->newHireEmployee(null);
+
+        $this->assertSame(13.0, $this->service->effectiveVacationDays(1, 2026));
+    }
+
+    /** S3: anderswo bereits voller Jahresurlaub gewährt -> § 6 -> 0. */
+    public function testNewHireWithFullPriorGrantGetsZero(): void {
+        $this->newHireEmployee('30');
+
+        $this->assertSame(0.0, $this->service->effectiveVacationDays(1, 2026));
+    }
+
+    /** § 6-Deckel: min(Teilurlaub, voll − anderswo). 30 − 20 = 10 < 13 -> 10. */
+    public function testNewHireIsCappedByRemainingAnnualEntitlement(): void {
+        $this->newHireEmployee('20');
+
+        $this->assertSame(10.0, $this->service->effectiveVacationDays(1, 2026));
+    }
+
+    /** 0-Boden: anderswo mehr als der volle Anspruch -> nie negativ. */
+    public function testNewHireNeverGoesNegative(): void {
+        $this->newHireEmployee('35');
+
+        $this->assertSame(0.0, $this->service->effectiveVacationDays(1, 2026));
+    }
+
+    /** Folgejahr: kein Eintrittsjahr mehr -> voller Anspruch, unabhängig vom Kennzeichen. */
+    public function testNewHireGetsFullEntitlementInFollowingYear(): void {
+        $this->newHireEmployee(null);
+
+        $this->assertSame(30.0, $this->service->effectiveVacationDays(1, 2027));
     }
 
     /**

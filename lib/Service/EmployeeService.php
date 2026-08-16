@@ -170,7 +170,8 @@ class EmployeeService {
         ?string $entryDate = null,
         string $currentUserId = '',
         int $workingDaysPerWeek = 5,
-        ?float $vacationDaysUsed = null
+        ?float $vacationDaysUsed = null,
+        bool $vacationTransferred = false
     ): Employee {
         // Validate
         $errors = $this->validate($userId, $firstName, $lastName, $federalState);
@@ -211,6 +212,7 @@ class EmployeeService {
         }
 
         $employee->setVacationDaysUsed(self::normalizeVacationDaysUsed($vacationDaysUsed));
+        $employee->setVacationTransferred($vacationTransferred);
 
         $employee->setIsActive(true);
         $employee->setCreatedAt(new DateTime());
@@ -244,7 +246,8 @@ class EmployeeService {
         ?string $entryDate = null,
         ?string $exitDate = null,
         string $currentUserId = '',
-        ?float $vacationDaysUsed = null
+        ?float $vacationDaysUsed = null,
+        bool $vacationTransferred = false
     ): Employee {
         $employee = $this->find($id);
         $oldValues = $employee->jsonSerialize();
@@ -279,6 +282,7 @@ class EmployeeService {
         $employee->setEntryDate($entryDate ? new DateTime($entryDate) : null);
         $employee->setExitDate($exitDate ? new DateTime($exitDate) : null);
         $employee->setVacationDaysUsed(self::normalizeVacationDaysUsed($vacationDaysUsed));
+        $employee->setVacationTransferred($vacationTransferred);
 
         // isActive is intentionally not set here: the resting state is owned by
         // setResting()/reactivate(), which also clear deputy references (#486).
