@@ -219,6 +219,54 @@ class WorkScheduleServiceTest extends TestCase {
     }
 
     // ---------------------------------------------------------------------
+    // #581: Anzeige-Profil bei zukünftigem Eintrittsdatum
+    // ---------------------------------------------------------------------
+
+    /**
+     * #581: when a profile is active today it is used as-is for the display.
+     */
+    public function testGetDisplayScheduleReturnsActiveToday(): void {
+        $this->mapper->method('findForDate')->willReturn($this->scheduleAt('2020-01-01', 25, 5));
+
+        $this->assertSame(25, $this->service->getDisplaySchedule(1)->getVacationDays());
+    }
+
+    /**
+     * #581: a not-yet-started employee (only future-dated profiles, e.g. entry
+     * date ahead) must show their EARLIEST profile, not the synthetic 40h/30
+     * default. This is the reported bug: the overview showed 30 until the entry
+     * date was reached.
+     */
+    public function testGetDisplayScheduleFallsBackToEarliestFutureProfile(): void {
+        $this->mapper->method('findForDate')
+            ->willThrowException(new DoesNotExistException('no active profile today'));
+        $this->mapper->method('findByEmployeeId')->willReturn([
+            $this->scheduleAt('2099-06-01', 20, 4), // later
+            $this->scheduleAt('2099-01-01', 12, 2), // earliest -> must win
+        ]);
+
+        $result = $this->service->getDisplaySchedule(1);
+
+        $this->assertSame(12, $result->getVacationDays(), 'earliest profile must win, not the default 30');
+        $this->assertSame('2099-01-01', $result->getValidFrom()->format('Y-m-d'));
+    }
+
+    /**
+     * #581: an employee with no profile at all still falls back to the synthetic
+     * default (40h / 30).
+     */
+    public function testGetDisplayScheduleFallsBackToDefaultWhenNoProfiles(): void {
+        $this->mapper->method('findForDate')
+            ->willThrowException(new DoesNotExistException('none'));
+        $this->mapper->method('findByEmployeeId')->willReturn([]);
+
+        $result = $this->service->getDisplaySchedule(1);
+
+        $this->assertSame(30, $result->getVacationDays());
+        $this->assertSame(40.0, (float)$result->getWeeklyHours());
+    }
+
+    // ---------------------------------------------------------------------
     // #453: Rückdatierung von Arbeitszeitprofilen
     // ---------------------------------------------------------------------
 
