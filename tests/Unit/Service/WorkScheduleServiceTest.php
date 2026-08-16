@@ -189,6 +189,54 @@ class WorkScheduleServiceTest extends TestCase {
     }
 
     // ---------------------------------------------------------------------
+    // #590: Teilurlaub im Eintrittsjahr (nur Eintritt geklippt, nicht Austritt)
+    // ---------------------------------------------------------------------
+
+    /**
+     * #590: Eintritt zur Jahresmitte -> nur die Monate ab Eintritt zählen
+     * (Teilurlaub). Vollzeit 5-Tage/30, Eintritt 1.7. -> ~15 (Jul-Dez).
+     */
+    public function testEntryYearIsProrated(): void {
+        $pastYear = (int)(new DateTime())->format('Y') - 1;
+        $this->employeeMapper->method('find')
+            ->willReturn($this->employeeWithEntryDate($pastYear . '-07-01'));
+        $this->mapper->method('findByEmployeeAndDateRange')
+            ->willReturn([$this->scheduleAt($pastYear . '-07-01', 30, 5)]);
+
+        $result = $this->service->getVacationDaysForEntryYear(1, $pastYear);
+
+        $this->assertGreaterThan(0, $result);
+        $this->assertLessThan(30, $result);
+        $this->assertEqualsWithDelta(15, $result, 1);
+    }
+
+    /**
+     * #590: Eintritt am 1.1. -> voller Jahresanspruch (kein Klippen).
+     */
+    public function testJanuaryEntryYieldsFullYear(): void {
+        $pastYear = (int)(new DateTime())->format('Y') - 1;
+        $this->employeeMapper->method('find')
+            ->willReturn($this->employeeWithEntryDate($pastYear . '-01-01'));
+        $this->mapper->method('findByEmployeeAndDateRange')
+            ->willReturn([$this->scheduleAt($pastYear . '-01-01', 30, 5)]);
+
+        $this->assertSame(30, $this->service->getVacationDaysForEntryYear(1, $pastYear));
+    }
+
+    /**
+     * #590: kein Eintrittsdatum -> kein Klippen -> voller Jahresanspruch.
+     */
+    public function testNoEntryDateYieldsFullYear(): void {
+        $pastYear = (int)(new DateTime())->format('Y') - 1;
+        $this->employeeMapper->method('find')
+            ->willReturn($this->employeeWithEntryDate(null));
+        $this->mapper->method('findByEmployeeAndDateRange')
+            ->willReturn([$this->scheduleAt(($pastYear - 5) . '-01-01', 30, 5)]);
+
+        $this->assertSame(30, $this->service->getVacationDaysForEntryYear(1, $pastYear));
+    }
+
+    // ---------------------------------------------------------------------
     // #453: Rückdatierung von Arbeitszeitprofilen
     // ---------------------------------------------------------------------
 

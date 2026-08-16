@@ -1067,10 +1067,26 @@ class AbsenceService {
      * #501 were both symptoms of exactly that.
      */
     public function effectiveVacationDays(int $employeeId, int $year): float {
-        $baseEntitlement = (float)$this->workScheduleService->getVacationDaysForYear($employeeId, $year);
         $carryover = (float)(int)round($this->carryoverService->getVacationCarryoverDays($employeeId, $year));
+        $used = $this->vacationDaysUsedInYear($employeeId, $year);
+        $fullYear = (float)$this->workScheduleService->getVacationDaysForYear($employeeId, $year);
 
-        return $baseEntitlement + $carryover - $this->vacationDaysUsedInYear($employeeId, $year);
+        $employee = $this->employeeMapper->find($employeeId);
+        $entryDate = $employee->getEntryDate();
+        $isEntryYear = $entryDate !== null && (int)$entryDate->format('Y') === $year;
+
+        // #590: a genuine new hire in the entry year (not a takeover) only accrues
+        // Teilurlaub (§ 5), capped by the still-open annual entitlement (§ 6,
+        // "already granted elsewhere" = $used) and never negative. A takeover /
+        // continuation (vacation_transferred) keeps the full annual entitlement
+        // minus already-used, exactly as before. Every existing employee with an
+        // entry date is migrated to takeover, so no current/historical value moves.
+        if ($isEntryYear && !$employee->getVacationTransferred()) {
+            $teilurlaub = (float)$this->workScheduleService->getVacationDaysForEntryYear($employeeId, $year);
+            return max(0.0, min($teilurlaub, $fullYear - $used)) + $carryover;
+        }
+
+        return $fullYear + $carryover - $used;
     }
 
     /**

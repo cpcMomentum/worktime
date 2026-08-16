@@ -90,7 +90,8 @@ class EmployeeController extends BaseController {
         string $federalState = 'BY',
         ?string $entryDate = null,
         int $workingDaysPerWeek = 5,
-        ?float $vacationDaysUsed = null
+        ?float $vacationDaysUsed = null,
+        bool $vacationTransferred = false
     ): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
@@ -114,7 +115,8 @@ class EmployeeController extends BaseController {
                 $entryDate,
                 $this->userId,
                 $workingDaysPerWeek,
-                $vacationDaysUsed
+                $vacationDaysUsed,
+                $vacationTransferred
             );
 
             return $this->createdResponse($employee);
@@ -134,7 +136,8 @@ class EmployeeController extends BaseController {
         string $federalState = 'BY',
         ?string $entryDate = null,
         ?string $exitDate = null,
-        ?float $vacationDaysUsed = null
+        ?float $vacationDaysUsed = null,
+        bool $vacationTransferred = false
     ): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
@@ -156,7 +159,8 @@ class EmployeeController extends BaseController {
                 $entryDate,
                 $exitDate,
                 $this->userId,
-                $vacationDaysUsed
+                $vacationDaysUsed,
+                $vacationTransferred
             );
 
             return $this->successResponse($employee);
