@@ -80,7 +80,7 @@ class EmployeeService {
         return array_map(
             fn (Employee $e): Employee => isset($active[$e->getId()])
                 ? $this->applyScheduleValues($e, $active[$e->getId()])
-                : $this->withActiveSchedule($e), // schedule-less employee: use default fallback
+                : $this->withActiveSchedule($e), // no profile active today: resolve via getDisplaySchedule (#581)
             $employees,
         );
     }
