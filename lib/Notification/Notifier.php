@@ -37,6 +37,27 @@ class Notifier implements INotifier {
 			throw new UnknownNotificationException();
 		}
 
+		try {
+			return $this->prepareWorkTimeNotification($notification, $languageCode);
+		} catch (UnknownNotificationException $e) {
+			// Genuinely unknown subject — let NC handle it.
+			throw $e;
+		} catch (\InvalidArgumentException $e) {
+			// A known WorkTime notification whose stored parameters are no longer
+			// valid — typically a stale row written by an older app version. NC 34+
+			// deprecates letting \InvalidArgumentException escape prepare() (#551);
+			// discard the undisplayable notification cleanly so it stops
+			// re-spamming the log on every cron run.
+			throw new UnknownNotificationException();
+		}
+	}
+
+	/**
+	 * Build a known WorkTime notification. Any \InvalidArgumentException raised
+	 * while setting the parsed subject/message, icon or link (e.g. from stale
+	 * parameters or a missing route) is caught and handled by prepare().
+	 */
+	private function prepareWorkTimeNotification(INotification $notification, string $languageCode): INotification {
 		$l = $this->l10nFactory->get(Application::APP_ID, $languageCode);
 		$params = $notification->getSubjectParameters();
 		$monthYear = $this->formatMonthYear($params, $languageCode);
