@@ -73,6 +73,7 @@
         <div v-if="locked && !isYearMode" class="lock-banner">
             <LockIcon :size="20" />
             {{ t('worktime', 'Monat genehmigt – Einträge gesperrt. Korrektur nur durch HR.') }}
+            <InfoIcon>{{ t('worktime', 'Ein genehmigter Monat ist festgeschrieben, damit Auswertungen und Nachweise stabil bleiben. Personalverwaltung und Administration können ihn dennoch korrigieren: Die Änderung verlangt eine Begründung, wird protokolliert, und der Monat geht anschließend zurück zur erneuten Genehmigung.') }}</InfoIcon>
         </div>
 
         <div v-if="!isYearMode && statistics && statistics.workingDays === 0" class="schedule-warning-banner">
@@ -193,6 +194,7 @@ import NcModal from '@nextcloud/vue/dist/Components/NcModal.js'
 import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js'
 import SendIcon from 'vue-material-design-icons/Send.vue'
 import LockIcon from 'vue-material-design-icons/Lock.vue'
+import InfoIcon from '../components/InfoIcon.vue'
 import AlertIcon from 'vue-material-design-icons/Alert.vue'
 import FilePdfBox from 'vue-material-design-icons/FilePdfBox.vue'
 import FormatListBulletedIcon from 'vue-material-design-icons/FormatListBulleted.vue'
@@ -225,6 +227,7 @@ export default {
         NcDateTimePicker,
         SendIcon,
         LockIcon,
+        InfoIcon,
         AlertIcon,
         FilePdfBox,
         FormatListBulletedIcon,

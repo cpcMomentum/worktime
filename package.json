@@ -11,8 +11,8 @@
         "lint": "eslint --ext .js,.vue src",
         "lint:fix": "eslint --ext .js,.vue src --fix",
         "test": "jest",
-        "l10n:check": "node scripts/l10n-check.mjs",
-        "l10n:fix": "node scripts/l10n-check.mjs --fix",
+        "l10n:check": "nc-l10n-check",
+        "l10n:fix": "nc-l10n-check --fix",
         "prepare": "git config core.hooksPath .githooks || true"
     },
     "repository": {
@@ -47,6 +47,7 @@
         "babel-jest": "^29.7.0",
         "eslint": "^8.57.0",
         "jest": "^29.7.0",
+        "nc-app-tooling": "github:cpcMomentum/nc-app-tooling#v1.11.0",
         "vue-loader": "^17.4.2",
         "webpack": "^5.94.0",
         "webpack-cli": "^6.0.1"

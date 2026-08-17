@@ -110,4 +110,33 @@ class ProjectEmployeeMapper extends QBMapper {
             ->where($qb->expr()->eq('project_id', $qb->createNamedParameter($projectId, IQueryBuilder::PARAM_INT)));
         $qb->executeStatement();
     }
+
+    /**
+     * Remove every project assignment of an employee (#424, employee deletion).
+     *
+     * Relevant beyond tidiness: a stale assignment would silently attach the
+     * old membership to a future employee that reuses the same row id.
+     *
+     * @return int Number of rows actually removed.
+     */
+    public function deleteByEmployeeId(int $employeeId): int {
+        $qb = $this->db->getQueryBuilder();
+        $qb->delete($this->getTableName())
+            ->where($qb->expr()->eq('employee_id', $qb->createNamedParameter($employeeId, IQueryBuilder::PARAM_INT)));
+
+        return $qb->executeStatement();
+    }
+
+    public function countByEmployeeId(int $employeeId): int {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select($qb->func()->count('id'))
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('employee_id', $qb->createNamedParameter($employeeId, IQueryBuilder::PARAM_INT)));
+
+        $result = $qb->executeQuery();
+        $count = $result->fetchOne();
+        $result->closeCursor();
+
+        return (int)$count;
+    }
 }

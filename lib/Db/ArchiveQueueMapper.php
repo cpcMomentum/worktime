@@ -168,4 +168,33 @@ class ArchiveQueueMapper extends QBMapper {
 
         return $qb->executeStatement();
     }
+
+    /**
+     * Remove every queued archive job of an employee (#424, employee deletion).
+     *
+     * Left behind, a pending job would keep pointing the background worker at
+     * an employee that no longer exists.
+     *
+     * @return int Number of rows actually removed.
+     */
+    public function deleteByEmployeeId(int $employeeId): int {
+        $qb = $this->db->getQueryBuilder();
+        $qb->delete($this->getTableName())
+            ->where($qb->expr()->eq('employee_id', $qb->createNamedParameter($employeeId, IQueryBuilder::PARAM_INT)));
+
+        return $qb->executeStatement();
+    }
+
+    public function countByEmployeeId(int $employeeId): int {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select($qb->func()->count('id'))
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('employee_id', $qb->createNamedParameter($employeeId, IQueryBuilder::PARAM_INT)));
+
+        $result = $qb->executeQuery();
+        $count = $result->fetchOne();
+        $result->closeCursor();
+
+        return (int)$count;
+    }
 }

@@ -20,11 +20,10 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * Regression coverage for issue #281: the annual vacation entitlement must equal
- * the value of the work-schedule profile that is valid for the year, identical
- * across the profile editor, the employee overview and the team view. It must
- * NOT be pro-rated/blended across an overlapping (e.g. auto-created default)
- * profile, which previously produced surprising numbers such as 21 instead of 14.
+ * Vacation entitlement per year. Superseding #281 (which pinned the value to one
+ * reference-date profile), #571 computes it zeitabschnittsweise across the
+ * profiles valid in the year, weighted by scheduled working days — the legally
+ * required pro-rata at a mid-year pensum change (BAG 19.03.2019 - 9 AZR 406/17).
  */
 class WorkScheduleServiceTest extends TestCase {
 
@@ -69,57 +68,172 @@ class WorkScheduleServiceTest extends TestCase {
     }
 
     private function schedule(int $vacationDays): WorkSchedule {
+        return $this->scheduleAt('2020-01-01', $vacationDays, 5);
+    }
+
+    /**
+     * Build a profile with a given valid-from, full-year entitlement and number
+     * of working days (the first $workingDays of Mon..Fri get 8h, the rest 0).
+     */
+    private function scheduleAt(string $validFrom, int $vacationDays, int $workingDays): WorkSchedule {
         $s = new WorkSchedule();
         $s->setEmployeeId(1);
-        $s->setValidFrom(new DateTime('2020-01-01'));
+        $s->setValidFrom(new DateTime($validFrom));
         $s->setVacationDays($vacationDays);
+        $setters = ['setMonHours', 'setTueHours', 'setWedHours', 'setThuHours', 'setFriHours'];
+        foreach ($setters as $i => $setter) {
+            $s->$setter($i < $workingDays ? '8.00' : '0.00');
+        }
+        $s->setSatHours('0.00');
+        $s->setSunHours('0.00');
         return $s;
     }
 
     /**
-     * The entitlement equals the valid profile's value – not a blend with any
-     * earlier/overlapping profile. We query a past year so the reference date is
-     * deterministic (the year's end), independent of the current date.
+     * #571: a constant profile across the whole year yields exactly its own
+     * full-year entitlement (regression guard — the blend must not distort the
+     * simple case).
      */
-    public function testReturnsValidProfileVacationDaysWithoutBlending(): void {
+    public function testConstantProfileYieldsItsOwnEntitlement(): void {
         $pastYear = (int)(new DateTime())->format('Y') - 1;
+        $this->mapper->method('findByEmployeeAndDateRange')
+            ->willReturn([$this->scheduleAt(($pastYear - 5) . '-01-01', 30, 5)]);
 
-        // Whatever date is asked for in that year, the valid profile has 14 days.
-        $this->mapper->method('findForDate')->willReturn($this->schedule(14));
-
-        $this->assertSame(14, $this->service->getVacationDaysForYear(1, $pastYear));
+        $this->assertSame(30.0, $this->service->getVacationEntitlementForYear(1, $pastYear));
+        $this->assertSame(30, $this->service->getVacationDaysForYear(1, $pastYear));
     }
 
     /**
-     * With no persisted schedule, getScheduleForDate falls back to a default
-     * (30 days), so the entitlement is the default rather than an error.
+     * #571: the core fix. A mid-year pensum change (4-day/24 in H1 -> full-time
+     * 5-day/30 in H2) must produce the time-weighted blend (~27), NOT the
+     * year-end profile's value (30) that the old reference-date logic returned.
+     * BAG 19.03.2019 - 9 AZR 406/17.
+     */
+    public function testBlendsAcrossMidYearPensumChange(): void {
+        $pastYear = (int)(new DateTime())->format('Y') - 1;
+        $this->mapper->method('findByEmployeeAndDateRange')->willReturn([
+            $this->scheduleAt($pastYear . '-01-01', 24, 4), // H1: 4-day week
+            $this->scheduleAt($pastYear . '-07-01', 30, 5), // H2: full time
+        ]);
+
+        $entitlement = $this->service->getVacationEntitlementForYear(1, $pastYear);
+
+        // Strictly between the two full-year values -> it is a blend, not a pick.
+        $this->assertGreaterThan(24.0, $entitlement);
+        $this->assertLessThan(30.0, $entitlement);
+        // Half/half split lands at ~27; certainly not the old stichtag value 30.
+        $this->assertEqualsWithDelta(27.0, $entitlement, 0.6);
+        $this->assertSame(27, $this->service->getVacationDaysForYear(1, $pastYear));
+    }
+
+    /**
+     * With no persisted schedule, buildSegments falls back to the default
+     * profile (30 days, 5-day week), so the entitlement is the default.
      */
     public function testFallsBackToDefaultWhenNoScheduleExists(): void {
         $pastYear = (int)(new DateTime())->format('Y') - 1;
 
+        $this->mapper->method('findByEmployeeAndDateRange')->willReturn([]);
         $this->mapper->method('findForDate')
             ->willThrowException(new DoesNotExistException('none'));
 
         $this->assertSame(30, $this->service->getVacationDaysForYear(1, $pastYear));
     }
 
+    // ---------------------------------------------------------------------
+    // #581: Anzeige-Profil bei zukünftigem Eintrittsdatum
+    // ---------------------------------------------------------------------
+
     /**
-     * For a past year the reference date is that year's 31 December, ensuring the
-     * profile valid back then drives the entitlement.
+     * #581: when a profile is active today it is used as-is for the display.
      */
-    public function testPastYearUsesYearEndAsReference(): void {
+    public function testGetDisplayScheduleReturnsActiveToday(): void {
+        $this->mapper->method('findForDate')->willReturn($this->scheduleAt('2020-01-01', 25, 5));
+
+        $this->assertSame(25, $this->service->getDisplaySchedule(1)->getVacationDays());
+    }
+
+    /**
+     * #581: a not-yet-started employee (only future-dated profiles, e.g. entry
+     * date ahead) must show their EARLIEST profile, not the synthetic 40h/30
+     * default. This is the reported bug: the overview showed 30 until the entry
+     * date was reached.
+     */
+    public function testGetDisplayScheduleFallsBackToEarliestFutureProfile(): void {
+        $this->mapper->method('findForDate')
+            ->willThrowException(new DoesNotExistException('no active profile today'));
+        $this->mapper->method('findByEmployeeId')->willReturn([
+            $this->scheduleAt('2099-06-01', 20, 4), // later
+            $this->scheduleAt('2099-01-01', 12, 2), // earliest -> must win
+        ]);
+
+        $result = $this->service->getDisplaySchedule(1);
+
+        $this->assertSame(12, $result->getVacationDays(), 'earliest profile must win, not the default 30');
+        $this->assertSame('2099-01-01', $result->getValidFrom()->format('Y-m-d'));
+    }
+
+    /**
+     * #581: an employee with no profile at all still falls back to the synthetic
+     * default (40h / 30).
+     */
+    public function testGetDisplayScheduleFallsBackToDefaultWhenNoProfiles(): void {
+        $this->mapper->method('findForDate')
+            ->willThrowException(new DoesNotExistException('none'));
+        $this->mapper->method('findByEmployeeId')->willReturn([]);
+
+        $result = $this->service->getDisplaySchedule(1);
+
+        $this->assertSame(30, $result->getVacationDays());
+        $this->assertSame(40.0, (float)$result->getWeeklyHours());
+    }
+
+    // ---------------------------------------------------------------------
+    // #590: Teilurlaub im Eintrittsjahr (nur Eintritt geklippt, nicht Austritt)
+    // ---------------------------------------------------------------------
+
+    /**
+     * #590: Eintritt zur Jahresmitte -> nur die Monate ab Eintritt zählen
+     * (Teilurlaub). Vollzeit 5-Tage/30, Eintritt 1.7. -> ~15 (Jul-Dez).
+     */
+    public function testEntryYearIsProrated(): void {
         $pastYear = (int)(new DateTime())->format('Y') - 1;
-        $expectedReference = $pastYear . '-12-31';
+        $this->employeeMapper->method('find')
+            ->willReturn($this->employeeWithEntryDate($pastYear . '-07-01'));
+        $this->mapper->method('findByEmployeeAndDateRange')
+            ->willReturn([$this->scheduleAt($pastYear . '-07-01', 30, 5)]);
 
-        $this->mapper->expects($this->once())
-            ->method('findForDate')
-            ->with(
-                $this->equalTo(1),
-                $this->callback(fn (DateTime $d): bool => $d->format('Y-m-d') === $expectedReference),
-            )
-            ->willReturn($this->schedule(20));
+        $result = $this->service->getVacationDaysForEntryYear(1, $pastYear);
 
-        $this->assertSame(20, $this->service->getVacationDaysForYear(1, $pastYear));
+        $this->assertGreaterThan(0, $result);
+        $this->assertLessThan(30, $result);
+        $this->assertEqualsWithDelta(15, $result, 1);
+    }
+
+    /**
+     * #590: Eintritt am 1.1. -> voller Jahresanspruch (kein Klippen).
+     */
+    public function testJanuaryEntryYieldsFullYear(): void {
+        $pastYear = (int)(new DateTime())->format('Y') - 1;
+        $this->employeeMapper->method('find')
+            ->willReturn($this->employeeWithEntryDate($pastYear . '-01-01'));
+        $this->mapper->method('findByEmployeeAndDateRange')
+            ->willReturn([$this->scheduleAt($pastYear . '-01-01', 30, 5)]);
+
+        $this->assertSame(30, $this->service->getVacationDaysForEntryYear(1, $pastYear));
+    }
+
+    /**
+     * #590: kein Eintrittsdatum -> kein Klippen -> voller Jahresanspruch.
+     */
+    public function testNoEntryDateYieldsFullYear(): void {
+        $pastYear = (int)(new DateTime())->format('Y') - 1;
+        $this->employeeMapper->method('find')
+            ->willReturn($this->employeeWithEntryDate(null));
+        $this->mapper->method('findByEmployeeAndDateRange')
+            ->willReturn([$this->scheduleAt(($pastYear - 5) . '-01-01', 30, 5)]);
+
+        $this->assertSame(30, $this->service->getVacationDaysForEntryYear(1, $pastYear));
     }
 
     // ---------------------------------------------------------------------

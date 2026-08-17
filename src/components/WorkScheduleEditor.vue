@@ -96,12 +96,16 @@
                             disabled>
                     </div>
                     <div class="form-group">
-                        <label>{{ t('worktime', 'Urlaubstage') }} *</label>
+                        <label>{{ t('worktime', 'Urlaubstage') }} <InfoIcon>{{ t('worktime', 'Voller Jahresanspruch bei diesem Arbeitsmuster. Bei unterjährigem Wechsel wird der tatsächliche Jahresanspruch zeitanteilig aus allen Profilen des Jahres berechnet.') }}</InfoIcon> *</label>
                         <input v-model.number="form.vacationDays"
                             type="number"
                             min="0"
                             max="60"
-                            class="input-field input-small">
+                            class="input-field input-small"
+                            @input="vacationTouched = true">
+                        <p v-if="!editingSchedule && !vacationTouched" class="hint">
+                            {{ t('worktime', 'Vorschlag {days} bei {count} Arbeitstagen (30 × Tage ÷ 5) — anpassbar', { days: suggestedVacationDays, count: workingDaysInForm }) }}
+                        </p>
                     </div>
                 </div>
 
@@ -140,6 +144,7 @@ import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Close from 'vue-material-design-icons/Close.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
+import InfoIcon from './InfoIcon.vue'
 import { mapGetters, mapActions } from 'vuex'
 import { showError } from '@nextcloud/dialogs'
 import { formatDateISO, getLocale } from '../utils/dateUtils.js'
@@ -155,6 +160,7 @@ export default {
         Pencil,
         Close,
         Plus,
+        InfoIcon,
     },
     props: {
         employeeId: {
@@ -176,6 +182,9 @@ export default {
             showDeleteDialog: false,
             scheduleToDelete: null,
             maxDailyHours: 10,
+            // #571 (D5): once the user edits the vacation field, stop auto-
+            // suggesting from the day pattern. Only ever suggests on a new profile.
+            vacationTouched: false,
             form: this.getEmptyForm(),
             weekdays: [
                 { key: 'mon', label: this.t('worktime', 'Mo') },
@@ -193,6 +202,15 @@ export default {
         calculatedWeeklyHours() {
             const h = this.form.dayHours
             return (h.mon + h.tue + h.wed + h.thu + h.fri + (h.sat || 0) + (h.sun || 0)).toFixed(1)
+        },
+        // #571 (D5): number of days with >0 hours in the current form.
+        workingDaysInForm() {
+            return Object.values(this.form.dayHours).filter(v => v > 0).length
+        },
+        // #571 (D5): pro-rated full-year entitlement suggestion for this pattern,
+        // relative to a 5-day full-time base of 30 days (§ 5-style rounding).
+        suggestedVacationDays() {
+            return Math.round(30 * this.workingDaysInForm / 5)
         },
         minValidFrom() {
             // #453: allow back-dating down to the employee's entry date. Without
@@ -229,6 +247,17 @@ export default {
                 }
             },
         },
+        // #571 (D5): on a NEW profile, keep the vacation value in step with the
+        // day pattern until the user overrides it. Never touches an existing
+        // profile's value, never overrides a manual entry.
+        'form.dayHours': {
+            deep: true,
+            handler() {
+                if (!this.editingSchedule && !this.vacationTouched) {
+                    this.form.vacationDays = this.suggestedVacationDays
+                }
+            },
+        },
     },
     methods: {
         ...mapActions('workSchedules', ['fetchSchedules', 'createSchedule', 'updateSchedule', 'deleteSchedule']),
@@ -250,11 +279,13 @@ export default {
         },
         startCreate() {
             this.editingSchedule = null
+            this.vacationTouched = false
             this.form = this.getEmptyForm()
             this.showForm = true
         },
         startEdit(schedule) {
             this.editingSchedule = schedule
+            this.vacationTouched = true // never auto-change an existing profile (#571 D5)
             this.form = {
                 validFrom: null,
                 dayHours: {

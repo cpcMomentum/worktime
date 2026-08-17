@@ -74,9 +74,15 @@ class Project extends Entity implements JsonSerializable {
         $this->markFieldUpdated('allEmployees');
     }
 
+    /**
+     * Anzeigename fuer Auswahlfelder: Code vorangestellt, ohne Klammern (#550).
+     *
+     * Die Listen sind nach Code sortiert, deshalb steht er vorn — die eckigen
+     * Klammern trugen dabei nichts bei und machten die Zeile nur unruhiger.
+     */
     public function getDisplayName(): string {
         if ($this->code) {
-            return "[{$this->code}] {$this->name}";
+            return "{$this->code} {$this->name}";
         }
         return $this->name;
     }

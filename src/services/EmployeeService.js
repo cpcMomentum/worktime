@@ -82,6 +82,19 @@ export default {
     },
 
     /**
+     * Preview what a deletion removes (#424): the record count per table plus
+     * the colleagues who lose this employee as supervisor or deputy.
+     */
+    async getDeletionImpact(id) {
+        try {
+            const response = await api.get(`/employees/${id}/deletion-impact`)
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
+    /**
      * Preview which colleagues are affected when this employee is put to rest
      * (#486): deputy links that get cleared, team members losing a supervisor.
      */

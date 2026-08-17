@@ -7,6 +7,26 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-08-17
+
+### Added
+- **Urlaubsanspruch bei unterjährigem Pensumwechsel zeitanteilig (#571)**: Ändert sich im Laufe des Jahres die Zahl der Arbeitstage pro Woche (etwa Teilzeit ↔ Vollzeit), wird der Jahresurlaub jetzt zeitabschnittsweise über die im Jahr geltenden Arbeitszeitprofile berechnet statt aus einem einzelnen Stichtag-Profil. Damit stimmt der Anspruch bei Pensumänderungen mit der Rechtsprechung überein (BAG 19.03.2019). Betrifft nur Mitarbeitende, deren Pensum sich innerhalb eines Jahres ändert.
+- **Teilurlaub im Eintrittsjahr für echte Neueinstellungen (#590)**: Wer unterjährig neu eingestellt wird, erhält für das Eintrittsjahr nur noch den anteiligen Urlaub (Teilurlaub, § 5 BUrlG) statt des vollen Jahresanspruchs. Ein neues Kennzeichen „Resturlaub aus vorheriger Beschäftigung übernehmen" im Mitarbeiter-Formular unterscheidet die echte Neueinstellung (anteilig) von einer Übernahme oder durchgehenden Beschäftigung (voller Anspruch abzüglich bereits genommener Tage). Der übernommene Anteil wird nie negativ (§ 6 BUrlG). Bestehende Mitarbeitende bleiben unverändert — die Umstellung setzt alle mit Eintrittsdatum automatisch auf „Übernahme".
+- **Mitarbeiter löschen räumt vollständig auf (#424)**: Beim Löschen eines Mitarbeiters werden jetzt alle abhängigen Daten (Zeiteinträge, Abwesenheiten, Arbeitszeitprofile, Jahresüberträge) transaktional mitentfernt. Vorab zeigt ein Dialog beziffert, was gelöscht wird.
+- **Erläuternde Hinweise an folgenreichen Entscheidungen (#239)**: An mehreren wirkungsvollen Stellen (Ruhend-Setzen, Vertretung bei genehmigter Abwesenheit, Monatssperre) erscheinen jetzt kurze Hinweise.
+- **Projekte nach Projektcode sortieren (#550)**.
+
+### Fixed
+- **Neuer Mitarbeiter mit zukünftigem Eintrittsdatum zeigte die Standardwerte (#581)**: Bis das Eintrittsdatum erreicht war, zeigte die obere Anzeige 40 Std. und 30 Urlaubstage statt der Werte aus dem Arbeitszeitprofil — auch beim Mitarbeitenden selbst, wodurch zu viel Urlaub beantragbar war. Jetzt wird durchgängig das (kommende) Profil angezeigt.
+- **Arbeitstage pro Woche gehören ins Arbeitszeitprofil (#578)**: Der Wert wird beim Anlegen respektiert (eine 4-Tage-Woche erzeugt ein Mo–Do-Profil) und beim Bearbeiten nicht mehr aus einem toten Steuerpfad überschrieben.
+- **Projektfarbe über den NcColorPicker (#548)**: bessere Farbauswahl und lesbarerer Kontrast der Filter-Chips.
+
+### Security
+- webdav auf 5.10.0 angehoben (drei ausgelieferte Sicherheitshinweise geschlossen), axios auf 1.19.0.
+
+### Changed (intern)
+- Umstellung der CI-, Pre-Commit-Hook- und l10n-Prüfungen auf nc-app-tooling, Secret-Check im Pre-Commit, nachgezogene Review-Fixes aus älteren Release-Branches sowie diverse aktualisierte Entwicklungs-Abhängigkeiten. Keine Auswirkung auf die Funktion.
+
 ## [0.15.3] - 2026-08-02
 
 ### Added

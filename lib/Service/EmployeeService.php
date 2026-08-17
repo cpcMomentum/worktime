@@ -28,19 +28,23 @@ class EmployeeService {
         private WorkScheduleMapper $workScheduleMapper,
         private WorkScheduleService $workScheduleService,
         private AuditLogService $auditLogService,
+        private EmployeeDeletionService $deletionService,
         private IUserManager $userManager,
         private LoggerInterface $logger,
     ) {
     }
 
     /**
-     * Copy the weeklyHours and vacationDays from a work schedule onto the
-     * employee. The work schedule is the single source of truth for these
-     * values; the entity is mutated in memory only and never persisted here.
+     * Copy the weeklyHours, vacationDays and workingDaysPerWeek from a work
+     * schedule onto the employee, so the (denormalised) top fields in the editor
+     * mirror the currently valid profile (#571). The work schedule is the single
+     * source of truth; the entity is mutated in memory only and never persisted
+     * here.
      */
     private function applyScheduleValues(Employee $employee, WorkSchedule $schedule): Employee {
         $employee->setWeeklyHours((string)$schedule->getWeeklyHours());
         $employee->setVacationDays($schedule->getVacationDays());
+        $employee->setWorkingDaysPerWeek($schedule->getWorkingDaysPerWeek());
         return $employee;
     }
 
@@ -52,7 +56,9 @@ class EmployeeService {
     private function withActiveSchedule(Employee $employee): Employee {
         return $this->applyScheduleValues(
             $employee,
-            $this->workScheduleService->getScheduleForDate($employee->getId(), new DateTime()),
+            // #581: show the earliest profile for a not-yet-started employee
+            // instead of the synthetic 40h/30 default.
+            $this->workScheduleService->getDisplaySchedule($employee->getId()),
         );
     }
 
@@ -74,7 +80,7 @@ class EmployeeService {
         return array_map(
             fn (Employee $e): Employee => isset($active[$e->getId()])
                 ? $this->applyScheduleValues($e, $active[$e->getId()])
-                : $this->withActiveSchedule($e), // schedule-less employee: use default fallback
+                : $this->withActiveSchedule($e), // no profile active today: resolve via getDisplaySchedule (#581)
             $employees,
         );
     }
@@ -164,7 +170,8 @@ class EmployeeService {
         ?string $entryDate = null,
         string $currentUserId = '',
         int $workingDaysPerWeek = 5,
-        ?float $vacationDaysUsed = null
+        ?float $vacationDaysUsed = null,
+        bool $vacationTransferred = false
     ): Employee {
         // Validate
         $errors = $this->validate($userId, $firstName, $lastName, $federalState);
@@ -205,6 +212,7 @@ class EmployeeService {
         }
 
         $employee->setVacationDaysUsed(self::normalizeVacationDaysUsed($vacationDaysUsed));
+        $employee->setVacationTransferred($vacationTransferred);
 
         $employee->setIsActive(true);
         $employee->setCreatedAt(new DateTime());
@@ -238,8 +246,8 @@ class EmployeeService {
         ?string $entryDate = null,
         ?string $exitDate = null,
         string $currentUserId = '',
-        int $workingDaysPerWeek = 5,
-        ?float $vacationDaysUsed = null
+        ?float $vacationDaysUsed = null,
+        bool $vacationTransferred = false
     ): Employee {
         $employee = $this->find($id);
         $oldValues = $employee->jsonSerialize();
@@ -257,21 +265,24 @@ class EmployeeService {
             throw ValidationException::fromSingleError('supervisorId', 'Employee cannot be their own supervisor');
         }
 
-        // weeklyHours and vacationDays are intentionally not set here: they are
-        // owned by the work schedule profile and synced via
-        // WorkScheduleService::syncEmployeeFromActiveSchedule. Surfacing them on
-        // read happens in withActiveSchedule().
+        // weeklyHours, vacationDays and workingDaysPerWeek are intentionally not
+        // set here: they are owned by the work schedule profile and mirrored onto
+        // the employee via applyScheduleValues() on every read (withActiveSchedule).
+        // #573: workingDaysPerWeek used to be written from the client payload here,
+        // a dead control path - the field is derived from the profile day pattern
+        // and the editor shows it read-only since #571, so the persisted value was
+        // always shadowed on the next read anyway.
         $employee->setFirstName($firstName);
         $employee->setLastName($lastName);
         $employee->setEmail($email);
         $employee->setPersonnelNumber($personnelNumber);
         $employee->setSupervisorId($supervisorId);
-        $employee->setWorkingDaysPerWeek(max(1, min(7, $workingDaysPerWeek)));
         $employee->setFederalState($federalState);
 
         $employee->setEntryDate($entryDate ? new DateTime($entryDate) : null);
         $employee->setExitDate($exitDate ? new DateTime($exitDate) : null);
         $employee->setVacationDaysUsed(self::normalizeVacationDaysUsed($vacationDaysUsed));
+        $employee->setVacationTransferred($vacationTransferred);
 
         // isActive is intentionally not set here: the resting state is owned by
         // setResting()/reactivate(), which also clear deputy references (#486).
@@ -387,20 +398,31 @@ class EmployeeService {
     }
 
     /**
+     * What a deletion would remove, for the confirmation dialog (#424).
+     *
      * @throws NotFoundException
+     * @return array{
+     *     counts: array<string, int>,
+     *     deputyFor: list<array{id: int, fullName: string}>,
+     *     supervisorOf: list<array{id: int, fullName: string}>
+     * }
      */
-    public function delete(int $id, string $currentUserId = ''): void {
-        $employee = $this->find($id);
+    public function getDeletionImpact(int $id): array {
+        return $this->deletionService->getImpact($this->find($id));
+    }
 
-        // Audit log
-        if ($currentUserId) {
-            $this->auditLogService->logDelete($currentUserId, 'employee', $employee->getId(), $employee->jsonSerialize());
-        }
-
-        // Delete associated work schedules
-        $this->workScheduleMapper->deleteByEmployeeId($id);
-
-        $this->employeeMapper->delete($employee);
+    /**
+     * Delete an employee and every record attached to them (#424).
+     *
+     * The cleanup itself lives in {@see EmployeeDeletionService}: it is the one
+     * place that has to know all employee-scoped tables, and keeping it there
+     * means a new table gets one obvious home instead of being forgotten.
+     *
+     * @throws NotFoundException
+     * @return array<string, int> Rows actually removed, per table.
+     */
+    public function delete(int $id, string $currentUserId = ''): array {
+        return $this->deletionService->delete($this->find($id), $currentUserId);
     }
 
     /**
@@ -546,19 +568,30 @@ class EmployeeService {
      */
     private function createInitialWorkSchedule(Employee $employee): void {
         try {
-            $dailyHours = round((float)$employee->getWeeklyHours() / 5, 2);
+            // Respect the requested number of working days per week instead of
+            // always assuming Mon-Fri (#573): the first N weekdays are worked at
+            // weeklyHours / N, the remaining days are off. N=5 reproduces the
+            // previous Mon-Fri behaviour unchanged.
+            $workingDays = max(1, min(7, $employee->getWorkingDaysPerWeek()));
+            $dailyHours = round((float)$employee->getWeeklyHours() / $workingDays, 2);
+            $formatted = number_format($dailyHours, 2, '.', '');
             $validFrom = $employee->getEntryDate() ?? new DateTime('2020-01-01');
+
+            $hours = array_fill(0, 7, '0.00');
+            for ($i = 0; $i < $workingDays; $i++) {
+                $hours[$i] = $formatted;
+            }
 
             $schedule = new \OCA\WorkTime\Db\WorkSchedule();
             $schedule->setEmployeeId($employee->getId());
             $schedule->setValidFrom($validFrom);
-            $schedule->setMonHours(number_format($dailyHours, 2, '.', ''));
-            $schedule->setTueHours(number_format($dailyHours, 2, '.', ''));
-            $schedule->setWedHours(number_format($dailyHours, 2, '.', ''));
-            $schedule->setThuHours(number_format($dailyHours, 2, '.', ''));
-            $schedule->setFriHours(number_format($dailyHours, 2, '.', ''));
-            $schedule->setSatHours('0.00');
-            $schedule->setSunHours('0.00');
+            $schedule->setMonHours($hours[0]);
+            $schedule->setTueHours($hours[1]);
+            $schedule->setWedHours($hours[2]);
+            $schedule->setThuHours($hours[3]);
+            $schedule->setFriHours($hours[4]);
+            $schedule->setSatHours($hours[5]);
+            $schedule->setSunHours($hours[6]);
             $schedule->setVacationDays($employee->getVacationDays());
             $schedule->setCreatedAt(new DateTime());
             $schedule->setUpdatedAt(new DateTime());

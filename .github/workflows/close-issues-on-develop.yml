@@ -39,7 +39,55 @@ jobs:
         with:
           script: |
             const pr = context.payload.pull_request
-            const haystack = `${pr.title}\n\n${pr.body || ''}`
+            // Code ist Anschauungsmaterial, keine Anweisung. Ein PR, der den
+            // Workflow selbst dokumentiert, enthaelt Beispielzeilen wie
+            // "Loest #7 und behebt #8" — gemeint als Beleg, dass das Muster
+            // greift, nicht als Auftrag. In projektwerk ist genau das am
+            // 07.08.2026 passiert: Der PR trug seine eigene Gegenprobe-Tabelle
+            // im Text, und der Lauf schloss drei Issues, von denen keins
+            // erledigt war. Dieses Repo war nicht betroffen — der Lauf vom
+            // 07.08.2026 meldet "Keine Issue-Referenz im PR gefunden" —, die
+            // Fehlerklasse ist aber dieselbe. Der Fehlgriff ist so still wie
+            // sein Gegenstueck: Der Workflow meldet "success" und nennt die
+            // Nummern nur im Log.
+            //
+            // Deshalb faellt alles weg, was als Code ausgezeichnet ist:
+            // Bloecke mit ``` oder ~~~, danach Inline-Code in Backticks.
+            // Eine Referenz, die zaehlen soll, steht im Fliesstext.
+            const stripCode = (text) => {
+              // CRLF braucht keine Sonderbehandlung: JavaScript zaehlt \r
+              // selbst als Zeilenende, ^ und $ greifen mit dem m-Flag also
+              // auch vor einem \r. Nachgeprueft, nicht angenommen: In
+              // projektwerk haelt tests/ci/close-issues-workflow.spec.ts das
+              // mit 22 Faellen fest, die stripCode und pattern aus der
+              // YAML-Datei herausloesen. Dieses Repo hat den Waechter nicht —
+              // Aenderungen hier gegen jene Testbank gegenpruefen.
+              //
+              // Der Zaun wird als Laufweite gemerkt (```, ````, …) und nur von
+              // einem gleich langen Zaun geschlossen. Sonst beendet ein innerer
+              // 3er-Zaun einen aeusseren 4er-Block vorzeitig, und dessen Rest
+              // gilt wieder als Fliesstext — genau die Konstellation, in der
+              // jemand einen Workflow dokumentiert, der Backticks enthaelt.
+              const fenced = text
+                .replace(/^[ \t]*(`{3,}|~{3,})[^\n]*\n[\s\S]*?^[ \t]*\1[ \t]*$/gm, ' ')
+
+              // Ein unpaariger Zaun (abgeschnittener Text, vergessenes
+              // Schlusszeichen) darf nicht dazu fuehren, dass der Rest wieder
+              // als Fliesstext gilt — ab dort wird nichts mehr ausgewertet.
+              // Muss VOR dem Inline-Schritt stehen: der zerlegt "```" sonst in
+              // ein leeres Backtick-Paar plus Rest, und der Zaun ist weg.
+              const stray = fenced.search(/^[ \t]*(`{3,}|~{3,})/m)
+              const open = stray === -1 ? fenced : fenced.slice(0, stray)
+
+              // CommonMark erlaubt Inline-Code ueber mehrere Zeilen, aber nicht
+              // ueber eine Leerzeile hinweg. Genau diese Grenze wird geachtet:
+              // ohne sie wuerde ein einzelnes verirrtes Backtick den halben
+              // Text verschlucken und echte Referenzen mitnehmen.
+              return open.replace(/`[^`]*`/g, (span) =>
+                /\n[ \t]*\n/.test(span) ? span : ' ')
+            }
+
+            const haystack = stripCode(`${pr.title}\n\n${pr.body || ''}`)
 
             // Die Schluesselwoerter, die GitHub selbst auswertet — plus die
             // deutschen Entsprechungen, weil die PR-Texte in diesem Repo deutsch

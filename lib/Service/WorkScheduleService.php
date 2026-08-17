@@ -76,6 +76,40 @@ class WorkScheduleService {
     }
 
     /**
+     * Schedule to SHOW for an employee today (#581).
+     *
+     * Unlike getScheduleForDate(), which returns the synthetic 40h/30 default as
+     * soon as no profile is active *today*, this prefers the employee's earliest
+     * profile when they only have future-dated ones - e.g. a new hire whose entry
+     * date (and therefore the initial profile's valid_from) lies ahead. Without
+     * this, the overview would show 40h/30 until the entry date is reached and the
+     * employee could appear to have more leave than they do.
+     *
+     * Display only: the calculation paths (buildSegments, calculateTargetMinutes)
+     * keep using getScheduleForDate() unchanged, so Soll and entitlement - which
+     * already clip by entry/exit date elsewhere - are untouched.
+     */
+    public function getDisplaySchedule(int $employeeId): WorkSchedule {
+        try {
+            return $this->mapper->findForDate($employeeId, new DateTime());
+        } catch (DoesNotExistException) {
+            // No profile active today - fall back to the earliest one if any exist.
+        }
+
+        $schedules = $this->mapper->findByEmployeeId($employeeId);
+        if (!empty($schedules)) {
+            usort(
+                $schedules,
+                static fn (WorkSchedule $a, WorkSchedule $b): int => $a->getValidFrom() <=> $b->getValidFrom(),
+            );
+            return $schedules[0];
+        }
+
+        // Truly profile-less employee: keep the synthetic default.
+        return $this->getScheduleForDate($employeeId, new DateTime());
+    }
+
+    /**
      * @throws ValidationException
      */
     public function create(
@@ -372,32 +406,121 @@ class WorkScheduleService {
     }
 
     /**
-     * Get vacation days entitlement for a year.
-     *
-     * Vacation entitlement is an annual figure tied to the work-schedule profile
-     * that is valid for the employee, not a value that accrues per sub-period the
-     * way working hours do. Pro-rating it across mid-year profile changes produced
-     * confusing blended numbers that disagreed with the profile editor and the
-     * employee overview (#281) – e.g. an auto-created default profile (30 days)
-     * overlapping a real, mid-year profile (14 days) showed ~21 instead of 14.
-     *
-     * We therefore take the entitlement from the profile valid at the year's
-     * reference date: today for the current year (so it matches the employee
-     * overview and profile editor), the year's end for past years.
+     * Whole-day vacation entitlement for a calendar year (rounded per
+     * getVacationEntitlementForYear + § 5 Abs. 2 BUrlG).
      */
     public function getVacationDaysForYear(int $employeeId, int $year): int {
-        $now = new DateTime();
+        return (int)round($this->getVacationEntitlementForYear($employeeId, $year));
+    }
+
+    /**
+     * Exact (unrounded) vacation entitlement for a year, computed
+     * zeitabschnittsweise across the work-schedule profiles that apply during
+     * the year (#571, BAG 19.03.2019 - 9 AZR 406/17; EuGH C-415/12, C-219/14).
+     *
+     * Each vacation_days on a profile is read as the full-year entitlement of
+     * that day pattern (e.g. 24 for a 4-day week, 30 for a 5-day week). The
+     * year's entitlement is the sum of each segment's full-year value weighted
+     * by the share of scheduled working days that fall into the segment:
+     *
+     *   sum( profil.vacationDays * Arbeitstage_im_Abschnitt / Arbeitstage_im_vollen_Jahr_des_Musters )
+     *
+     * Weighting is by scheduled working days, not calendar days, matching the
+     * legal reference (... x arbeitspflichtige Tage / 260) and the day-by-day
+     * logic of calculateTargetMinutes. Public holidays are deliberately NOT
+     * netted out here - they reduce the Soll, not the contractual leave rhythm.
+     *
+     * This replaces the earlier reference-date pick (#281), which took a single
+     * profile's value and therefore ignored mid-year pensum changes. The reason
+     * #281 avoided a blend - it disagreed with the per-profile editor - is
+     * resolved by reading each profile's value as its own full-year entitlement
+     * and labelling the year total as a distinct figure.
+     */
+    public function getVacationEntitlementForYear(int $employeeId, int $year): float {
         $yearStart = new DateTime("$year-01-01");
         $yearEnd = new DateTime("$year-12-31");
 
-        // The year's end, but never in the future: the current year uses the
-        // profile valid today; a future year falls back to the year's start.
-        $reference = $yearEnd < $now ? $yearEnd : $now;
-        if ($reference < $yearStart) {
-            $reference = $yearStart;
+        $total = 0.0;
+        foreach ($this->buildSegments($employeeId, $yearStart, $yearEnd) as $segment) {
+            /** @var WorkSchedule $schedule */
+            $schedule = $segment['schedule'];
+            $workingDaysFullYear = $this->countScheduledWorkingDays($schedule, $yearStart, $yearEnd);
+            if ($workingDaysFullYear <= 0) {
+                continue; // a profile without working days carries no entitlement
+            }
+            $workingDaysInSegment = $this->countScheduledWorkingDays($schedule, $segment['start'], $segment['end']);
+            $total += $schedule->getVacationDays() * $workingDaysInSegment / $workingDaysFullYear;
         }
 
-        return $this->getScheduleForDate($employeeId, $reference)->getVacationDays();
+        return $total;
+    }
+
+    /**
+     * Whole-day Teilurlaub for a genuine new hire's entry year (#590, § 5).
+     */
+    public function getVacationDaysForEntryYear(int $employeeId, int $year): int {
+        return (int)round($this->getProratedEntitlementForEntryYear($employeeId, $year));
+    }
+
+    /**
+     * Exact (unrounded) Teilurlaub for the entry year: like
+     * getVacationEntitlementForYear, but the accrual window starts at the
+     * employee's entry date (§ 5 - a mid-year new hire only accrues leave for the
+     * months actually employed). The denominator stays the full year, so each
+     * profile is weighted by employed-working-days / full-year-working-days, and
+     * a pensum change within the entry year (#571) composes correctly.
+     *
+     * Only the START (entry) is clipped here, not the exit - the exit year
+     * (§ 5c) is handled separately (#591). Used only when the employee is NOT
+     * flagged as a takeover (vacation_transferred); see
+     * AbsenceService::effectiveVacationDays.
+     */
+    private function getProratedEntitlementForEntryYear(int $employeeId, int $year): float {
+        $yearStart = new DateTime("$year-01-01");
+        $yearEnd = new DateTime("$year-12-31");
+
+        $windowStart = clone $yearStart;
+        try {
+            $entry = $this->employeeMapper->find($employeeId)->getEntryDate();
+            if ($entry !== null) {
+                $entry = (clone $entry)->setTime(0, 0, 0);
+                if ($entry > $windowStart) {
+                    $windowStart = $entry;
+                }
+            }
+        } catch (DoesNotExistException) {
+            // No employee record: fall back to the full year (no clipping).
+        }
+
+        $total = 0.0;
+        foreach ($this->buildSegments($employeeId, $windowStart, $yearEnd) as $segment) {
+            /** @var WorkSchedule $schedule */
+            $schedule = $segment['schedule'];
+            $workingDaysFullYear = $this->countScheduledWorkingDays($schedule, $yearStart, $yearEnd);
+            if ($workingDaysFullYear <= 0) {
+                continue;
+            }
+            $workingDaysInSegment = $this->countScheduledWorkingDays($schedule, $segment['start'], $segment['end']);
+            $total += $schedule->getVacationDays() * $workingDaysInSegment / $workingDaysFullYear;
+        }
+
+        return $total;
+    }
+
+    /**
+     * Scheduled working days of one profile's day pattern within [start, end],
+     * inclusive. No holiday adjustment - see getVacationEntitlementForYear.
+     */
+    private function countScheduledWorkingDays(WorkSchedule $schedule, DateTime $start, DateTime $end): int {
+        $count = 0;
+        $current = clone $start;
+        while ($current <= $end) {
+            if ($schedule->isWorkingDay((int)$current->format('N'))) {
+                $count++;
+            }
+            $current->modify('+1 day');
+        }
+        return $count;
     }
 
     /**

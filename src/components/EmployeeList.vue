@@ -78,7 +78,10 @@
         <NcDialog v-if="showRestingDialog"
             :name="t('worktime', 'Mitarbeiter ruhend setzen?')"
             @close="closeRestingDialog">
-            <p>{{ t('worktime', '"{name}" kann dann keine Zeiten und Abwesenheiten mehr erfassen. Bestehende Daten bleiben einsehbar und exportierbar.', { name: employeeToRest?.fullName }) }}</p>
+            <p>
+                {{ t('worktime', '"{name}" kann dann keine Zeiten und Abwesenheiten mehr erfassen. Bestehende Daten bleiben einsehbar und exportierbar.', { name: employeeToRest?.fullName }) }}
+                <InfoIcon>{{ t('worktime', 'Gedacht für Elternzeit, Mutterschutz, Langzeiterkrankung oder Ausscheiden. Der Mitarbeiter bleibt in der Verwaltung sichtbar und sieht seine eigenen Daten weiterhin, kann aber nichts mehr erfassen. Personalverwaltung und Administration können zurückliegende Einträge weiterhin korrigieren. Jederzeit umkehrbar.') }}</InfoIcon>
+            </p>
 
             <NcTextField :value.sync="restingReason"
                 maxlength="500"
@@ -114,11 +117,50 @@
 
         <NcDialog v-if="showDeleteDialog"
             :name="t('worktime', 'Mitarbeiter löschen?')"
-            @close="showDeleteDialog = false">
+            @close="closeDeleteDialog">
             <p>{{ t('worktime', 'Möchten Sie den Mitarbeiter "{name}" wirklich löschen?', { name: employeeToDelete?.fullName }) }}</p>
-            <p class="delete-warning">{{ t('worktime', 'Diese Aktion kann nicht rückgängig gemacht werden.') }}</p>
+
+            <p v-if="deleteImpactLoading" class="impact-loading">{{ t('worktime', 'Umfang wird ermittelt …') }}</p>
+
+            <div v-if="deletionRows.length > 0" class="impact-block">
+                <strong>{{ t('worktime', 'Mitgelöscht werden:') }}</strong>
+                <ul class="deletion-counts">
+                    <li v-for="row in deletionRows" :key="row.key">
+                        <span>{{ row.label }}</span>
+                        <span class="deletion-count">{{ row.count }}</span>
+                    </li>
+                </ul>
+            </div>
+
+            <p v-else-if="deleteImpact && !deleteImpactLoading">
+                {{ t('worktime', 'Zu diesem Mitarbeiter sind keine weiteren Daten erfasst.') }}
+            </p>
+
+            <div v-if="deleteImpact && deleteImpact.supervisorOf.length > 0" class="impact-block impact-warning">
+                <strong>{{ t('worktime', 'Diese Mitarbeiter haben dann keinen Vorgesetzten mehr:') }}</strong>
+                <ul>
+                    <li v-for="person in deleteImpact.supervisorOf" :key="'ds' + person.id">{{ person.fullName }}</li>
+                </ul>
+                <p>{{ t('worktime', 'Ihre Genehmigungen laufen dann nur noch über Admin oder Personalverwaltung.') }}</p>
+            </div>
+
+            <div v-if="deleteImpact && deleteImpact.deputyFor.length > 0" class="impact-block">
+                <strong>{{ t('worktime', 'Vertretung wird gestrichen bei:') }}</strong>
+                <ul>
+                    <li v-for="person in deleteImpact.deputyFor" :key="'dd' + person.id">{{ person.fullName }}</li>
+                </ul>
+            </div>
+
+            <NcNoteCard type="warning">
+                {{ t('worktime', 'Diese Aktion kann nicht rückgängig gemacht werden. Für Arbeitszeitnachweise können Aufbewahrungspflichten gelten — prüfen Sie das, bevor Sie löschen.') }}
+            </NcNoteCard>
+
+            <NcNoteCard type="info">
+                {{ t('worktime', 'Für ausgeschiedene Mitarbeiter ist meist „Ruhend setzen“ richtig: Die Erfassung wird beendet, die Daten bleiben einsehbar und exportierbar.') }}
+            </NcNoteCard>
+
             <template #actions>
-                <NcButton type="tertiary" @click="showDeleteDialog = false">
+                <NcButton type="tertiary" @click="closeDeleteDialog">
                     {{ t('worktime', 'Abbrechen') }}
                 </NcButton>
                 <NcButton type="error" @click="deleteConfirmed">
@@ -133,7 +175,9 @@
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
+import NcNoteCard from '@nextcloud/vue/dist/Components/NcNoteCard.js'
 import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
+import InfoIcon from './InfoIcon.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Close from 'vue-material-design-icons/Close.vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
@@ -148,7 +192,9 @@ export default {
         NcButton,
         NcEmptyContent,
         NcDialog,
+        NcNoteCard,
         NcTextField,
+        InfoIcon,
         Pencil,
         Close,
         AccountGroup,
@@ -166,12 +212,42 @@ export default {
         return {
             showDeleteDialog: false,
             employeeToDelete: null,
+            deleteImpact: null,
+            deleteImpactLoading: false,
             showRestingDialog: false,
             employeeToRest: null,
             restingReason: '',
             impact: null,
             impactLoading: false,
         }
+    },
+    computed: {
+        /**
+         * The record counts worth showing: everything the backend reports as
+         * greater than zero, in a fixed order so the dialog does not reshuffle
+         * between employees. Empty tables are left out — listing eight rows of
+         * "0" buries the two numbers that matter.
+         */
+        deletionRows() {
+            if (!this.deleteImpact) {
+                return []
+            }
+
+            const labels = [
+                ['timeEntries', this.t('worktime', 'Zeiteinträge')],
+                ['absences', this.t('worktime', 'Abwesenheiten')],
+                ['workSchedules', this.t('worktime', 'Arbeitszeitprofile')],
+                ['carryovers', this.t('worktime', 'Jahresüberträge')],
+                ['payouts', this.t('worktime', 'Überstunden-Auszahlungen')],
+                ['projectAssignments', this.t('worktime', 'Projektzuordnungen')],
+                ['archiveJobs', this.t('worktime', 'Archiv-Aufträge')],
+                ['auditLogs', this.t('worktime', 'Protokolleinträge')],
+            ]
+
+            return labels
+                .filter(([key]) => (this.deleteImpact.counts[key] || 0) > 0)
+                .map(([key, label]) => ({ key, label, count: this.deleteImpact.counts[key] }))
+        },
     },
     methods: {
         async confirmResting(employee) {
@@ -208,14 +284,38 @@ export default {
             this.$emit('rest', { employee: this.employeeToRest, reason: this.restingReason })
             this.closeRestingDialog()
         },
-        confirmDelete(employee) {
+        async confirmDelete(employee) {
             this.employeeToDelete = employee
+            this.deleteImpact = null
             this.showDeleteDialog = true
+            this.deleteImpactLoading = true
+
+            try {
+                const impact = await EmployeeService.getDeletionImpact(employee.id)
+                if (this.employeeToDelete === employee) {
+                    this.deleteImpact = impact
+                }
+            } catch (e) {
+                // Without the preview the dialog still works, it just warns in
+                // general terms instead of naming numbers.
+                if (this.employeeToDelete === employee) {
+                    this.deleteImpact = null
+                }
+            } finally {
+                if (this.employeeToDelete === employee) {
+                    this.deleteImpactLoading = false
+                }
+            }
+        },
+        closeDeleteDialog() {
+            this.showDeleteDialog = false
+            this.employeeToDelete = null
+            this.deleteImpact = null
+            this.deleteImpactLoading = false
         },
         deleteConfirmed() {
             this.$emit('delete', this.employeeToDelete)
-            this.showDeleteDialog = false
-            this.employeeToDelete = null
+            this.closeDeleteDialog()
         },
     },
 }
@@ -290,11 +390,6 @@ td.actions-col {
     color: var(--color-text-maxcontrast);
 }
 
-.delete-warning {
-    color: var(--color-error-text);
-    font-size: 0.9em;
-}
-
 .locked-reason {
     font-size: 0.85em;
     color: var(--color-text-maxcontrast);
@@ -317,5 +412,28 @@ td.actions-col {
 
 .impact-warning {
     color: var(--color-error-text);
+}
+
+/* Zahlenliste statt Aufzaehlung: die Menge ist hier die Aussage, deshalb
+   rechtsbuendig in einer eigenen Spalte statt hinter dem Label im Fliesstext.
+   Selektor bewusst mit .impact-block davor: `.impact-block ul` (0,0,1,1)
+   schlaegt sonst `.deletion-counts` (0,0,1,0) und die Punkte blieben stehen
+   (#424). */
+.impact-block ul.deletion-counts {
+    margin: 4px 0 16px 0;
+    list-style: none;
+    max-width: 22rem;
+}
+
+.impact-block ul.deletion-counts li {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 2px 0;
+}
+
+.deletion-count {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
 }
 </style>
