@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace OCA\WorkTime\Tests\Unit\Notification;
 
+use OCA\WorkTime\AppInfo\Application;
 use OCA\WorkTime\Notification\Notifier;
+use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\L10N\IFactory;
+use OCP\Notification\INotification;
+use OCP\Notification\UnknownNotificationException;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
@@ -23,12 +27,69 @@ class NotifierTest extends TestCase {
     private Notifier $notifier;
 
     protected function setUp(): void {
+        $l10n = $this->createMock(IL10N::class);
+        $l10n->method('t')->willReturnCallback(
+            static fn (string $text): string => $text
+        );
+        $l10nFactory = $this->createMock(IFactory::class);
+        $l10nFactory->method('get')->willReturn($l10n);
+
         $this->notifier = new Notifier(
             $this->createMock(IURLGenerator::class),
-            $this->createMock(IFactory::class),
+            $l10nFactory,
         );
         $this->formatMonthYear = new ReflectionMethod(Notifier::class, 'formatMonthYear');
         $this->formatMonthYear->setAccessible(true);
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     */
+    private function buildNotification(string $subject, array $params, bool $subjectThrows = false): INotification {
+        $notification = $this->createMock(INotification::class);
+        $notification->method('getApp')->willReturn(Application::APP_ID);
+        $notification->method('getSubject')->willReturn($subject);
+        $notification->method('getSubjectParameters')->willReturn($params);
+        if ($subjectThrows) {
+            // Mirrors NC's INotification setters, which validate their input and
+            // throw \InvalidArgumentException on an empty/oversized value.
+            $notification->method('setParsedSubject')->willThrowException(new \InvalidArgumentException('invalid subject'));
+        } else {
+            $notification->method('setParsedSubject')->willReturnSelf();
+        }
+        $notification->method('setParsedMessage')->willReturnSelf();
+        $notification->method('setIcon')->willReturnSelf();
+        $notification->method('setLink')->willReturnSelf();
+        return $notification;
+    }
+
+    public function testForeignAppNotificationIsUnknown(): void {
+        $notification = $this->createMock(INotification::class);
+        $notification->method('getApp')->willReturn('some_other_app');
+
+        $this->expectException(UnknownNotificationException::class);
+        $this->notifier->prepare($notification, 'de');
+    }
+
+    public function testUnknownSubjectIsUnknown(): void {
+        $this->expectException(UnknownNotificationException::class);
+        $this->notifier->prepare($this->buildNotification('subject_that_does_not_exist', []), 'de');
+    }
+
+    public function testKnownNotificationIsPrepared(): void {
+        $notification = $this->buildNotification('time_entries_approved', ['month' => 3, 'year' => 2026]);
+        $this->assertSame($notification, $this->notifier->prepare($notification, 'de'));
+    }
+
+    public function testStaleParametersAreDiscardedAsUnknown(): void {
+        // #551: a known notification whose stored parameters no longer validate
+        // makes an NC setter throw \InvalidArgumentException. It must not escape
+        // prepare() (deprecated on NC 34+) — the undisplayable notification is
+        // discarded as unknown instead, so it stops re-spamming the log.
+        $notification = $this->buildNotification('time_entries_approved', ['month' => 3, 'year' => 2026], subjectThrows: true);
+
+        $this->expectException(UnknownNotificationException::class);
+        $this->notifier->prepare($notification, 'de');
     }
 
     /**
