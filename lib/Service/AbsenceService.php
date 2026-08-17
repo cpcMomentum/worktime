@@ -1058,8 +1058,8 @@ class AbsenceService {
      *
      *  - base entitlement from the year's own work-schedule profile
      *    (#501 — the employee cache field only ever holds today's profile),
-     *  - plus the previous-year carryover (#500), rounded to whole days the way
-     *    it has always been rounded here,
+     *  - plus the previous-year carryover (#500), counted exactly, including
+     *    half days (#525),
      *  - minus the days already used in the entry year (#522).
      *
      * Callers (vacation overview, quota check when requesting, Betriebsferien,
@@ -1067,7 +1067,10 @@ class AbsenceService {
      * #501 were both symptoms of exactly that.
      */
     public function effectiveVacationDays(int $employeeId, int $year): float {
-        $carryover = (float)(int)round($this->carryoverService->getVacationCarryoverDays($employeeId, $year));
+        // #525: the carryover is stored and entered with half-day precision
+        // (step 0.5, DECIMAL(4,1)); count it exactly instead of rounding, so the
+        // displayed and the charged carryover match in balance and quota check.
+        $carryover = $this->carryoverService->getVacationCarryoverDays($employeeId, $year);
         $used = $this->vacationDaysUsedInYear($employeeId, $year);
         $fullYear = (float)$this->workScheduleService->getVacationDaysForYear($employeeId, $year);
 
