@@ -1097,7 +1097,7 @@ class AbsenceService {
      * employer, or before the company moved to this app. The value belongs to
      * that one year only; every later year gets the full entitlement.
      *
-     * Deliberately exact: unlike the carryover above, half days are not rounded.
+     * Deliberately exact: half days are not rounded (same as the carryover).
      */
     public function vacationDaysUsedInYear(int $employeeId, int $year): float {
         $employee = $this->employeeMapper->find($employeeId);
