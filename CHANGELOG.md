@@ -7,6 +7,12 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.16.1] - 2026-08-17
+
+### Fixed
+- **Update auf 0.16.0 brach bei der Migration ab (#596)**: Auf manchen Instanzen scheiterte das Update mit „Column vacation_transferred is type Bool and also NotNull, so it can not store false". Ursache war eine NOT-NULL-Boolean-Spalte, die Nextcloud je nach Datenbank/Plattform ablehnt. Die Spalte wird jetzt nullable angelegt (Standardwert unverändert), das Update läuft wieder durch. Bereits erfolgreich aktualisierte Instanzen sind nicht betroffen.
+- **Wiederholte Log-Warnung des Benachrichtigungs-Notifiers (#551)**: Seit Nextcloud 34 konnte `Notifier::prepare()` eine veraltete `\InvalidArgumentException` bis in den Server durchreichen, was das Log im Minutentakt füllte. Beim Aufbau einer nicht mehr darstellbaren Benachrichtigung wird sie jetzt abgefangen und die Benachrichtigung sauber verworfen.
+
 ## [0.16.0] - 2026-08-17
 
 ### Added
