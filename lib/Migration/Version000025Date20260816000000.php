@@ -43,8 +43,16 @@ class Version000025Date20260816000000 extends SimpleMigrationStep {
         $table = $schema->getTable('wt_employees');
 
         if (!$table->hasColumn('vacation_transferred')) {
+            // #596: the column must be nullable. Nextcloud rejects a NOT NULL
+            // boolean column ("type Bool and also NotNull, so it can not store
+            // false") because false is treated as an empty value that a NOT NULL
+            // boolean cannot hold on every supported platform — the update aborts.
+            // A nullable boolean with a false default is the portable form: the
+            // DEFAULT backfills existing rows to false on ADD COLUMN, so no NULL
+            // ever reaches the (typed bool) entity, and postSchemaChange then
+            // flips the takeover rows to true.
             $table->addColumn('vacation_transferred', Types::BOOLEAN, [
-                'notnull' => true,
+                'notnull' => false,
                 'default' => false,
             ]);
         }
