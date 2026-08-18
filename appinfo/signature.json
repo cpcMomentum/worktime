@@ -1,9 +1,9 @@
 {
     "hashes": {
-        "CHANGELOG.md": "7791b0fffde0b7b9db810beba81cf8d3067054fb6c912e04d6233ad916d9f141249de8da2c409781277abfd044ecadf0f619ca972f9676d35a29eb3e7f0a8d7b",
+        "CHANGELOG.md": "13f9f1cde56d07661f46958acb91776d00a35afca519e24fb1031969a67613fa3829b7d4a6655fc5d4832e862701e8da32d0467ecb46ee61e7a7f0f034b3cc94",
         "LICENSE": "3568a76677f3d55dbbc7fc33c4073b4714cc6f68d92cd842a9ca2b230e8bd2140e59c3fc3cce34be34ffed78d75ab6e9d991ba59bf7c4addde7fb96648d3375d",
         "README.md": "e1ea095e791e588f038d999d22a190ec267b1146f4fbfa5582b2b18faf21b1a8f55c41258df708a4b7639d03a695afcdf753ce6107f0d5074c61f6f36dae7175",
-        "appinfo\/info.xml": "6847ea1af273ebecf6f65332fd86ca451d7d616386689cda48a83ac2bf6d2a596acbea94660fa18f97775e95e63d3df03269b01d11b6ecb21bb201234719b75c",
+        "appinfo\/info.xml": "91519c081cdeea759e7a0968cfcbaa83ca3ea93f440b41a1ca0f1934acf66de42f09f711bf977b736d7db9bf86def204cbd9804fcfaf47b0dd34f9e15ce31d75",
         "appinfo\/routes.php": "2d795fe5f9f80db2cece085ede30411cf029f9337c884eb8fce02f1c4113d7c5ddb8bb00aa8566209661208d2006f27579d9efeace92846c18548cbc17a37ef4",
         "img\/app-dark.svg": "d7eae0ce39e99f05f315a4f0c2387a8d4987d9bb4bf498bbc89e3844c2f76d485c12fd191a9c327fd76066fe8d393fb73b4c00c7f174ff217127c3d0967239c1",
         "img\/app.svg": "72157d282e54255774f345423a59f021ab4b6d73610526f33ade8db8ded3122c87fc0653bca6f57614a8f2e0ff79083ed66b29b49376f8b1c2e5242de68cf1a6",
@@ -89,7 +89,7 @@
         "lib\/Migration\/Version000024Date20260731000000.php": "bba27017424bf4e1676f403425c08ba0f171025df0eac6471d24633114cd67e029d298135a9b179c775a0471be563495c16ea9c797301cb178fe1d72dbcd37ca",
         "lib\/Migration\/Version000025Date20260816000000.php": "4e68d093da1109f4494d616508b09a0f031bffcb14665dcd52e0c4879f6a33d7aab5fcd816d23c6d12993a8c3893b3e9d293ac579d260c16aea70eba564ae29a",
         "lib\/Notification\/NotificationService.php": "e2170230b5ed3fd8f5bec1c17a402b2d4cd211aa32fba08145fa49f86b252f291e7740b75a2ddb63fc34a8b30b55f22d23fb6364d6b28714e2946f8ad886c081",
-        "lib\/Notification\/Notifier.php": "ae669618bf3001c6a67b8bee2159392d43023edc328a171eb72401593db57b779f1bbdc1231764d64aeb6bb96d8a2bfe780a1ad31084490cabb3e9b151987b86",
+        "lib\/Notification\/Notifier.php": "3bb6446847f16f1df9c7ab16a8e951a658510e695f0c60b589df03917b0a31074e11d8fc98918af0ab55e2c05597865d0ca79287ec9d6aac3be43e1e1d3976ab",
         "lib\/Service\/.gitkeep": "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e",
         "lib\/Service\/AbsenceService.php": "52275a0226a26addc07f0b791a79cd6f7a603cde64ea662d5ba39f57924717493fc75246c04cd1a71a5c45ad5a966267efea1270678d1cd065d2ff009234ea2c",
         "lib\/Service\/ArchiveService.php": "b3a6f6f0353876bc52cf2bab32f2894941d0eedee6f32c5f17ec689b7ca2a04db0a2f2e9ac152fd568a7d889775a93990858fc08e28dff9ba4d21822e415df4f",
@@ -188,6 +188,6 @@
         "vendor\/tecnickcom\/tcpdf\/tools\/convert_fonts_examples.txt": "c4c8e617248924852aca34f4d0030377ca451e2e5de775ddc4d5cef353af1e7d2061c7ef7bf038a7fb9f9d4149acef8101d4e1fef168deb48c61a0eefe859227",
         "vendor\/tecnickcom\/tcpdf\/tools\/tcpdf_addfont.php": "f94b7d68e38f4def7f079efea17bdffae67f0ddfd92ff579d7d36967eef326329562e23786b9ad664281b63c9853b7ef750adfa7c856a0d7bbe511be850fbf30"
     },
-    "signature": "ojyaNCOZ0W4nFi7WJw8TPUaMqjP1MjdKpdjtXR7A+qZvd+wGqQwgDy7PxtJRJIkMatNFs9Onu5PAWjTAZk8DlemJ8rJfFBn8ZcsToDTNXQTPzpNrwE848OFF7STcEBeS42kDLWOMcRQ2aBwId8M7eFplgQkSeZaLR6MCVvkDHQVo4wn8ZWCILNG0VAridxKYicGHhZwdDtr6RqyNGtpF0jUknc5LuppCBZqptueqXf4m8xfg3ksveXNLAzEmh09jkvxTp6K8Rv2Rq4Nn2Lh6pm82SfCkvsVBOEZr6nr08xRPjg7PE0ujtP3Mz0ro+jsXBjU5yvHk7TvNlHxnyMgoUA==",
+    "signature": "aU8Dw4Mfx6uH4wcswRXYfIT+jAKvSwwoV0ZfBcQ1k7ASXh8lsnkOydGB6eSn8cBbkrgw\/q2ibSZIqnFKPu6fQiXTOaSP8XnEyUIgzmEq5j6BueuNzaSa8Ea+UgwqCaWgY7o9zsHoiGbt\/9Kqo6ELMBd7+1CwJVMhpaa749H6FnQIe23Gn5B3LcN\/TOUy4wZkHfvyrCC4TpjhLLjF1WIj6XdgKPVzDJrJZe6e6fe11joA57IqmshyZtAyYj21itBmCgUxFP8SQhxFicFMlU6qHwYIX9FTfoTiXJiwcMPJuyiictPjpbYLlDXc91iiotO2h4vPrKkH5oyASWETUAc73g==",
     "certificate": "-----BEGIN CERTIFICATE-----\r\nMIIDAzCCAesCAhLvMA0GCSqGSIb3DQEBCwUAMHsxCzAJBgNVBAYTAkRFMRswGQYD\r\nVQQIDBJCYWRlbi1XdWVydHRlbWJlcmcxFzAVBgNVBAoMDk5leHRjbG91ZCBHbWJI\r\nMTYwNAYDVQQDDC1OZXh0Y2xvdWQgQ29kZSBTaWduaW5nIEludGVybWVkaWF0ZSBB\r\ndXRob3JpdHkwHhcNMjYwMjA2MTgwNzAyWhcNMzYwNTE0MTgwNzAyWjATMREwDwYD\r\nVQQDDAh3b3JrdGltZTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL\/b\r\n9iUR\/hnnlbkchImfamKpEfnMyIiM6Ewe58W3JrJGA6pycVkamLyeUEcaRMbaZmbK\r\n5oosZ8g\/mVjLSZcAbM8F2rV4pOsSD6ToJ7S419gCHYBMVsm9HDdYbej65DXXqOJn\r\nVV4xfdj8KSaxsgH\/1aVWvKBil8sjLiBUEIHdOCytY3EEzISn8p+Ma5cUC+1Bf9kh\r\nffY5i0YvZ38R8cdI0SeraLmHBpUy4m91P7Kg03uZspiWwYZBupTZxhlBAawKU\/Za\r\nxcViP7+JY8p4lll0io1Q1ViXPnFcj8C9uvnU43k13wRbAWqYV8pUEQcKKbA60Gk\/\r\nZB+Z4b1l+5V0Sp1a0NUCAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAgOYI54EXGsPe\r\n3aXvprtL4CvR33fEBJguelgz4pqrxSQRgnxJySB6Fo+ocj7wxQt0\/\/sw4bds60cH\r\n82rC6uF23lA7GE0\/sdHQPrc9UW\/C93oU5pgC54CKWUMqUBgWiBjTe4tStf5gE0C1\r\n5Jad2eMKpEnNO8x7v+OnxOzJYhUZvbN0E3UM5NVjzcZV\/lsVQxnmhtXkd4dJ6twy\r\n+QAQlmifHcw4beyvF1A4e1Hwcc4\/b9O64RdI\/oZ\/ehU41uP5zdF61B6A6cF+IbS+\r\nUdTPcyqRqEsFQRw52JpSdkKnFtG76Dg8rD0o5PyrmKOtHMnssPdJicehEoFe144e\r\nOdhkeyiR8w==\r\n-----END CERTIFICATE-----"
 }

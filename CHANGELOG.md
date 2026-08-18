@@ -7,6 +7,11 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.16.3] - 2026-08-18
+
+### Fixed
+- **Benachrichtigungen kamen auf Nextcloud 34 ohne Symbol und ohne Verlinkung an (#551)**: Auf Nextcloud 34 fehlte allen WorkTime-Benachrichtigungen das App-Symbol und der Link, mit dem man aus der Benachrichtigung in die App springt. Ursache war eine relative Symbol-Adresse, die Nextcloud 34 nicht mehr akzeptiert. Das Symbol wird jetzt als absolute Adresse gesetzt, Symbol und Verlinkung erscheinen wieder. (Der zugehörige wiederholte Log-Eintrag war bereits mit 0.16.1 verstummt; dies behebt die eigentliche Ursache.)
+
 ## [0.16.2] - 2026-08-18
 
 ### Fixed
