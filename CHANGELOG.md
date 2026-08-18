@@ -7,6 +7,11 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.16.2] - 2026-08-18
+
+### Fixed
+- **Halbe Urlaubstage aus dem Jahresübertrag wurden als ganze verrechnet (#525)**: Ein Übertrag von etwa 12,5 Tagen wurde in Guthaben und Antragsprüfung auf 13 aufgerundet, obwohl die Übersicht den halben Tag korrekt anzeigte. Anzeige und Verrechnung stimmen jetzt überein, der Übertrag zählt exakt mit halben Tagen. Betrifft nur Mitarbeitende mit einem halben Tag im Vorjahresübertrag.
+
 ## [0.16.1] - 2026-08-17
 
 ### Fixed
