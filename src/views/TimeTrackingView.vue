@@ -486,7 +486,9 @@ export default {
             try {
                 const stats = await AbsenceService.getVacationStats(this.activeEmployeeId, this.selectedMonth.year)
                 this.vacationRemaining = stats?.remaining ?? null
-                this.vacationCarryover = Math.round(stats?.carryover ?? 0)
+                // #525: Übertrag exakt anzeigen (halbe Tage), damit diese
+                // Anzeige mit Urlaubsübersicht und Verrechnung deckungsgleich ist.
+                this.vacationCarryover = stats?.carryover ?? 0
                 this.vacationTotal = stats?.total ?? null
             } catch (error) {
                 console.error('Failed to load vacation stats:', error)
