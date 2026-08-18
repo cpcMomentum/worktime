@@ -81,15 +81,52 @@ class NotifierTest extends TestCase {
         $this->assertSame($notification, $this->notifier->prepare($notification, 'de'));
     }
 
-    public function testStaleParametersAreDiscardedAsUnknown(): void {
-        // #551: a known notification whose stored parameters no longer validate
-        // makes an NC setter throw \InvalidArgumentException. It must not escape
-        // prepare() (deprecated on NC 34+) — the undisplayable notification is
-        // discarded as unknown instead, so it stops re-spamming the log.
+    public function testSetterRejectionIsDiscardedAsUnknown(): void {
+        // #551 safety net: if an NC INotification setter rejects a value while
+        // building a known notification, the resulting \InvalidArgumentException
+        // must not escape prepare() (deprecated on NC 34+). It is converted to
+        // UnknownNotificationException so the undisplayable notification is
+        // discarded cleanly instead of spamming the log every cron run.
         $notification = $this->buildNotification('time_entries_approved', ['month' => 3, 'year' => 2026], subjectThrows: true);
 
         $this->expectException(UnknownNotificationException::class);
         $this->notifier->prepare($notification, 'de');
+    }
+
+    public function testIconIsSetAsAbsoluteUrl(): void {
+        // #551 root cause: NC 34's setIcon() rejects a non-absolute URL, but
+        // imagePath() returns a relative path. The notifier must wrap it in
+        // getAbsoluteURL(); otherwise setIcon() throws and the notification
+        // loses both its icon and its link on NC 34. This locks the icon in as
+        // an absolute (http) URL so a regression to raw imagePath() fails here.
+        $urlGenerator = $this->createMock(IURLGenerator::class);
+        $urlGenerator->method('imagePath')
+            ->willReturn('/custom_apps/worktime/img/app-dark.svg');
+        $urlGenerator->method('getAbsoluteURL')
+            ->willReturnCallback(static fn (string $path): string => 'http://localhost' . $path);
+        $urlGenerator->method('linkToRouteAbsolute')
+            ->willReturn('http://localhost/apps/worktime/');
+
+        $l10n = $this->createMock(IL10N::class);
+        $l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
+        $l10nFactory = $this->createMock(IFactory::class);
+        $l10nFactory->method('get')->willReturn($l10n);
+
+        $notifier = new Notifier($urlGenerator, $l10nFactory);
+
+        $notification = $this->createMock(INotification::class);
+        $notification->method('getApp')->willReturn(Application::APP_ID);
+        $notification->method('getSubject')->willReturn('time_entries_approved');
+        $notification->method('getSubjectParameters')->willReturn(['month' => 3, 'year' => 2026]);
+        $notification->method('setParsedSubject')->willReturnSelf();
+        $notification->method('setParsedMessage')->willReturnSelf();
+        $notification->method('setLink')->willReturnSelf();
+        $notification->expects($this->once())
+            ->method('setIcon')
+            ->with($this->stringStartsWith('http'))
+            ->willReturnSelf();
+
+        $notifier->prepare($notification, 'de');
     }
 
     /**
