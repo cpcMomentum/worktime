@@ -106,18 +106,51 @@ class PunchServiceTest extends TestCase {
 
 	// --- pause / resume ---------------------------------------------------
 
-	public function testResumeAccumulatesBreakSeconds(): void {
+	public function testPauseUsesAtomicConditionalUpdate(): void {
+		$punch = $this->punch($this->utc('2020-01-01 08:00:00'));
+		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		// Atomic pause must run as a guarded UPDATE, not a read-then-update.
+		$this->mapper->expects($this->never())->method('update');
+		$this->mapper->expects($this->once())->method('pauseIfRunning')
+			->with(1, $this->isType('string'))->willReturn(1);
+
+		$result = $this->service->punchPause(7);
+		$this->assertInstanceOf(ActivePunch::class, $result);
+	}
+
+	public function testPauseLosingTheRaceThrowsConflict(): void {
+		$punch = $this->punch($this->utc('2020-01-01 08:00:00'));
+		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		// A concurrent pause already flipped paused_at → 0 affected.
+		$this->mapper->method('pauseIfRunning')->willReturn(0);
+
+		$this->expectException(PunchConflictException::class);
+		$this->service->punchPause(7);
+	}
+
+	public function testResumeAccumulatesElapsedViaAtomicUpdate(): void {
 		$pausedAt = (new DateTime('now', new DateTimeZone('UTC')))->modify('-600 seconds');
 		$punch = $this->punch($this->utc('2020-01-01 08:00:00'), 100, $pausedAt);
 		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
-		$this->mapper->method('update')->willReturnCallback(fn (ActivePunch $p): ActivePunch => $p);
+		$this->mapper->expects($this->never())->method('update');
+		// The elapsed pause (~600s) is added as column arithmetic, not in PHP.
+		$this->mapper->expects($this->once())->method('accumulateBreakAndResume')
+			->with(1, $this->callback(fn (int $d): bool => $d >= 599 && $d <= 602))
+			->willReturn(1);
 
 		$result = $this->service->punchResume(7);
+		$this->assertInstanceOf(ActivePunch::class, $result);
+	}
 
-		// 100 prior + ~600 elapsed; allow a couple of seconds of execution slack.
-		$this->assertGreaterThanOrEqual(699, $result->getBreakSeconds());
-		$this->assertLessThanOrEqual(603 + 100, $result->getBreakSeconds());
-		$this->assertNull($result->getPausedAt());
+	public function testResumeLosingTheRaceThrowsConflict(): void {
+		$pausedAt = (new DateTime('now', new DateTimeZone('UTC')))->modify('-600 seconds');
+		$punch = $this->punch($this->utc('2020-01-01 08:00:00'), 100, $pausedAt);
+		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		// A concurrent resume already cleared paused_at → 0 affected, no double-count.
+		$this->mapper->method('accumulateBreakAndResume')->willReturn(0);
+
+		$this->expectException(PunchConflictException::class);
+		$this->service->punchResume(7);
 	}
 
 	public function testPauseWhenNotOpenThrowsConflict(): void {
@@ -129,6 +162,7 @@ class PunchServiceTest extends TestCase {
 	public function testPauseWhenAlreadyPausedThrowsConflict(): void {
 		$punch = $this->punch($this->utc('2020-01-01 08:00:00'), 0, $this->utc('2020-01-01 12:00:00'));
 		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		$this->mapper->expects($this->never())->method('pauseIfRunning');
 		$this->expectException(PunchConflictException::class);
 		$this->service->punchPause(7);
 	}
@@ -136,6 +170,7 @@ class PunchServiceTest extends TestCase {
 	public function testResumeWhenNotPausedThrowsConflict(): void {
 		$punch = $this->punch($this->utc('2020-01-01 08:00:00'));
 		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		$this->mapper->expects($this->never())->method('accumulateBreakAndResume');
 		$this->expectException(PunchConflictException::class);
 		$this->service->punchResume(7);
 	}

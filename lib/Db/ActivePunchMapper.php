@@ -63,4 +63,46 @@ class ActivePunchMapper extends QBMapper {
 
 		return $qb->executeStatement();
 	}
+
+	/**
+	 * Atomically start a live break: set paused_at only if the punch is currently
+	 * running (paused_at IS NULL). Returns affected rows — 0 means it was already
+	 * paused (or gone). The row lock + WHERE re-evaluation serializes two
+	 * concurrent pause calls so only one wins (#612).
+	 *
+	 * @param string $nowUtc UTC timestamp formatted 'Y-m-d H:i:s'
+	 */
+	public function pauseIfRunning(int $id, string $nowUtc): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('paused_at', $qb->createNamedParameter($nowUtc))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT)))
+			->andWhere($qb->expr()->isNull('paused_at'));
+
+		return $qb->executeStatement();
+	}
+
+	/**
+	 * Atomically end a live break: add the elapsed seconds to break_seconds and
+	 * clear paused_at, only if a break is currently running (paused_at IS NOT
+	 * NULL). Returns affected rows — 0 means no break was running (already
+	 * resumed, or gone). The increment is done as column arithmetic in one
+	 * statement, so two concurrent resumes cannot double-count: the row lock
+	 * serializes them and the second sees paused_at already NULL → 0 affected
+	 * (#612). Portable across pgsql/mysql/sqlite (no datetime SQL functions).
+	 */
+	public function accumulateBreakAndResume(int $id, int $deltaSeconds): int {
+		$delta = max(0, $deltaSeconds);
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			// func()->add() yields an IQueryFunction that set() passes through
+			// unquoted — a raw "break_seconds + :p" string would be quoted as a
+			// column name and break.
+			->set('break_seconds', $qb->func()->add('break_seconds', $qb->createNamedParameter($delta, IQueryBuilder::PARAM_INT)))
+			->set('paused_at', $qb->createNamedParameter(null, IQueryBuilder::PARAM_NULL))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT)))
+			->andWhere($qb->expr()->isNotNull('paused_at'));
+
+		return $qb->executeStatement();
+	}
 }
