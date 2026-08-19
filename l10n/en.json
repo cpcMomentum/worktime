@@ -684,7 +684,23 @@
 		"Es läuft bereits eine Stempelung.": "A punch is already running.",
 		"Die Stempelung ist bereits pausiert.": "The punch is already paused.",
 		"Es läuft gerade keine Pause.": "No break is currently running.",
-		"Es läuft keine Stempelung.": "No punch is running."
+		"Es läuft keine Stempelung.": "No punch is running.",
+		"Ausstempeln": "Clock out",
+		"Zeiteintrag bestätigen": "Confirm time entry",
+		"Prüfe die Zeiten und bestätige, um den Zeiteintrag anzulegen.": "Check the times and confirm to create the time entry.",
+		"Du bist seit {hours} h eingestempelt. Bitte prüfe das Ende, bevor du buchst.": "You have been clocked in for {hours} h. Please check the end before booking.",
+		"Start": "Start",
+		"Optionale Notiz": "Optional note",
+		"Nettozeit: {duration}": "Net time: {duration}",
+		"Buchen": "Book",
+		"Buchen fehlgeschlagen.": "Booking failed.",
+		"Projekt (optional)": "Project (optional)",
+		"Notiz (optional)": "Note (optional)",
+		"Einstempeln": "Clock in",
+		"In Pause": "On break",
+		"Einstempeln fehlgeschlagen.": "Clock-in failed.",
+		"Pause fehlgeschlagen.": "Pausing failed.",
+		"Fortsetzen fehlgeschlagen.": "Resuming failed."
 	},
 	"pluralForm": "nplurals=2; plural=(n != 1);"
 }

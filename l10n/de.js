@@ -685,6 +685,22 @@ OC.L10N.register(
     "Es läuft bereits eine Stempelung." : "Es läuft bereits eine Stempelung.",
     "Die Stempelung ist bereits pausiert." : "Die Stempelung ist bereits pausiert.",
     "Es läuft gerade keine Pause." : "Es läuft gerade keine Pause.",
-    "Es läuft keine Stempelung." : "Es läuft keine Stempelung."
+    "Es läuft keine Stempelung." : "Es läuft keine Stempelung.",
+    "Ausstempeln" : "Ausstempeln",
+    "Zeiteintrag bestätigen" : "Zeiteintrag bestätigen",
+    "Prüfe die Zeiten und bestätige, um den Zeiteintrag anzulegen." : "Prüfe die Zeiten und bestätige, um den Zeiteintrag anzulegen.",
+    "Du bist seit {hours} h eingestempelt. Bitte prüfe das Ende, bevor du buchst." : "Du bist seit {hours} h eingestempelt. Bitte prüfe das Ende, bevor du buchst.",
+    "Start" : "Start",
+    "Optionale Notiz" : "Optionale Notiz",
+    "Nettozeit: {duration}" : "Nettozeit: {duration}",
+    "Buchen" : "Buchen",
+    "Buchen fehlgeschlagen." : "Buchen fehlgeschlagen.",
+    "Projekt (optional)" : "Projekt (optional)",
+    "Notiz (optional)" : "Notiz (optional)",
+    "Einstempeln" : "Einstempeln",
+    "In Pause" : "In Pause",
+    "Einstempeln fehlgeschlagen." : "Einstempeln fehlgeschlagen.",
+    "Pause fehlgeschlagen." : "Pause fehlgeschlagen.",
+    "Fortsetzen fehlgeschlagen." : "Fortsetzen fehlgeschlagen."
 },
 "nplurals=2; plural=(n != 1);");
