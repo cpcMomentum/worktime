@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Notification;
 
 use OCA\WorkTime\AppInfo\Application;
+use OCA\WorkTime\Db\ActivePunchMapper;
 use OCP\IURLGenerator;
 use OCP\L10N\IFactory;
 use OCP\Notification\INotification;
@@ -21,6 +22,7 @@ class Notifier implements INotifier {
 	public function __construct(
 		private IURLGenerator $urlGenerator,
 		private IFactory $l10nFactory,
+		private ActivePunchMapper $activePunchMapper,
 	) {
 	}
 
@@ -193,6 +195,30 @@ class Notifier implements INotifier {
 						$l->t('Fehler: %s', [$params['error']])
 					);
 				}
+				break;
+
+			case 'punch_pause_reminder':
+				// Lazy retract (#588): if the break is no longer running (resumed,
+				// punched out, or gone) the reminder is stale — discard it.
+				$punch = $this->activePunchMapper->findByIdOrNull((int)$notification->getObjectId());
+				if ($punch === null || !$punch->isPaused()) {
+					throw new UnknownNotificationException();
+				}
+				$notification->setParsedSubject(
+					$l->t('Bist du noch in der Pause? Sie läuft seit über %d Minuten.', [(int)($params['maxPause'] ?? 60)])
+				);
+				break;
+
+			case 'punch_out_reminder':
+				// Lazy retract (#588): once punched out (row gone) the reminder is
+				// stale.
+				$punch = $this->activePunchMapper->findByIdOrNull((int)$notification->getObjectId());
+				if ($punch === null) {
+					throw new UnknownNotificationException();
+				}
+				$notification->setParsedSubject(
+					$l->t('Du bist seit über %d Stunden eingestempelt. Nicht vergessen auszustempeln.', [(int)($params['hours'] ?? 10)])
+				);
 				break;
 
 			default:

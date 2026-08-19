@@ -35,6 +35,8 @@ class CompanySetting extends Entity implements JsonSerializable {
     public const KEY_MAX_DAILY_HOURS = 'max_daily_hours';
     public const KEY_MIN_BREAK_MINUTES_6H = 'min_break_minutes_6h';
     public const KEY_MIN_BREAK_MINUTES_9H = 'min_break_minutes_9h';
+    // Stopwatch reminders (#588): pause considered "too long" beyond this.
+    public const KEY_MAX_PAUSE_MINUTES = 'max_pause_minutes';
     public const KEY_APPROVAL_REQUIRED = 'approval_required';
     public const KEY_PDF_ARCHIVE_PATH = 'pdf_archive_path';
     public const KEY_PDF_ARCHIVE_USER = 'pdf_archive_user';
@@ -52,6 +54,7 @@ class CompanySetting extends Entity implements JsonSerializable {
         self::KEY_MAX_DAILY_HOURS => '10',
         self::KEY_MIN_BREAK_MINUTES_6H => '30',
         self::KEY_MIN_BREAK_MINUTES_9H => '45',
+        self::KEY_MAX_PAUSE_MINUTES => '60',
         self::KEY_APPROVAL_REQUIRED => '0',
         self::KEY_PDF_ARCHIVE_PATH => '/WorkTime/Archiv',
         self::KEY_PDF_ARCHIVE_USER => '',

@@ -40,6 +40,35 @@ class ActivePunchMapper extends QBMapper {
 	}
 
 	/**
+	 * All open punches (for the reminder scan #588).
+	 *
+	 * @return ActivePunch[]
+	 */
+	public function findAll(): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')->from($this->getTableName());
+
+		return $this->findEntities($qb);
+	}
+
+	/**
+	 * A punch by id, or null when it no longer exists (e.g. already punched out).
+	 * Used by the Notifier to lazily retract a stale reminder (#588).
+	 */
+	public function findByIdOrNull(int $id): ?ActivePunch {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT)));
+
+		try {
+			return $this->findEntity($qb);
+		} catch (DoesNotExistException|MultipleObjectsReturnedException $e) {
+			return null;
+		}
+	}
+
+	/**
 	 * The open punch for an employee, or null when none is open.
 	 */
 	public function findByEmployeeOrNull(int $employeeId): ?ActivePunch {
@@ -100,8 +129,37 @@ class ActivePunchMapper extends QBMapper {
 			// column name and break.
 			->set('break_seconds', $qb->func()->add('break_seconds', $qb->createNamedParameter($delta, IQueryBuilder::PARAM_INT)))
 			->set('paused_at', $qb->createNamedParameter(null, IQueryBuilder::PARAM_NULL))
+			// Clear the pause reminder so a later long break can remind again (#588).
+			->set('pause_reminded_at', $qb->createNamedParameter(null, IQueryBuilder::PARAM_NULL))
 			->where($qb->expr()->eq('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT)))
 			->andWhere($qb->expr()->isNotNull('paused_at'));
+
+		return $qb->executeStatement();
+	}
+
+	/**
+	 * Atomically mark the punch-pause reminder as sent, only if it wasn't already
+	 * (#588). Returns affected rows — 1 means this call may send the notification,
+	 * 0 means another run already did (dedup).
+	 */
+	public function markPauseReminded(int $id, string $nowUtc): int {
+		return $this->markReminded('pause_reminded_at', $id, $nowUtc);
+	}
+
+	/**
+	 * Atomically mark the forgot-clock-out reminder as sent, only if it wasn't
+	 * already (#588).
+	 */
+	public function markOutReminded(int $id, string $nowUtc): int {
+		return $this->markReminded('out_reminded_at', $id, $nowUtc);
+	}
+
+	private function markReminded(string $column, int $id, string $nowUtc): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set($column, $qb->createNamedParameter($nowUtc))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT)))
+			->andWhere($qb->expr()->isNull($column));
 
 		return $qb->executeStatement();
 	}

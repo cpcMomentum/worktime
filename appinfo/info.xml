@@ -74,6 +74,7 @@ Behalten Sie den Überblick über Arbeitszeiten, Überstunden und Urlaub.
 
     <background-jobs>
         <job>OCA\WorkTime\BackgroundJob\ArchivePdfJob</job>
+        <job>OCA\WorkTime\BackgroundJob\PunchReminderJob</job>
     </background-jobs>
 
     <repair-steps>

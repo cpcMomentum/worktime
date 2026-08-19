@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Tests\Unit\Notification;
 
 use OCA\WorkTime\AppInfo\Application;
+use OCA\WorkTime\Db\ActivePunchMapper;
 use OCA\WorkTime\Notification\Notifier;
 use OCP\IL10N;
 use OCP\IURLGenerator;
@@ -37,6 +38,7 @@ class NotifierTest extends TestCase {
         $this->notifier = new Notifier(
             $this->createMock(IURLGenerator::class),
             $l10nFactory,
+            $this->createMock(ActivePunchMapper::class),
         );
         $this->formatMonthYear = new ReflectionMethod(Notifier::class, 'formatMonthYear');
         $this->formatMonthYear->setAccessible(true);
@@ -112,7 +114,7 @@ class NotifierTest extends TestCase {
         $l10nFactory = $this->createMock(IFactory::class);
         $l10nFactory->method('get')->willReturn($l10n);
 
-        $notifier = new Notifier($urlGenerator, $l10nFactory);
+        $notifier = new Notifier($urlGenerator, $l10nFactory, $this->createMock(ActivePunchMapper::class));
 
         $notification = $this->createMock(INotification::class);
         $notification->method('getApp')->willReturn(Application::APP_ID);
