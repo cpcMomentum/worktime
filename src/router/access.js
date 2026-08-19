@@ -17,9 +17,11 @@ export const accessRules = {
 	// Universal, loop-safe fallback. Stays ungated on purpose.
 	tracking: () => true,
 	absences: (p) => !!p.employeeId,
-	// Gemeinsamer Reiter: jeder Mitarbeiter sieht das Team (Daten-Scoping im
-	// Backend — Admin/HR alle, Vorgesetzte ihr Team, MA self + geteilte). (#357)
-	team: (p) => !!p.employeeId,
+	// Gemeinsamer Reiter: jeder Mitarbeiter sieht das Team; zusaetzlich Admin/HR
+	// auch ohne eigenes Mitarbeiterprofil (GF/HR ohne WorkTime-Konto). Daten-
+	// Scoping im Backend (getTeamMembers) — Admin/HR alle, Vorgesetzte ihr Team,
+	// MA self + geteilte. (#357, #604)
+	team: (p) => !!(p.employeeId || p.isAdmin || p.isHrManager),
 	// Vorgesetzte (canApprove) genehmigen ihr Team — nicht nur Admin/HR. (#357)
 	approvals: (p) => !!(p.canApprove || p.isAdmin || p.isHrManager),
 	evaluation: (p) => !!(p.isAdmin || p.isHrManager),

@@ -35,6 +35,15 @@ const ROLES = {
 		canManageEmployees: false, canManageSettings: false,
 		canManageProjects: false, canManageHolidays: false, canApprove: false,
 	},
+	// HR manager (or managing director) WITHOUT an own employee record (#604):
+	// role comes from group membership, not from wt_employees, so employeeId is
+	// null. Must still reach the Team tab — the backend scopes team data by role.
+	hrNoProfile: {
+		isAdmin: false, isHrManager: true, isSupervisor: false, isEmployee: false,
+		employeeId: null, hasEmployees: true,
+		canManageEmployees: true, canManageSettings: false,
+		canManageProjects: true, canManageHolidays: true, canApprove: true,
+	},
 	// Degenerate: authenticated user with no employee record and no role at all.
 	bare: {
 		isAdmin: false, isHrManager: false, isSupervisor: false, isEmployee: false,
@@ -61,6 +70,13 @@ describe('route access matrix', () => {
 		expect(canAccess('team', ROLES.employee)).toBe(true)
 	})
 
+	// Pin the concrete #604 regression: an HR manager without an own profile can
+	// open and see the Team tab (role-based, not profile-based).
+	it('HR manager without own profile can access and see the Team tab (#604)', () => {
+		expect(canAccess('team', ROLES.hrNoProfile)).toBe(true)
+		expect(isNavVisible('team', ROLES.hrNoProfile)).toBe(true)
+	})
+
 	// Pin the degenerate fallback: a roleless user is bounced everywhere except
 	// the universal /tracking fallback, and sees no tabs.
 	it('bare user can only reach tracking', () => {
@@ -82,6 +98,7 @@ describe('route access matrix', () => {
 			hrManager: ['tracking', 'absences', 'team', 'approvals', 'evaluation', 'my-settings', 'settings', 'audit'],
 			supervisor: ['tracking', 'absences', 'team', 'approvals', 'my-settings'],
 			employee: ['tracking', 'absences', 'my-settings'],
+			hrNoProfile: ['team', 'approvals', 'evaluation', 'settings', 'audit'],
 			bare: [],
 		})
 	})
