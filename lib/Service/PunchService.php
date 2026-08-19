@@ -91,8 +91,12 @@ class PunchService {
 		if ($punch->isPaused()) {
 			throw new PunchConflictException($this->l->t('Die Stempelung ist bereits pausiert.'));
 		}
-		$punch->setPausedAt($this->nowUtc());
-		return $this->mapper->update($punch);
+		// Atomic conditional update (#612): two concurrent pauses serialize on the
+		// row lock; only one flips paused_at, the other gets 0 affected.
+		if ($this->mapper->pauseIfRunning($punch->getId(), $this->nowUtc()->format('Y-m-d H:i:s')) === 0) {
+			throw new PunchConflictException($this->l->t('Die Stempelung ist bereits pausiert.'));
+		}
+		return $this->requireOpen($employeeId);
 	}
 
 	/**
@@ -105,8 +109,15 @@ class PunchService {
 		if (!$punch->isPaused()) {
 			throw new PunchConflictException($this->l->t('Es läuft gerade keine Pause.'));
 		}
-		$this->foldRunningPause($punch);
-		return $this->mapper->update($punch);
+		// Accumulate the elapsed pause and clear paused_at in one atomic statement
+		// (#612): the delta is added as column arithmetic guarded on paused_at IS
+		// NOT NULL, so two concurrent resumes cannot double-count — the loser gets
+		// 0 affected.
+		$elapsed = $this->nowUtc()->getTimestamp() - $this->reinterpretAsUtc($punch->getPausedAt())->getTimestamp();
+		if ($this->mapper->accumulateBreakAndResume($punch->getId(), $elapsed) === 0) {
+			throw new PunchConflictException($this->l->t('Es läuft gerade keine Pause.'));
+		}
+		return $this->requireOpen($employeeId);
 	}
 
 	/**
