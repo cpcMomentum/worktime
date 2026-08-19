@@ -681,6 +681,10 @@ OC.L10N.register(
     "Resturlaub aus vorheriger Beschäftigung übernehmen" : "Carry over remaining leave from previous employment",
     "An: der volle Jahresanspruch gilt, abzüglich der bereits genommenen Tage (interner Wechsel, Umstieg auf diese App). Aus: echte Neueinstellung — nur anteilig für die Monate ab Eintritt (Teilurlaub)." : "On: the full annual entitlement applies, minus the days already taken (internal transfer, switch to this app). Off: genuine new hire — prorated only for the months from the entry date (partial leave).",
     "Davon {year} anderswo bereits gewährt/genommen" : "Of which already granted/taken elsewhere in {year}",
-    "Urlaubstage, die im Eintrittsjahr bereits genommen oder ausbezahlt wurden — beim vorherigen Arbeitgeber oder vor der Umstellung auf diese App. Bei Übernahme werden sie vom vollen Anspruch abgezogen, bei Neueinstellung begrenzen sie den anteiligen Anspruch (§ 6). Ab dem Folgejahr gilt wieder der volle Jahresanspruch. Halbe Tage sind möglich." : "Leave days already taken or paid out in the entry year — at the previous employer or before switching to this app. For a takeover they are deducted from the full entitlement; for a new hire they cap the prorated entitlement (§ 6). From the following year the full annual entitlement applies again. Half days are possible."
+    "Urlaubstage, die im Eintrittsjahr bereits genommen oder ausbezahlt wurden — beim vorherigen Arbeitgeber oder vor der Umstellung auf diese App. Bei Übernahme werden sie vom vollen Anspruch abgezogen, bei Neueinstellung begrenzen sie den anteiligen Anspruch (§ 6). Ab dem Folgejahr gilt wieder der volle Jahresanspruch. Halbe Tage sind möglich." : "Leave days already taken or paid out in the entry year — at the previous employer or before switching to this app. For a takeover they are deducted from the full entitlement; for a new hire they cap the prorated entitlement (§ 6). From the following year the full annual entitlement applies again. Half days are possible.",
+    "Es läuft bereits eine Stempelung." : "A punch is already running.",
+    "Die Stempelung ist bereits pausiert." : "The punch is already paused.",
+    "Es läuft gerade keine Pause." : "No break is currently running.",
+    "Es läuft keine Stempelung." : "No punch is running."
 },
 "nplurals=2; plural=(n != 1);");
