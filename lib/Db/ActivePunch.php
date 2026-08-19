@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Db;
 
 use DateTime;
+use DateTimeZone;
 use JsonSerializable;
 use OCP\AppFramework\Db\Entity;
 
@@ -66,14 +67,29 @@ class ActivePunch extends Entity implements JsonSerializable {
 		return [
 			'id' => $this->id,
 			'employeeId' => $this->employeeId,
-			'startedAt' => $this->startedAt?->format('c'),
-			'pausedAt' => $this->pausedAt?->format('c'),
+			'startedAt' => self::reinterpretAsUtc($this->startedAt)?->format('c'),
+			'pausedAt' => self::reinterpretAsUtc($this->pausedAt)?->format('c'),
 			'breakSeconds' => $this->breakSeconds,
 			'isPaused' => $this->isPaused(),
 			'projectId' => $this->projectId,
 			'description' => $this->description,
 			'createdVia' => $this->createdVia,
-			'createdAt' => $this->createdAt?->format('c'),
+			'createdAt' => self::reinterpretAsUtc($this->createdAt)?->format('c'),
 		];
+	}
+
+	/**
+	 * Stored datetimes are always written as UTC wall-clock digits (see
+	 * PunchService::nowUtc()), but QBMapper hydrates them via `new DateTime($value)`,
+	 * which applies the PHP process's default timezone rather than UTC. Reinterpret
+	 * the wall-clock digits as UTC so serialized timestamps carry the correct offset
+	 * regardless of the server's default timezone.
+	 */
+	private static function reinterpretAsUtc(?DateTime $stored): ?DateTime {
+		if ($stored === null) {
+			return null;
+		}
+		return DateTime::createFromFormat('Y-m-d H:i:s', $stored->format('Y-m-d H:i:s'), new DateTimeZone('UTC'))
+			?: $stored;
 	}
 }
