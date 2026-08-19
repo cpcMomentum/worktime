@@ -44,6 +44,14 @@ const ROLES = {
 		canManageEmployees: true, canManageSettings: false,
 		canManageProjects: true, canManageHolidays: true, canApprove: true,
 	},
+	// Same class as hrNoProfile, but Admin without an own record — the fix rule
+	// (employeeId || isAdmin || isHrManager) is symmetric, so lock both sides.
+	adminNoProfile: {
+		isAdmin: true, isHrManager: false, isSupervisor: false, isEmployee: false,
+		employeeId: null, hasEmployees: true,
+		canManageEmployees: true, canManageSettings: true,
+		canManageProjects: true, canManageHolidays: true, canApprove: true,
+	},
 	// Degenerate: authenticated user with no employee record and no role at all.
 	bare: {
 		isAdmin: false, isHrManager: false, isSupervisor: false, isEmployee: false,
@@ -77,6 +85,12 @@ describe('route access matrix', () => {
 		expect(isNavVisible('team', ROLES.hrNoProfile)).toBe(true)
 	})
 
+	// Symmetric case: Admin without an own profile reaches the Team tab too (#604).
+	it('Admin without own profile can access and see the Team tab (#604)', () => {
+		expect(canAccess('team', ROLES.adminNoProfile)).toBe(true)
+		expect(isNavVisible('team', ROLES.adminNoProfile)).toBe(true)
+	})
+
 	// Pin the degenerate fallback: a roleless user is bounced everywhere except
 	// the universal /tracking fallback, and sees no tabs.
 	it('bare user can only reach tracking', () => {
@@ -99,6 +113,7 @@ describe('route access matrix', () => {
 			supervisor: ['tracking', 'absences', 'team', 'approvals', 'my-settings'],
 			employee: ['tracking', 'absences', 'my-settings'],
 			hrNoProfile: ['team', 'approvals', 'evaluation', 'settings', 'audit'],
+			adminNoProfile: ['team', 'approvals', 'evaluation', 'settings', 'audit'],
 			bare: [],
 		})
 	})
