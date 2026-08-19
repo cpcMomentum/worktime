@@ -13,11 +13,11 @@
 			<div class="punch-out__grid">
 				<div class="form-group">
 					<label for="punch-date">{{ t('worktime', 'Datum') }}</label>
-					<input id="punch-date" v-model="form.date" type="date" class="input-field">
+					<input id="punch-date" v-model="form.date" type="date" class="input-field" disabled>
 				</div>
 				<div class="form-group">
 					<label for="punch-start">{{ t('worktime', 'Start') }}</label>
-					<input id="punch-start" v-model="form.startTime" type="time" class="input-field">
+					<input id="punch-start" v-model="form.startTime" type="time" class="input-field" disabled>
 				</div>
 				<div class="form-group">
 					<label for="punch-end">{{ t('worktime', 'Ende') }}</label>
@@ -267,6 +267,11 @@ export default {
 
 .punch-out textarea.input-field {
 	resize: vertical;
+}
+
+.punch-out .input-field:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
 }
 
 .punch-out__net {
