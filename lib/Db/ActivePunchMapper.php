@@ -49,4 +49,18 @@ class ActivePunchMapper extends QBMapper {
 			return null;
 		}
 	}
+
+	/**
+	 * Delete the punch row by id, returning the number of affected rows. Used as
+	 * the atomic "consume" step inside punch-out: two concurrent punch-outs both
+	 * try this; the second blocks on the row lock and then sees 0 affected once
+	 * the first committed — so only one can proceed to book an entry.
+	 */
+	public function deleteById(int $id): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT)));
+
+		return $qb->executeStatement();
+	}
 }

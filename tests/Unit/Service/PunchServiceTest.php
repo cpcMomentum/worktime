@@ -150,7 +150,7 @@ class PunchServiceTest extends TestCase {
 		$this->timeEntryService->expects($this->once())->method('create')
 			->with(7, '2020-01-01', '08:00', '16:30', 30, null, null, 'user1')
 			->willReturn(new TimeEntry());
-		$this->mapper->expects($this->once())->method('delete')->with($punch);
+		$this->mapper->expects($this->once())->method('deleteById')->with(1)->willReturn(1);
 		$this->db->expects($this->once())->method('beginTransaction');
 		$this->db->expects($this->once())->method('commit');
 
@@ -160,6 +160,7 @@ class PunchServiceTest extends TestCase {
 	public function testPunchOutWithLiveBreakUsesAccumulatedSeconds(): void {
 		$punch = $this->punch($this->utc('2020-01-01 08:00:00'), 3600); // 1h live break
 		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		$this->mapper->method('deleteById')->willReturn(1);
 		$this->timeEntryService->expects($this->never())->method('suggestBreak');
 		$this->timeEntryService->expects($this->once())->method('create')
 			->with(7, '2020-01-01', '08:00', '16:30', 60, null, null, 'user1')
@@ -171,6 +172,7 @@ class PunchServiceTest extends TestCase {
 	public function testPunchOutBreakOverrideWins(): void {
 		$punch = $this->punch($this->utc('2020-01-01 08:00:00'), 3600);
 		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		$this->mapper->method('deleteById')->willReturn(1);
 		$this->timeEntryService->expects($this->never())->method('suggestBreak');
 		$this->timeEntryService->expects($this->once())->method('create')
 			->with(7, '2020-01-01', '08:00', '16:30', 15, null, null, 'user1')
@@ -184,6 +186,7 @@ class PunchServiceTest extends TestCase {
 		$punch->setProjectId(9);
 		$punch->setDescription('Notiz');
 		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		$this->mapper->method('deleteById')->willReturn(1);
 		$this->timeEntryService->method('suggestBreak')->willReturn(30);
 		$this->timeEntryService->expects($this->once())->method('create')
 			->with(7, '2020-01-01', '08:00', '16:30', 30, 9, 'Notiz', 'user1')
@@ -195,15 +198,31 @@ class PunchServiceTest extends TestCase {
 	public function testPunchOutCreateFailureLeavesPunchOpen(): void {
 		$punch = $this->punch($this->utc('2020-01-01 08:00:00'), 0);
 		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		$this->mapper->method('deleteById')->willReturn(1);
 		$this->timeEntryService->method('suggestBreak')->willReturn(30);
 		$this->timeEntryService->method('create')
 			->willThrowException(new ValidationException(['overlap' => ['Overlap']]));
-		$this->mapper->expects($this->never())->method('delete');
+		// The consuming delete runs inside the transaction, so the rollback (not a
+		// skipped delete) is what keeps the punch open on a create() failure.
 		$this->db->expects($this->once())->method('beginTransaction');
 		$this->db->expects($this->once())->method('rollBack');
 		$this->db->expects($this->never())->method('commit');
 
 		$this->expectException(ValidationException::class);
+		$this->service->punchOut(7, 'user1', null, null, null, '16:30', false);
+	}
+
+	public function testConcurrentPunchOutSecondFindsNoPunchAndBooksNothing(): void {
+		$punch = $this->punch($this->utc('2020-01-01 08:00:00'), 0);
+		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		// A parallel punch-out already consumed the row: 0 affected.
+		$this->mapper->method('deleteById')->willReturn(0);
+		$this->timeEntryService->method('suggestBreak')->willReturn(30);
+		$this->timeEntryService->expects($this->never())->method('create');
+		$this->db->expects($this->once())->method('rollBack');
+		$this->db->expects($this->never())->method('commit');
+
+		$this->expectException(PunchConflictException::class);
 		$this->service->punchOut(7, 'user1', null, null, null, '16:30', false);
 	}
 
@@ -239,7 +258,7 @@ class PunchServiceTest extends TestCase {
 		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
 		$this->timeEntryService->method('suggestBreak')->willReturn(45);
 		$this->timeEntryService->expects($this->once())->method('create')->willReturn(new TimeEntry());
-		$this->mapper->expects($this->once())->method('delete')->with($punch);
+		$this->mapper->expects($this->once())->method('deleteById')->with(1)->willReturn(1);
 
 		$result = $this->service->punchOut(7, 'user1', null, null, null, null, true);
 		$this->assertInstanceOf(TimeEntry::class, $result);

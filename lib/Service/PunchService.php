@@ -177,6 +177,15 @@ class PunchService {
 
 		$this->db->beginTransaction();
 		try {
+			// Consume the punch first (inside the transaction). A concurrent
+			// punch-out — double click, retry — blocks on this row and then finds
+			// 0 affected once we commit, so it cannot book a second entry. If
+			// create() fails afterwards, the rollback restores this row, so the
+			// punch stays open (nothing lost).
+			if ($this->mapper->deleteById($punch->getId()) === 0) {
+				throw new PunchConflictException($this->l->t('Es läuft keine Stempelung.'));
+			}
+
 			$entry = $this->timeEntryService->create(
 				$employeeId,
 				$date,
@@ -187,7 +196,6 @@ class PunchService {
 				$resolvedDescription,
 				$userId,
 			);
-			$this->mapper->delete($punch);
 			$this->db->commit();
 			return $entry;
 		} catch (\Throwable $e) {
