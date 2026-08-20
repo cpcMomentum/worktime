@@ -158,10 +158,16 @@ export default {
 	methods: {
 		prefill() {
 			const start = new Date(this.punch.startedAt)
-			const now = new Date()
+			// Punching out of a running pause ends the entry at pausedAt — the
+			// moment work stopped. WorkTime books work, not attendance, so the
+			// open pause is discarded rather than counted (#617). A running
+			// punch ends now. The user can still correct the end below.
+			const end = this.punch.isPaused && this.punch.pausedAt
+				? new Date(this.punch.pausedAt)
+				: new Date()
 			this.form.date = this.toYmd(start)
 			this.form.startTime = this.toHm(start)
-			this.form.endTime = this.toHm(now)
+			this.form.endTime = this.toHm(end)
 			this.form.projectId = this.punch.projectId || null
 			this.form.description = this.punch.description || ''
 
