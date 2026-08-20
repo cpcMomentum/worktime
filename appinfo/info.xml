@@ -83,6 +83,10 @@ Behalten Sie den Überblick über Arbeitszeiten, Überstunden und Urlaub.
         </post-migration>
     </repair-steps>
 
+    <commands>
+        <command>OCA\WorkTime\Command\PushTest</command>
+    </commands>
+
     <navigations>
         <navigation>
             <name>WorkTime</name>
