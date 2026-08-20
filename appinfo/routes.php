@@ -7,6 +7,10 @@ return [
         // Page routes
         ['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],
 
+        // Push (#593): device-token registration for APNs.
+        ['name' => 'push#register', 'url' => '/api/push/register', 'verb' => 'POST'],
+        ['name' => 'push#unregister', 'url' => '/api/push/token', 'verb' => 'DELETE'],
+
         // Time Entries API (specific routes before {id})
         ['name' => 'time_entry#suggestBreak', 'url' => '/api/time-entries/suggest-break', 'verb' => 'POST'],
         // Stopwatch (#584): server-authoritative open punch.

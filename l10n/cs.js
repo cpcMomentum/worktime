@@ -705,6 +705,10 @@ OC.L10N.register(
     "Max. Pausendauer (min)" : "Max. Pausendauer (min)",
     "Läuft eine laufende Pause (Stempeluhr) länger als dieser Wert, erhält der Mitarbeiter eine Erinnerung („Bist du noch in der Pause?“)." : "Läuft eine laufende Pause (Stempeluhr) länger als dieser Wert, erhält der Mitarbeiter eine Erinnerung („Bist du noch in der Pause?“).",
     "Bist du noch in der Pause? Sie läuft seit über %d Minuten." : "Bist du noch in der Pause? Sie läuft seit über %d Minuten.",
-    "Du bist seit über %d Stunden eingestempelt. Nicht vergessen auszustempeln." : "Du bist seit über %d Stunden eingestempelt. Nicht vergessen auszustempeln."
+    "Du bist seit über %d Stunden eingestempelt. Nicht vergessen auszustempeln." : "Du bist seit über %d Stunden eingestempelt. Nicht vergessen auszustempeln.",
+    "Kein Gerätetoken übergeben." : "Kein Gerätetoken übergeben.",
+    "Nicht unterstützte Plattform." : "Nicht unterstützte Plattform.",
+    "Gerätetoken konnte nicht gespeichert werden." : "Gerätetoken konnte nicht gespeichert werden.",
+    "Gerätetoken konnte nicht entfernt werden." : "Gerätetoken konnte nicht entfernt werden."
 },
 "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;");

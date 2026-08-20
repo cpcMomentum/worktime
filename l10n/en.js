@@ -705,6 +705,10 @@ OC.L10N.register(
     "Max. Pausendauer (min)" : "Max. break duration (min)",
     "Läuft eine laufende Pause (Stempeluhr) länger als dieser Wert, erhält der Mitarbeiter eine Erinnerung („Bist du noch in der Pause?“)." : "If a running break (stopwatch) lasts longer than this value, the employee gets a reminder (“Are you still on a break?”).",
     "Bist du noch in der Pause? Sie läuft seit über %d Minuten." : "Are you still on a break? It has been running for over %d minutes.",
-    "Du bist seit über %d Stunden eingestempelt. Nicht vergessen auszustempeln." : "You have been clocked in for over %d hours. Don't forget to clock out."
+    "Du bist seit über %d Stunden eingestempelt. Nicht vergessen auszustempeln." : "You have been clocked in for over %d hours. Don't forget to clock out.",
+    "Kein Gerätetoken übergeben." : "No device token provided.",
+    "Nicht unterstützte Plattform." : "Unsupported platform.",
+    "Gerätetoken konnte nicht gespeichert werden." : "Could not save the device token.",
+    "Gerätetoken konnte nicht entfernt werden." : "Could not remove the device token."
 },
 "nplurals=2; plural=(n != 1);");
