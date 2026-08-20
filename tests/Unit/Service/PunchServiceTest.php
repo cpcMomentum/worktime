@@ -299,6 +299,70 @@ class PunchServiceTest extends TestCase {
 		$this->assertInstanceOf(TimeEntry::class, $result);
 	}
 
+	// --- punch-out from a running pause (#617) ----------------------------
+
+	public function testPunchOutFromRunningPauseEndsAtPausedAtAndDiscardsPause(): void {
+		// Paused, punched out without resuming, no completed breaks: the entry ends
+		// at pausedAt and books no break — the running pause is discarded, not folded.
+		$punch = $this->punch($this->utc('2020-01-01 08:00:00'), 0, $this->utc('2020-01-01 08:05:00'));
+		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		$this->mapper->expects($this->once())->method('deleteById')->with(1)->willReturn(1);
+		// End is pausedAt (08:05), so the §4 suggestion sees the real 5-minute span.
+		$this->timeEntryService->expects($this->once())->method('suggestBreak')
+			->with('08:00', '08:05')->willReturn(0);
+		$this->timeEntryService->expects($this->once())->method('create')
+			->with(7, '2020-01-01', '08:00', '08:05', 0, null, null, 'user1')
+			->willReturn(new TimeEntry());
+
+		$this->service->punchOut(7, 'user1', null, null, null, null, false);
+	}
+
+	public function testPunchOutFromRunningPauseKeepsCompletedBreaksAndDiscardsLast(): void {
+		// One completed break (30 min in break_seconds) plus a second, still-running
+		// pause at 12:00. Punch-out ends at 12:00, books only the completed 30 min;
+		// the running pause is neither folded nor counted.
+		$punch = $this->punch($this->utc('2020-01-01 08:00:00'), 1800, $this->utc('2020-01-01 12:00:00'));
+		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		$this->mapper->method('deleteById')->willReturn(1);
+		// break_seconds > 0 → accumulated break wins, no §4 suggestion.
+		$this->timeEntryService->expects($this->never())->method('suggestBreak');
+		$this->timeEntryService->expects($this->once())->method('create')
+			->with(7, '2020-01-01', '08:00', '12:00', 30, null, null, 'user1')
+			->willReturn(new TimeEntry());
+
+		$this->service->punchOut(7, 'user1', null, null, null, null, false);
+	}
+
+	public function testPunchOutFromPauseWithEndOverrideLetsOverrideWin(): void {
+		// An explicit end override (HR correction) beats pausedAt.
+		$punch = $this->punch($this->utc('2020-01-01 08:00:00'), 0, $this->utc('2020-01-01 12:00:00'));
+		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		$this->mapper->method('deleteById')->willReturn(1);
+		$this->timeEntryService->method('suggestBreak')->with('08:00', '17:00')->willReturn(45);
+		$this->timeEntryService->expects($this->once())->method('create')
+			->with(7, '2020-01-01', '08:00', '17:00', 45, null, null, 'user1')
+			->willReturn(new TimeEntry());
+
+		$this->service->punchOut(7, 'user1', null, null, null, '17:00', false);
+	}
+
+	public function testPunchOutLongPausedIsNotFlaggedOverlong(): void {
+		// Punched in 20h ago but paused 5 minutes in and left running: the effective
+		// end is pausedAt, so the real work span is 5 minutes — the overlong guard
+		// must not fire (regression: guard once measured now − start).
+		$startedAt = (new DateTime('now', new DateTimeZone('UTC')))->modify('-20 hours');
+		$pausedAt = (clone $startedAt)->modify('+5 minutes');
+		$punch = $this->punch($startedAt, 0, $pausedAt);
+		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		$this->mapper->expects($this->once())->method('deleteById')->with(1)->willReturn(1);
+		$this->timeEntryService->method('suggestBreak')->willReturn(0);
+		$this->timeEntryService->expects($this->once())->method('create')->willReturn(new TimeEntry());
+
+		// No confirmation needed despite the 20h-old start.
+		$result = $this->service->punchOut(7, 'user1', null, null, null, null, false);
+		$this->assertInstanceOf(TimeEntry::class, $result);
+	}
+
 	// --- getActive --------------------------------------------------------
 
 	public function testGetActiveReturnsNullWhenNone(): void {

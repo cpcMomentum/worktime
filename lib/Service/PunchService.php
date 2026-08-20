@@ -140,26 +140,34 @@ class PunchService {
 	): TimeEntry {
 		$punch = $this->requireOpen($employeeId);
 
-		// A punch-out while still paused ends the pause now.
-		if ($punch->isPaused()) {
-			$this->foldRunningPause($punch);
-		}
-
 		$startedUtc = $this->reinterpretAsUtc($punch->getStartedAt());
 		$tz = $this->dateTimeZone->getTimeZone();
 		$startLocal = (clone $startedUtc)->setTimezone($tz);
 		$date = $startLocal->format('Y-m-d');
 		$startTime = $startLocal->format('H:i');
 
+		// Resolve the end. An explicit override (HR correction) always wins.
+		// Otherwise, punching out while still paused means the employee stopped
+		// working at pausedAt — WorkTime measures work, not attendance, so the
+		// running pause is discarded (end = pausedAt), not folded into the break
+		// (#617). A running punch ends now. Completed pauses (pause → resume) stay
+		// in break_seconds regardless.
 		if ($endTimeOverride !== null && $endTimeOverride !== '') {
 			$endTime = $endTimeOverride;
+			$effectiveEndUtc = $this->nowUtc();
+		} elseif ($punch->isPaused()) {
+			$effectiveEndUtc = $this->reinterpretAsUtc($punch->getPausedAt());
+			$endTime = (clone $effectiveEndUtc)->setTimezone($tz)->format('H:i');
 		} else {
-			$endTime = (new DateTime('now', $tz))->format('H:i');
+			$effectiveEndUtc = $this->nowUtc();
+			$endTime = (clone $effectiveEndUtc)->setTimezone($tz)->format('H:i');
 		}
 
 		// Real elapsed time drives the overlong guard — the wall-clock H:i span
 		// caps at 24h and would miss a multi-day "forgot to punch out" (edge case 3).
-		$realElapsedMinutes = (int)floor(($this->nowUtc()->getTimestamp() - $startedUtc->getTimestamp()) / 60);
+		// It runs to the effective end (pausedAt when punching out of a pause), so a
+		// punch left paused for hours is not falsely flagged as overlong.
+		$realElapsedMinutes = (int)floor(($effectiveEndUtc->getTimestamp() - $startedUtc->getTimestamp()) / 60);
 
 		// Break: explicit override wins; otherwise the accumulated live break;
 		// otherwise the automatic §4 suggestion.
@@ -224,22 +232,6 @@ class PunchService {
 			throw new PunchConflictException($this->l->t('Es läuft keine Stempelung.'));
 		}
 		return $punch;
-	}
-
-	/**
-	 * Add the currently running pause (paused_at..now) to break_seconds and clear
-	 * paused_at. Mutates the entity; caller persists.
-	 */
-	private function foldRunningPause(ActivePunch $punch): void {
-		$pausedAt = $punch->getPausedAt();
-		if ($pausedAt === null) {
-			return;
-		}
-		$elapsed = $this->nowUtc()->getTimestamp() - $this->reinterpretAsUtc($pausedAt)->getTimestamp();
-		if ($elapsed > 0) {
-			$punch->setBreakSeconds($punch->getBreakSeconds() + $elapsed);
-		}
-		$punch->setPausedAt(null);
 	}
 
 	private function overlongThresholdMinutes(): int {
