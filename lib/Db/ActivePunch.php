@@ -36,6 +36,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setCreatedVia(string $createdVia)
  * @method DateTime getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
+ * @method DateTime|null getPauseRemindedAt()
+ * @method void setPauseRemindedAt(?DateTime $pauseRemindedAt)
+ * @method DateTime|null getOutRemindedAt()
+ * @method void setOutRemindedAt(?DateTime $outRemindedAt)
  */
 class ActivePunch extends Entity implements JsonSerializable {
 
@@ -47,6 +51,8 @@ class ActivePunch extends Entity implements JsonSerializable {
 	protected ?string $description = null;
 	protected string $createdVia = 'web';
 	protected ?DateTime $createdAt = null;
+	protected ?DateTime $pauseRemindedAt = null;
+	protected ?DateTime $outRemindedAt = null;
 
 	public function __construct() {
 		$this->addType('id', 'integer');
@@ -57,6 +63,8 @@ class ActivePunch extends Entity implements JsonSerializable {
 		$this->addType('projectId', 'integer');
 		$this->addType('createdVia', 'string');
 		$this->addType('createdAt', 'datetime');
+		$this->addType('pauseRemindedAt', 'datetime');
+		$this->addType('outRemindedAt', 'datetime');
 	}
 
 	public function isPaused(): bool {

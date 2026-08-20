@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Tests\Unit\Notification;
 
 use OCA\WorkTime\AppInfo\Application;
+use OCA\WorkTime\Db\ActivePunch;
+use OCA\WorkTime\Db\ActivePunchMapper;
 use OCA\WorkTime\Notification\Notifier;
 use OCP\IL10N;
 use OCP\IURLGenerator;
@@ -25,6 +27,7 @@ class NotifierTest extends TestCase {
 
     private ReflectionMethod $formatMonthYear;
     private Notifier $notifier;
+    private ActivePunchMapper $activePunchMapper;
 
     protected function setUp(): void {
         $l10n = $this->createMock(IL10N::class);
@@ -34,9 +37,11 @@ class NotifierTest extends TestCase {
         $l10nFactory = $this->createMock(IFactory::class);
         $l10nFactory->method('get')->willReturn($l10n);
 
+        $this->activePunchMapper = $this->createMock(ActivePunchMapper::class);
         $this->notifier = new Notifier(
             $this->createMock(IURLGenerator::class),
             $l10nFactory,
+            $this->activePunchMapper,
         );
         $this->formatMonthYear = new ReflectionMethod(Notifier::class, 'formatMonthYear');
         $this->formatMonthYear->setAccessible(true);
@@ -45,11 +50,12 @@ class NotifierTest extends TestCase {
     /**
      * @param array<string, mixed> $params
      */
-    private function buildNotification(string $subject, array $params, bool $subjectThrows = false): INotification {
+    private function buildNotification(string $subject, array $params, bool $subjectThrows = false, int $objectId = 1): INotification {
         $notification = $this->createMock(INotification::class);
         $notification->method('getApp')->willReturn(Application::APP_ID);
         $notification->method('getSubject')->willReturn($subject);
         $notification->method('getSubjectParameters')->willReturn($params);
+        $notification->method('getObjectId')->willReturn((string)$objectId);
         if ($subjectThrows) {
             // Mirrors NC's INotification setters, which validate their input and
             // throw \InvalidArgumentException on an empty/oversized value.
@@ -61,6 +67,58 @@ class NotifierTest extends TestCase {
         $notification->method('setIcon')->willReturnSelf();
         $notification->method('setLink')->willReturnSelf();
         return $notification;
+    }
+
+    private function pausedPunch(): ActivePunch {
+        $punch = new ActivePunch();
+        $punch->setId(1);
+        $punch->setPausedAt(new \DateTime('2026-01-01 10:00:00'));
+        return $punch;
+    }
+
+    public function testPunchPauseReminderIsPreparedWhileStillPaused(): void {
+        $this->activePunchMapper->method('findByIdOrNull')->with(1)->willReturn($this->pausedPunch());
+
+        $notification = $this->buildNotification('punch_pause_reminder', ['maxPause' => 60]);
+        $this->assertSame($notification, $this->notifier->prepare($notification, 'de'));
+    }
+
+    public function testPunchPauseReminderIsRetractedOnceResumed(): void {
+        // Lazy retract (#588): the pause ended (resumed/punched out) between the
+        // reminder being scheduled and the notification being rendered — the
+        // punch itself has no pausedAt anymore, so the reminder is stale.
+        $punch = new ActivePunch();
+        $punch->setId(1);
+        $punch->setPausedAt(null);
+        $this->activePunchMapper->method('findByIdOrNull')->with(1)->willReturn($punch);
+
+        $this->expectException(UnknownNotificationException::class);
+        $this->notifier->prepare($this->buildNotification('punch_pause_reminder', ['maxPause' => 60]), 'de');
+    }
+
+    public function testPunchPauseReminderIsRetractedOncePunchGone(): void {
+        $this->activePunchMapper->method('findByIdOrNull')->with(1)->willReturn(null);
+
+        $this->expectException(UnknownNotificationException::class);
+        $this->notifier->prepare($this->buildNotification('punch_pause_reminder', ['maxPause' => 60]), 'de');
+    }
+
+    public function testPunchOutReminderIsPreparedWhilePunchStillOpen(): void {
+        $punch = new ActivePunch();
+        $punch->setId(1);
+        $this->activePunchMapper->method('findByIdOrNull')->with(1)->willReturn($punch);
+
+        $notification = $this->buildNotification('punch_out_reminder', ['hours' => 11]);
+        $this->assertSame($notification, $this->notifier->prepare($notification, 'de'));
+    }
+
+    public function testPunchOutReminderIsRetractedOncePunchedOut(): void {
+        // Lazy retract (#588): once the punch row is gone (punched out) the
+        // reminder is stale.
+        $this->activePunchMapper->method('findByIdOrNull')->with(1)->willReturn(null);
+
+        $this->expectException(UnknownNotificationException::class);
+        $this->notifier->prepare($this->buildNotification('punch_out_reminder', ['hours' => 11]), 'de');
     }
 
     public function testForeignAppNotificationIsUnknown(): void {
@@ -112,7 +170,7 @@ class NotifierTest extends TestCase {
         $l10nFactory = $this->createMock(IFactory::class);
         $l10nFactory->method('get')->willReturn($l10n);
 
-        $notifier = new Notifier($urlGenerator, $l10nFactory);
+        $notifier = new Notifier($urlGenerator, $l10nFactory, $this->createMock(ActivePunchMapper::class));
 
         $notification = $this->createMock(INotification::class);
         $notification->method('getApp')->willReturn(Application::APP_ID);

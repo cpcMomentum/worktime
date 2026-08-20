@@ -701,6 +701,10 @@ OC.L10N.register(
     "In Pause" : "On break",
     "Einstempeln fehlgeschlagen." : "Clock-in failed.",
     "Pause fehlgeschlagen." : "Pausing failed.",
-    "Fortsetzen fehlgeschlagen." : "Resuming failed."
+    "Fortsetzen fehlgeschlagen." : "Resuming failed.",
+    "Max. Pausendauer (min)" : "Max. break duration (min)",
+    "Läuft eine laufende Pause (Stempeluhr) länger als dieser Wert, erhält der Mitarbeiter eine Erinnerung („Bist du noch in der Pause?“)." : "If a running break (stopwatch) lasts longer than this value, the employee gets a reminder (“Are you still on a break?”).",
+    "Bist du noch in der Pause? Sie läuft seit über %d Minuten." : "Are you still on a break? It has been running for over %d minutes.",
+    "Du bist seit über %d Stunden eingestempelt. Nicht vergessen auszustempeln." : "You have been clocked in for over %d hours. Don't forget to clock out."
 },
 "nplurals=2; plural=(n != 1);");
