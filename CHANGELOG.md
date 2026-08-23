@@ -7,6 +7,18 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.16.4] - 2026-08-23
+
+### Added
+- **Stempeluhr — Live-Zeiterfassung per Ein- und Ausstempeln (#583, #584, #585)**: In der Zeiterfassung gibt es jetzt eine Stempeluhr. Einstempeln startet einen laufenden Timer mit Pausentaste; Ausstempeln erzeugt daraus einen normalen Zeiteintrag und durchläuft alle Prüfungen (Überlappung, Monatssperre, Pausenvorschlag nach §4 ArbZG, Pflichtfelder). Der laufende Timer liegt serverseitig, ist damit geräteübergreifend und übersteht ein Schließen der App.
+- **Erinnerungen der Stempeluhr (#588)**: Optionale Benachrichtigungen „Pause läuft zu lange" und „Ausstempeln vergessen" per Nextcloud-Benachrichtigung (Server-Hintergrundjob).
+- **Push-Benachrichtigungen — serverseitige Grundlage (#593)**: Fundament für spätere App-Push-Benachrichtigungen (Geräte-Registrierung, direktes APNs, ohne Drittdienste). Für Nutzer noch ohne sichtbare Funktion — die mobile App folgt separat.
+
+### Fixed
+- **„PDF über Zeitraum" schlug mit „CSRF check failed" fehl (#620)**: Der Zeitraum-Export erzeugte kein PDF, sondern die Nextcloud-Fehlerseite „Zugriff verboten – CSRF check failed"; der Monatsbericht funktionierte dagegen. Ursache war ein fehlendes CSRF-Attribut am Zeitraum-Endpunkt. Der Export erzeugt jetzt das PDF. (Danke an Ben v. Haxthausen für die Meldung.)
+- **Ausstempeln während einer laufenden Pause buchte die Pause als Arbeitszeit (#617)**: Wer aus einer laufenden Pause ausstempelte, ohne vorher „Weiter" zu drücken, bekam einen Eintrag, der bis zum Ausstempel-Zeitpunkt lief und die offene Pause als Arbeitszeit zählte. Der Eintrag endet jetzt beim Beginn der Pause (Feierabend), die offene Pause wird verworfen; bereits abgeschlossene Pausen bleiben erfasst.
+- **Team-Reiter für Admin und HR ohne eigenes Mitarbeiterprofil (#604)**: Admin- und HR-Manager ohne eigenes Profil sahen die Teamübersicht nicht. Der Team-Reiter ist jetzt unabhängig von einem eigenen Profil zugänglich.
+
 ## [0.16.3] - 2026-08-18
 
 ### Fixed
