@@ -606,6 +606,7 @@ class ReportController extends BaseController {
      * (#102), e.g. the 20th of one month to the 20th of the next.
      */
     #[NoAdminRequired]
+    #[NoCSRFRequired]
     public function pdfRange(?int $employeeId = null, string $startDate = '', string $endDate = ''): DataDownloadResponse|JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
