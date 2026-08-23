@@ -18,7 +18,11 @@ use OCA\WorkTime\Service\CompanySettingsService;
 use OCA\WorkTime\Service\EmployeeService;
 use OCA\WorkTime\Service\PdfService;
 use OCA\WorkTime\Service\PermissionService;
+use OCA\WorkTime\Service\PunchConfirmationRequiredException;
+use OCA\WorkTime\Service\PunchConflictException;
+use OCA\WorkTime\Service\PunchService;
 use OCA\WorkTime\Service\TimeEntryService;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
@@ -36,6 +40,7 @@ class TimeEntryController extends BaseController {
         private PdfService $pdfService,
         private EmployeeService $employeeService,
         private ArchiveService $archiveService,
+        private PunchService $punchService,
         private LoggerInterface $logger,
     ) {
         parent::__construct($request, $userId);
@@ -163,6 +168,147 @@ class TimeEntryController extends BaseController {
         } catch (\Exception $e) {
             return $this->handleException($e);
         }
+    }
+
+    /**
+     * Stopwatch (#584): the requester's own open punch, or null.
+     */
+    #[NoAdminRequired]
+    public function active(?int $employeeId = null): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+        if ($error = $this->requireEmployeeId($employeeId)) {
+            return $error;
+        }
+        if (!$this->permissionService->canEditTimeEntry($this->userId, $employeeId)) {
+            return $this->forbiddenResponse();
+        }
+
+        return $this->successResponse($this->punchService->getActive($employeeId));
+    }
+
+    /**
+     * Start a punch (#584).
+     */
+    #[NoAdminRequired]
+    public function punchIn(?int $employeeId = null, ?int $projectId = null, ?string $description = null): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+        if ($error = $this->requireEmployeeId($employeeId)) {
+            return $error;
+        }
+        if (!$this->permissionService->canEditTimeEntry($this->userId, $employeeId)) {
+            return $this->forbiddenResponse();
+        }
+
+        try {
+            return $this->createdResponse($this->punchService->punchIn($employeeId, $projectId, $description, 'web'));
+        } catch (PunchConflictException $e) {
+            return $this->conflictResponse($e->getMessage());
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    /**
+     * Start a live break (#584).
+     */
+    #[NoAdminRequired]
+    public function punchPause(?int $employeeId = null): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+        if ($error = $this->requireEmployeeId($employeeId)) {
+            return $error;
+        }
+        if (!$this->permissionService->canEditTimeEntry($this->userId, $employeeId)) {
+            return $this->forbiddenResponse();
+        }
+
+        try {
+            return $this->successResponse($this->punchService->punchPause($employeeId));
+        } catch (PunchConflictException $e) {
+            return $this->conflictResponse($e->getMessage());
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    /**
+     * End a live break (#584).
+     */
+    #[NoAdminRequired]
+    public function punchResume(?int $employeeId = null): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+        if ($error = $this->requireEmployeeId($employeeId)) {
+            return $error;
+        }
+        if (!$this->permissionService->canEditTimeEntry($this->userId, $employeeId)) {
+            return $this->forbiddenResponse();
+        }
+
+        try {
+            return $this->successResponse($this->punchService->punchResume($employeeId));
+        } catch (PunchConflictException $e) {
+            return $this->conflictResponse($e->getMessage());
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    /**
+     * End the punch and book a time entry (#584). On an overlong punch without
+     * confirmation/correction, returns 409 with the derived values so the client
+     * can show a confirm/correct dialog.
+     */
+    #[NoAdminRequired]
+    public function punchOut(
+        ?int $employeeId = null,
+        ?int $breakMinutes = null,
+        ?int $projectId = null,
+        ?string $description = null,
+        ?string $endTime = null,
+        bool $confirm = false
+    ): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+        if ($error = $this->requireEmployeeId($employeeId)) {
+            return $error;
+        }
+        if (!$this->permissionService->canEditTimeEntry($this->userId, $employeeId)) {
+            return $this->forbiddenResponse();
+        }
+
+        try {
+            $entry = $this->punchService->punchOut(
+                $employeeId,
+                $this->userId,
+                $breakMinutes,
+                $projectId,
+                $description,
+                $endTime,
+                $confirm
+            );
+            return $this->createdResponse($entry);
+        } catch (PunchConfirmationRequiredException $e) {
+            return new JSONResponse(
+                ['error' => $e->getMessage(), 'code' => 'confirmation_required', 'suggested' => $e->getSuggested()],
+                Http::STATUS_CONFLICT
+            );
+        } catch (PunchConflictException $e) {
+            return $this->conflictResponse($e->getMessage());
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    private function conflictResponse(string $message): JSONResponse {
+        return new JSONResponse(['error' => $message, 'code' => 'punch_conflict'], Http::STATUS_CONFLICT);
     }
 
     #[NoAdminRequired]

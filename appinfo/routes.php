@@ -7,8 +7,18 @@ return [
         // Page routes
         ['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],
 
+        // Push (#593): device-token registration for APNs.
+        ['name' => 'push#register', 'url' => '/api/push/register', 'verb' => 'POST'],
+        ['name' => 'push#unregister', 'url' => '/api/push/token', 'verb' => 'DELETE'],
+
         // Time Entries API (specific routes before {id})
         ['name' => 'time_entry#suggestBreak', 'url' => '/api/time-entries/suggest-break', 'verb' => 'POST'],
+        // Stopwatch (#584): server-authoritative open punch.
+        ['name' => 'time_entry#active', 'url' => '/api/time-entries/active', 'verb' => 'GET'],
+        ['name' => 'time_entry#punchIn', 'url' => '/api/time-entries/punch-in', 'verb' => 'POST'],
+        ['name' => 'time_entry#punchPause', 'url' => '/api/time-entries/punch-pause', 'verb' => 'POST'],
+        ['name' => 'time_entry#punchResume', 'url' => '/api/time-entries/punch-resume', 'verb' => 'POST'],
+        ['name' => 'time_entry#punchOut', 'url' => '/api/time-entries/punch-out', 'verb' => 'POST'],
         ['name' => 'time_entry#submitMonth', 'url' => '/api/time-entries/submit-month', 'verb' => 'POST'],
         ['name' => 'time_entry#approveMonth', 'url' => '/api/time-entries/approve-month', 'verb' => 'POST'],
         ['name' => 'time_entry#reopenMonth', 'url' => '/api/time-entries/reopen-month', 'verb' => 'POST'],

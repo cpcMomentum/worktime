@@ -8,6 +8,7 @@ import absences from './modules/absences.js'
 import holidays from './modules/holidays.js'
 import projects from './modules/projects.js'
 import workSchedules from './modules/workSchedules.js'
+import punch from './modules/punch.js'
 
 Vue.use(Vuex)
 
@@ -20,5 +21,6 @@ export default new Vuex.Store({
         holidays,
         projects,
         workSchedules,
+        punch,
     },
 })

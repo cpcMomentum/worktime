@@ -103,6 +103,55 @@ export default {
         }
     },
 
+    // Stopwatch (#585). The running punch is server-authoritative (#584); the
+    // client only reads the state and sends punch commands.
+    async getActivePunch(employeeId) {
+        try {
+            const response = await api.get('/time-entries/active', { params: { employeeId } })
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
+    async punchIn(employeeId, projectId = null, description = null) {
+        try {
+            const response = await api.post('/time-entries/punch-in', { employeeId, projectId, description })
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
+    async punchPause(employeeId) {
+        try {
+            const response = await api.post('/time-entries/punch-pause', { employeeId })
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
+    async punchResume(employeeId) {
+        try {
+            const response = await api.post('/time-entries/punch-resume', { employeeId })
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
+    async punchOut(employeeId, { breakMinutes = null, projectId = null, description = null, endTime = null, confirm = false } = {}) {
+        try {
+            const response = await api.post('/time-entries/punch-out', {
+                employeeId, breakMinutes, projectId, description, endTime, confirm,
+            })
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
     async submitMonth(employeeId, year, month) {
         try {
             const response = await api.post('/time-entries/submit-month', { employeeId, year, month })

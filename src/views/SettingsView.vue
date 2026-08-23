@@ -225,6 +225,16 @@
                             class="input-field input-small"
                             @change="saveSetting('min_break_minutes_9h')">
                     </div>
+                    <div class="form-group">
+                        <label for="maxPause">{{ t('worktime', 'Max. Pausendauer (min)') }} <InfoIcon>{{ t('worktime', 'Läuft eine laufende Pause (Stempeluhr) länger als dieser Wert, erhält der Mitarbeiter eine Erinnerung („Bist du noch in der Pause?“).') }}</InfoIcon></label>
+                        <input id="maxPause"
+                            v-model.number="settings.max_pause_minutes"
+                            type="number"
+                            min="0"
+                            max="480"
+                            class="input-field input-small"
+                            @change="saveSetting('max_pause_minutes')">
+                    </div>
                 </div>
             </NcSettingsSection>
 

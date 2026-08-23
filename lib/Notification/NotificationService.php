@@ -11,6 +11,7 @@ namespace OCA\WorkTime\Notification;
 
 use OCA\WorkTime\AppInfo\Application;
 use OCA\WorkTime\Db\Absence;
+use OCA\WorkTime\Db\ActivePunch;
 use OCA\WorkTime\Db\EmployeeMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Notification\IManager as INotificationManager;
@@ -204,6 +205,61 @@ class NotificationService {
 			return $supervisor->getUserId();
 		} catch (DoesNotExistException) {
 			$this->logger->warning('Supervisor not found', ['supervisorId' => $supervisorId]);
+			return null;
+		}
+	}
+
+	/**
+	 * Reminder (#588): a live break has been running too long. Sent to the
+	 * employee themselves. The datetime is pinned to the threshold moment and the
+	 * object to the punch id, so re-running the cron produces an identical
+	 * notification that Nextcloud deduplicates instead of spamming.
+	 */
+	public function notifyPunchPauseTooLong(ActivePunch $punch, \DateTimeInterface $thresholdMoment, int $maxPauseMinutes): void {
+		$userId = $this->getEmployeeUserId($punch->getEmployeeId());
+		if ($userId === null) {
+			return;
+		}
+
+		$notification = $this->notificationManager->createNotification();
+		$notification->setApp(Application::APP_ID);
+		$notification->setUser($userId);
+		$notification->setDateTime(\DateTime::createFromInterface($thresholdMoment));
+		$notification->setObject('wt_punch_pause', (string)$punch->getId());
+		$notification->setSubject('punch_pause_reminder', ['maxPause' => $maxPauseMinutes]);
+
+		$this->notificationManager->notify($notification);
+	}
+
+	/**
+	 * Reminder (#588): the punch has been running past the daily threshold —
+	 * likely a forgotten clock-out. Deterministic datetime/object as above.
+	 */
+	public function notifyPunchForgotClockOut(ActivePunch $punch, \DateTimeInterface $thresholdMoment, int $thresholdHours): void {
+		$userId = $this->getEmployeeUserId($punch->getEmployeeId());
+		if ($userId === null) {
+			return;
+		}
+
+		$notification = $this->notificationManager->createNotification();
+		$notification->setApp(Application::APP_ID);
+		$notification->setUser($userId);
+		$notification->setDateTime(\DateTime::createFromInterface($thresholdMoment));
+		$notification->setObject('wt_punch_out', (string)$punch->getId());
+		$notification->setSubject('punch_out_reminder', ['hours' => $thresholdHours]);
+
+		$this->notificationManager->notify($notification);
+	}
+
+	/**
+	 * The Nextcloud user id behind an employee, or null if the employee is gone
+	 * or not linked to a user.
+	 */
+	private function getEmployeeUserId(int $employeeId): ?string {
+		try {
+			$userId = $this->employeeMapper->find($employeeId)->getUserId();
+			return $userId !== '' ? $userId : null;
+		} catch (DoesNotExistException $e) {
 			return null;
 		}
 	}

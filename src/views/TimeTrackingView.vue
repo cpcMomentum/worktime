@@ -4,6 +4,11 @@
             <h2>{{ t('worktime', 'Zeiterfassung') }}</h2>
         </div>
 
+        <PunchPanel v-if="showPunchPanel"
+            :employee-id="employeeId"
+            :project-options="punchProjectOptions"
+            @booked="loadData" />
+
         <div class="view-toolbar">
             <div v-if="!isNarrow" class="layout-seg" role="group" :aria-label="t('worktime', 'Ansicht')">
                 <button class="seg-btn"
@@ -212,6 +217,7 @@ import YearOverviewTable from '../components/YearOverviewTable.vue'
 import DayList from '../components/DayList.vue'
 import MonthCalendar from '../components/MonthCalendar.vue'
 import DayDetailPanel from '../components/DayDetailPanel.vue'
+import PunchPanel from '../components/PunchPanel.vue'
 import ReportService from '../services/ReportService.js'
 import AbsenceService from '../services/AbsenceService.js'
 import TimeEntryService from '../services/TimeEntryService.js'
@@ -240,6 +246,7 @@ export default {
         DayList,
         MonthCalendar,
         DayDetailPanel,
+        PunchPanel,
     },
     data() {
         return {
@@ -269,11 +276,19 @@ export default {
     computed: {
         ...mapState('timeEntries', ['selectedMonth']),
         ...mapGetters('timeEntries', ['timeEntries', 'loading']),
-        ...mapGetters('permissions', ['activeEmployeeId', 'approvalRequired']),
+        ...mapGetters('permissions', ['activeEmployeeId', 'approvalRequired', 'employeeId', 'isEmployee', 'isCorrectionMode']),
         ...mapGetters('employees', ['currentEmployee']),
         ...mapGetters('projects', ['activeProjects']),
         projects() {
             return this.activeProjects
+        },
+        // Stopwatch (#585): only for the user's own profile, never while an
+        // HR correction targets someone else.
+        showPunchPanel() {
+            return this.isEmployee && !!this.employeeId && !this.isCorrectionMode
+        },
+        punchProjectOptions() {
+            return this.activeProjects.map((p) => ({ id: p.id, label: p.displayName || p.name }))
         },
         rangeInvalid() {
             return !!(this.rangeStart && this.rangeEnd && new Date(this.rangeEnd) < new Date(this.rangeStart))
