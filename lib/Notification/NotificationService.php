@@ -45,6 +45,13 @@ class NotificationService {
 	 *                                      in-app notification
 	 */
 	private function queuePush(string $userId, string $subject, array $params): void {
+		// Only enqueue when the subject actually has a push rendering, so
+		// in-app-only subjects (e.g. time_entries_reopened) don't insert a job
+		// that would no-op in PushDelivery.
+		if (!PushDelivery::supports($subject)) {
+			return;
+		}
+
 		$this->jobList->add(PushNotificationJob::class, [
 			'userId' => $userId,
 			'subject' => $subject,

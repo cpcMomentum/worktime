@@ -191,6 +191,20 @@ class NotificationServiceTest extends TestCase {
 		$this->service->notifyPunchPauseTooLong($punch, new \DateTime('2026-08-24 12:00:00'), 60);
 	}
 
+	public function testReopenedNotifiesInAppButQueuesNoPush(): void {
+		$employee = new Employee();
+		$employee->setId(1);
+		$employee->setUserId('erika');
+		$this->employeeMapper->method('find')->willReturn($employee);
+
+		// In-app notification is sent, but reopened has no push rendering, so no
+		// job is queued (avoids a no-op job insert).
+		$this->notificationManager->expects($this->once())->method('notify');
+		$this->jobList->expects($this->never())->method('add');
+
+		$this->service->notifyTimeEntriesReopened(1, 2026, 8, 'Bitte korrigieren');
+	}
+
 	private function stubEmployeeWithoutSupervisor(): void {
 		$employee = new Employee();
 		$employee->setId(1);

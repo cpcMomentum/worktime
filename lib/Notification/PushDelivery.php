@@ -33,6 +33,32 @@ use Psr\Log\LoggerInterface;
  */
 class PushDelivery {
 
+	/**
+	 * The notification subjects that have a mobile push rendering below. This is
+	 * the single source of truth for "is this pushable": NotificationService asks
+	 * it before enqueuing a PushNotificationJob, so subjects that only exist in
+	 * app (e.g. archive_failed, time_entries_reopened) never queue a job that
+	 * would no-op. Keep in sync with the cases in {@see renderBody()}.
+	 */
+	public const PUSHABLE_SUBJECTS = [
+		'absence_submitted',
+		'time_entries_submitted',
+		'absence_approved',
+		'absence_rejected',
+		'time_entries_approved',
+		'time_entries_rejected',
+		'punch_pause_reminder',
+		'punch_out_reminder',
+	];
+
+	/**
+	 * Whether a subject has a mobile push rendering. Used to avoid enqueuing a
+	 * job for an in-app-only subject.
+	 */
+	public static function supports(string $subject): bool {
+		return in_array($subject, self::PUSHABLE_SUBJECTS, true);
+	}
+
 	public function __construct(
 		private ApnsClient $apnsClient,
 		private IUserManager $userManager,
