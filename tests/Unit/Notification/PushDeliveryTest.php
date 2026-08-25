@@ -15,12 +15,13 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * Genehmigungs-Push (#593 Phase B, worktime-mobile#19).
+ * Genehmigungs-Push (#593 Phase B/C, worktime-mobile#19).
  *
- * PushDelivery mirrors the two "submitted" in-app notifications to an APNs push.
- * Two things matter and are pinned here: the body is rendered in the recipient's
- * language with the same wording as the in-app Notifier, and a push must never
- * throw — the in-app notification has already gone out.
+ * PushDelivery mirrors the "submitted", "approved"/"rejected" and stopwatch
+ * reminder in-app notifications to an APNs push. Two things matter and are
+ * pinned here: the body is rendered in the recipient's language with the same
+ * wording as the in-app Notifier, and a push must never throw — the in-app
+ * notification has already gone out.
  */
 class PushDeliveryTest extends TestCase {
 
