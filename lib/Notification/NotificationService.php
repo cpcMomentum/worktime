@@ -10,10 +10,12 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Notification;
 
 use OCA\WorkTime\AppInfo\Application;
+use OCA\WorkTime\BackgroundJob\PushNotificationJob;
 use OCA\WorkTime\Db\Absence;
 use OCA\WorkTime\Db\ActivePunch;
 use OCA\WorkTime\Db\EmployeeMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\BackgroundJob\IJobList;
 use OCP\Notification\IManager as INotificationManager;
 use Psr\Log\LoggerInterface;
 
@@ -30,8 +32,24 @@ class NotificationService {
 		private INotificationManager $notificationManager,
 		private EmployeeMapper $employeeMapper,
 		private LoggerInterface $logger,
-		private PushDelivery $pushDelivery,
+		private IJobList $jobList,
 	) {
+	}
+
+	/**
+	 * Queue the approval push so it runs on the next cron tick instead of
+	 * blocking the submit request on APNs (#593 Phase B). Enqueuing is a fast DB
+	 * insert; the actual HTTP/2 delivery happens in {@see PushNotificationJob}.
+	 *
+	 * @param array<string, mixed> $params the same subject parameters as the
+	 *                                      in-app notification
+	 */
+	private function queuePush(string $userId, string $subject, array $params): void {
+		$this->jobList->add(PushNotificationJob::class, [
+			'userId' => $userId,
+			'subject' => $subject,
+			'params' => $params,
+		]);
 	}
 
 	public function notifyAbsenceSubmitted(Absence $absence): void {
@@ -54,9 +72,9 @@ class NotificationService {
 
 			$this->notificationManager->notify($notification);
 
-			// Phase B (#593): also push the supervisor. Best-effort; PushDelivery
-			// swallows its own errors so this never breaks the in-app notification.
-			$this->pushDelivery->send($supervisorUserId, 'absence_submitted', $params);
+			// Phase B (#593): also push the supervisor, but out of the request path
+			// via a queued job so a slow APNs endpoint can never stall the submit.
+			$this->queuePush($supervisorUserId, 'absence_submitted', $params);
 		} catch (\Throwable $e) {
 			$this->logger->error('Failed to send absence_submitted notification', [
 				'exception' => $e,
@@ -100,9 +118,9 @@ class NotificationService {
 
 			$this->notificationManager->notify($notification);
 
-			// Phase B (#593): also push the supervisor. Best-effort; PushDelivery
-			// swallows its own errors so this never breaks the in-app notification.
-			$this->pushDelivery->send($supervisorUserId, 'time_entries_submitted', $params);
+			// Phase B (#593): also push the supervisor, but out of the request path
+			// via a queued job so a slow APNs endpoint can never stall the submit.
+			$this->queuePush($supervisorUserId, 'time_entries_submitted', $params);
 		} catch (\Throwable $e) {
 			$this->logger->error('Failed to send time_entries_submitted notification', [
 				'exception' => $e,

@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace OCA\WorkTime\Tests\Unit\Notification;
 
+use OCA\WorkTime\BackgroundJob\PushNotificationJob;
 use OCA\WorkTime\Db\Absence;
 use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\EmployeeMapper;
 use OCA\WorkTime\Notification\NotificationService;
-use OCA\WorkTime\Notification\PushDelivery;
+use OCP\BackgroundJob\IJobList;
 use OCP\Notification\IManager as INotificationManager;
 use OCP\Notification\INotification;
 use PHPUnit\Framework\TestCase;
@@ -17,15 +18,16 @@ use Psr\Log\LoggerInterface;
 /**
  * Genehmigungs-Push wiring (#593 Phase B).
  *
- * The two "submitted" events must, in addition to the in-app notification, hand
- * the recipient and subject to PushDelivery. These tests pin that the push is
- * fired for exactly those events and reaches the resolved supervisor.
+ * The two "submitted" events must, besides the in-app notification, *queue* a
+ * push job (never call APNs synchronously in the submit request). These tests
+ * pin that the job is enqueued for exactly those events, carrying the resolved
+ * supervisor and subject.
  */
 class NotificationServiceTest extends TestCase {
 
 	private INotificationManager $notificationManager;
 	private EmployeeMapper $employeeMapper;
-	private PushDelivery $pushDelivery;
+	private IJobList $jobList;
 	private NotificationService $service;
 
 	protected function setUp(): void {
@@ -34,13 +36,13 @@ class NotificationServiceTest extends TestCase {
 			->willReturn($this->createMock(INotification::class));
 
 		$this->employeeMapper = $this->createMock(EmployeeMapper::class);
-		$this->pushDelivery = $this->createMock(PushDelivery::class);
+		$this->jobList = $this->createMock(IJobList::class);
 
 		$this->service = new NotificationService(
 			$this->notificationManager,
 			$this->employeeMapper,
 			$this->createMock(LoggerInterface::class),
-			$this->pushDelivery,
+			$this->jobList,
 		);
 	}
 
@@ -63,16 +65,19 @@ class NotificationServiceTest extends TestCase {
 		);
 	}
 
-	public function testAbsenceSubmittedAlsoPushesSupervisor(): void {
+	public function testAbsenceSubmittedQueuesPushForSupervisor(): void {
 		$this->stubEmployeeAndSupervisor();
 		$this->notificationManager->expects($this->once())->method('notify');
 
-		$this->pushDelivery->expects($this->once())
-			->method('send')
+		$this->jobList->expects($this->once())
+			->method('add')
 			->with(
-				'boss',
-				'absence_submitted',
-				$this->callback(static fn (array $p): bool => ($p['employeeName'] ?? null) === 'Erika Muster')
+				PushNotificationJob::class,
+				$this->callback(static function (array $arg): bool {
+					return $arg['userId'] === 'boss'
+						&& $arg['subject'] === 'absence_submitted'
+						&& ($arg['params']['employeeName'] ?? null) === 'Erika Muster';
+				})
 			);
 
 		$absence = new Absence();
@@ -86,22 +91,52 @@ class NotificationServiceTest extends TestCase {
 		$this->service->notifyAbsenceSubmitted($absence);
 	}
 
-	public function testTimeEntriesSubmittedAlsoPushesSupervisor(): void {
+	public function testTimeEntriesSubmittedQueuesPushForSupervisor(): void {
 		$this->stubEmployeeAndSupervisor();
 		$this->notificationManager->expects($this->once())->method('notify');
 
-		$this->pushDelivery->expects($this->once())
-			->method('send')
+		$this->jobList->expects($this->once())
+			->method('add')
 			->with(
-				'boss',
-				'time_entries_submitted',
-				$this->callback(static fn (array $p): bool => ($p['month'] ?? null) === 8 && ($p['year'] ?? null) === 2026)
+				PushNotificationJob::class,
+				$this->callback(static function (array $arg): bool {
+					return $arg['userId'] === 'boss'
+						&& $arg['subject'] === 'time_entries_submitted'
+						&& ($arg['params']['month'] ?? null) === 8
+						&& ($arg['params']['year'] ?? null) === 2026;
+				})
 			);
 
 		$this->service->notifyTimeEntriesSubmitted(1, 2026, 8);
 	}
 
-	public function testNoSupervisorMeansNoPush(): void {
+	public function testNoSupervisorMeansNoPushForTimeEntries(): void {
+		$this->stubEmployeeWithoutSupervisor();
+
+		$this->notificationManager->expects($this->never())->method('notify');
+		$this->jobList->expects($this->never())->method('add');
+
+		$this->service->notifyTimeEntriesSubmitted(1, 2026, 8);
+	}
+
+	public function testNoSupervisorMeansNoPushForAbsence(): void {
+		$this->stubEmployeeWithoutSupervisor();
+
+		$this->notificationManager->expects($this->never())->method('notify');
+		$this->jobList->expects($this->never())->method('add');
+
+		$absence = new Absence();
+		$absence->setId(99);
+		$absence->setEmployeeId(1);
+		$absence->setType(Absence::TYPE_VACATION);
+		$absence->setStatus(Absence::STATUS_PENDING);
+		$absence->setStartDate(new \DateTime('2026-08-01'));
+		$absence->setEndDate(new \DateTime('2026-08-05'));
+
+		$this->service->notifyAbsenceSubmitted($absence);
+	}
+
+	private function stubEmployeeWithoutSupervisor(): void {
 		$employee = new Employee();
 		$employee->setId(1);
 		$employee->setFirstName('Erika');
@@ -109,10 +144,5 @@ class NotificationServiceTest extends TestCase {
 		$employee->setUserId('erika');
 		$employee->setSupervisorId(null);
 		$this->employeeMapper->method('find')->willReturn($employee);
-
-		$this->notificationManager->expects($this->never())->method('notify');
-		$this->pushDelivery->expects($this->never())->method('send');
-
-		$this->service->notifyTimeEntriesSubmitted(1, 2026, 8);
 	}
 }
