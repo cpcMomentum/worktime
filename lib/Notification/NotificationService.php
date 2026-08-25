@@ -42,24 +42,21 @@ class NotificationService {
 				return;
 			}
 
-			$notification = $this->createNotification('absence_submitted', $supervisorUserId, [
+			$params = [
 				'employeeName' => $employee->getFullName(),
 				'typeName' => $absence->getTypeName(),
 				'startDate' => $absence->getStartDate()->format('d.m.'),
 				'endDate' => $absence->getEndDate()->format('d.m.'),
-			]);
+			];
+
+			$notification = $this->createNotification('absence_submitted', $supervisorUserId, $params);
 			$notification->setObject('absence', (string)$absence->getId());
 
 			$this->notificationManager->notify($notification);
 
 			// Phase B (#593): also push the supervisor. Best-effort; PushDelivery
 			// swallows its own errors so this never breaks the in-app notification.
-			$this->pushDelivery->send($supervisorUserId, 'absence_submitted', [
-				'employeeName' => $employee->getFullName(),
-				'typeName' => $absence->getTypeName(),
-				'startDate' => $absence->getStartDate()->format('d.m.'),
-				'endDate' => $absence->getEndDate()->format('d.m.'),
-			]);
+			$this->pushDelivery->send($supervisorUserId, 'absence_submitted', $params);
 		} catch (\Throwable $e) {
 			$this->logger->error('Failed to send absence_submitted notification', [
 				'exception' => $e,
@@ -92,22 +89,20 @@ class NotificationService {
 				return;
 			}
 
-			$notification = $this->createNotification('time_entries_submitted', $supervisorUserId, [
+			$params = [
 				'employeeName' => $employee->getFullName(),
 				'month' => $month,
 				'year' => $year,
-			]);
+			];
+
+			$notification = $this->createNotification('time_entries_submitted', $supervisorUserId, $params);
 			$notification->setObject('time_entry', $employeeId . '-' . $year . '-' . $month);
 
 			$this->notificationManager->notify($notification);
 
 			// Phase B (#593): also push the supervisor. Best-effort; PushDelivery
 			// swallows its own errors so this never breaks the in-app notification.
-			$this->pushDelivery->send($supervisorUserId, 'time_entries_submitted', [
-				'employeeName' => $employee->getFullName(),
-				'month' => $month,
-				'year' => $year,
-			]);
+			$this->pushDelivery->send($supervisorUserId, 'time_entries_submitted', $params);
 		} catch (\Throwable $e) {
 			$this->logger->error('Failed to send time_entries_submitted notification', [
 				'exception' => $e,
