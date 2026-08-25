@@ -15,12 +15,13 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * Genehmigungs-Push (#593 Phase B, worktime-mobile#19).
+ * Genehmigungs-Push (#593 Phase B/C, worktime-mobile#19).
  *
- * PushDelivery mirrors the two "submitted" in-app notifications to an APNs push.
- * Two things matter and are pinned here: the body is rendered in the recipient's
- * language with the same wording as the in-app Notifier, and a push must never
- * throw — the in-app notification has already gone out.
+ * PushDelivery mirrors the "submitted", "approved"/"rejected" and stopwatch
+ * reminder in-app notifications to an APNs push. Two things matter and are
+ * pinned here: the body is rendered in the recipient's language with the same
+ * wording as the in-app Notifier, and a push must never throw — the in-app
+ * notification has already gone out.
  */
 class PushDeliveryTest extends TestCase {
 
@@ -100,13 +101,72 @@ class PushDeliveryTest extends TestCase {
 		$this->assertSame('time_entries_submitted', $captured['data']['type']);
 	}
 
-	public function testUnknownSubjectIsNotPushed(): void {
-		$this->apnsClient->expects($this->never())->method('sendToUser');
+	public function testAbsenceApprovedPushesRenderedBody(): void {
+		$captured = null;
+		$this->apnsClient->expects($this->once())
+			->method('sendToUser')
+			->with('erika', $this->callback(function (array $payload) use (&$captured): bool {
+				$captured = $payload;
+				return true;
+			}))
+			->willReturn([]);
 
-		$this->delivery->send('supervisor', 'absence_approved', [
+		$this->delivery->send('erika', 'absence_approved', [
 			'typeName' => 'Urlaub',
 			'startDate' => '01.08.',
 			'endDate' => '05.08.',
+		]);
+
+		$this->assertSame(
+			'Deine Abwesenheit (Urlaub, 01.08. - 05.08.) wurde genehmigt',
+			$captured['aps']['alert']['body']
+		);
+		$this->assertSame('absence_approved', $captured['data']['type']);
+	}
+
+	public function testTimeEntriesRejectedPushesRenderedBody(): void {
+		$captured = null;
+		$this->apnsClient->expects($this->once())
+			->method('sendToUser')
+			->with('erika', $this->callback(function (array $payload) use (&$captured): bool {
+				$captured = $payload;
+				return true;
+			}))
+			->willReturn([]);
+
+		$this->delivery->send('erika', 'time_entries_rejected', ['month' => 8, 'year' => 2026]);
+
+		$this->assertStringStartsWith('Deine Zeiteinträge für ', $captured['aps']['alert']['body']);
+		$this->assertStringEndsWith(' wurden abgelehnt', $captured['aps']['alert']['body']);
+	}
+
+	public function testPunchReminderPushesRenderedBody(): void {
+		$captured = null;
+		$this->apnsClient->expects($this->once())
+			->method('sendToUser')
+			->with('erika', $this->callback(function (array $payload) use (&$captured): bool {
+				$captured = $payload;
+				return true;
+			}))
+			->willReturn([]);
+
+		$this->delivery->send('erika', 'punch_out_reminder', ['hours' => 10]);
+
+		$this->assertSame(
+			'Du bist seit über 10 Stunden eingestempelt. Nicht vergessen auszustempeln.',
+			$captured['aps']['alert']['body']
+		);
+		$this->assertSame('punch_out_reminder', $captured['data']['type']);
+	}
+
+	public function testUnknownSubjectIsNotPushed(): void {
+		$this->apnsClient->expects($this->never())->method('sendToUser');
+
+		// archive_failed is an in-app-only notification with no mobile push.
+		$this->delivery->send('supervisor', 'archive_failed', [
+			'employeeName' => 'Bob Doe',
+			'month' => 8,
+			'year' => 2026,
 		]);
 	}
 
