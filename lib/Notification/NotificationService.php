@@ -190,14 +190,19 @@ class NotificationService {
 		try {
 			$employee = $this->employeeMapper->find($absence->getEmployeeId());
 
-			$notification = $this->createNotification($subject, $employee->getUserId(), [
+			$params = [
 				'typeName' => $absence->getTypeName(),
 				'startDate' => $absence->getStartDate()->format('d.m.'),
 				'endDate' => $absence->getEndDate()->format('d.m.'),
-			]);
+			];
+
+			$notification = $this->createNotification($subject, $employee->getUserId(), $params);
 			$notification->setObject('absence', (string)$absence->getId());
 
 			$this->notificationManager->notify($notification);
+
+			// Phase B/C (#593): mirror the decision to the employee's phone.
+			$this->queuePush($employee->getUserId(), $subject, $params);
 		} catch (\Throwable $e) {
 			$this->logger->error('Failed to send ' . $subject . ' notification', [
 				'exception' => $e,
@@ -210,14 +215,19 @@ class NotificationService {
 		try {
 			$employee = $this->employeeMapper->find($employeeId);
 
-			$notification = $this->createNotification($subject, $employee->getUserId(), [
+			$params = [
 				'month' => $month,
 				'year' => $year,
 				'reason' => $reason,
-			]);
+			];
+
+			$notification = $this->createNotification($subject, $employee->getUserId(), $params);
 			$notification->setObject('time_entry', $employeeId . '-' . $year . '-' . $month);
 
 			$this->notificationManager->notify($notification);
+
+			// Phase B/C (#593): mirror the decision to the employee's phone.
+			$this->queuePush($employee->getUserId(), $subject, $params);
 		} catch (\Throwable $e) {
 			$this->logger->error('Failed to send ' . $subject . ' notification', [
 				'exception' => $e,
@@ -260,6 +270,10 @@ class NotificationService {
 		$notification->setSubject('punch_pause_reminder', ['maxPause' => $maxPauseMinutes]);
 
 		$this->notificationManager->notify($notification);
+
+		// Phase C (#593): the reminder job runs server-side, so also push it to
+		// the employee's phone.
+		$this->queuePush($userId, 'punch_pause_reminder', ['maxPause' => $maxPauseMinutes]);
 	}
 
 	/**
@@ -280,6 +294,10 @@ class NotificationService {
 		$notification->setSubject('punch_out_reminder', ['hours' => $thresholdHours]);
 
 		$this->notificationManager->notify($notification);
+
+		// Phase C (#593): the reminder job runs server-side, so also push it to
+		// the employee's phone.
+		$this->queuePush($userId, 'punch_out_reminder', ['hours' => $thresholdHours]);
 	}
 
 	/**

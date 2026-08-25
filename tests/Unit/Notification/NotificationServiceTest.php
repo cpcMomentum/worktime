@@ -6,6 +6,7 @@ namespace OCA\WorkTime\Tests\Unit\Notification;
 
 use OCA\WorkTime\BackgroundJob\PushNotificationJob;
 use OCA\WorkTime\Db\Absence;
+use OCA\WorkTime\Db\ActivePunch;
 use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\EmployeeMapper;
 use OCA\WorkTime\Notification\NotificationService;
@@ -134,6 +135,60 @@ class NotificationServiceTest extends TestCase {
 		$absence->setEndDate(new \DateTime('2026-08-05'));
 
 		$this->service->notifyAbsenceSubmitted($absence);
+	}
+
+	public function testAbsenceApprovedQueuesPushForEmployee(): void {
+		$employee = new Employee();
+		$employee->setId(1);
+		$employee->setUserId('erika');
+		$this->employeeMapper->method('find')->willReturn($employee);
+		$this->notificationManager->expects($this->once())->method('notify');
+
+		$this->jobList->expects($this->once())
+			->method('add')
+			->with(
+				PushNotificationJob::class,
+				$this->callback(static function (array $arg): bool {
+					return $arg['userId'] === 'erika'
+						&& $arg['subject'] === 'absence_approved'
+						&& ($arg['params']['typeName'] ?? null) === 'Urlaub';
+				})
+			);
+
+		$absence = new Absence();
+		$absence->setId(99);
+		$absence->setEmployeeId(1);
+		$absence->setType(Absence::TYPE_VACATION);
+		$absence->setStatus(Absence::STATUS_APPROVED);
+		$absence->setStartDate(new \DateTime('2026-08-01'));
+		$absence->setEndDate(new \DateTime('2026-08-05'));
+
+		$this->service->notifyAbsenceApproved($absence);
+	}
+
+	public function testPunchPauseReminderQueuesPushForEmployee(): void {
+		$employee = new Employee();
+		$employee->setId(7);
+		$employee->setUserId('erika');
+		$this->employeeMapper->method('find')->willReturn($employee);
+		$this->notificationManager->expects($this->once())->method('notify');
+
+		$this->jobList->expects($this->once())
+			->method('add')
+			->with(
+				PushNotificationJob::class,
+				$this->callback(static function (array $arg): bool {
+					return $arg['userId'] === 'erika'
+						&& $arg['subject'] === 'punch_pause_reminder'
+						&& ($arg['params']['maxPause'] ?? null) === 60;
+				})
+			);
+
+		$punch = new ActivePunch();
+		$punch->setId(3);
+		$punch->setEmployeeId(7);
+
+		$this->service->notifyPunchPauseTooLong($punch, new \DateTime('2026-08-24 12:00:00'), 60);
 	}
 
 	private function stubEmployeeWithoutSupervisor(): void {

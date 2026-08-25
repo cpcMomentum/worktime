@@ -16,9 +16,10 @@ use OCP\L10N\IFactory;
 use Psr\Log\LoggerInterface;
 
 /**
- * Phase B (#593, worktime-mobile#19): mirror the two "submitted" in-app
- * notifications to an APNs push, so a supervisor is reached on their phone the
- * moment something needs approval.
+ * Phase B/C (#593, worktime-mobile#19): mirror the relevant in-app
+ * notifications to an APNs push, so the recipient is reached on their phone —
+ * a supervisor when something needs approval (submitted), an employee when a
+ * decision is made (approved/rejected) or a stopwatch reminder fires (#588).
  *
  * This sits next to {@see NotificationService}: that class writes the on-screen
  * notification, this one additionally pushes it. The push text is rendered in
@@ -97,6 +98,50 @@ class PushDelivery {
 						$params['employeeName'] ?? '',
 						$this->formatMonthYear($params, $lang),
 					]
+				);
+
+			case 'absence_approved':
+				return $l->t(
+					'Deine Abwesenheit (%1$s, %2$s - %3$s) wurde genehmigt',
+					[
+						$params['typeName'] ?? '',
+						$params['startDate'] ?? '',
+						$params['endDate'] ?? '',
+					]
+				);
+
+			case 'absence_rejected':
+				return $l->t(
+					'Deine Abwesenheit (%1$s, %2$s - %3$s) wurde abgelehnt',
+					[
+						$params['typeName'] ?? '',
+						$params['startDate'] ?? '',
+						$params['endDate'] ?? '',
+					]
+				);
+
+			case 'time_entries_approved':
+				return $l->t(
+					'Deine Zeiteinträge für %s wurden genehmigt',
+					[$this->formatMonthYear($params, $lang)]
+				);
+
+			case 'time_entries_rejected':
+				return $l->t(
+					'Deine Zeiteinträge für %s wurden abgelehnt',
+					[$this->formatMonthYear($params, $lang)]
+				);
+
+			case 'punch_pause_reminder':
+				return $l->t(
+					'Bist du noch in der Pause? Sie läuft seit über %d Minuten.',
+					[(int)($params['maxPause'] ?? 60)]
+				);
+
+			case 'punch_out_reminder':
+				return $l->t(
+					'Du bist seit über %d Stunden eingestempelt. Nicht vergessen auszustempeln.',
+					[(int)($params['hours'] ?? 10)]
 				);
 
 			default:
