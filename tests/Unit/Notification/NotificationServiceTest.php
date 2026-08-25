@@ -17,12 +17,13 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * Genehmigungs-Push wiring (#593 Phase B).
+ * Genehmigungs-Push wiring (#593 Phase B/C).
  *
- * The two "submitted" events must, besides the in-app notification, *queue* a
- * push job (never call APNs synchronously in the submit request). These tests
- * pin that the job is enqueued for exactly those events, carrying the resolved
- * supervisor and subject.
+ * Besides the in-app notification, the "submitted", "approved"/"rejected" and
+ * stopwatch reminder events must *queue* a push job (never call APNs
+ * synchronously). These tests pin that the job is enqueued for exactly those
+ * events, carrying the resolved recipient and subject — and that subjects with
+ * no push rendering (e.g. reopened) queue nothing.
  */
 class NotificationServiceTest extends TestCase {
 
