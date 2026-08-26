@@ -709,6 +709,8 @@ OC.L10N.register(
     "Kein Gerätetoken übergeben." : "Kein Gerätetoken übergeben.",
     "Nicht unterstützte Plattform." : "Nicht unterstützte Plattform.",
     "Gerätetoken konnte nicht gespeichert werden." : "Gerätetoken konnte nicht gespeichert werden.",
-    "Gerätetoken konnte nicht entfernt werden." : "Gerätetoken konnte nicht entfernt werden."
+    "Gerätetoken konnte nicht entfernt werden." : "Gerätetoken konnte nicht entfernt werden.",
+    "Stornierte und abgelehnte ausblenden" : "Stornierte und abgelehnte ausblenden",
+    "{count} ausgeblendet" : "{count} ausgeblendet"
 },
 "nplurals=2; plural=(n != 1);");
