@@ -86,6 +86,18 @@
                     {{ t('worktime', 'Neue Abwesenheit') }}
                 </NcButton>
             </div>
+            <div v-if="absences.length > 0" class="list-filter">
+                <NcCheckboxRadioSwitch
+                    :checked.sync="hideCancelledRejected"
+                    type="switch">
+                    {{ t('worktime', 'Stornierte und abgelehnte ausblenden') }}
+                </NcCheckboxRadioSwitch>
+                <button v-if="hideCancelledRejected && hiddenCount > 0"
+                    class="list-filter__hint"
+                    @click="hideCancelledRejected = false">
+                    {{ t('worktime', '{count} ausgeblendet', { count: hiddenCount }) }}
+                </button>
+            </div>
             <NcLoadingIcon v-if="loading" :size="44" />
             <table v-else-if="absences.length > 0 || isCreating" class="absence-table">
                 <thead>
@@ -108,7 +120,7 @@
                         @save="onCreate"
                         @cancel="cancelCreate" />
                     <AbsenceRow
-                        v-for="absence in sortedAbsences"
+                        v-for="absence in visibleAbsences"
                         :key="absence.id"
                         :absence="absence"
                         :mode="editingId === absence.id ? 'edit' : 'view'"
@@ -203,6 +215,7 @@
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
+import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
 import PlusIcon from 'vue-material-design-icons/Plus.vue'
 import CalendarIcon from 'vue-material-design-icons/Calendar.vue'
 import { mapGetters, mapActions } from 'vuex'
@@ -221,6 +234,7 @@ export default {
         NcButton,
         NcLoadingIcon,
         NcEmptyContent,
+        NcCheckboxRadioSwitch,
         PlusIcon,
         CalendarIcon,
         AbsenceRow,
@@ -235,6 +249,9 @@ export default {
             isCreating: false,
             overtime: null,
             pendingCorrection: null,
+            // #586: stornierte/abgelehnte Eintraege sammeln sich an; standardmaessig
+            // ausblenden, damit die Liste uebersichtlich bleibt (reine Anzeige).
+            hideCancelledRejected: true,
         }
     },
     computed: {
@@ -256,6 +273,19 @@ export default {
         },
         sortedAbsences() {
             return [...this.absences].sort((a, b) => b.startDate.localeCompare(a.startDate))
+        },
+        // #586: Ansicht-Filter (keine Datenaenderung). Blendet stornierte und
+        // abgelehnte Eintraege aus, wenn der Schalter aktiv ist.
+        visibleAbsences() {
+            if (!this.hideCancelledRejected) {
+                return this.sortedAbsences
+            }
+            return this.sortedAbsences.filter(
+                a => a.status !== 'cancelled' && a.status !== 'rejected',
+            )
+        },
+        hiddenCount() {
+            return this.sortedAbsences.length - this.visibleAbsences.length
         },
         vacationCarryover() {
             // #525: zeige den Übertrag exakt (halbe Tage), damit Anzeige und
@@ -625,6 +655,29 @@ export default {
 
 .list-head .list-title {
     margin: 0;
+}
+
+/* #586: Ansicht-Filter ueber der Abwesenheitsliste */
+.list-filter {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 0 0 12px;
+}
+
+.list-filter__hint {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 13px;
+    color: var(--color-text-maxcontrast);
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.list-filter__hint:hover {
+    color: var(--color-main-text);
 }
 
 .list-title {
