@@ -166,7 +166,7 @@ class HolidayService {
             $holidays[] = $this->createHoliday($year, (int)$fronleichnam->format('m'), (int)$fronleichnam->format('d'), 'Fronleichnam', $federalState);
         }
 
-        // Add special half-day holidays (Christmas Eve, New Year's Eve)
+        // Add special days (Christmas Eve, New Year's Eve) - #569
         $specialDays = $this->generateSpecialDays($year, $federalState);
         $holidays = array_merge($holidays, $specialDays);
 
