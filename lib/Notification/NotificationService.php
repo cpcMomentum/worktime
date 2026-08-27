@@ -10,10 +10,12 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Notification;
 
 use OCA\WorkTime\AppInfo\Application;
+use OCA\WorkTime\BackgroundJob\PushNotificationJob;
 use OCA\WorkTime\Db\Absence;
 use OCA\WorkTime\Db\ActivePunch;
 use OCA\WorkTime\Db\EmployeeMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\BackgroundJob\IJobList;
 use OCP\Notification\IManager as INotificationManager;
 use Psr\Log\LoggerInterface;
 
@@ -30,7 +32,31 @@ class NotificationService {
 		private INotificationManager $notificationManager,
 		private EmployeeMapper $employeeMapper,
 		private LoggerInterface $logger,
+		private IJobList $jobList,
 	) {
+	}
+
+	/**
+	 * Queue the approval push so it runs on the next cron tick instead of
+	 * blocking the submit request on APNs (#593 Phase B). Enqueuing is a fast DB
+	 * insert; the actual HTTP/2 delivery happens in {@see PushNotificationJob}.
+	 *
+	 * @param array<string, mixed> $params the same subject parameters as the
+	 *                                      in-app notification
+	 */
+	private function queuePush(string $userId, string $subject, array $params): void {
+		// Only enqueue when the subject actually has a push rendering, so
+		// in-app-only subjects (e.g. time_entries_reopened) don't insert a job
+		// that would no-op in PushDelivery.
+		if (!PushDelivery::supports($subject)) {
+			return;
+		}
+
+		$this->jobList->add(PushNotificationJob::class, [
+			'userId' => $userId,
+			'subject' => $subject,
+			'params' => $params,
+		]);
 	}
 
 	public function notifyAbsenceSubmitted(Absence $absence): void {
@@ -41,15 +67,21 @@ class NotificationService {
 				return;
 			}
 
-			$notification = $this->createNotification('absence_submitted', $supervisorUserId, [
+			$params = [
 				'employeeName' => $employee->getFullName(),
 				'typeName' => $absence->getTypeName(),
 				'startDate' => $absence->getStartDate()->format('d.m.'),
 				'endDate' => $absence->getEndDate()->format('d.m.'),
-			]);
+			];
+
+			$notification = $this->createNotification('absence_submitted', $supervisorUserId, $params);
 			$notification->setObject('absence', (string)$absence->getId());
 
 			$this->notificationManager->notify($notification);
+
+			// Phase B (#593): also push the supervisor, but out of the request path
+			// via a queued job so a slow APNs endpoint can never stall the submit.
+			$this->queuePush($supervisorUserId, 'absence_submitted', $params);
 		} catch (\Throwable $e) {
 			$this->logger->error('Failed to send absence_submitted notification', [
 				'exception' => $e,
@@ -82,14 +114,20 @@ class NotificationService {
 				return;
 			}
 
-			$notification = $this->createNotification('time_entries_submitted', $supervisorUserId, [
+			$params = [
 				'employeeName' => $employee->getFullName(),
 				'month' => $month,
 				'year' => $year,
-			]);
+			];
+
+			$notification = $this->createNotification('time_entries_submitted', $supervisorUserId, $params);
 			$notification->setObject('time_entry', $employeeId . '-' . $year . '-' . $month);
 
 			$this->notificationManager->notify($notification);
+
+			// Phase B (#593): also push the supervisor, but out of the request path
+			// via a queued job so a slow APNs endpoint can never stall the submit.
+			$this->queuePush($supervisorUserId, 'time_entries_submitted', $params);
 		} catch (\Throwable $e) {
 			$this->logger->error('Failed to send time_entries_submitted notification', [
 				'exception' => $e,
@@ -159,14 +197,19 @@ class NotificationService {
 		try {
 			$employee = $this->employeeMapper->find($absence->getEmployeeId());
 
-			$notification = $this->createNotification($subject, $employee->getUserId(), [
+			$params = [
 				'typeName' => $absence->getTypeName(),
 				'startDate' => $absence->getStartDate()->format('d.m.'),
 				'endDate' => $absence->getEndDate()->format('d.m.'),
-			]);
+			];
+
+			$notification = $this->createNotification($subject, $employee->getUserId(), $params);
 			$notification->setObject('absence', (string)$absence->getId());
 
 			$this->notificationManager->notify($notification);
+
+			// Phase B/C (#593): mirror the decision to the employee's phone.
+			$this->queuePush($employee->getUserId(), $subject, $params);
 		} catch (\Throwable $e) {
 			$this->logger->error('Failed to send ' . $subject . ' notification', [
 				'exception' => $e,
@@ -179,14 +222,19 @@ class NotificationService {
 		try {
 			$employee = $this->employeeMapper->find($employeeId);
 
-			$notification = $this->createNotification($subject, $employee->getUserId(), [
+			$params = [
 				'month' => $month,
 				'year' => $year,
 				'reason' => $reason,
-			]);
+			];
+
+			$notification = $this->createNotification($subject, $employee->getUserId(), $params);
 			$notification->setObject('time_entry', $employeeId . '-' . $year . '-' . $month);
 
 			$this->notificationManager->notify($notification);
+
+			// Phase B/C (#593): mirror the decision to the employee's phone.
+			$this->queuePush($employee->getUserId(), $subject, $params);
 		} catch (\Throwable $e) {
 			$this->logger->error('Failed to send ' . $subject . ' notification', [
 				'exception' => $e,
@@ -229,6 +277,10 @@ class NotificationService {
 		$notification->setSubject('punch_pause_reminder', ['maxPause' => $maxPauseMinutes]);
 
 		$this->notificationManager->notify($notification);
+
+		// Phase C (#593): the reminder job runs server-side, so also push it to
+		// the employee's phone.
+		$this->queuePush($userId, 'punch_pause_reminder', ['maxPause' => $maxPauseMinutes]);
 	}
 
 	/**
@@ -249,6 +301,10 @@ class NotificationService {
 		$notification->setSubject('punch_out_reminder', ['hours' => $thresholdHours]);
 
 		$this->notificationManager->notify($notification);
+
+		// Phase C (#593): the reminder job runs server-side, so also push it to
+		// the employee's phone.
+		$this->queuePush($userId, 'punch_out_reminder', ['hours' => $thresholdHours]);
 	}
 
 	/**
