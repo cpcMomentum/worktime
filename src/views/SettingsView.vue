@@ -309,18 +309,50 @@
             <NcSettingsSection v-if="canManageSettings"
                 v-show="activeSection === 'sec-sondertage'"
                 id="sec-sondertage" :name="t('worktime', 'Sondertage')"
-                :description="t('worktime', 'Definieren Sie, ob Heiligabend und Silvester als halbe Arbeitstage gelten.')">
+                :description="t('worktime', 'Legen Sie fest, wie Heiligabend und Silvester behandelt werden.')">
                 <div class="form-group">
-                    <NcCheckboxRadioSwitch :checked.sync="settings.christmas_eve_half_day"
-                        @update:checked="saveSettingBool('christmas_eve_half_day')">
-                        {{ t('worktime', 'Heiligabend (24.12.) als halber Arbeitstag') }} <InfoIcon>{{ t('worktime', 'Wenn aktiviert, wird das Tagessoll am 24.12. halbiert. Beispiel: Bei 8 Std./Tag werden nur 4 Std. als Soll angerechnet.') }}</InfoIcon>
-                    </NcCheckboxRadioSwitch>
+                    <label class="special-day-label">
+                        {{ t('worktime', 'Heiligabend (24.12.)') }} <InfoIcon>{{ t('worktime', 'Halber freier Tag halbiert das Tagessoll, ganzer freier Tag setzt es auf null. Beispiel: Bei 8 Std./Tag werden 4 Std. bzw. 0 Std. als Soll angerechnet.') }}</InfoIcon>
+                    </label>
+                    <div class="special-day-options">
+                        <NcCheckboxRadioSwitch :checked.sync="settings.christmas_eve_half_day"
+                            value="none" name="christmas-eve-mode" type="radio"
+                            @update:checked="saveSetting('christmas_eve_half_day')">
+                            {{ t('worktime', 'Normaler Arbeitstag') }}
+                        </NcCheckboxRadioSwitch>
+                        <NcCheckboxRadioSwitch :checked.sync="settings.christmas_eve_half_day"
+                            value="half" name="christmas-eve-mode" type="radio"
+                            @update:checked="saveSetting('christmas_eve_half_day')">
+                            {{ t('worktime', 'Halber freier Tag') }}
+                        </NcCheckboxRadioSwitch>
+                        <NcCheckboxRadioSwitch :checked.sync="settings.christmas_eve_half_day"
+                            value="full" name="christmas-eve-mode" type="radio"
+                            @update:checked="saveSetting('christmas_eve_half_day')">
+                            {{ t('worktime', 'Ganzer freier Tag') }}
+                        </NcCheckboxRadioSwitch>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <NcCheckboxRadioSwitch :checked.sync="settings.new_years_eve_half_day"
-                        @update:checked="saveSettingBool('new_years_eve_half_day')">
-                        {{ t('worktime', 'Silvester (31.12.) als halber Arbeitstag') }} <InfoIcon>{{ t('worktime', 'Wenn aktiviert, wird das Tagessoll am 31.12. halbiert. Beispiel: Bei 8 Std./Tag werden nur 4 Std. als Soll angerechnet.') }}</InfoIcon>
-                    </NcCheckboxRadioSwitch>
+                    <label class="special-day-label">
+                        {{ t('worktime', 'Silvester (31.12.)') }} <InfoIcon>{{ t('worktime', 'Halber freier Tag halbiert das Tagessoll, ganzer freier Tag setzt es auf null. Beispiel: Bei 8 Std./Tag werden 4 Std. bzw. 0 Std. als Soll angerechnet.') }}</InfoIcon>
+                    </label>
+                    <div class="special-day-options">
+                        <NcCheckboxRadioSwitch :checked.sync="settings.new_years_eve_half_day"
+                            value="none" name="new-years-eve-mode" type="radio"
+                            @update:checked="saveSetting('new_years_eve_half_day')">
+                            {{ t('worktime', 'Normaler Arbeitstag') }}
+                        </NcCheckboxRadioSwitch>
+                        <NcCheckboxRadioSwitch :checked.sync="settings.new_years_eve_half_day"
+                            value="half" name="new-years-eve-mode" type="radio"
+                            @update:checked="saveSetting('new_years_eve_half_day')">
+                            {{ t('worktime', 'Halber freier Tag') }}
+                        </NcCheckboxRadioSwitch>
+                        <NcCheckboxRadioSwitch :checked.sync="settings.new_years_eve_half_day"
+                            value="full" name="new-years-eve-mode" type="radio"
+                            @update:checked="saveSetting('new_years_eve_half_day')">
+                            {{ t('worktime', 'Ganzer freier Tag') }}
+                        </NcCheckboxRadioSwitch>
+                    </div>
                 </div>
                 <p class="help-text">
                     {{ t('worktime', 'Hinweis: Änderungen wirken sich auf neu generierte Feiertage aus. Generieren Sie die Feiertage erneut, um die Änderungen anzuwenden.') }}
@@ -1162,8 +1194,9 @@ export default {
                     require_description: settings.require_description === '1',
                     allow_future_entries: settings.allow_future_entries === '1',
                     approval_required: settings.approval_required === '1',
-                    christmas_eve_half_day: settings.christmas_eve_half_day === '1',
-                    new_years_eve_half_day: settings.new_years_eve_half_day === '1',
+                    // #569: 'none' | 'half' | 'full'; legacy booleans normalised.
+                    christmas_eve_half_day: this.specialDayMode(settings.christmas_eve_half_day),
+                    new_years_eve_half_day: this.specialDayMode(settings.new_years_eve_half_day),
                 }
             } catch (error) {
                 console.error('Failed to load settings:', error)
@@ -1186,6 +1219,13 @@ export default {
             } catch (error) {
                 showErrorMessage(error.message)
             }
+        },
+        // #569: normalise a special-day setting value to a mode string, still
+        // reading the legacy boolean ('1' = half, '0'/empty = none).
+        specialDayMode(value) {
+            if (value === 'full') return 'full'
+            if (value === 'half' || value === '1') return 'half'
+            return 'none'
         },
         confirmApprovalToggle(newValue) {
             const title = newValue
@@ -2015,6 +2055,19 @@ export default {
     margin-top: 4px;
     font-size: 0.85em;
     color: var(--color-text-maxcontrast);
+}
+
+/* #569: Sondertage — Auswahl je Tag */
+.special-day-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.special-day-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 20px;
 }
 
 .folder-picker {

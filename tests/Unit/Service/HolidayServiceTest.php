@@ -218,4 +218,63 @@ class HolidayServiceTest extends TestCase {
 
         $this->assertSame([2026, 2027], $checkedYears);
     }
+
+    // ---------------------------------------------------------------------
+    // #569: Sondertage (24.12./31.12.) — none / half / full
+    // ---------------------------------------------------------------------
+
+    /**
+     * Generate holidays for a year with the given special-day settings and return
+     * the scope of the inserted 24.12 / 31.12 holidays (absent key = not created).
+     *
+     * @param array<string,string> $modes settingKey => value
+     * @return array<string,float> 'm-d' => scope
+     */
+    private function specialDayScopes(int $year, array $modes): array {
+        $this->holidayMapper->method('hasAutoForYearAndState')->willReturn(false);
+        $this->settingsMapper->method('getValue')->willReturnCallback(
+            static fn (string $key, ?string $default = null): ?string => $modes[$key] ?? $default
+        );
+        $captured = [];
+        $this->holidayMapper->method('insert')->willReturnCallback(
+            function (Holiday $h) use (&$captured): Holiday {
+                $captured[$h->getDate()->format('m-d')] = $h->getScopeValue();
+                return $h;
+            }
+        );
+        $this->service->ensureHolidaysForYear($year, 'BY');
+        return $captured;
+    }
+
+    public function testSpecialDayFullMeansWholeDayOff(): void {
+        $scopes = $this->specialDayScopes(2027, [
+            'christmas_eve_half_day' => 'full',
+            'new_years_eve_half_day' => 'half',
+        ]);
+
+        // Full day off = scope 1.0 (no target), exactly like a public holiday.
+        $this->assertSame(1.0, $scopes['12-24'] ?? null);
+        $this->assertSame(0.5, $scopes['12-31'] ?? null);
+    }
+
+    public function testSpecialDayLegacyBooleanStaysHalfDay(): void {
+        // Existing instances store '1' (half) / '0' (none) — no migration.
+        $scopes = $this->specialDayScopes(2027, [
+            'christmas_eve_half_day' => '1',
+            'new_years_eve_half_day' => '0',
+        ]);
+
+        $this->assertSame(0.5, $scopes['12-24'] ?? null);
+        $this->assertArrayNotHasKey('12-31', $scopes);
+    }
+
+    public function testSpecialDayNoneMeansRegularWorkingDay(): void {
+        $scopes = $this->specialDayScopes(2027, [
+            'christmas_eve_half_day' => 'none',
+            'new_years_eve_half_day' => 'none',
+        ]);
+
+        $this->assertArrayNotHasKey('12-24', $scopes);
+        $this->assertArrayNotHasKey('12-31', $scopes);
+    }
 }

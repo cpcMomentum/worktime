@@ -183,27 +183,42 @@ class HolidayService {
     }
 
     /**
-     * Generate special days (Christmas Eve, New Year's Eve) as half-day holidays
-     * based on company settings
+     * Generate special days (Christmas Eve, New Year's Eve) based on company
+     * settings. Each day can be a regular working day, a half day off, or a full
+     * day off (#569) — a full day off is a scope-1.0 holiday, i.e. no target
+     * hours, exactly like a public holiday.
      *
      * @return Holiday[]
      */
     private function generateSpecialDays(int $year, string $federalState): array {
         $holidays = [];
 
-        // Christmas Eve (24.12.) - half day (scope = 0.5)
-        $christmasEveHalfDay = $this->settingsMapper->getValueAsBool(CompanySetting::KEY_CHRISTMAS_EVE_HALF_DAY);
-        if ($christmasEveHalfDay) {
-            $holidays[] = $this->createHoliday($year, 12, 24, 'Heiligabend', $federalState, 0.5);
+        $christmasScope = $this->specialDayScope(CompanySetting::KEY_CHRISTMAS_EVE_HALF_DAY);
+        if ($christmasScope > 0.0) {
+            $holidays[] = $this->createHoliday($year, 12, 24, 'Heiligabend', $federalState, $christmasScope);
         }
 
-        // New Year's Eve (31.12.) - half day (scope = 0.5)
-        $newYearsEveHalfDay = $this->settingsMapper->getValueAsBool(CompanySetting::KEY_NEW_YEARS_EVE_HALF_DAY);
-        if ($newYearsEveHalfDay) {
-            $holidays[] = $this->createHoliday($year, 12, 31, 'Silvester', $federalState, 0.5);
+        $newYearsScope = $this->specialDayScope(CompanySetting::KEY_NEW_YEARS_EVE_HALF_DAY);
+        if ($newYearsScope > 0.0) {
+            $holidays[] = $this->createHoliday($year, 12, 31, 'Silvester', $federalState, $newYearsScope);
         }
 
         return $holidays;
+    }
+
+    /**
+     * Scope for a special-day setting (#569): 'none' → 0.0 (regular working day),
+     * 'half' → 0.5, 'full' → 1.0. Legacy boolean values are still honoured so
+     * existing instances keep working without a data migration: '1' → 0.5 (the
+     * previous half-day behaviour), '0'/'' → 0.0.
+     */
+    private function specialDayScope(string $key): float {
+        $value = (string)$this->settingsMapper->getValue($key, 'half');
+        return match ($value) {
+            'full' => 1.0,
+            'half', '1' => 0.5,
+            default => 0.0,
+        };
     }
 
     /**
