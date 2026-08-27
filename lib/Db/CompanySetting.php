@@ -58,8 +58,10 @@ class CompanySetting extends Entity implements JsonSerializable {
         self::KEY_APPROVAL_REQUIRED => '0',
         self::KEY_PDF_ARCHIVE_PATH => '/WorkTime/Archiv',
         self::KEY_PDF_ARCHIVE_USER => '',
-        self::KEY_CHRISTMAS_EVE_HALF_DAY => '1',
-        self::KEY_NEW_YEARS_EVE_HALF_DAY => '1',
+        // #569: 'none' | 'half' | 'full'. Legacy boolean values are still read
+        // ('1' = half, '0' = none), so existing instances need no migration.
+        self::KEY_CHRISTMAS_EVE_HALF_DAY => 'half',
+        self::KEY_NEW_YEARS_EVE_HALF_DAY => 'half',
     ];
 
     protected string $settingKey = '';
