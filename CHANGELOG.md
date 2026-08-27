@@ -7,6 +7,15 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.16.5] - 2026-08-27
+
+### Added
+- **Sondertage: Heiligabend und Silvester wahlweise als ganzer freier Tag (#569)**: In den Admin-Einstellungen unter „Sondertage" lässt sich für den 24.12. und 31.12. jetzt je wählen zwischen normalem Arbeitstag, halbem freien Tag (wie bisher) und ganzem freien Tag. „Ganzer freier Tag" setzt das Tagessoll auf null, wie ein gesetzlicher Feiertag; das passt etwa zu Tarifverträgen wie BAT-KF, unter denen der 24.12. und 31.12. ganz frei sind. Bestehende Instanzen bleiben unverändert (bisheriges Verhalten entspricht dem halben Tag). (Danke an Wendepunkt-Velbert für den Vorschlag.)
+- **Abwesenheitsliste: stornierte und abgelehnte Einträge ausblenden (#586)**: Über der Abwesenheitsliste gibt es jetzt einen Schalter, der stornierte und abgelehnte Einträge ausblendet (standardmäßig aktiv). Ein Hinweis zeigt die Zahl der ausgeblendeten Einträge und blendet sie per Klick wieder ein. Reine Anzeige, keine Datenänderung. (Danke an Jana Grieb für den Vorschlag.)
+
+### Changed
+- **Push-Benachrichtigungen: Anbindung der Ereignisse (#593)**: Die serverseitige Push-Grundlage aus 0.16.4 ist jetzt an die relevanten Ereignisse angebunden (Einreichen und Genehmigen/Ablehnen von Abwesenheiten und Zeiteinträgen, Stoppuhr-Erinnerungen). Der Versand läuft aus dem Anfrage-Pfad heraus über einen Hintergrundjob. Für Nutzer noch ohne sichtbare Funktion; die mobile App und die Server-Konfiguration folgen separat.
+
 ## [0.16.4] - 2026-08-23
 
 ### Added
