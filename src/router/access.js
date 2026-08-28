@@ -16,7 +16,10 @@
 export const accessRules = {
 	// Universal, loop-safe fallback. Stays ungated on purpose.
 	tracking: () => true,
-	absences: (p) => !!p.employeeId,
+	// Own absences, or — in HR correction mode (#631, #148) — the corrected
+	// employee's. `targetEmployeeId` is set only while correcting, so this widens
+	// access exactly for the correction target and stays own-only otherwise.
+	absences: (p) => !!(p.employeeId || p.targetEmployeeId),
 	// Gemeinsamer Reiter: jeder Mitarbeiter sieht das Team; zusaetzlich Admin/HR
 	// auch ohne eigenes Mitarbeiterprofil (GF/HR ohne WorkTime-Konto). Daten-
 	// Scoping im Backend (getTeamMembers) — Admin/HR alle, Vorgesetzte ihr Team,
@@ -37,7 +40,7 @@ export const accessRules = {
  * always allowed — they carry no guarded view.
  *
  * @param {string} routeName route `name`
- * @param {object} perms permission profile (store getter permissions/permissions)
+ * @param {object} perms permission profile (store getter permissions/accessProfile)
  * @return {boolean}
  */
 export function canAccess(routeName, perms) {
@@ -51,8 +54,9 @@ export function canAccess(routeName, perms) {
  * blocked route can never become a visible tab.
  */
 const navUx = {
-	// Zeiterfassung ist universell erreichbar, der Tab aber nur fuer Mitarbeiter.
-	tracking: (p) => !!p.isEmployee,
+	// Zeiterfassung ist universell erreichbar, der Tab aber nur fuer Mitarbeiter —
+	// oder im HR-Korrekturmodus (#631) fuer den korrigierten Mitarbeiter.
+	tracking: (p) => !!(p.isEmployee || p.targetEmployeeId),
 	// Team-Tab nur zeigen, wenn es ueberhaupt andere Mitarbeiter gibt.
 	team: (p) => !!p.hasEmployees,
 	// Genehmigungs-Tab nur fuer aktive Genehmiger mit Team (Admin/HR ohne

@@ -176,7 +176,7 @@ export default {
 		SleepIcon,
 	},
 	computed: {
-		...mapGetters('permissions', ['permissions', 'isEmployee', 'hasEmployees', 'canManageSettings', 'canApprove', 'isCorrectionMode', 'correctionEmployeeName']),
+		...mapGetters('permissions', ['accessProfile', 'isEmployee', 'hasEmployees', 'canManageSettings', 'canApprove', 'isCorrectionMode', 'correctionEmployeeName']),
 		...mapGetters('employees', ['currentEmployee']),
 
 		/**
@@ -198,7 +198,9 @@ export default {
 		// Single source of truth (src/router/access.js): a tab is shown only if the
 		// router guard would also let this role in — prevents 0.12.0 "tote Tabs".
 		navVisible(routeName) {
-			return isNavVisible(routeName, this.permissions)
+			// #631: correction-aware profile so the correctable tabs appear while
+			// correcting an employee, even for HR/admin without an own profile.
+			return isNavVisible(routeName, this.accessProfile)
 		},
 		...mapActions('employees', ['fetchCurrentEmployee', 'fetchFederalStates']),
 		...mapActions('projects', ['fetchProjects']),
