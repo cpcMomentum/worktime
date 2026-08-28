@@ -1,0 +1,74 @@
+# Dependabot-Konfiguration — flottenweit vereinheitlicht (nc-app-tooling#13).
+#
+# Vorlage ist rechnungswerks Fassung (eingefuehrt 07.08.2026), die sich in der
+# Flotte bewaehrt hat. #13 ("automatisierte Nextcloud-Versionsanpassung") ist
+# im Testpfad bereits geloest: alle Apps leiten die getesteten nextcloud/ocp-
+# Versionen aus info.xml ab (worktime#21) und der canary laeuft gegen
+# dev-master. Was fehlte, war das laufende Nachziehen der Abhaengigkeiten selbst
+# — dafuer sorgt Dependabot hier, inkl. nextcloud/ocp (composer).
+#
+# WARUM target-branch develop: Ohne diese Angabe zielen geplante Updates auf den
+# Standard-Branch (main). main bekommt aber nur Releases, gesammelt wird auf
+# develop. Ohne die Lenkung laegen die PRs auf dem falschen Ziel und liefen der
+# Entwicklung hinterher.
+#
+# VORBEHALT: target-branch lenkt die geplanten Versionsupdates auf develop. Ob
+# GitHub auch Security-Updates dorthin lenkt, ist der Doku nicht eindeutig zu
+# entnehmen; nach derzeitigem Stand zielen sie weiter auf main. Solche PRs
+# werden wie bisher von Hand nach develop uebernommen.
+#
+# WARUM nur minor/patch gruppiert: Ohne Gruppierung entsteht pro Paket ein
+# eigener PR. Major-Spruenge bleiben bewusst einzeln — ein @nextcloud/vue- oder
+# vue-loader-Major kann den Build brechen (Vue-2-Apps) und gehoert einzeln
+# geprueft, nicht in einem Sammel-PR versteckt. Jeder PR durchlaeuft ohnehin die
+# CI samt Build- und Bundle-Frische-Pruefung; ein brechender Bump wird dort rot.
+
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-und-patch:
+        update-types:
+          - minor
+          - patch
+    commit-message:
+      prefix: chore(deps)
+      prefix-development: chore(deps-dev)
+
+  - package-ecosystem: composer
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      composer-minor-und-patch:
+        update-types:
+          - minor
+          - patch
+    commit-message:
+      prefix: chore(deps)
+      prefix-development: chore(deps-dev)
+
+  # Die Workflows selbst: Actions-Versionen veralten sonst still.
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    groups:
+      actions:
+        update-types:
+          - minor
+          - patch
+    commit-message:
+      prefix: ci(deps)
