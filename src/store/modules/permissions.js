@@ -30,6 +30,15 @@ const state = {
 
 const getters = {
     permissions: (state) => state.permissions,
+    // #631: the profile the access layer (src/router/access.js) gates on — the
+    // raw permissions plus the correction target. That makes the correctable
+    // tabs (tracking, absences) reachable while correcting an employee, even for
+    // an HR/admin without an own profile (employeeId null). Without this the
+    // access rules only ever see the user's own (empty) profile.
+    accessProfile: (state) => ({
+        ...state.permissions,
+        targetEmployeeId: state.correction.targetEmployeeId,
+    }),
     approvalRequired: (state) => state.approvalRequired,
     requireProject: (state) => state.requireProject,
     requireDescription: (state) => state.requireDescription,
