@@ -7,6 +7,11 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.16.6] - 2026-08-28
+
+### Fixed
+- **HR-Manager ohne eigenes Profil sah im Korrekturmodus die Reiter Zeiterfassung und Abwesenheiten nicht (#631)**: Ein HR-Manager oder Geschäftsführer, dessen Rolle aus der Gruppenmitgliedschaft kommt und der kein eigenes Mitarbeiterprofil hat, konnte im Korrekturmodus keine Abwesenheiten des korrigierten Mitarbeiters bearbeiten (z. B. Urlaub zurücknehmen und Krankheit eintragen), weil die beiden Reiter fehlten. Die Reiter richten sich jetzt nach dem aktiven Mitarbeiter (eigenes Profil oder Korrektur-Ziel) und erscheinen im Korrekturmodus. (Danke an Thorsten Vogt für die Meldung.)
+
 ## [0.16.5] - 2026-08-27
 
 ### Added
