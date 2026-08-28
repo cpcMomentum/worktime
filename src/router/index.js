@@ -95,7 +95,9 @@ const router = new VueRouter({
 // Route guard: single source of truth in access.js — the same rules feed the
 // App.vue navigation, so a tab can never be visible-but-blocked (0.12.0 #357).
 router.beforeEach((to, from, next) => {
-	const perms = store.getters['permissions/permissions']
+	// #631: gate on the correction-aware profile so an HR/admin correcting an
+	// employee can reach the correctable routes even without an own profile.
+	const perms = store.getters['permissions/accessProfile']
 	if (!canAccess(to.name, perms)) {
 		return next('/')
 	}
