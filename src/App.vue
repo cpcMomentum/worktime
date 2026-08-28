@@ -176,7 +176,7 @@ export default {
 		SleepIcon,
 	},
 	computed: {
-		...mapGetters('permissions', ['permissions', 'accessProfile', 'isEmployee', 'hasEmployees', 'canManageSettings', 'canApprove', 'isCorrectionMode', 'correctionEmployeeName']),
+		...mapGetters('permissions', ['accessProfile', 'isEmployee', 'hasEmployees', 'canManageSettings', 'canApprove', 'isCorrectionMode', 'correctionEmployeeName']),
 		...mapGetters('employees', ['currentEmployee']),
 
 		/**
