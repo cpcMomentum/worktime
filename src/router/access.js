@@ -40,7 +40,7 @@ export const accessRules = {
  * always allowed — they carry no guarded view.
  *
  * @param {string} routeName route `name`
- * @param {object} perms permission profile (store getter permissions/permissions)
+ * @param {object} perms permission profile (store getter permissions/accessProfile)
  * @return {boolean}
  */
 export function canAccess(routeName, perms) {
