@@ -28,6 +28,13 @@ permissions:
   pull-requests: write
   issues: write
 
+# Gegen ueberlappende Laeufe (Doppel-Dispatch): sie wuerden um denselben Branch
+# und dieselbe Issue-Idempotenzpruefung wettlaufen. cancel-in-progress: false,
+# damit ein laufender Lauf seine PR-/Issue-Erstellung zu Ende bringt.
+concurrency:
+  group: nc-compat
+  cancel-in-progress: false
+
 jobs:
   compat:
     runs-on: ubuntu-latest
@@ -94,7 +101,7 @@ jobs:
           msg="$(printf 'chore: max-version auf NC %s heben (nc-app-tooling#17)\n\nKompatibilitaet mit NC %s von nc-compat gegen dessen nextcloud/ocp-Stubs\ngeprueft (dieser Lauf war gruen). Bitte gegenlesen, dann mergen.' "$NEU" "$NEU")"
           git commit -am "$msg"
           git push origin "$branch"
-          body="$(printf 'Automatisch von `nc-compat`. Die App hat die Unit-Tests gegen `nextcloud/ocp:^%s.0` bestanden — der Bump ist geprueft, nicht geraten.\n\nNur Stub-Ebene (API-Signaturen): ein Durchklicken auf echtem NC %s ersetzt das NICHT.\n\nLauf: %s' "$NEU" "$NEU" "$RUN_URL")"
+          body="$(printf 'Automatisch von `nc-compat`. Die App hat die Unit-Tests gegen `nextcloud/ocp:^%s.0` bestanden — der Bump ist geprueft, nicht geraten.\n\nNur Stub-Ebene (API-Signaturen): ein Durchklicken auf echtem NC %s ersetzt das NICHT.\n\n**Hinweis zur CI:** Dieser PR wurde vom GITHUB_TOKEN erstellt; GitHub startet dafuer absichtlich keine Folge-Workflows, `phpunit` (required) laeuft hier also nicht von selbst an. Der Compat-Lauf hat den Test aber bereits gruen gefahren. Zum Freischalten des Required-Checks: einen leeren Commit pushen (`git commit --allow-empty`) oder den PR einmal schliessen und wieder oeffnen.\n\nLauf: %s' "$NEU" "$NEU" "$RUN_URL")"
           gh pr create --base develop --head "$branch" \
             --title "chore: max-version auf NC ${NEU} heben (geprueft)" \
             --body "$body"
