@@ -1,0 +1,128 @@
+name: nc-compat
+
+# Kompatibilitaets-Waechter (nc-app-tooling#17). Nextcloud released 2x/Jahr ein
+# neues Major. Dieser Lauf erkennt das, testet die App gegen dessen
+# nextcloud/ocp-Stubs und macht daraus eine HANDLUNG statt nur einer Mail:
+#   gruen -> PR, der max-version in info.xml hebt (der Bump ist damit geprueft)
+#   rot   -> Issue "Kompatibilitaet mit NC N pruefen" samt Log
+#
+# Erkennung: nc-compat-check (nc-app-tooling >= v1.14.0). Der Test selbst ist
+# der aus phpunit.yml (composer require ocp + composer test).
+#
+# Laeuft NUR vom Default-Branch (hier develop) — GitHub startet schedule-Events
+# ausschliesslich dort. Der Simulations-Input erlaubt, den Waechter zu testen,
+# bevor es je ein neues Major gibt.
+
+on:
+  schedule:
+    - cron: '17 6 * * 1'   # Montag frueh (UTC)
+  workflow_dispatch:
+    inputs:
+      simuliere_nc:
+        description: 'Test: NC-Major erzwingen (z.B. 35). Leer = echt via Packagist.'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+# Gegen ueberlappende Laeufe (Doppel-Dispatch): sie wuerden um denselben Branch
+# und dieselbe Issue-Idempotenzpruefung wettlaufen. cancel-in-progress: false,
+# damit ein laufender Lauf seine PR-/Issue-Erstellung zu Ende bringt.
+concurrency:
+  group: nc-compat
+  cancel-in-progress: false
+
+jobs:
+  compat:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Abhaengigkeiten (fuer nc-compat-check)
+        run: npm ci
+
+      # Erkennung. Der Simulations-Input geht ueber env in das Werkzeug, nicht
+      # per Interpolation ins Skript — dieselbe Injection-Vorsicht wie phpunit.yml.
+      - name: Neues NC-Major erkennen
+        id: detect
+        env:
+          NC_COMPAT_LATEST_MAJOR: ${{ github.event.inputs.simuliere_nc }}
+        run: npx nc-compat-check
+
+      # --- Ab hier nur, wenn ein neues Major da ist ---------------------------
+
+      - name: PHP einrichten
+        if: steps.detect.outputs.neu != ''
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+          tools: composer:v2
+
+      # continue-on-error: der Ausgang (success/failure) steuert unten PR vs.
+      # Issue; der Job selbst soll deswegen nicht rot werden.
+      - name: Gegen die neue NC-Version testen
+        if: steps.detect.outputs.neu != ''
+        id: test
+        continue-on-error: true
+        env:
+          OCP: ${{ steps.detect.outputs.constraint }}
+        run: |
+          composer require --dev --no-update "nextcloud/ocp:$OCP" \
+            && composer update --no-interaction --no-progress --prefer-dist \
+            && composer test
+
+      # Gruen: PR, der max-version hebt. Idempotent — existiert der Branch
+      # schon, wird nichts angefasst (kein Clobbern eines laufenden PRs).
+      - name: Gruen -> PR, der max-version hebt
+        if: steps.detect.outputs.neu != '' && steps.test.outcome == 'success'
+        env:
+          NEU: ${{ steps.detect.outputs.neu }}
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          branch="chore/nc-compat-$NEU"
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            echo "Branch $branch existiert bereits — nichts zu tun."
+            exit 0
+          fi
+          sed -i -E "s/(max-version=\")[0-9]+(\")/\1${NEU}\2/" appinfo/info.xml
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          msg="$(printf 'chore: max-version auf NC %s heben (nc-app-tooling#17)\n\nKompatibilitaet mit NC %s von nc-compat gegen dessen nextcloud/ocp-Stubs\ngeprueft (dieser Lauf war gruen). Bitte gegenlesen, dann mergen.' "$NEU" "$NEU")"
+          # NUR info.xml committen. Der Test-Schritt hat composer.json (ocp-
+          # Constraint verengt) und composer.lock veraendert; die duerfen NICHT
+          # in den Bump-PR (der verspricht reine max-version-Anhebung).
+          git add appinfo/info.xml
+          git commit -m "$msg"
+          git push origin "$branch"
+          body="$(printf 'Automatisch von `nc-compat`. Die App hat die Unit-Tests gegen `nextcloud/ocp:^%s.0` bestanden — der Bump ist geprueft, nicht geraten.\n\nNur Stub-Ebene (API-Signaturen): ein Durchklicken auf echtem NC %s ersetzt das NICHT.\n\n**Hinweis zur CI:** Dieser PR wurde vom GITHUB_TOKEN erstellt; GitHub startet dafuer absichtlich keine Folge-Workflows, `phpunit` (required) laeuft hier also nicht von selbst an. Der Compat-Lauf hat den Test aber bereits gruen gefahren. Zum Freischalten des Required-Checks: einen leeren Commit pushen (`git commit --allow-empty`) oder den PR einmal schliessen und wieder oeffnen.\n\nLauf: %s' "$NEU" "$NEU" "$RUN_URL")"
+          gh pr create --base develop --head "$branch" \
+            --title "chore: max-version auf NC ${NEU} heben (geprueft)" \
+            --body "$body"
+
+      # Rot: Issue. Idempotent ueber den Titel — existiert schon eins, kein neues.
+      - name: Rot -> Issue
+        if: steps.detect.outputs.neu != '' && steps.test.outcome == 'failure'
+        env:
+          NEU: ${{ steps.detect.outputs.neu }}
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          titel="nc-compat: Kompatibilitaet mit NC ${NEU} pruefen"
+          if gh issue list --state open --search "in:title $titel" --json title \
+             --jq '.[].title' | grep -Fxq "$titel"; then
+            echo "Issue \"$titel\" existiert bereits — kein neues."
+            exit 0
+          fi
+          body="$(printf '`nc-compat` hat die App gegen `nextcloud/ocp:^%s.0` getestet — die Unit-Tests sind **fehlgeschlagen**. Das deutet auf eine API-Aenderung in NC %s (entfernte/geaenderte Signatur), die vor einem max-version-Bump zu klaeren ist.\n\nLauf mit Log: %s\n\nHinweis: geprueft ist nur die Stub-Ebene (API-Signaturen). Verhaltens-Aenderungen zeigen sich erst auf echtem NC %s.' "$NEU" "$NEU" "$RUN_URL" "$NEU")"
+          gh issue create --title "$titel" --body "$body"
