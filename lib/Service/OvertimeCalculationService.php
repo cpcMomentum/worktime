@@ -160,6 +160,8 @@ class OvertimeCalculationService {
         $targetReductionDays = 0;
         $compensatoryDays = 0;
 
+        $workedByDate = $this->workedMinutesByDate($timeEntries);
+
         foreach ($absences as $absence) {
             if (!$absence->isApproved()) {
                 continue;
@@ -172,6 +174,14 @@ class OvertimeCalculationService {
             $scope = $absence->getScopeValue();
             $days = $this->workScheduleService->countWorkingDays($employeeId, $aStart, $aEnd, $holidays) * $scope;
             $minutes = $this->calculateAbsenceMinutes($employeeId, $aStart, $aEnd, $scope, $holidays);
+
+            // #625: single-day hourly sick is capped to the remaining daily target
+            // instead of the scope-based full/half credit.
+            if ($absence instanceof Absence && $absence->getAbsenceMinutes() !== null) {
+                $minutes = $this->creditForSubDayAbsence($employeeId, $aStart, $absence->getAbsenceMinutes(), $workedByDate);
+                $dayTarget = $this->workScheduleService->getDailyMinutesForDate($employeeId, $aStart);
+                $days = $dayTarget > 0 ? $minutes / $dayTarget : 0.0;
+            }
 
             if (in_array($absence->getType(), $targetReductionTypes, true)) {
                 $targetReductionDays += $days;
@@ -356,6 +366,8 @@ class OvertimeCalculationService {
             Absence::TYPE_COMPENSATORY,
         ];
 
+        $workedByDate = $this->workedMinutesByDate($timeEntries);
+
         foreach ($absences as $absence) {
             if ($absence->isApproved()) {
                 $absenceStart = $absence->getStartDate();
@@ -371,6 +383,13 @@ class OvertimeCalculationService {
 
                     // Calculate absence minutes per day using actual schedule
                     $absenceMinutes = $this->calculateAbsenceMinutes($employeeId, $monthAbsenceStart, $monthAbsenceEnd, $absenceScope, $holidays);
+
+                    // #625: single-day hourly sick caps to the remaining daily target.
+                    if ($absence instanceof Absence && $absence->getAbsenceMinutes() !== null) {
+                        $absenceMinutes = $this->creditForSubDayAbsence($employeeId, $absenceStart, $absence->getAbsenceMinutes(), $workedByDate);
+                        $dayTarget = $this->workScheduleService->getDailyMinutesForDate($employeeId, $absenceStart);
+                        $effectiveDays = $dayTarget > 0 ? $absenceMinutes / $dayTarget : 0.0;
+                    }
 
                     if (in_array($absence->getType(), $targetReductionTypes, true)) {
                         $targetReductionDaysMonth += $effectiveDays;
@@ -392,6 +411,13 @@ class OvertimeCalculationService {
                     $effectiveDaysUntilToday = $daysUntilToday * $absenceScope;
 
                     $absenceMinutesUntilToday = $this->calculateAbsenceMinutes($employeeId, $actualAbsenceStart, $actualAbsenceEnd, $absenceScope, $holidays);
+
+                    // #625: single-day hourly sick caps to the remaining daily target.
+                    if ($absence instanceof Absence && $absence->getAbsenceMinutes() !== null) {
+                        $absenceMinutesUntilToday = $this->creditForSubDayAbsence($employeeId, $absenceStart, $absence->getAbsenceMinutes(), $workedByDate);
+                        $dayTarget = $this->workScheduleService->getDailyMinutesForDate($employeeId, $absenceStart);
+                        $effectiveDaysUntilToday = $dayTarget > 0 ? $absenceMinutesUntilToday / $dayTarget : 0.0;
+                    }
 
                     if (in_array($absence->getType(), $targetReductionTypes, true)) {
                         $targetReductionDaysUntilToday += $effectiveDaysUntilToday;
@@ -524,5 +550,42 @@ class OvertimeCalculationService {
         }
 
         return $totalMinutes;
+    }
+
+    /**
+     * Sum worked minutes per calendar day (Y-m-d). Only real TimeEntry rows carry
+     * a date; lightweight test doubles without one are ignored.
+     *
+     * @param TimeEntry[] $timeEntries
+     * @return array<string, int>
+     */
+    private function workedMinutesByDate(array $timeEntries): array {
+        $map = [];
+        foreach ($timeEntries as $entry) {
+            if (!$entry instanceof TimeEntry) {
+                continue;
+            }
+            $date = $entry->getDate();
+            if ($date === null) {
+                continue;
+            }
+            $key = $date->format('Y-m-d');
+            $map[$key] = ($map[$key] ?? 0) + $entry->getWorkMinutes();
+        }
+        return $map;
+    }
+
+    /**
+     * #625 Pro-Tag-Deckelung fuer stundenweise Krankheit: die Gutschrift eines
+     * Einzeltags fuellt hoechstens bis zum Resttagessoll (Tagessoll minus der an
+     * dem Tag bereits gearbeiteten Minuten). So entstehen keine kuenstlichen
+     * Ueberstunden, wenn an einem Krank-Tag zusaetzlich gearbeitet wurde.
+     *
+     * @param array<string, int> $workedByDate
+     */
+    private function creditForSubDayAbsence(int $employeeId, DateTime $date, int $absenceMinutes, array $workedByDate): int {
+        $dayTarget = $this->workScheduleService->getDailyMinutesForDate($employeeId, $date);
+        $worked = $workedByDate[$date->format('Y-m-d')] ?? 0;
+        return max(0, min($absenceMinutes, $dayTarget - $worked));
     }
 }

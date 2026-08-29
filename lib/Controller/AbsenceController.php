@@ -87,7 +87,8 @@ class AbsenceController extends BaseController {
         string $endDate = '',
         ?string $note = null,
         float $scope = 1.0,
-        ?string $reason = null
+        ?string $reason = null,
+        ?int $absenceMinutes = null
     ): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
@@ -124,7 +125,8 @@ class AbsenceController extends BaseController {
                 $this->userId,
                 $scope,
                 $reason,
-                $allowLockedOverride
+                $allowLockedOverride,
+                $absenceMinutes
             );
 
             return $this->createdResponse($absence);
@@ -141,7 +143,8 @@ class AbsenceController extends BaseController {
         string $endDate,
         ?string $note = null,
         float $scope = 1.0,
-        ?string $reason = null
+        ?string $reason = null,
+        ?int $absenceMinutes = null
     ): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
@@ -181,7 +184,8 @@ class AbsenceController extends BaseController {
                 $this->userId,
                 $scope,
                 $reason,
-                $allowLockedOverride
+                $allowLockedOverride,
+                $absenceMinutes
             );
 
             return $this->successResponse($absence);
