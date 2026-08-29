@@ -99,7 +99,11 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$branch"
           msg="$(printf 'chore: max-version auf NC %s heben (nc-app-tooling#17)\n\nKompatibilitaet mit NC %s von nc-compat gegen dessen nextcloud/ocp-Stubs\ngeprueft (dieser Lauf war gruen). Bitte gegenlesen, dann mergen.' "$NEU" "$NEU")"
-          git commit -am "$msg"
+          # NUR info.xml committen. Der Test-Schritt hat composer.json (ocp-
+          # Constraint verengt) und composer.lock veraendert; die duerfen NICHT
+          # in den Bump-PR (der verspricht reine max-version-Anhebung).
+          git add appinfo/info.xml
+          git commit -m "$msg"
           git push origin "$branch"
           body="$(printf 'Automatisch von `nc-compat`. Die App hat die Unit-Tests gegen `nextcloud/ocp:^%s.0` bestanden — der Bump ist geprueft, nicht geraten.\n\nNur Stub-Ebene (API-Signaturen): ein Durchklicken auf echtem NC %s ersetzt das NICHT.\n\n**Hinweis zur CI:** Dieser PR wurde vom GITHUB_TOKEN erstellt; GitHub startet dafuer absichtlich keine Folge-Workflows, `phpunit` (required) laeuft hier also nicht von selbst an. Der Compat-Lauf hat den Test aber bereits gruen gefahren. Zum Freischalten des Required-Checks: einen leeren Commit pushen (`git commit --allow-empty`) oder den PR einmal schliessen und wieder oeffnen.\n\nLauf: %s' "$NEU" "$NEU" "$RUN_URL")"
           gh pr create --base develop --head "$branch" \
