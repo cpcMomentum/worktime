@@ -20,6 +20,10 @@ const state = {
     // Company rules for time-entry fields (#329)
     requireProject: false,
     requireDescription: false,
+    // #625: hourly sick leave for a single day offered in the absence form.
+    hourlySickEnabled: false,
+    // #626: emergency work during an approved vacation day offered in the entry form.
+    emergencyWorkEnabled: false,
     // HR/Admin correction context (#148): when set, the tracking and absence
     // views operate on this employee instead of the logged-in user.
     correction: {
@@ -42,6 +46,8 @@ const getters = {
     approvalRequired: (state) => state.approvalRequired,
     requireProject: (state) => state.requireProject,
     requireDescription: (state) => state.requireDescription,
+    hourlySickEnabled: (state) => state.hourlySickEnabled,
+    emergencyWorkEnabled: (state) => state.emergencyWorkEnabled,
     isCorrectionMode: (state) => state.correction.targetEmployeeId !== null,
     correctionEmployeeName: (state) => state.correction.employeeName,
     // The employee whose data the views should load/edit: the correction target
@@ -77,6 +83,12 @@ const mutations = {
         state.requireProject = requireProject
         state.requireDescription = requireDescription
     },
+    SET_HOURLY_SICK_ENABLED(state, hourlySickEnabled) {
+        state.hourlySickEnabled = hourlySickEnabled
+    },
+    SET_EMERGENCY_WORK_ENABLED(state, emergencyWorkEnabled) {
+        state.emergencyWorkEnabled = emergencyWorkEnabled
+    },
     SET_CORRECTION(state, { targetEmployeeId, employeeName }) {
         state.correction = { targetEmployeeId, employeeName }
     },
@@ -108,6 +120,14 @@ const actions = {
 
     setRequiredFields({ commit }, { requireProject, requireDescription }) {
         commit('SET_REQUIRED_FIELDS', { requireProject, requireDescription })
+    },
+
+    setHourlySickEnabled({ commit }, hourlySickEnabled) {
+        commit('SET_HOURLY_SICK_ENABLED', hourlySickEnabled)
+    },
+
+    setEmergencyWorkEnabled({ commit }, emergencyWorkEnabled) {
+        commit('SET_EMERGENCY_WORK_ENABLED', emergencyWorkEnabled)
     },
 
     startCorrection({ commit }, { employeeId, employeeName }) {

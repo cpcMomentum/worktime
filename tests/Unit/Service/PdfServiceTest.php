@@ -88,6 +88,24 @@ class PdfServiceTest extends TestCase {
         $this->assertSame('Mobile App', $row['project']);
     }
 
+    public function testEmergencyWorkOnVacationDayIsMarkedAndVacationShown(): void {
+        // #626: Notarbeit an einem vollen genehmigten Urlaubstag — der Eintrag wird
+        // als Notarbeit (ausstehende Freigabe) markiert, und die Urlaubszeile bleibt
+        // sichtbar, damit "Urlaub + Notarbeit" im Report unterscheidbar ist.
+        $entry = $this->entry('2026-06-01', '18:00', '20:00', 0, 120, null, 'Server-Ausfall');
+        $entry->setIsEmergency(1);
+        $entry->setEmergencyApproved(0);
+        $vacation = $this->absence('vacation', '2026-06-01', '2026-06-01', 'approved', 1.0);
+
+        $rows = $this->rowsByDay([$entry], [$vacation], [], 2026, 6)['01.06.2026'];
+
+        $this->assertStringContainsString('Notarbeit', $rows[0]['note']);
+        $this->assertStringContainsString('wartet auf Freigabe', $rows[0]['note']);
+        $this->assertStringContainsString('Server-Ausfall', $rows[0]['note']);
+        $notes = array_map(static fn ($r) => $r['note'], $rows);
+        $this->assertNotEmpty(array_filter($notes, static fn ($n) => str_contains($n, 'Urlaub')));
+    }
+
     private function entry(string $date, string $start, string $end, int $break, int $work, ?int $projectId, string $desc): TimeEntry {
         $e = new TimeEntry();
         $e->setDate(new DateTime($date));

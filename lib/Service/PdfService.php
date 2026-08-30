@@ -497,12 +497,27 @@ class PdfService {
             $day = $this->getGermanDayName($dayOfWeek);
 
             $absence = $absencesByDate[$dateStr] ?? null;
-            $absenceLabel = $absence !== null
-                ? $absence->getTypeName() . ($absence->isHalfDay() ? ' (halber Tag)' : '')
-                : '';
+            $absenceLabel = '';
+            if ($absence !== null) {
+                if ($absence->getAbsenceMinutes() !== null) {
+                    // #625: stundenweise Krank -> Stundenzahl statt "halber Tag".
+                    $absenceLabel = $absence->getTypeName()
+                        . ' (' . number_format($absence->getAbsenceMinutes() / 60, 2, ',', '') . ' h)';
+                } else {
+                    $absenceLabel = $absence->getTypeName() . ($absence->isHalfDay() ? ' (halber Tag)' : '');
+                }
+            }
 
             if (isset($entriesByDate[$dateStr])) {
+                $hasEmergency = false;
                 foreach ($entriesByDate[$dateStr] as $entry) {
+                    $note = $entry->getDescription() ?? '';
+                    if ($entry->isEmergency()) {
+                        // #626: Notarbeit klar kennzeichnen; ausstehende Freigabe markieren.
+                        $hasEmergency = true;
+                        $marker = 'Notarbeit' . ($entry->isEmergencyApproved() ? '' : ' (wartet auf Freigabe)');
+                        $note = $note !== '' ? $marker . ': ' . $note : $marker;
+                    }
                     $rows[] = [
                         'date' => $date,
                         'day' => $day,
@@ -511,7 +526,7 @@ class PdfService {
                         'break' => $this->formatMinutes($entry->getBreakMinutes()),
                         'work' => $this->formatMinutes($entry->getWorkMinutes()),
                         'project' => $entry->getProjectId() !== null ? ($projectNames[$entry->getProjectId()] ?? '') : '',
-                        'note' => $entry->getDescription() ?? '',
+                        'note' => $note,
                         'fill' => $fill,
                     ];
                     $date = ''; // Clear for subsequent entries on the same day
@@ -521,7 +536,11 @@ class PdfService {
                 // (morning work + afternoon off). A full-day absence never
                 // coexists with a booking in valid data, so we don't add a
                 // marker row there to avoid a confusing "worked + absent" day.
-                if ($absence !== null && $absence->isHalfDay()) {
+                // #625: stundenweise Krank koexistiert mit gebuchter Arbeit — die
+                // Krank-Zeile ergaenzt die Arbeitszeilen (wie beim Halbtag).
+                // #626: an einem Notarbeit-Tag ergaenzt die (volle) Urlaubszeile die
+                // Arbeitszeilen, damit "Urlaub + Notarbeit" im Report sichtbar bleibt.
+                if ($absence !== null && ($absence->isHalfDay() || $absence->getAbsenceMinutes() !== null || $hasEmergency)) {
                     $rows[] = $this->markerRow($date, $day, $absenceLabel, $fill);
                 }
             } elseif ($absence !== null) {

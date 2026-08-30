@@ -365,6 +365,8 @@ export default {
                         typeName,
                         status: absence.status,
                         scope: absence.scope || 1,
+                        // #625: stundenweise Krank-Minuten (null = ganz/halb via scope).
+                        absenceMinutes: absence.absenceMinutes ?? null,
                     }
                 }
             }

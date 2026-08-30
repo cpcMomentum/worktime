@@ -40,6 +40,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setUpdatedAt(DateTime $updatedAt)
  * @method string getScope()
  * @method void setScope(string $scope)
+ * @method int|null getAbsenceMinutes()
+ * @method void setAbsenceMinutes(?int $absenceMinutes)
  * @method int getIsCentral()
  * @method void setIsCentral(int $isCentral)
  * @method string|null getCentralGroup()
@@ -85,6 +87,8 @@ class Absence extends Entity implements JsonSerializable {
     protected ?DateTime $createdAt = null;
     protected ?DateTime $updatedAt = null;
     protected string $scope = '1.00';
+    /** #625: Krank-Minuten eines Einzeltags. NULL = scope-basiertes Verhalten (ganz/halb). */
+    protected ?int $absenceMinutes = null;
     /** @deprecated Use scope instead - kept for DB compatibility during migration */
     protected int $isHalfDay = 0;
     /** #15: 1 = centrally created by admin/HR (Betriebsferien) — protected from employee edits. */
@@ -101,6 +105,7 @@ class Absence extends Entity implements JsonSerializable {
         $this->addType('approvedAt', 'datetime');
         $this->addType('createdAt', 'datetime');
         $this->addType('updatedAt', 'datetime');
+        $this->addType('absenceMinutes', 'integer');
         $this->addType('isHalfDay', 'integer');
         $this->addType('isCentral', 'integer');
     }
@@ -148,6 +153,7 @@ class Absence extends Entity implements JsonSerializable {
             'endDate' => $this->endDate?->format('Y-m-d'),
             'days' => (float)$this->days,
             'scope' => $this->getScopeValue(),
+            'absenceMinutes' => $this->absenceMinutes,
             'note' => $this->note,
             'status' => $this->status,
             'approvedBy' => $this->approvedBy,

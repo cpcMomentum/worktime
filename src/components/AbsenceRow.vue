@@ -72,12 +72,26 @@
                         </div>
                         <div class="field days-cell">
                             <div class="scope-row">
-                                <NcSelect
-                                    v-model="selectedScope"
-                                    :options="scopeOptions"
-                                    :clearable="false"
-                                    class="scope-select" />
-                                <span class="days-value">{{ calculatedDays }} {{ t('worktime', 'Tage') }}</span>
+                                <template v-if="showHourlySick">
+                                    <input
+                                        v-model.number="form.absenceHours"
+                                        type="number"
+                                        min="0"
+                                        max="24"
+                                        step="0.25"
+                                        class="inline-input hours-input"
+                                        :placeholder="t('worktime', 'Std.')"
+                                        :title="t('worktime', 'Krank-Stunden für diesen Tag (leer = ganzer Tag)')">
+                                    <span class="days-value">{{ t('worktime', 'Std. krank') }}</span>
+                                </template>
+                                <template v-else>
+                                    <NcSelect
+                                        v-model="selectedScope"
+                                        :options="scopeOptions"
+                                        :clearable="false"
+                                        class="scope-select" />
+                                    <span class="days-value">{{ calculatedDays }} {{ t('worktime', 'Tage') }}</span>
+                                </template>
                             </div>
                         </div>
                         <div class="field note-field">
@@ -162,6 +176,10 @@ export default {
             type: Object,
             default: null,
         },
+        hourlySickEnabled: {
+            type: Boolean,
+            default: false,
+        },
     },
     emits: ['edit', 'save', 'cancel', 'remove'],
     data() {
@@ -172,6 +190,8 @@ export default {
                 endDate: new Date(),
                 note: '',
                 scope: 1.0,
+                // #625: krank-Stunden fuer einen Einzeltag (null = ganzer Tag).
+                absenceHours: null,
             },
             // Tracks whether the user deliberately picked an end date. While false,
             // the end date follows the start date (single day is the default outcome).
@@ -228,6 +248,14 @@ export default {
                     this.form.endDate = new Date(this.form.startDate)
                 }
             },
+        },
+        isSingleDay() {
+            if (!this.form.startDate || !this.form.endDate) return false
+            return formatDateISO(this.form.startDate) === formatDateISO(this.form.endDate)
+        },
+        // #625: stundenweise Krank nur fuer Einzeltag-Krank und nur wenn firmenweit erlaubt.
+        showHourlySick() {
+            return this.hourlySickEnabled && this.form.type === 'sick' && this.isSingleDay
         },
         calculatedDays() {
             if (!this.form.startDate || !this.form.endDate) return '-'
@@ -330,6 +358,8 @@ export default {
                 endDate: new Date(absence.endDate),
                 note: absence.note || '',
                 scope: absence.scope ?? 1.0,
+                // #625: bestehende stundenweise Krank -> Stunden aus Minuten.
+                absenceHours: absence.absenceMinutes ? absence.absenceMinutes / 60 : null,
             }
             // Existing absence already has an explicit end date -> don't auto-clobber it.
             this.endTouched = true
@@ -341,6 +371,7 @@ export default {
                 endDate: new Date(),
                 note: '',
                 scope: 1.0,
+                absenceHours: null,
             }
             // Fresh form: end date follows the start until the user picks one.
             this.endTouched = false
@@ -381,6 +412,13 @@ export default {
                 endDate: formatDateISO(this.form.endDate),
                 note: this.form.note || null,
                 scope: this.form.scope,
+            }
+
+            // #625: stundenweise Krank -> Minuten mitsenden; scope bleibt 1.0.
+            // Der Server ist Autoritaet (Gate, Typ, Einzeltag, Deckelung auf Tagessoll).
+            if (this.showHourlySick && this.form.absenceHours > 0) {
+                data.absenceMinutes = Math.round(this.form.absenceHours * 60)
+                data.scope = 1.0
             }
 
             this.$emit('save', {
@@ -512,6 +550,10 @@ tr.creating {
 
 .scope-select {
     min-width: 7rem;
+}
+
+.hours-input {
+    width: 5rem;
 }
 
 .days-value {

@@ -175,6 +175,27 @@ class CompanySettingsService {
     }
 
     /**
+     * #625: stundenweise Krankheit fuer Einzeltage erlaubt.
+     */
+    public function isHourlySickEnabled(): bool {
+        return $this->getBool(CompanySetting::KEY_HOURLY_SICK_ENABLED);
+    }
+
+    /**
+     * #626-1: Notarbeit an genehmigten vollen Urlaubstagen erlaubt.
+     */
+    public function isEmergencyWorkEnabled(): bool {
+        return $this->getBool(CompanySetting::KEY_EMERGENCY_WORK_ENABLED);
+    }
+
+    /**
+     * #626-1: Notarbeit muss vor Wirksamkeit freigegeben werden.
+     */
+    public function emergencyWorkRequiresApproval(): bool {
+        return $this->getBool(CompanySetting::KEY_EMERGENCY_WORK_REQUIRES_APPROVAL);
+    }
+
+    /**
      * Get minimum break minutes for >6h work
      */
     public function getMinBreakMinutes6h(): int {

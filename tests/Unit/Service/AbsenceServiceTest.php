@@ -21,6 +21,7 @@ use OCA\WorkTime\Service\HolidayService;
 use OCA\WorkTime\Service\ProjectService;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCA\WorkTime\Service\ValidationException;
+use OCA\WorkTime\Service\CompanySettingsService;
 use OCA\WorkTime\Service\WorkScheduleService;
 use OCA\WorkTime\Service\YearlyCarryoverService;
 use OCP\IL10N;
@@ -48,6 +49,7 @@ class AbsenceServiceTest extends TestCase {
     private WorkScheduleService $workScheduleService;
     private HolidayService $holidayService;
     private YearlyCarryoverService $carryoverService;
+    private CompanySettingsService $companySettingsService;
     /** @var array<int,int> Per-year override for getVacationDaysForYear (#501). */
     private array $scheduleEntitlementByYear = [];
     private LoggerInterface $logger;
@@ -86,6 +88,8 @@ class AbsenceServiceTest extends TestCase {
             $this->l
         );
 
+        $this->companySettingsService = $this->createMock(CompanySettingsService::class);
+
         $this->service = new AbsenceService(
             $this->absenceMapper,
             $this->employeeMapper,
@@ -96,6 +100,7 @@ class AbsenceServiceTest extends TestCase {
             $this->workScheduleService,
             $this->holidayService,
             $this->carryoverService,
+            $this->companySettingsService,
             $this->logger,
             $this->l
         );
@@ -428,6 +433,144 @@ class AbsenceServiceTest extends TestCase {
         );
 
         $this->assertSame(Absence::STATUS_PENDING, $result->getStatus());
+    }
+
+    // ---------------------------------------------------------------------
+    // #625: stundenweise Krankheit — Gate, serverseitige Deckelung, Koexistenz
+    // ---------------------------------------------------------------------
+
+    /** Gemeinsames Setup fuer einen erfolgreichen create-Aufruf am currentMonthDate('11'). */
+    private function primeSuccessfulCreate(): void {
+        $this->expectActiveEmployee();
+        $this->absenceMapper->method('findOverlapping')->willReturn([]);
+        $this->timeEntryMapper->method('getMonthlyStatusSummary')
+            ->willReturn(['draft' => 1, 'submitted' => 0, 'approved' => 0, 'rejected' => 0]);
+        $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
+        $this->workScheduleService->method('countWorkingDays')->willReturn(1.0);
+        $this->absenceMapper->method('insert')->willReturnArgument(0);
+    }
+
+    private function createSick(string $start, string $end, ?int $absenceMinutes): Absence {
+        return $this->service->create(
+            1, Absence::TYPE_SICK, $start, $end, null, 'BY', 'user1', 1.0, null, false, $absenceMinutes
+        );
+    }
+
+    public function testHourlySickCappedToDailyTargetWhenEnabled(): void {
+        $this->primeSuccessfulCreate();
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]);
+        $this->companySettingsService->method('isHourlySickEnabled')->willReturn(true);
+        $this->workScheduleService->method('getDailyMinutesForDate')->willReturn(480);
+
+        $day = $this->currentMonthDate('11')->format('Y-m-d');
+        // 600 angefragt, Tagessoll 480 -> serverseitig auf 480 gedeckelt.
+        $result = $this->createSick($day, $day, 600);
+
+        $this->assertSame(480, $result->getAbsenceMinutes());
+        $this->assertSame(Absence::STATUS_APPROVED, $result->getStatus());
+    }
+
+    public function testHourlySickCoexistsWithTimeEntry(): void {
+        $this->primeSuccessfulCreate();
+        $entry = new TimeEntry();
+        $entry->setEmployeeId(1);
+        $entry->setDate($this->currentMonthDate('11'));
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([$entry]);
+        $this->companySettingsService->method('isHourlySickEnabled')->willReturn(true);
+        $this->workScheduleService->method('getDailyMinutesForDate')->willReturn(480);
+
+        $day = $this->currentMonthDate('11')->format('Y-m-d');
+        // Trotz vorhandenem Zeiteintrag kein Konflikt (Halbtag-analog).
+        $result = $this->createSick($day, $day, 300);
+
+        $this->assertSame(300, $result->getAbsenceMinutes());
+        // #625 (Review-Fix): persistierte days spiegeln den Krank-Anteil 300/480.
+        $this->assertSame('0.625', $result->getDays());
+    }
+
+    public function testHourlySickIgnoredWhenFeatureDisabled(): void {
+        $this->primeSuccessfulCreate();
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]);
+        $this->companySettingsService->method('isHourlySickEnabled')->willReturn(false);
+
+        $day = $this->currentMonthDate('11')->format('Y-m-d');
+        // Feature aus -> Feld ignoriert, ganztaegige Krankmeldung wie bisher.
+        $result = $this->createSick($day, $day, 300);
+
+        $this->assertNull($result->getAbsenceMinutes());
+    }
+
+    public function testHourlySickPreservedOnEditWhenFeatureDisabled(): void {
+        // #625 Review: schaltet der Admin das Feature spaeter aus, darf ein blosses
+        // Bearbeiten (Feld wird gar nicht mehr gesendet -> absenceMinutes=null) die
+        // bestehenden Krank-Minuten nicht still auf Ganztag umwerten.
+        $this->expectActiveEmployee();
+        $day = $this->currentMonthDate('11');
+        $existing = $this->makeAbsence(Absence::TYPE_SICK, Absence::STATUS_APPROVED, $day, $day);
+        $existing->setAbsenceMinutes(300);
+        $this->absenceMapper->method('find')->willReturn($existing);
+        $this->absenceMapper->method('findOverlapping')->willReturn([]);
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]);
+        $this->timeEntryMapper->method('getMonthlyStatusSummary')
+            ->willReturn(['draft' => 1, 'submitted' => 0, 'approved' => 0, 'rejected' => 0]);
+        $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
+        $this->workScheduleService->method('countWorkingDays')->willReturn(1.0);
+        $this->workScheduleService->method('getDailyMinutesForDate')->willReturn(480);
+        $this->absenceMapper->method('update')->willReturnArgument(0);
+        // Feature aus.
+        $this->companySettingsService->method('isHourlySickEnabled')->willReturn(false);
+
+        $iso = $day->format('Y-m-d');
+        $result = $this->service->update(
+            5, Absence::TYPE_SICK, $iso, $iso, null, 'BY', 'user1', 1.0, null, false, null
+        );
+
+        $this->assertSame(300, $result->getAbsenceMinutes());
+    }
+
+    public function testHourlySickPreservedOnEditIsCappedToNewDayTarget(): void {
+        // Review: preserving the old minutes verbatim (without capping) could push
+        // days above 1.0 if the edit moves the absence to a day with a smaller
+        // work-schedule target (e.g. a part-time day).
+        $this->expectActiveEmployee();
+        $day = $this->currentMonthDate('11');
+        $existing = $this->makeAbsence(Absence::TYPE_SICK, Absence::STATUS_APPROVED, $day, $day);
+        $existing->setAbsenceMinutes(300);
+        $this->absenceMapper->method('find')->willReturn($existing);
+        $this->absenceMapper->method('findOverlapping')->willReturn([]);
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]);
+        $this->timeEntryMapper->method('getMonthlyStatusSummary')
+            ->willReturn(['draft' => 1, 'submitted' => 0, 'approved' => 0, 'rejected' => 0]);
+        $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
+        $this->workScheduleService->method('countWorkingDays')->willReturn(1.0);
+        // New target day only has 120 minutes scheduled (e.g. part-time).
+        $this->workScheduleService->method('getDailyMinutesForDate')->willReturn(120);
+        $this->absenceMapper->method('update')->willReturnArgument(0);
+        $this->companySettingsService->method('isHourlySickEnabled')->willReturn(false);
+
+        $iso = $day->format('Y-m-d');
+        $result = $this->service->update(
+            5, Absence::TYPE_SICK, $iso, $iso, null, 'BY', 'user1', 1.0, null, false, null
+        );
+
+        $this->assertSame(120, $result->getAbsenceMinutes());
+        $this->assertSame('1', $result->getDays());
+    }
+
+    public function testHourlySickIgnoredForMultiDayRange(): void {
+        $this->primeSuccessfulCreate();
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]);
+        $this->companySettingsService->method('isHourlySickEnabled')->willReturn(true);
+        $this->workScheduleService->method('getDailyMinutesForDate')->willReturn(480);
+
+        // Mehrtaegig -> absenceMinutes gilt nicht (nur Einzeltag).
+        $result = $this->createSick(
+            $this->currentMonthDate('10')->format('Y-m-d'),
+            $this->currentMonthDate('12')->format('Y-m-d'),
+            300
+        );
+
+        $this->assertNull($result->getAbsenceMinutes());
     }
 
     // ---------------------------------------------------------------------

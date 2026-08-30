@@ -156,6 +156,18 @@ class Notifier implements INotifier {
 				);
 				break;
 
+			case 'emergency_work_recorded':
+				$notification->setParsedSubject(
+					$l->t(
+						'%1$s hat Notarbeit im Urlaub am %2$s erfasst',
+						[
+							$params['employeeName'] ?? '',
+							$params['date'] ?? '',
+						]
+					)
+				);
+				break;
+
 			case 'time_entries_rejected':
 				$notification->setParsedSubject(
 					$l->t(

@@ -160,6 +160,8 @@ class OvertimeCalculationService {
         $targetReductionDays = 0;
         $compensatoryDays = 0;
 
+        $workedByDate = $this->workedMinutesByDate($timeEntries);
+
         foreach ($absences as $absence) {
             if (!$absence->isApproved()) {
                 continue;
@@ -172,6 +174,15 @@ class OvertimeCalculationService {
             $scope = $absence->getScopeValue();
             $days = $this->workScheduleService->countWorkingDays($employeeId, $aStart, $aEnd, $holidays) * $scope;
             $minutes = $this->calculateAbsenceMinutes($employeeId, $aStart, $aEnd, $scope, $holidays);
+
+            // #625: single-day hourly sick is capped to the remaining daily target
+            // instead of the scope-based full/half credit.
+            if ($absence instanceof Absence && $absence->getAbsenceMinutes() !== null) {
+                $dayTarget = $this->workScheduleService->getDailyMinutesForDate($employeeId, $aStart);
+                $worked = $workedByDate[$aStart->format('Y-m-d')] ?? 0;
+                $minutes = $this->capSubDayCredit($absence->getAbsenceMinutes(), $dayTarget, $worked);
+                $days = $dayTarget > 0 ? $minutes / $dayTarget : 0.0;
+            }
 
             if (in_array($absence->getType(), $targetReductionTypes, true)) {
                 $targetReductionDays += $days;
@@ -188,6 +199,9 @@ class OvertimeCalculationService {
 
         $workedMinutes = 0;
         foreach ($timeEntries as $entry) {
+            if ($this->isUnapprovedEmergency($entry)) {
+                continue;
+            }
             $workedMinutes += $entry->getWorkMinutes();
         }
         $actualMinutes = $workedMinutes + $paidAbsenceMinutes;
@@ -356,6 +370,8 @@ class OvertimeCalculationService {
             Absence::TYPE_COMPENSATORY,
         ];
 
+        $workedByDate = $this->workedMinutesByDate($timeEntries);
+
         foreach ($absences as $absence) {
             if ($absence->isApproved()) {
                 $absenceStart = $absence->getStartDate();
@@ -371,6 +387,14 @@ class OvertimeCalculationService {
 
                     // Calculate absence minutes per day using actual schedule
                     $absenceMinutes = $this->calculateAbsenceMinutes($employeeId, $monthAbsenceStart, $monthAbsenceEnd, $absenceScope, $holidays);
+
+                    // #625: single-day hourly sick caps to the remaining daily target.
+                    if ($absence instanceof Absence && $absence->getAbsenceMinutes() !== null) {
+                        $dayTarget = $this->workScheduleService->getDailyMinutesForDate($employeeId, $absenceStart);
+                        $worked = $workedByDate[$absenceStart->format('Y-m-d')] ?? 0;
+                        $absenceMinutes = $this->capSubDayCredit($absence->getAbsenceMinutes(), $dayTarget, $worked);
+                        $effectiveDays = $dayTarget > 0 ? $absenceMinutes / $dayTarget : 0.0;
+                    }
 
                     if (in_array($absence->getType(), $targetReductionTypes, true)) {
                         $targetReductionDaysMonth += $effectiveDays;
@@ -393,6 +417,14 @@ class OvertimeCalculationService {
 
                     $absenceMinutesUntilToday = $this->calculateAbsenceMinutes($employeeId, $actualAbsenceStart, $actualAbsenceEnd, $absenceScope, $holidays);
 
+                    // #625: single-day hourly sick caps to the remaining daily target.
+                    if ($absence instanceof Absence && $absence->getAbsenceMinutes() !== null) {
+                        $dayTarget = $this->workScheduleService->getDailyMinutesForDate($employeeId, $absenceStart);
+                        $worked = $workedByDate[$absenceStart->format('Y-m-d')] ?? 0;
+                        $absenceMinutesUntilToday = $this->capSubDayCredit($absence->getAbsenceMinutes(), $dayTarget, $worked);
+                        $effectiveDaysUntilToday = $dayTarget > 0 ? $absenceMinutesUntilToday / $dayTarget : 0.0;
+                    }
+
                     if (in_array($absence->getType(), $targetReductionTypes, true)) {
                         $targetReductionDaysUntilToday += $effectiveDaysUntilToday;
                         $targetReductionMinutesUntilToday += $absenceMinutesUntilToday;
@@ -414,6 +446,9 @@ class OvertimeCalculationService {
         // Sum actual work minutes from time entries
         $workedMinutes = 0;
         foreach ($timeEntries as $entry) {
+            if ($this->isUnapprovedEmergency($entry)) {
+                continue;
+            }
             $workedMinutes += $entry->getWorkMinutes();
         }
 
@@ -524,5 +559,53 @@ class OvertimeCalculationService {
         }
 
         return $totalMinutes;
+    }
+
+    /**
+     * Sum worked minutes per calendar day (Y-m-d). Only real TimeEntry rows carry
+     * a date; lightweight test doubles without one are ignored.
+     *
+     * @param TimeEntry[] $timeEntries
+     * @return array<string, int>
+     */
+    private function workedMinutesByDate(array $timeEntries): array {
+        $map = [];
+        foreach ($timeEntries as $entry) {
+            if (!$entry instanceof TimeEntry) {
+                continue;
+            }
+            $date = $entry->getDate();
+            if ($date === null) {
+                continue;
+            }
+            $key = $date->format('Y-m-d');
+            $map[$key] = ($map[$key] ?? 0) + $entry->getWorkMinutes();
+        }
+        return $map;
+    }
+
+    /**
+     * #625 Pro-Tag-Deckelung fuer stundenweise Krankheit: die Gutschrift eines
+     * Einzeltags fuellt hoechstens bis zum Resttagessoll (Tagessoll minus der an
+     * dem Tag bereits gearbeiteten Minuten). So entstehen keine kuenstlichen
+     * Ueberstunden, wenn an einem Krank-Tag zusaetzlich gearbeitet wurde.
+     *
+     * Der Aufrufer holt das Tagessoll einmal und reicht es (sowie die an dem Tag
+     * gearbeiteten Minuten) herein, um eine zweite identische DB-Abfrage zu sparen.
+     */
+    private function capSubDayCredit(int $absenceMinutes, int $dayTarget, int $workedOnDay): int {
+        return max(0, min($absenceMinutes, $dayTarget - $workedOnDay));
+    }
+
+    /**
+     * #626: Notarbeit im Urlaub, die noch nicht freigegeben ist, zaehlt nicht in
+     * die Ist-Summe (bis der Chef sie freigibt). Beruehrt ausschliesslich
+     * Notarbeit-Eintraege; normale Eintraege bleiben unberuehrt. Der instanceof-
+     * Guard schuetzt die schlanken Test-Doubles ohne diese Methoden.
+     */
+    private function isUnapprovedEmergency(mixed $entry): bool {
+        return $entry instanceof TimeEntry
+            && $entry->isEmergency()
+            && !$entry->isEmergencyApproved();
     }
 }

@@ -32,6 +32,12 @@ jobs:
       - name: Abhaengigkeiten installieren
         run: npm ci
 
+      - name: Schema-Portabilitaet
+        run: npx nc-schema-check
+
+      - name: Notification-Vertraege
+        run: npx nc-notification-check
+
       - name: ESLint
         run: npm run lint
 

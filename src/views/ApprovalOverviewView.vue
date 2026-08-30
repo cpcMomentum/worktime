@@ -35,6 +35,10 @@
                             <ClockOutlineIcon :size="18" />
                             {{ t('worktime', 'Zeiten') }}
                         </button>
+                        <button v-if="emergencyItems.length > 0" class="seg-btn" :class="{ active: kindFilter === 'emergency' }" @click="kindFilter = 'emergency'">
+                            <AlertOutlineIcon :size="18" />
+                            {{ t('worktime', 'Notarbeit') }}
+                        </button>
                     </div>
                 </div>
 
@@ -85,6 +89,14 @@
                                             @click="rejectAbsence(item.id)">
                                             <template #icon><CloseIcon :size="18" /></template>
                                             {{ t('worktime', 'Ablehnen') }}
+                                        </NcButton>
+                                    </template>
+                                    <template v-else-if="item.kind === 'emergency'">
+                                        <NcButton type="primary"
+                                            :disabled="processingEmergency === item.id"
+                                            @click="approveEmergencyItem(item)">
+                                            <template #icon><CheckIcon :size="18" /></template>
+                                            {{ t('worktime', 'Genehmigen') }}
                                         </NcButton>
                                     </template>
                                     <template v-else>
@@ -249,6 +261,7 @@ import CloseIcon from 'vue-material-design-icons/Close.vue'
 import FormatListBulletedIcon from 'vue-material-design-icons/FormatListBulleted.vue'
 import CalendarIcon from 'vue-material-design-icons/Calendar.vue'
 import ClockOutlineIcon from 'vue-material-design-icons/ClockOutline.vue'
+import AlertOutlineIcon from 'vue-material-design-icons/AlertOutline.vue'
 import RestoreIcon from 'vue-material-design-icons/Restore.vue'
 import TimeEntryService from '../services/TimeEntryService.js'
 import AbsenceService from '../services/AbsenceService.js'
@@ -274,17 +287,20 @@ export default {
         FormatListBulletedIcon,
         CalendarIcon,
         ClockOutlineIcon,
+        AlertOutlineIcon,
         RestoreIcon,
     },
     data() {
         return {
             pendingAbsences: [],
             pendingMonths: [],
+            pendingEmergency: [],
             informationalAbsences: [],
             loading: false,
             kindFilter: 'all',
             processingAbsence: null,
             processingMonth: null,
+            processingEmergency: null,
             showRejectModal: false,
             rejectTarget: null,
             rejectReason: '',
@@ -330,8 +346,21 @@ export default {
                 waitingSince: (m.submittedAt || `${m.year}-${String(m.month).padStart(2, '0')}-01`).slice(0, 10),
             }))
         },
+        emergencyItems() {
+            return this.pendingEmergency.map(e => ({
+                key: 'e-' + e.id,
+                kind: 'emergency',
+                id: e.id,
+                employeeName: e.employeeName,
+                employeeUserId: e.employeeUserId,
+                typeLabel: t('worktime', 'Notarbeit'),
+                detail: `${formatDate(e.date)} · ${formatMinutes(e.workMinutes)} h`,
+                note: e.description || '',
+                waitingSince: (e.date || '').slice(0, 10),
+            }))
+        },
         inboxItems() {
-            return [...this.absenceItems, ...this.monthItems]
+            return [...this.absenceItems, ...this.monthItems, ...this.emergencyItems]
                 .sort((a, b) => a.waitingSince.localeCompare(b.waitingSince))
         },
         absenceCount() {
@@ -443,17 +472,19 @@ export default {
                 TimeEntryService.getPendingMonths(),
                 AbsenceService.getInformational(),
                 TimeEntryService.getArchiveStatus(),
+                TimeEntryService.getPendingEmergency(),
             ])
             this.pendingAbsences = results[0].status === 'fulfilled' ? (results[0].value || []) : []
             this.pendingMonths = results[1].status === 'fulfilled' ? (results[1].value || []) : []
             this.informationalAbsences = results[2].status === 'fulfilled' ? (results[2].value || []) : []
             this.archiveConfigured = results[3].status === 'fulfilled' ? !!(results[3].value?.configured) : false
+            this.pendingEmergency = results[4].status === 'fulfilled' ? (results[4].value || []) : []
             // A failed request leaves its list empty, which looks exactly like
             // "nothing to approve". Say so instead of showing a silent gap (#537).
             const failed = results.some(r => r.status === 'rejected')
             results.forEach((r, i) => {
                 if (r.status === 'rejected') {
-                    const names = ['getPending', 'getPendingMonths', 'getInformational', 'getArchiveStatus']
+                    const names = ['getPending', 'getPendingMonths', 'getInformational', 'getArchiveStatus', 'getPendingEmergency']
                     console.error(`Failed: ${names[i]}`, r.reason)
                 }
             })
@@ -473,6 +504,19 @@ export default {
                 showError(t('worktime', 'Fehler beim Genehmigen'))
             } finally {
                 this.processingAbsence = null
+            }
+        },
+        async approveEmergencyItem(item) {
+            this.processingEmergency = item.id
+            try {
+                await TimeEntryService.approveEmergency(item.id)
+                showSuccess(t('worktime', 'Notarbeit freigegeben'))
+                await this.loadData()
+            } catch (error) {
+                console.error('Failed to approve emergency work:', error)
+                showError(t('worktime', 'Fehler beim Genehmigen'))
+            } finally {
+                this.processingEmergency = null
             }
         },
         async rejectAbsence(absenceId) {
@@ -720,6 +764,15 @@ export default {
 
 .kind.sick .kind-dot {
     background: #cc4b42;
+}
+
+.kind.emergency {
+    background: var(--color-background-hover);
+    color: #b5730f;
+}
+
+.kind.emergency .kind-dot {
+    background: #e9a13b;
 }
 
 .detail {
