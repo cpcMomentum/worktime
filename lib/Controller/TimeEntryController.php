@@ -465,6 +465,28 @@ class TimeEntryController extends BaseController {
         ]);
     }
 
+    /**
+     * #626: Notarbeit im Urlaub freigeben, damit sie in die Ueberstunden zaehlt.
+     */
+    #[NoAdminRequired]
+    public function approveEmergency(int $id): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+
+        try {
+            $entry = $this->timeEntryService->find($id);
+            if (!$this->permissionService->canApprove($this->userId, $entry->getEmployeeId())) {
+                return $this->forbiddenResponse();
+            }
+
+            $updated = $this->timeEntryService->approveEmergency($id, $this->userId);
+            return $this->successResponse($updated);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
     #[NoAdminRequired]
     public function approveMonth(int $employeeId, int $year, int $month): JSONResponse {
         if ($authError = $this->requireAuth()) {

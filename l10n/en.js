@@ -720,6 +720,8 @@ OC.L10N.register(
     "Krank-Stunden für diesen Tag (leer = ganzer Tag)" : "Sick hours for this day (empty = full day)",
     "Std. krank" : "hrs sick",
     "Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert." : "Controls company-wide hourly sick leave on a single day. Disabled by default.",
-    "Für Notarbeit im Urlaub ist eine Begründung erforderlich." : "A reason is required for emergency work during vacation."
+    "Für Notarbeit im Urlaub ist eine Begründung erforderlich." : "A reason is required for emergency work during vacation.",
+    "%1$s hat Notarbeit im Urlaub am %2$s erfasst" : "%1$s recorded emergency work during vacation on %2$s",
+    "Nur Notarbeit-Einträge können freigegeben werden." : "Only emergency-work entries can be approved."
 },
 "nplurals=2; plural=(n != 1);");

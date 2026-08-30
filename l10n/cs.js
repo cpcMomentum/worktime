@@ -720,6 +720,8 @@ OC.L10N.register(
     "Krank-Stunden für diesen Tag (leer = ganzer Tag)" : "Hodiny nemoci pro tento den (prázdné = celý den)",
     "Std. krank" : "h nemoc",
     "Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert." : "Řídí celofiremně hodinovou nemocenskou v jednom dni. Ve výchozím nastavení vypnuto.",
-    "Für Notarbeit im Urlaub ist eine Begründung erforderlich." : "Pro nouzovou práci během dovolené je vyžadováno odůvodnění."
+    "Für Notarbeit im Urlaub ist eine Begründung erforderlich." : "Pro nouzovou práci během dovolené je vyžadováno odůvodnění.",
+    "%1$s hat Notarbeit im Urlaub am %2$s erfasst" : "%1$s zaznamenal(a) nouzovou práci během dovolené dne %2$s",
+    "Nur Notarbeit-Einträge können freigegeben werden." : "Schválit lze pouze záznamy nouzové práce."
 },
 "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;");

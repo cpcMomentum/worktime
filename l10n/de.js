@@ -720,6 +720,8 @@ OC.L10N.register(
     "Krank-Stunden für diesen Tag (leer = ganzer Tag)" : "Krank-Stunden für diesen Tag (leer = ganzer Tag)",
     "Std. krank" : "Std. krank",
     "Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert." : "Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert.",
-    "Für Notarbeit im Urlaub ist eine Begründung erforderlich." : "Für Notarbeit im Urlaub ist eine Begründung erforderlich."
+    "Für Notarbeit im Urlaub ist eine Begründung erforderlich." : "Für Notarbeit im Urlaub ist eine Begründung erforderlich.",
+    "%1$s hat Notarbeit im Urlaub am %2$s erfasst" : "%1$s hat Notarbeit im Urlaub am %2$s erfasst",
+    "Nur Notarbeit-Einträge können freigegeben werden." : "Nur Notarbeit-Einträge können freigegeben werden."
 },
 "nplurals=2; plural=(n != 1);");

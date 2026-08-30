@@ -572,6 +572,41 @@ class TimeEntryServiceTest extends TestCase {
         $this->assertSame(['eligible' => false, 'approved' => 1], $this->invokeResolveEmergency(true));
     }
 
+    public function testApproveEmergencySetsApproved(): void {
+        $entry = new TimeEntry();
+        $entry->setId(9);
+        $entry->setEmployeeId(1);
+        $entry->setIsEmergency(1);
+        $entry->setEmergencyApproved(0);
+        $this->timeEntryMapper->method('find')->willReturn($entry);
+        $this->timeEntryMapper->method('update')->willReturnArgument(0);
+
+        $result = $this->service->approveEmergency(9, 'boss');
+        $this->assertTrue($result->isEmergencyApproved());
+    }
+
+    public function testApproveEmergencyIsIdempotent(): void {
+        $entry = new TimeEntry();
+        $entry->setId(9);
+        $entry->setIsEmergency(1);
+        $entry->setEmergencyApproved(1);
+        $this->timeEntryMapper->method('find')->willReturn($entry);
+        $this->timeEntryMapper->expects($this->never())->method('update');
+
+        $result = $this->service->approveEmergency(9, 'boss');
+        $this->assertTrue($result->isEmergencyApproved());
+    }
+
+    public function testApproveEmergencyRejectsNonEmergency(): void {
+        $entry = new TimeEntry();
+        $entry->setId(9);
+        $entry->setIsEmergency(0);
+        $this->timeEntryMapper->method('find')->willReturn($entry);
+
+        $this->expectException(ValidationException::class);
+        $this->service->approveEmergency(9, 'boss');
+    }
+
     public function testEmergencyBypassesFullVacationBlock(): void {
         $this->absenceMapper->method('findByEmployeeAndDate')->willReturn([$this->fullApprovedVacation()]);
 

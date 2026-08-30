@@ -235,6 +235,11 @@ class TimeEntryService {
             $this->auditLogService->logCreate($currentUserId, 'time_entry', $entry->getId(), $newValues);
         }
 
+        // #626: den/die Vorgesetzte(n) ueber die erfasste Notarbeit informieren.
+        if ($emergency['eligible']) {
+            $this->notificationService->notifyEmergencyWorkRecorded($employeeId, $dateObj->format('d.m.Y'), $reason);
+        }
+
         // HR correction in a closed month: reopen the affected months for re-approval.
         if ($effectiveReason !== null) {
             $this->reopenLockedMonths($employeeId, $lockedMonths, $effectiveReason, $currentUserId);
@@ -481,6 +486,34 @@ class TimeEntryService {
             'submitted' => $submitted,
             'skipped' => $skipped,
         ];
+    }
+
+    /**
+     * #626: einen Notarbeit-Eintrag freigeben, sodass er in die Ueberstunden
+     * zaehlt. Idempotent. Die Berechtigung (canApprove) prueft der Controller.
+     *
+     * @throws NotFoundException
+     */
+    public function approveEmergency(int $id, string $currentUserId = ''): TimeEntry {
+        $entry = $this->find($id);
+
+        if (!$entry->isEmergency()) {
+            throw ValidationException::fromSingleError('id', $this->l->t('Nur Notarbeit-Einträge können freigegeben werden.'));
+        }
+        if ($entry->isEmergencyApproved()) {
+            return $entry;
+        }
+
+        $oldValues = $entry->jsonSerialize();
+        $entry->setEmergencyApproved(1);
+        $entry->setUpdatedAt(new DateTime());
+        $entry = $this->timeEntryMapper->update($entry);
+
+        if ($currentUserId) {
+            $this->auditLogService->log($currentUserId, 'approve_emergency', 'time_entry', $entry->getId(), $oldValues, $entry->jsonSerialize());
+        }
+
+        return $entry;
     }
 
     /**
