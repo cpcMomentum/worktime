@@ -302,8 +302,9 @@ export default {
                 projectId: this.form.projectId,
                 description: this.form.description || null,
             }
-            // #626: Notarbeit im Urlaub nur senden, wenn der Tag es zulaesst.
-            if (this.emergencyEligible && this.form.isEmergency) {
+            // #626: Notarbeit im Urlaub nur beim Anlegen senden (der update-Pfad
+            // uebernimmt das gespeicherte Flag; im Edit waere es ein totes Feld).
+            if (!this.isEdit && this.emergencyEligible && this.form.isEmergency) {
                 data.isEmergency = true
             }
             // In HR correction mode, capture a mandatory reason before saving.

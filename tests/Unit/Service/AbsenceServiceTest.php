@@ -500,6 +500,34 @@ class AbsenceServiceTest extends TestCase {
         $this->assertNull($result->getAbsenceMinutes());
     }
 
+    public function testHourlySickPreservedOnEditWhenFeatureDisabled(): void {
+        // #625 Review: schaltet der Admin das Feature spaeter aus, darf ein blosses
+        // Bearbeiten (Feld wird gar nicht mehr gesendet -> absenceMinutes=null) die
+        // bestehenden Krank-Minuten nicht still auf Ganztag umwerten.
+        $this->expectActiveEmployee();
+        $day = $this->currentMonthDate('11');
+        $existing = $this->makeAbsence(Absence::TYPE_SICK, Absence::STATUS_APPROVED, $day, $day);
+        $existing->setAbsenceMinutes(300);
+        $this->absenceMapper->method('find')->willReturn($existing);
+        $this->absenceMapper->method('findOverlapping')->willReturn([]);
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]);
+        $this->timeEntryMapper->method('getMonthlyStatusSummary')
+            ->willReturn(['draft' => 1, 'submitted' => 0, 'approved' => 0, 'rejected' => 0]);
+        $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
+        $this->workScheduleService->method('countWorkingDays')->willReturn(1.0);
+        $this->workScheduleService->method('getDailyMinutesForDate')->willReturn(480);
+        $this->absenceMapper->method('update')->willReturnArgument(0);
+        // Feature aus.
+        $this->companySettingsService->method('isHourlySickEnabled')->willReturn(false);
+
+        $iso = $day->format('Y-m-d');
+        $result = $this->service->update(
+            5, Absence::TYPE_SICK, $iso, $iso, null, 'BY', 'user1', 1.0, null, false, null
+        );
+
+        $this->assertSame(300, $result->getAbsenceMinutes());
+    }
+
     public function testHourlySickIgnoredForMultiDayRange(): void {
         $this->primeSuccessfulCreate();
         $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]);
