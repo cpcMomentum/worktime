@@ -7,6 +7,12 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-08-30
+
+### Added
+- **Stundenweise Krankmeldung an einem Einzeltag (#625)**: Mitarbeitende können an einem einzelnen Tag stundenweise krank sein und die restliche Zeit arbeiten. Die Krank-Stunden füllen bis zum Tagessoll, ohne künstliche Überstunden zu erzeugen; der Krank-Anteil erscheint im Tagesdetail, Kalender und PDF-Bericht. Firmenweit über einen Admin-Schalter aktivierbar, standardmäßig aus. (Danke an Thorsten Vogt für die Meldung.)
+- **Notarbeit/Bereitschaft an einem genehmigten Urlaubstag (#626)**: Wer während eines genehmigten vollen Urlaubstags außerplanmäßig arbeitet (z. B. Notfall oder Bereitschaft), kann diese Zeit jetzt erfassen, ohne den Urlaub stornieren zu müssen. Der Urlaub bleibt voll bestehen, die geleistete Arbeit zählt zusätzlich als Überstunden. Eine Begründung ist Pflicht, der/die Vorgesetzte wird informiert, und optional muss die Notarbeit vor der Anrechnung freigegeben werden (in der Genehmigungen-Ansicht). Firmenweit über einen Admin-Schalter aktivierbar, standardmäßig aus. Der stundenweise Urlaubsabzug aus dem Vorschlag wurde bewusst nicht umgesetzt, da er krumme Urlaubstage gegen das Jahreskontingent erzeugt hätte; der halbe Urlaubstag deckt diesen Fall weiterhin. (Danke an Thorsten Vogt für die Meldung.)
+
 ## [0.16.6] - 2026-08-28
 
 ### Fixed
