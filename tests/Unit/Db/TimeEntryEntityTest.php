@@ -33,4 +33,32 @@ class TimeEntryEntityTest extends TestCase {
         $this->assertSame(1, $entry->getIsEmergency());
         $this->assertTrue($entry->jsonSerialize()['isEmergency']);
     }
+
+    public function testIsEmergencyHelper(): void {
+        $entry = new TimeEntry();
+        $this->assertFalse($entry->isEmergency());
+
+        $entry->setIsEmergency(1);
+        $this->assertTrue($entry->isEmergency());
+    }
+
+    /**
+     * #626: emergency_approved defaults to 1 (wirksam), so the overtime gate never
+     * touches normal entries or existing rows.
+     */
+    public function testEmergencyApprovedDefaultsToApproved(): void {
+        $entry = new TimeEntry();
+
+        $this->assertSame(1, $entry->getEmergencyApproved());
+        $this->assertTrue($entry->isEmergencyApproved());
+        $this->assertTrue($entry->jsonSerialize()['emergencyApproved']);
+    }
+
+    public function testEmergencyApprovedPending(): void {
+        $entry = new TimeEntry();
+        $entry->setEmergencyApproved(0);
+
+        $this->assertFalse($entry->isEmergencyApproved());
+        $this->assertFalse($entry->jsonSerialize()['emergencyApproved']);
+    }
 }

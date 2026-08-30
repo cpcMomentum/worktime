@@ -719,6 +719,7 @@ OC.L10N.register(
     "Wenn aktiv, können Mitarbeitende an einem Einzeltag stundenweise krank sein und die restliche Zeit arbeiten. Die Krank-Stunden füllen bis zum Tagessoll, ohne künstliche Überstunden." : "Když je zapnuto, zaměstnanci mohou být část jednoho dne nemocní a zbytek dne pracovat. Hodiny nemoci se doplní do denního cíle bez umělých přesčasů.",
     "Krank-Stunden für diesen Tag (leer = ganzer Tag)" : "Hodiny nemoci pro tento den (prázdné = celý den)",
     "Std. krank" : "h nemoc",
-    "Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert." : "Řídí celofiremně hodinovou nemocenskou v jednom dni. Ve výchozím nastavení vypnuto."
+    "Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert." : "Řídí celofiremně hodinovou nemocenskou v jednom dni. Ve výchozím nastavení vypnuto.",
+    "Für Notarbeit im Urlaub ist eine Begründung erforderlich." : "Pro nouzovou práci během dovolené je vyžadováno odůvodnění."
 },
 "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;");

@@ -34,6 +34,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setDescription(?string $description)
  * @method int getIsEmergency()
  * @method void setIsEmergency(int $isEmergency)
+ * @method int getEmergencyApproved()
+ * @method void setEmergencyApproved(int $emergencyApproved)
  * @method string getStatus()
  * @method void setStatus(string $status)
  * @method DateTime getCreatedAt()
@@ -66,6 +68,8 @@ class TimeEntry extends Entity implements JsonSerializable {
     protected ?string $description = null;
     /** #626-1: 1 = Notarbeit/Bereitschaft an einem genehmigten vollen Urlaubstag. */
     protected int $isEmergency = 0;
+    /** #626-1: 0 = Notarbeit wartet auf Freigabe (nicht in Ueberstunden); 1 = wirksam. Default 1 haelt den Engine-Filter von Nicht-Notarbeit fern. */
+    protected int $emergencyApproved = 1;
     protected string $status = self::STATUS_DRAFT;
     protected ?DateTime $createdAt = null;
     protected ?DateTime $updatedAt = null;
@@ -84,12 +88,21 @@ class TimeEntry extends Entity implements JsonSerializable {
         $this->addType('workMinutes', 'integer');
         $this->addType('projectId', 'integer');
         $this->addType('isEmergency', 'integer');
+        $this->addType('emergencyApproved', 'integer');
         $this->addType('createdAt', 'datetime');
         $this->addType('updatedAt', 'datetime');
         $this->addType('submittedAt', 'datetime');
         $this->addType('submittedBy', 'integer');
         $this->addType('approvedAt', 'datetime');
         $this->addType('approvedBy', 'integer');
+    }
+
+    public function isEmergency(): bool {
+        return $this->isEmergency === 1;
+    }
+
+    public function isEmergencyApproved(): bool {
+        return $this->emergencyApproved === 1;
     }
 
     public function getWorkHours(): float {
@@ -117,6 +130,7 @@ class TimeEntry extends Entity implements JsonSerializable {
             'projectId' => $this->projectId,
             'description' => $this->description,
             'isEmergency' => $this->isEmergency === 1,
+            'emergencyApproved' => $this->emergencyApproved === 1,
             'status' => $this->status,
             'createdAt' => $this->createdAt?->format('c'),
             'updatedAt' => $this->updatedAt?->format('c'),

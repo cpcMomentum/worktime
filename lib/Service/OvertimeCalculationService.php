@@ -199,6 +199,9 @@ class OvertimeCalculationService {
 
         $workedMinutes = 0;
         foreach ($timeEntries as $entry) {
+            if ($this->isUnapprovedEmergency($entry)) {
+                continue;
+            }
             $workedMinutes += $entry->getWorkMinutes();
         }
         $actualMinutes = $workedMinutes + $paidAbsenceMinutes;
@@ -443,6 +446,9 @@ class OvertimeCalculationService {
         // Sum actual work minutes from time entries
         $workedMinutes = 0;
         foreach ($timeEntries as $entry) {
+            if ($this->isUnapprovedEmergency($entry)) {
+                continue;
+            }
             $workedMinutes += $entry->getWorkMinutes();
         }
 
@@ -589,5 +595,17 @@ class OvertimeCalculationService {
      */
     private function capSubDayCredit(int $absenceMinutes, int $dayTarget, int $workedOnDay): int {
         return max(0, min($absenceMinutes, $dayTarget - $workedOnDay));
+    }
+
+    /**
+     * #626: Notarbeit im Urlaub, die noch nicht freigegeben ist, zaehlt nicht in
+     * die Ist-Summe (bis der Chef sie freigibt). Beruehrt ausschliesslich
+     * Notarbeit-Eintraege; normale Eintraege bleiben unberuehrt. Der instanceof-
+     * Guard schuetzt die schlanken Test-Doubles ohne diese Methoden.
+     */
+    private function isUnapprovedEmergency(mixed $entry): bool {
+        return $entry instanceof TimeEntry
+            && $entry->isEmergency()
+            && !$entry->isEmergencyApproved();
     }
 }

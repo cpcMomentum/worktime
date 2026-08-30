@@ -719,6 +719,7 @@ OC.L10N.register(
     "Wenn aktiv, können Mitarbeitende an einem Einzeltag stundenweise krank sein und die restliche Zeit arbeiten. Die Krank-Stunden füllen bis zum Tagessoll, ohne künstliche Überstunden." : "Wenn aktiv, können Mitarbeitende an einem Einzeltag stundenweise krank sein und die restliche Zeit arbeiten. Die Krank-Stunden füllen bis zum Tagessoll, ohne künstliche Überstunden.",
     "Krank-Stunden für diesen Tag (leer = ganzer Tag)" : "Krank-Stunden für diesen Tag (leer = ganzer Tag)",
     "Std. krank" : "Std. krank",
-    "Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert." : "Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert."
+    "Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert." : "Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert.",
+    "Für Notarbeit im Urlaub ist eine Begründung erforderlich." : "Für Notarbeit im Urlaub ist eine Begründung erforderlich."
 },
 "nplurals=2; plural=(n != 1);");

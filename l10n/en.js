@@ -719,6 +719,7 @@ OC.L10N.register(
     "Wenn aktiv, können Mitarbeitende an einem Einzeltag stundenweise krank sein und die restliche Zeit arbeiten. Die Krank-Stunden füllen bis zum Tagessoll, ohne künstliche Überstunden." : "When enabled, employees can be sick for part of a single day and work the rest. The sick hours fill up to the daily target, without creating artificial overtime.",
     "Krank-Stunden für diesen Tag (leer = ganzer Tag)" : "Sick hours for this day (empty = full day)",
     "Std. krank" : "hrs sick",
-    "Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert." : "Controls company-wide hourly sick leave on a single day. Disabled by default."
+    "Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert." : "Controls company-wide hourly sick leave on a single day. Disabled by default.",
+    "Für Notarbeit im Urlaub ist eine Begründung erforderlich." : "A reason is required for emergency work during vacation."
 },
 "nplurals=2; plural=(n != 1);");

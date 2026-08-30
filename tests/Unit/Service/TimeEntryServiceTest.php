@@ -30,6 +30,8 @@ class TimeEntryServiceTest extends TestCase {
     private CompanySettingMapper $settingsMapper;
     private EmployeeMapper $employeeMapper;
     private AbsenceMapper $absenceMapper;
+    /** @var array<string,bool> Per-test overrides for CompanySetting bool keys (#626). */
+    private array $boolSettings = [];
     private AuditLogService $auditLogService;
     private NotificationService $notificationService;
     private ProjectService $projectService;
@@ -62,13 +64,9 @@ class TimeEntryServiceTest extends TestCase {
                 };
             });
 
+        // Tests override single bool settings via $this->boolSettings[$key] (#626).
         $this->settingsMapper->method('getValueAsBool')
-            ->willReturnCallback(function (string $key) {
-                return match ($key) {
-                    CompanySetting::KEY_ALLOW_FUTURE_ENTRIES => false,
-                    default => false,
-                };
-            });
+            ->willReturnCallback(fn(string $key): bool => $this->boolSettings[$key] ?? false);
 
         $this->settingsMapper->method('getValueAsFloat')
             ->willReturnCallback(function (string $key) {
@@ -519,6 +517,70 @@ class TimeEntryServiceTest extends TestCase {
         $this->absenceMapper->method('findByEmployeeAndDate')->willReturn([$absence]);
 
         $this->assertNotNull($this->invokeAbsenceConflict(210));
+    }
+
+    // ---------------------------------------------------------------------
+    // #626: Notarbeit im genehmigten Urlaub
+    // ---------------------------------------------------------------------
+
+    private function fullApprovedVacation(): Absence {
+        $absence = new Absence();
+        $absence->setStatus(Absence::STATUS_APPROVED);
+        $absence->setType(Absence::TYPE_VACATION);
+        $absence->setScopeValue(1.0);
+        return $absence;
+    }
+
+    /**
+     * @return array{eligible: bool, approved: int}
+     */
+    private function invokeResolveEmergency(bool $isEmergency): array {
+        $ref = new \ReflectionMethod($this->service, 'resolveEmergency');
+        $ref->setAccessible(true);
+        return $ref->invoke($this->service, 1, new DateTime('2026-09-02'), $isEmergency);
+    }
+
+    public function testEmergencyEligibleAndAutoApprovedWhenApprovalOff(): void {
+        $this->boolSettings[CompanySetting::KEY_EMERGENCY_WORK_ENABLED] = true;
+        $this->absenceMapper->method('findByEmployeeAndDate')->willReturn([$this->fullApprovedVacation()]);
+
+        $this->assertSame(['eligible' => true, 'approved' => 1], $this->invokeResolveEmergency(true));
+    }
+
+    public function testEmergencyPendingWhenApprovalRequired(): void {
+        $this->boolSettings[CompanySetting::KEY_EMERGENCY_WORK_ENABLED] = true;
+        $this->boolSettings[CompanySetting::KEY_EMERGENCY_WORK_REQUIRES_APPROVAL] = true;
+        $this->absenceMapper->method('findByEmployeeAndDate')->willReturn([$this->fullApprovedVacation()]);
+
+        $this->assertSame(['eligible' => true, 'approved' => 0], $this->invokeResolveEmergency(true));
+    }
+
+    public function testEmergencyIneligibleWhenFeatureOff(): void {
+        // Feature aus -> nie eligible, egal ob Urlaub vorliegt.
+        $this->absenceMapper->method('findByEmployeeAndDate')->willReturn([$this->fullApprovedVacation()]);
+
+        $this->assertSame(['eligible' => false, 'approved' => 1], $this->invokeResolveEmergency(true));
+    }
+
+    public function testEmergencyIneligibleWithoutFullVacation(): void {
+        $this->boolSettings[CompanySetting::KEY_EMERGENCY_WORK_ENABLED] = true;
+        // Halber Urlaub zaehlt nicht als voller Urlaubstag.
+        $half = $this->fullApprovedVacation();
+        $half->setScopeValue(0.5);
+        $this->absenceMapper->method('findByEmployeeAndDate')->willReturn([$half]);
+
+        $this->assertSame(['eligible' => false, 'approved' => 1], $this->invokeResolveEmergency(true));
+    }
+
+    public function testEmergencyBypassesFullVacationBlock(): void {
+        $this->absenceMapper->method('findByEmployeeAndDate')->willReturn([$this->fullApprovedVacation()]);
+
+        // isEmergency=true (bereits eligibility-geprueft) -> kein Konflikt.
+        $ref = new \ReflectionMethod($this->service, 'checkAbsenceConflict');
+        $ref->setAccessible(true);
+        $this->assertNull($ref->invoke($this->service, 1, new DateTime('2026-09-02'), 120, true));
+        // ohne Emergency -> voller Urlaub bleibt gesperrt.
+        $this->assertNotNull($ref->invoke($this->service, 1, new DateTime('2026-09-02'), 120, false));
     }
 
     /**

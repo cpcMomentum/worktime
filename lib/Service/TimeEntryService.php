@@ -153,7 +153,8 @@ class TimeEntryService {
         ?string $description = null,
         string $currentUserId = '',
         ?string $reason = null,
-        bool $allowLockedOverride = false
+        bool $allowLockedOverride = false,
+        bool $isEmergency = false
     ): TimeEntry {
         $this->assertEmployeeNotResting($employeeId, $allowLockedOverride);
 
@@ -161,8 +162,17 @@ class TimeEntryService {
         $startTimeObj = DateTime::createFromFormat('H:i', $startTime) ?: null;
         $endTimeObj = DateTime::createFromFormat('H:i', $endTime) ?: null;
 
-        // Validate (including absence conflict check)
-        $errors = $this->validate($dateObj, $startTimeObj, $endTimeObj, $breakMinutes, $employeeId);
+        // #626: server decides whether this is eligible emergency work on a full
+        // approved vacation day, and whether it needs approval.
+        $emergency = $this->resolveEmergency($employeeId, $dateObj, $isEmergency);
+
+        // Validate (including absence conflict check; emergency bypasses the vacation block)
+        $errors = $this->validate($dateObj, $startTimeObj, $endTimeObj, $breakMinutes, $employeeId, $emergency['eligible']);
+
+        // #626: a reason is mandatory for emergency work.
+        if ($emergency['eligible'] && trim((string)$reason) === '') {
+            $errors['reason'] = [$this->l->t('Für Notarbeit im Urlaub ist eine Begründung erforderlich.')];
+        }
 
         // Company rule (#329): enforce required project / description when configured.
         $errors = array_merge($errors, $this->requiredFieldErrors($employeeId, $projectId, $description));
@@ -201,6 +211,12 @@ class TimeEntryService {
         $entry->setProjectId($projectId);
         $entry->setDescription($description);
         $entry->setStatus(TimeEntry::STATUS_DRAFT);
+        if ($emergency['eligible']) {
+            // #626: Notarbeit im Urlaub. approved=0 haelt sie aus den Ueberstunden,
+            // bis der Chef freigibt (nur wenn der Freigabe-Schalter an ist).
+            $entry->setIsEmergency(1);
+            $entry->setEmergencyApproved($emergency['approved']);
+        }
         $entry->setCreatedAt(new DateTime());
         $entry->setUpdatedAt(new DateTime());
 
@@ -212,6 +228,9 @@ class TimeEntryService {
             $newValues = $entry->jsonSerialize();
             if ($auditReason !== null) {
                 $newValues['reason'] = $auditReason;
+            } elseif ($emergency['eligible'] && trim((string)$reason) !== '') {
+                // #626: Notarbeit-Begruendung im Audit festhalten.
+                $newValues['reason'] = $reason;
             }
             $this->auditLogService->logCreate($currentUserId, 'time_entry', $entry->getId(), $newValues);
         }
@@ -1169,7 +1188,7 @@ class TimeEntryService {
     /**
      * @return array<string, string[]>
      */
-    private function validate(DateTime $date, ?DateTime $startTime, ?DateTime $endTime, int $breakMinutes, ?int $employeeId = null): array {
+    private function validate(DateTime $date, ?DateTime $startTime, ?DateTime $endTime, int $breakMinutes, ?int $employeeId = null, bool $isEmergency = false): array {
         $errors = [];
 
         // Check future dates
@@ -1201,7 +1220,7 @@ class TimeEntryService {
 
             // Check for absence conflict
             if ($employeeId !== null) {
-                $absenceError = $this->checkAbsenceConflict($employeeId, $date, (int)$grossMinutes - $breakMinutes);
+                $absenceError = $this->checkAbsenceConflict($employeeId, $date, (int)$grossMinutes - $breakMinutes, $isEmergency);
                 if ($absenceError !== null) {
                     $errors['date'] = [$absenceError];
                 }
@@ -1223,7 +1242,7 @@ class TimeEntryService {
      * @param int $workMinutes Net work minutes planned
      * @return string|null Error message if conflict, null otherwise
      */
-    private function checkAbsenceConflict(int $employeeId, DateTime $date, int $workMinutes): ?string {
+    private function checkAbsenceConflict(int $employeeId, DateTime $date, int $workMinutes, bool $isEmergency = false): ?string {
         // Find absences that cover this date
         $absences = $this->absenceMapper->findByEmployeeAndDate($employeeId, $date);
 
@@ -1239,6 +1258,14 @@ class TimeEntryService {
                 continue;
             }
 
+            if ($isEmergency
+                && $absence->getType() === Absence::TYPE_VACATION
+                && $absence->getScopeValue() >= 1.0) {
+                // #626: Notarbeit an einem genehmigten vollen Urlaubstag darf
+                // koexistieren; der Urlaub bleibt, die Arbeit zaehlt als Ueberstunden.
+                continue;
+            }
+
             if ($absence->isHalfDay()) {
                 // Half-day absence: allow time entry without restriction
                 // The overtime calculation handles the reduced target time correctly
@@ -1250,6 +1277,40 @@ class TimeEntryService {
         }
 
         return null;
+    }
+
+    /**
+     * #626: true, wenn der Tag einen genehmigten VOLLEN Urlaubstag traegt (nicht
+     * halb, nicht stundenweise). Nur dann ist Notarbeit erlaubt.
+     */
+    private function hasFullApprovedVacationOnDate(int $employeeId, DateTime $date): bool {
+        foreach ($this->absenceMapper->findByEmployeeAndDate($employeeId, $date) as $absence) {
+            if ($absence->getStatus() === Absence::STATUS_APPROVED
+                && $absence->getType() === Absence::TYPE_VACATION
+                && $absence->getAbsenceMinutes() === null
+                && $absence->getScopeValue() >= 1.0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * #626: die serverseitig geprueften Notarbeit-Flags fuer einen create/update.
+     * Notarbeit gilt nur, wenn das Feature an ist UND der Tag einen genehmigten
+     * vollen Urlaubstag traegt. `approved` folgt dem Freigabe-Schalter.
+     *
+     * @return array{eligible: bool, approved: int}
+     */
+    private function resolveEmergency(int $employeeId, DateTime $date, bool $isEmergency): array {
+        $eligible = $isEmergency
+            && $this->settingsMapper->getValueAsBool(CompanySetting::KEY_EMERGENCY_WORK_ENABLED)
+            && $this->hasFullApprovedVacationOnDate($employeeId, $date);
+        if (!$eligible) {
+            return ['eligible' => false, 'approved' => 1];
+        }
+        $needsApproval = $this->settingsMapper->getValueAsBool(CompanySetting::KEY_EMERGENCY_WORK_REQUIRES_APPROVAL);
+        return ['eligible' => true, 'approved' => $needsApproval ? 0 : 1];
     }
 
     /**
