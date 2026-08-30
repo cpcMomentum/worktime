@@ -206,6 +206,13 @@ class AbsenceService {
         $workingDays = $this->calculateWorkingDays($startDateObj, $endDateObj, $federalState, $employeeId);
         $days = $workingDays * $scope;
 
+        // #625: persisted days reflect the sick share (minutes/daily target) so
+        // reports that read Absence.days directly show a partial, not a full, day.
+        if ($effectiveAbsenceMinutes !== null) {
+            $dayTarget = $this->workScheduleService->getDailyMinutesForDate($employeeId, $startDateObj);
+            $days = $dayTarget > 0 ? $effectiveAbsenceMinutes / $dayTarget : 0.0;
+        }
+
         if ($type === Absence::TYPE_VACATION) {
             $this->checkVacationQuota($employeeId, $startDateObj, $endDateObj, $federalState, $scope);
         }
@@ -679,6 +686,12 @@ class AbsenceService {
         // Calculate working days and apply scope (schedule-aware)
         $workingDays = $this->calculateWorkingDays($startDateObj, $endDateObj, $federalState, $absence->getEmployeeId());
         $days = $workingDays * $scope;
+
+        // #625: persisted days reflect the sick share (minutes/daily target).
+        if ($effectiveAbsenceMinutes !== null) {
+            $dayTarget = $this->workScheduleService->getDailyMinutesForDate($absence->getEmployeeId(), $startDateObj);
+            $days = $dayTarget > 0 ? $effectiveAbsenceMinutes / $dayTarget : 0.0;
+        }
 
         if ($type === Absence::TYPE_VACATION) {
             $this->checkVacationQuota($absence->getEmployeeId(), $startDateObj, $endDateObj, $federalState, $scope, $id);

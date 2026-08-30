@@ -484,6 +484,8 @@ class AbsenceServiceTest extends TestCase {
         $result = $this->createSick($day, $day, 300);
 
         $this->assertSame(300, $result->getAbsenceMinutes());
+        // #625 (Review-Fix): persistierte days spiegeln den Krank-Anteil 300/480.
+        $this->assertSame('0.625', $result->getDays());
     }
 
     public function testHourlySickIgnoredWhenFeatureDisabled(): void {

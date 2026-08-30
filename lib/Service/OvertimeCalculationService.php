@@ -178,8 +178,9 @@ class OvertimeCalculationService {
             // #625: single-day hourly sick is capped to the remaining daily target
             // instead of the scope-based full/half credit.
             if ($absence instanceof Absence && $absence->getAbsenceMinutes() !== null) {
-                $minutes = $this->creditForSubDayAbsence($employeeId, $aStart, $absence->getAbsenceMinutes(), $workedByDate);
                 $dayTarget = $this->workScheduleService->getDailyMinutesForDate($employeeId, $aStart);
+                $worked = $workedByDate[$aStart->format('Y-m-d')] ?? 0;
+                $minutes = $this->capSubDayCredit($absence->getAbsenceMinutes(), $dayTarget, $worked);
                 $days = $dayTarget > 0 ? $minutes / $dayTarget : 0.0;
             }
 
@@ -386,8 +387,9 @@ class OvertimeCalculationService {
 
                     // #625: single-day hourly sick caps to the remaining daily target.
                     if ($absence instanceof Absence && $absence->getAbsenceMinutes() !== null) {
-                        $absenceMinutes = $this->creditForSubDayAbsence($employeeId, $absenceStart, $absence->getAbsenceMinutes(), $workedByDate);
                         $dayTarget = $this->workScheduleService->getDailyMinutesForDate($employeeId, $absenceStart);
+                        $worked = $workedByDate[$absenceStart->format('Y-m-d')] ?? 0;
+                        $absenceMinutes = $this->capSubDayCredit($absence->getAbsenceMinutes(), $dayTarget, $worked);
                         $effectiveDays = $dayTarget > 0 ? $absenceMinutes / $dayTarget : 0.0;
                     }
 
@@ -414,8 +416,9 @@ class OvertimeCalculationService {
 
                     // #625: single-day hourly sick caps to the remaining daily target.
                     if ($absence instanceof Absence && $absence->getAbsenceMinutes() !== null) {
-                        $absenceMinutesUntilToday = $this->creditForSubDayAbsence($employeeId, $absenceStart, $absence->getAbsenceMinutes(), $workedByDate);
                         $dayTarget = $this->workScheduleService->getDailyMinutesForDate($employeeId, $absenceStart);
+                        $worked = $workedByDate[$absenceStart->format('Y-m-d')] ?? 0;
+                        $absenceMinutesUntilToday = $this->capSubDayCredit($absence->getAbsenceMinutes(), $dayTarget, $worked);
                         $effectiveDaysUntilToday = $dayTarget > 0 ? $absenceMinutesUntilToday / $dayTarget : 0.0;
                     }
 
@@ -581,11 +584,10 @@ class OvertimeCalculationService {
      * dem Tag bereits gearbeiteten Minuten). So entstehen keine kuenstlichen
      * Ueberstunden, wenn an einem Krank-Tag zusaetzlich gearbeitet wurde.
      *
-     * @param array<string, int> $workedByDate
+     * Der Aufrufer holt das Tagessoll einmal und reicht es (sowie die an dem Tag
+     * gearbeiteten Minuten) herein, um eine zweite identische DB-Abfrage zu sparen.
      */
-    private function creditForSubDayAbsence(int $employeeId, DateTime $date, int $absenceMinutes, array $workedByDate): int {
-        $dayTarget = $this->workScheduleService->getDailyMinutesForDate($employeeId, $date);
-        $worked = $workedByDate[$date->format('Y-m-d')] ?? 0;
-        return max(0, min($absenceMinutes, $dayTarget - $worked));
+    private function capSubDayCredit(int $absenceMinutes, int $dayTarget, int $workedOnDay): int {
+        return max(0, min($absenceMinutes, $dayTarget - $workedOnDay));
     }
 }
