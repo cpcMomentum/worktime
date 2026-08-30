@@ -182,7 +182,8 @@ class AbsenceService {
         $endDateObj = $this->parseDateOrFail($endDate, 'endDate');
 
         // #625: serverseitig gedeckelte Krank-Minuten (oder null, wenn n/a).
-        $effectiveAbsenceMinutes = $this->resolveHourlySickMinutes($type, $startDateObj, $endDateObj, $employeeId, $absenceMinutes);
+        $hourlySick = $this->resolveHourlySickMinutes($type, $startDateObj, $endDateObj, $employeeId, $absenceMinutes);
+        $effectiveAbsenceMinutes = $hourlySick['minutes'] ?? null;
 
         // #15 Stufe 2: Betriebsschließung entsteht nur über den zentralen Weg.
         if ($type === Absence::TYPE_COMPANY_CLOSURE) {
@@ -208,9 +209,9 @@ class AbsenceService {
 
         // #625: persisted days reflect the sick share (minutes/daily target) so
         // reports that read Absence.days directly show a partial, not a full, day.
-        if ($effectiveAbsenceMinutes !== null) {
-            $dayTarget = $this->workScheduleService->getDailyMinutesForDate($employeeId, $startDateObj);
-            $days = $dayTarget > 0 ? $effectiveAbsenceMinutes / $dayTarget : 0.0;
+        // Das Tagessoll kommt aus resolveHourlySickMinutes (keine zweite Abfrage).
+        if ($hourlySick !== null) {
+            $days = $hourlySick['dayTarget'] > 0 ? $hourlySick['minutes'] / $hourlySick['dayTarget'] : 0.0;
         }
 
         if ($type === Absence::TYPE_VACATION) {
@@ -670,7 +671,28 @@ class AbsenceService {
         }
 
         // #625: serverseitig gedeckelte Krank-Minuten (oder null, wenn n/a).
-        $effectiveAbsenceMinutes = $this->resolveHourlySickMinutes($type, $startDateObj, $endDateObj, $absence->getEmployeeId(), $absenceMinutes);
+        $hourlySick = $this->resolveHourlySickMinutes($type, $startDateObj, $endDateObj, $absence->getEmployeeId(), $absenceMinutes);
+        $effectiveAbsenceMinutes = $hourlySick['minutes'] ?? null;
+
+        // #625: schaltet der Admin das Feature spaeter aus, darf ein blosses Bearbeiten
+        // einer bestehenden stundenweisen Krankmeldung sie nicht still auf Ganztag
+        // umwerten. Wert erhalten, solange Typ sick + Einzeltag; nur bei aktivem
+        // Feature kann der Client ihn bewusst aendern/leeren.
+        if ($hourlySick === null
+            && $absence->getAbsenceMinutes() !== null
+            && !$this->companySettingsService->isHourlySickEnabled()
+            && $type === Absence::TYPE_SICK
+            && $startDateObj->format('Y-m-d') === $endDateObj->format('Y-m-d')) {
+            // Cap to the (possibly different, e.g. after a date change) target day's
+            // minutes, same as resolveHourlySickMinutes — otherwise days could exceed
+            // 1.0, or silently become 0.0 on a day with no schedule.
+            $dayTarget = $this->workScheduleService->getDailyMinutesForDate($absence->getEmployeeId(), $startDateObj);
+            $preservedMinutes = min($absence->getAbsenceMinutes(), $dayTarget);
+            if ($preservedMinutes > 0) {
+                $hourlySick = ['minutes' => $preservedMinutes, 'dayTarget' => $dayTarget];
+                $effectiveAbsenceMinutes = $preservedMinutes;
+            }
+        }
 
         // #360: a full-day absence must not overlap existing time entries.
         $this->checkTimeEntryConflict($absence->getEmployeeId(), $startDateObj, $endDateObj, $scope, $effectiveAbsenceMinutes);
@@ -688,9 +710,8 @@ class AbsenceService {
         $days = $workingDays * $scope;
 
         // #625: persisted days reflect the sick share (minutes/daily target).
-        if ($effectiveAbsenceMinutes !== null) {
-            $dayTarget = $this->workScheduleService->getDailyMinutesForDate($absence->getEmployeeId(), $startDateObj);
-            $days = $dayTarget > 0 ? $effectiveAbsenceMinutes / $dayTarget : 0.0;
+        if ($hourlySick !== null) {
+            $days = $hourlySick['dayTarget'] > 0 ? $hourlySick['minutes'] / $hourlySick['dayTarget'] : 0.0;
         }
 
         if ($type === Absence::TYPE_VACATION) {
@@ -1006,11 +1027,13 @@ class AbsenceService {
      */
     /**
      * #625 stundenweise Krank: liefert die serverseitig gedeckelten Krank-Minuten
-     * oder null, wenn der Fall nicht zutrifft. Server ist Autoritaet: nur bei
-     * aktivem Feature, Typ sick, Einzeltag und positivem Wert; gedeckelt auf das
-     * Tagessoll des betroffenen Tages.
+     * samt Tagessoll (fuer die days-Berechnung, spart eine zweite DB-Abfrage) oder
+     * null, wenn der Fall nicht zutrifft. Server ist Autoritaet: nur bei aktivem
+     * Feature, Typ sick, Einzeltag und positivem Wert; gedeckelt auf das Tagessoll.
+     *
+     * @return array{minutes: int, dayTarget: int}|null
      */
-    private function resolveHourlySickMinutes(string $type, DateTime $startDate, DateTime $endDate, int $employeeId, ?int $absenceMinutes): ?int {
+    private function resolveHourlySickMinutes(string $type, DateTime $startDate, DateTime $endDate, int $employeeId, ?int $absenceMinutes): ?array {
         if ($absenceMinutes === null || $absenceMinutes <= 0) {
             return null;
         }
@@ -1025,7 +1048,7 @@ class AbsenceService {
         }
         $dayTarget = $this->workScheduleService->getDailyMinutesForDate($employeeId, $startDate);
         $capped = min($absenceMinutes, $dayTarget);
-        return $capped > 0 ? $capped : null;
+        return $capped > 0 ? ['minutes' => $capped, 'dayTarget' => $dayTarget] : null;
     }
 
     private function checkTimeEntryConflict(int $employeeId, DateTime $startDate, DateTime $endDate, float $scope, ?int $absenceMinutes = null): void {

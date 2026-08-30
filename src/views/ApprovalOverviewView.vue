@@ -766,6 +766,15 @@ export default {
     background: #cc4b42;
 }
 
+.kind.emergency {
+    background: var(--color-background-hover);
+    color: #b5730f;
+}
+
+.kind.emergency .kind-dot {
+    background: #e9a13b;
+}
+
 .detail {
     color: var(--color-main-text);
 }
