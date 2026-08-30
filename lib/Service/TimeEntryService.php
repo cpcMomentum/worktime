@@ -1233,6 +1233,12 @@ class TimeEntryService {
                 continue;
             }
 
+            if ($absence->getAbsenceMinutes() !== null) {
+                // #625: stundenweise Krank koexistiert mit Zeiteintraegen wie ein
+                // Halbtag; die Pro-Tag-Deckelung verhindert kuenstliche Ueberstunden.
+                continue;
+            }
+
             if ($absence->isHalfDay()) {
                 // Half-day absence: allow time entry without restriction
                 // The overtime calculation handles the reduced target time correctly

@@ -45,6 +45,7 @@ class AbsenceService {
         private WorkScheduleService $workScheduleService,
         private HolidayService $holidayService,
         private YearlyCarryoverService $carryoverService,
+        private CompanySettingsService $companySettingsService,
         private LoggerInterface $logger,
         private IL10N $l,
     ) {
@@ -172,12 +173,16 @@ class AbsenceService {
         string $currentUserId = '',
         float $scope = 1.0,
         ?string $reason = null,
-        bool $allowLockedOverride = false
+        bool $allowLockedOverride = false,
+        ?int $absenceMinutes = null
     ): Absence {
         $this->assertEmployeeNotResting($employeeId, $allowLockedOverride);
 
         $startDateObj = $this->parseDateOrFail($startDate, 'startDate');
         $endDateObj = $this->parseDateOrFail($endDate, 'endDate');
+
+        // #625: serverseitig gedeckelte Krank-Minuten (oder null, wenn n/a).
+        $effectiveAbsenceMinutes = $this->resolveHourlySickMinutes($type, $startDateObj, $endDateObj, $employeeId, $absenceMinutes);
 
         // #15 Stufe 2: Betriebsschließung entsteht nur über den zentralen Weg.
         if ($type === Absence::TYPE_COMPANY_CLOSURE) {
@@ -191,7 +196,7 @@ class AbsenceService {
         }
 
         // #360: a full-day absence must not overlap existing time entries.
-        $this->checkTimeEntryConflict($employeeId, $startDateObj, $endDateObj, $scope);
+        $this->checkTimeEntryConflict($employeeId, $startDateObj, $endDateObj, $scope, $effectiveAbsenceMinutes);
 
         // Closed-month rules (#148): block employees, require a reason for HR corrections.
         $lockedMonths = $this->timeEntryService->lockedMonthsInRange($employeeId, $startDateObj, $endDateObj);
@@ -200,6 +205,13 @@ class AbsenceService {
         // Calculate working days and apply scope (schedule-aware)
         $workingDays = $this->calculateWorkingDays($startDateObj, $endDateObj, $federalState, $employeeId);
         $days = $workingDays * $scope;
+
+        // #625: persisted days reflect the sick share (minutes/daily target) so
+        // reports that read Absence.days directly show a partial, not a full, day.
+        if ($effectiveAbsenceMinutes !== null) {
+            $dayTarget = $this->workScheduleService->getDailyMinutesForDate($employeeId, $startDateObj);
+            $days = $dayTarget > 0 ? $effectiveAbsenceMinutes / $dayTarget : 0.0;
+        }
 
         if ($type === Absence::TYPE_VACATION) {
             $this->checkVacationQuota($employeeId, $startDateObj, $endDateObj, $federalState, $scope);
@@ -214,6 +226,7 @@ class AbsenceService {
         $absence->setEndDate($endDateObj);
         $absence->setDays((string)$days);
         $absence->setScopeValue($scope);
+        $absence->setAbsenceMinutes($effectiveAbsenceMinutes);
         $absence->setNote($note);
         $absence->setCreatedAt(new DateTime());
         $absence->setUpdatedAt(new DateTime());
@@ -627,7 +640,8 @@ class AbsenceService {
         string $currentUserId = '',
         float $scope = 1.0,
         ?string $reason = null,
-        bool $allowLockedOverride = false
+        bool $allowLockedOverride = false,
+        ?int $absenceMinutes = null
     ): Absence {
         $absence = $this->find($id);
         $this->assertEmployeeNotResting($absence->getEmployeeId(), $allowLockedOverride);
@@ -655,8 +669,11 @@ class AbsenceService {
             throw new ValidationException($errors);
         }
 
+        // #625: serverseitig gedeckelte Krank-Minuten (oder null, wenn n/a).
+        $effectiveAbsenceMinutes = $this->resolveHourlySickMinutes($type, $startDateObj, $endDateObj, $absence->getEmployeeId(), $absenceMinutes);
+
         // #360: a full-day absence must not overlap existing time entries.
-        $this->checkTimeEntryConflict($absence->getEmployeeId(), $startDateObj, $endDateObj, $scope);
+        $this->checkTimeEntryConflict($absence->getEmployeeId(), $startDateObj, $endDateObj, $scope, $effectiveAbsenceMinutes);
 
         // Closed-month rules (#148): employees are blocked from any change that
         // touches a closed month (old or new range); HR corrections require a
@@ -670,6 +687,12 @@ class AbsenceService {
         $workingDays = $this->calculateWorkingDays($startDateObj, $endDateObj, $federalState, $absence->getEmployeeId());
         $days = $workingDays * $scope;
 
+        // #625: persisted days reflect the sick share (minutes/daily target).
+        if ($effectiveAbsenceMinutes !== null) {
+            $dayTarget = $this->workScheduleService->getDailyMinutesForDate($absence->getEmployeeId(), $startDateObj);
+            $days = $dayTarget > 0 ? $effectiveAbsenceMinutes / $dayTarget : 0.0;
+        }
+
         if ($type === Absence::TYPE_VACATION) {
             $this->checkVacationQuota($absence->getEmployeeId(), $startDateObj, $endDateObj, $federalState, $scope, $id);
         }
@@ -681,6 +704,7 @@ class AbsenceService {
         $absence->setEndDate($endDateObj);
         $absence->setDays((string)$days);
         $absence->setScopeValue($scope);
+        $absence->setAbsenceMinutes($effectiveAbsenceMinutes);
         $absence->setNote($note);
         $absence->setUpdatedAt(new DateTime());
 
@@ -980,7 +1004,35 @@ class AbsenceService {
      *
      * @throws ValidationException
      */
-    private function checkTimeEntryConflict(int $employeeId, DateTime $startDate, DateTime $endDate, float $scope): void {
+    /**
+     * #625 stundenweise Krank: liefert die serverseitig gedeckelten Krank-Minuten
+     * oder null, wenn der Fall nicht zutrifft. Server ist Autoritaet: nur bei
+     * aktivem Feature, Typ sick, Einzeltag und positivem Wert; gedeckelt auf das
+     * Tagessoll des betroffenen Tages.
+     */
+    private function resolveHourlySickMinutes(string $type, DateTime $startDate, DateTime $endDate, int $employeeId, ?int $absenceMinutes): ?int {
+        if ($absenceMinutes === null || $absenceMinutes <= 0) {
+            return null;
+        }
+        if (!$this->companySettingsService->isHourlySickEnabled()) {
+            return null;
+        }
+        if ($type !== Absence::TYPE_SICK) {
+            return null;
+        }
+        if ($startDate->format('Y-m-d') !== $endDate->format('Y-m-d')) {
+            return null;
+        }
+        $dayTarget = $this->workScheduleService->getDailyMinutesForDate($employeeId, $startDate);
+        $capped = min($absenceMinutes, $dayTarget);
+        return $capped > 0 ? $capped : null;
+    }
+
+    private function checkTimeEntryConflict(int $employeeId, DateTime $startDate, DateTime $endDate, float $scope, ?int $absenceMinutes = null): void {
+        // #625: stundenweise Krank (absenceMinutes gesetzt) koexistiert wie ein Halbtag.
+        if ($absenceMinutes !== null) {
+            return;
+        }
         // Half-day absences may coexist with time entries — no hard block.
         if ($scope < 1.0) {
             return;

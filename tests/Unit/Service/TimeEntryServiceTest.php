@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Tests\Unit\Service;
 
 use DateTime;
+use OCA\WorkTime\Db\Absence;
 use OCA\WorkTime\Db\AbsenceMapper;
 use OCA\WorkTime\Db\CompanySetting;
 use OCA\WorkTime\Db\CompanySettingMapper;
@@ -486,6 +487,38 @@ class TimeEntryServiceTest extends TestCase {
         } catch (ValidationException $e) {
             $this->assertArrayHasKey('projectId', $e->getErrors());
         }
+    }
+
+    // ---------------------------------------------------------------------
+    // #625: Zeiteintrag darf an stundenweise-Krank-Tag koexistieren
+    // ---------------------------------------------------------------------
+
+    private function invokeAbsenceConflict(int $workMinutes): ?string {
+        $ref = new \ReflectionMethod($this->service, 'checkAbsenceConflict');
+        $ref->setAccessible(true);
+        return $ref->invoke($this->service, 1, new DateTime('2026-04-15'), $workMinutes);
+    }
+
+    public function testHourlySickAbsenceDoesNotBlockTimeEntry(): void {
+        $absence = new Absence();
+        $absence->setStatus(Absence::STATUS_APPROVED);
+        $absence->setType(Absence::TYPE_SICK);
+        $absence->setScopeValue(1.0);
+        $absence->setAbsenceMinutes(300);
+        $this->absenceMapper->method('findByEmployeeAndDate')->willReturn([$absence]);
+
+        $this->assertNull($this->invokeAbsenceConflict(210));
+    }
+
+    public function testFullDaySickStillBlocksTimeEntry(): void {
+        $absence = new Absence();
+        $absence->setStatus(Absence::STATUS_APPROVED);
+        $absence->setType(Absence::TYPE_SICK);
+        $absence->setScopeValue(1.0);
+        // kein absenceMinutes -> ganztaegig, weiterhin gesperrt.
+        $this->absenceMapper->method('findByEmployeeAndDate')->willReturn([$absence]);
+
+        $this->assertNotNull($this->invokeAbsenceConflict(210));
     }
 
     /**

@@ -201,6 +201,20 @@
             </NcSettingsSection>
 
             <NcSettingsSection v-if="canManageSettings"
+                v-show="activeSection === 'sec-absenzen'"
+                id="sec-absenzen" :name="t('worktime', 'Teiltages-Absenzen')"
+                :description="t('worktime', 'Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert.')">
+                <div class="form-group">
+                    <NcCheckboxRadioSwitch :checked.sync="settings.hourly_sick_enabled"
+                        @update:checked="saveSettingBool('hourly_sick_enabled')">
+                        {{ t('worktime', 'Stundenweise Krankmeldung erlauben') }} <InfoIcon>{{ t('worktime', 'Wenn aktiv, können Mitarbeitende an einem Einzeltag stundenweise krank sein und die restliche Zeit arbeiten. Die Krank-Stunden füllen bis zum Tagessoll, ohne künstliche Überstunden.') }}</InfoIcon>
+                    </NcCheckboxRadioSwitch>
+                </div>
+                <!-- Notarbeit im Urlaub (#626) folgt in einer spaeteren Phase; die
+                     Schalter bleiben bis dahin ausgeblendet, damit sie nichts vortaeuschen. -->
+            </NcSettingsSection>
+
+            <NcSettingsSection v-if="canManageSettings"
                 v-show="activeSection === 'sec-pausen'"
                 id="sec-pausen" :name="t('worktime', 'Pausenregelung (§4 ArbZG)')"
                 :description="t('worktime', 'Mindestpause gemäß deutschem Arbeitszeitgesetz')">
@@ -826,6 +840,7 @@ import CalendarStar from 'vue-material-design-icons/CalendarStar.vue'
 import Beach from 'vue-material-design-icons/Beach.vue'
 import SwapHorizontalBold from 'vue-material-design-icons/SwapHorizontalBold.vue'
 import CashMultiple from 'vue-material-design-icons/CashMultiple.vue'
+import MedicalBag from 'vue-material-design-icons/MedicalBag.vue'
 import { getFilePickerBuilder, FilePickerType, DialogBuilder } from '@nextcloud/dialogs'
 import { mapGetters, mapActions } from 'vuex'
 import SettingsService from '../services/SettingsService.js'
@@ -881,6 +896,7 @@ export default {
         Beach,
         SwapHorizontalBold,
         CashMultiple,
+        MedicalBag,
         EmployeeForm,
         EmployeeList,
         BetriebsferienSettings,
@@ -1062,6 +1078,7 @@ export default {
                 ]),
                 group(this.t('worktime', 'Abläufe'), [
                     { id: 'sec-genehmigung', label: this.t('worktime', 'Genehmigung'), icon: 'CheckDecagram', visible: this.canManageSettings },
+                    { id: 'sec-absenzen', label: this.t('worktime', 'Teiltages-Absenzen'), icon: 'MedicalBag', visible: this.canManageSettings },
                     { id: 'sec-pausen', label: this.t('worktime', 'Pausenregelung'), icon: 'CoffeeOutline', visible: this.canManageSettings },
                     { id: 'sec-pdf', label: this.t('worktime', 'PDF-Archiv'), icon: 'FilePdfBox', visible: this.canManageSettings },
                 ]),
@@ -1194,6 +1211,8 @@ export default {
                     require_description: settings.require_description === '1',
                     allow_future_entries: settings.allow_future_entries === '1',
                     approval_required: settings.approval_required === '1',
+                    // #625: Teiltages-Absenzen-Schalter (Notarbeit #626 folgt später).
+                    hourly_sick_enabled: settings.hourly_sick_enabled === '1',
                     // #569: 'none' | 'half' | 'full'; legacy booleans normalised.
                     christmas_eve_half_day: this.specialDayMode(settings.christmas_eve_half_day),
                     new_years_eve_half_day: this.specialDayMode(settings.new_years_eve_half_day),

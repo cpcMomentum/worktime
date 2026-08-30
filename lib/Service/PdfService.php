@@ -497,9 +497,16 @@ class PdfService {
             $day = $this->getGermanDayName($dayOfWeek);
 
             $absence = $absencesByDate[$dateStr] ?? null;
-            $absenceLabel = $absence !== null
-                ? $absence->getTypeName() . ($absence->isHalfDay() ? ' (halber Tag)' : '')
-                : '';
+            $absenceLabel = '';
+            if ($absence !== null) {
+                if ($absence->getAbsenceMinutes() !== null) {
+                    // #625: stundenweise Krank -> Stundenzahl statt "halber Tag".
+                    $absenceLabel = $absence->getTypeName()
+                        . ' (' . number_format($absence->getAbsenceMinutes() / 60, 2, ',', '') . ' h)';
+                } else {
+                    $absenceLabel = $absence->getTypeName() . ($absence->isHalfDay() ? ' (halber Tag)' : '');
+                }
+            }
 
             if (isset($entriesByDate[$dateStr])) {
                 foreach ($entriesByDate[$dateStr] as $entry) {
@@ -521,7 +528,9 @@ class PdfService {
                 // (morning work + afternoon off). A full-day absence never
                 // coexists with a booking in valid data, so we don't add a
                 // marker row there to avoid a confusing "worked + absent" day.
-                if ($absence !== null && $absence->isHalfDay()) {
+                // #625: stundenweise Krank koexistiert mit gebuchter Arbeit — die
+                // Krank-Zeile ergaenzt die Arbeitszeilen (wie beim Halbtag).
+                if ($absence !== null && ($absence->isHalfDay() || $absence->getAbsenceMinutes() !== null)) {
                     $rows[] = $this->markerRow($date, $day, $absenceLabel, $fill);
                 }
             } elseif ($absence !== null) {

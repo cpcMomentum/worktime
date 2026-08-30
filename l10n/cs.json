@@ -712,7 +712,13 @@
 		"Normaler Arbeitstag": "Normaler Arbeitstag",
 		"Halber freier Tag": "Halber freier Tag",
 		"Ganzer freier Tag": "Ganzer freier Tag",
-		"Silvester (31.12.)": "Silvester (31.12.)"
+		"Silvester (31.12.)": "Silvester (31.12.)",
+		"Teiltages-Absenzen": "Absence na část dne",
+		"Stundenweise Krankmeldung erlauben": "Povolit hodinovou nemocenskou",
+		"Wenn aktiv, können Mitarbeitende an einem Einzeltag stundenweise krank sein und die restliche Zeit arbeiten. Die Krank-Stunden füllen bis zum Tagessoll, ohne künstliche Überstunden.": "Když je zapnuto, zaměstnanci mohou být část jednoho dne nemocní a zbytek dne pracovat. Hodiny nemoci se doplní do denního cíle bez umělých přesčasů.",
+		"Krank-Stunden für diesen Tag (leer = ganzer Tag)": "Hodiny nemoci pro tento den (prázdné = celý den)",
+		"Std. krank": "h nemoc",
+		"Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert.": "Řídí celofiremně hodinovou nemocenskou v jednom dni. Ve výchozím nastavení vypnuto."
 	},
 	"pluralForm": "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;"
 }

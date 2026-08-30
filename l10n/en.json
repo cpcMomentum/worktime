@@ -712,7 +712,13 @@
 		"Normaler Arbeitstag": "Regular working day",
 		"Halber freier Tag": "Half day off",
 		"Ganzer freier Tag": "Full day off",
-		"Silvester (31.12.)": "New Year's Eve (Dec 31)"
+		"Silvester (31.12.)": "New Year's Eve (Dec 31)",
+		"Teiltages-Absenzen": "Partial-day absences",
+		"Stundenweise Krankmeldung erlauben": "Allow hourly sick leave",
+		"Wenn aktiv, können Mitarbeitende an einem Einzeltag stundenweise krank sein und die restliche Zeit arbeiten. Die Krank-Stunden füllen bis zum Tagessoll, ohne künstliche Überstunden.": "When enabled, employees can be sick for part of a single day and work the rest. The sick hours fill up to the daily target, without creating artificial overtime.",
+		"Krank-Stunden für diesen Tag (leer = ganzer Tag)": "Sick hours for this day (empty = full day)",
+		"Std. krank": "hrs sick",
+		"Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert.": "Controls company-wide hourly sick leave on a single day. Disabled by default."
 	},
 	"pluralForm": "nplurals=2; plural=(n != 1);"
 }

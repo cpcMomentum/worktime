@@ -10,7 +10,7 @@
         </div>
         <template v-else-if="day.absence">
             <div class="dp-note" :class="absenceColorClass(day.absence.type)">
-                {{ day.absence.typeName }}<span v-if="day.absence.scope < 1"> ({{ scopeLabel }})</span>
+                {{ day.absence.typeName }}<span v-if="day.absence.absenceMinutes"> ({{ hoursLabel(day.absence.absenceMinutes) }})</span><span v-else-if="day.absence.scope < 1"> ({{ scopeLabel }})</span>
             </div>
             <NcButton type="tertiary" class="dp-open-abs" @click="goToAbsence">
                 {{ t('worktime', 'In „Abwesenheit" öffnen') }}

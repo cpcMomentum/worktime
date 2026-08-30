@@ -42,6 +42,10 @@ class CompanySetting extends Entity implements JsonSerializable {
     public const KEY_PDF_ARCHIVE_USER = 'pdf_archive_user';
     public const KEY_CHRISTMAS_EVE_HALF_DAY = 'christmas_eve_half_day';
     public const KEY_NEW_YEARS_EVE_HALF_DAY = 'new_years_eve_half_day';
+    // Teiltages-Absenzen (#625/#626): stundenweise Krank + Notarbeit im Urlaub.
+    public const KEY_HOURLY_SICK_ENABLED = 'hourly_sick_enabled';
+    public const KEY_EMERGENCY_WORK_ENABLED = 'emergency_work_enabled';
+    public const KEY_EMERGENCY_WORK_REQUIRES_APPROVAL = 'emergency_work_requires_approval';
 
     public const DEFAULTS = [
         self::KEY_COMPANY_NAME => '',
@@ -62,6 +66,10 @@ class CompanySetting extends Entity implements JsonSerializable {
         // ('1' = half, '0' = none), so existing instances need no migration.
         self::KEY_CHRISTMAS_EVE_HALF_DAY => 'half',
         self::KEY_NEW_YEARS_EVE_HALF_DAY => 'half',
+        // Teiltages-Absenzen: standardmaessig aus, bis der Admin sie freischaltet.
+        self::KEY_HOURLY_SICK_ENABLED => '0',
+        self::KEY_EMERGENCY_WORK_ENABLED => '0',
+        self::KEY_EMERGENCY_WORK_REQUIRES_APPROVAL => '0',
     ];
 
     protected string $settingKey = '';

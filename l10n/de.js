@@ -713,6 +713,12 @@ OC.L10N.register(
     "Normaler Arbeitstag" : "Normaler Arbeitstag",
     "Halber freier Tag" : "Halber freier Tag",
     "Ganzer freier Tag" : "Ganzer freier Tag",
-    "Silvester (31.12.)" : "Silvester (31.12.)"
+    "Silvester (31.12.)" : "Silvester (31.12.)",
+    "Teiltages-Absenzen" : "Teiltages-Absenzen",
+    "Stundenweise Krankmeldung erlauben" : "Stundenweise Krankmeldung erlauben",
+    "Wenn aktiv, können Mitarbeitende an einem Einzeltag stundenweise krank sein und die restliche Zeit arbeiten. Die Krank-Stunden füllen bis zum Tagessoll, ohne künstliche Überstunden." : "Wenn aktiv, können Mitarbeitende an einem Einzeltag stundenweise krank sein und die restliche Zeit arbeiten. Die Krank-Stunden füllen bis zum Tagessoll, ohne künstliche Überstunden.",
+    "Krank-Stunden für diesen Tag (leer = ganzer Tag)" : "Krank-Stunden für diesen Tag (leer = ganzer Tag)",
+    "Std. krank" : "Std. krank",
+    "Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert." : "Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert."
 },
 "nplurals=2; plural=(n != 1);");
