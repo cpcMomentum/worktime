@@ -528,6 +528,35 @@ class AbsenceServiceTest extends TestCase {
         $this->assertSame(300, $result->getAbsenceMinutes());
     }
 
+    public function testHourlySickPreservedOnEditIsCappedToNewDayTarget(): void {
+        // Review: preserving the old minutes verbatim (without capping) could push
+        // days above 1.0 if the edit moves the absence to a day with a smaller
+        // work-schedule target (e.g. a part-time day).
+        $this->expectActiveEmployee();
+        $day = $this->currentMonthDate('11');
+        $existing = $this->makeAbsence(Absence::TYPE_SICK, Absence::STATUS_APPROVED, $day, $day);
+        $existing->setAbsenceMinutes(300);
+        $this->absenceMapper->method('find')->willReturn($existing);
+        $this->absenceMapper->method('findOverlapping')->willReturn([]);
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]);
+        $this->timeEntryMapper->method('getMonthlyStatusSummary')
+            ->willReturn(['draft' => 1, 'submitted' => 0, 'approved' => 0, 'rejected' => 0]);
+        $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
+        $this->workScheduleService->method('countWorkingDays')->willReturn(1.0);
+        // New target day only has 120 minutes scheduled (e.g. part-time).
+        $this->workScheduleService->method('getDailyMinutesForDate')->willReturn(120);
+        $this->absenceMapper->method('update')->willReturnArgument(0);
+        $this->companySettingsService->method('isHourlySickEnabled')->willReturn(false);
+
+        $iso = $day->format('Y-m-d');
+        $result = $this->service->update(
+            5, Absence::TYPE_SICK, $iso, $iso, null, 'BY', 'user1', 1.0, null, false, null
+        );
+
+        $this->assertSame(120, $result->getAbsenceMinutes());
+        $this->assertSame('1', $result->getDays());
+    }
+
     public function testHourlySickIgnoredForMultiDayRange(): void {
         $this->primeSuccessfulCreate();
         $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]);

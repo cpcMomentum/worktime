@@ -683,9 +683,15 @@ class AbsenceService {
             && !$this->companySettingsService->isHourlySickEnabled()
             && $type === Absence::TYPE_SICK
             && $startDateObj->format('Y-m-d') === $endDateObj->format('Y-m-d')) {
+            // Cap to the (possibly different, e.g. after a date change) target day's
+            // minutes, same as resolveHourlySickMinutes — otherwise days could exceed
+            // 1.0, or silently become 0.0 on a day with no schedule.
             $dayTarget = $this->workScheduleService->getDailyMinutesForDate($absence->getEmployeeId(), $startDateObj);
-            $hourlySick = ['minutes' => $absence->getAbsenceMinutes(), 'dayTarget' => $dayTarget];
-            $effectiveAbsenceMinutes = $absence->getAbsenceMinutes();
+            $preservedMinutes = min($absence->getAbsenceMinutes(), $dayTarget);
+            if ($preservedMinutes > 0) {
+                $hourlySick = ['minutes' => $preservedMinutes, 'dayTarget' => $dayTarget];
+                $effectiveAbsenceMinutes = $preservedMinutes;
+            }
         }
 
         // #360: a full-day absence must not overlap existing time entries.
