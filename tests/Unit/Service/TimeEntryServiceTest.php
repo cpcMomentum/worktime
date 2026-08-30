@@ -607,6 +607,22 @@ class TimeEntryServiceTest extends TestCase {
         $this->service->approveEmergency(9, 'boss');
     }
 
+    public function testApproveEmergencyBlockedOnLockedMonth(): void {
+        // Eintrag in einem vergangenen Jahr -> Monat gesperrt -> Freigabe wuerde
+        // die Ueberstunden still aendern, also blockieren (#626 Review-Fix).
+        $entry = new TimeEntry();
+        $entry->setId(9);
+        $entry->setEmployeeId(1);
+        $entry->setIsEmergency(1);
+        $entry->setEmergencyApproved(0);
+        $entry->setDate(new DateTime('2020-01-15'));
+        $this->timeEntryMapper->method('find')->willReturn($entry);
+        $this->timeEntryMapper->expects($this->never())->method('update');
+
+        $this->expectException(ValidationException::class);
+        $this->service->approveEmergency(9, 'boss');
+    }
+
     public function testEmergencyBypassesFullVacationBlock(): void {
         $this->absenceMapper->method('findByEmployeeAndDate')->willReturn([$this->fullApprovedVacation()]);
 

@@ -169,14 +169,15 @@ class TimeEntryService {
         // Validate (including absence conflict check; emergency bypasses the vacation block)
         $errors = $this->validate($dateObj, $startTimeObj, $endTimeObj, $breakMinutes, $employeeId, $emergency['eligible']);
 
+        // Company rule (#329): enforce required project / description when configured.
+        $errors = array_merge($errors, $this->requiredFieldErrors($employeeId, $projectId, $description));
+
         // #626: a reason is mandatory for emergency work. It lives in the entry's
-        // description so approvers and reports can see it directly.
+        // description so approvers and reports can see it directly. Set AFTER the
+        // generic merge so the more specific emergency message wins.
         if ($emergency['eligible'] && trim((string)$description) === '') {
             $errors['description'] = [$this->l->t('Für Notarbeit im Urlaub ist eine Begründung erforderlich.')];
         }
-
-        // Company rule (#329): enforce required project / description when configured.
-        $errors = array_merge($errors, $this->requiredFieldErrors($employeeId, $projectId, $description));
 
         // Check for overlapping entries (only when times are valid)
         if ($startTimeObj !== null && $endTimeObj !== null) {
@@ -272,11 +273,20 @@ class TimeEntryService {
         $startTimeObj = DateTime::createFromFormat('H:i', $startTime) ?: null;
         $endTimeObj = DateTime::createFromFormat('H:i', $endTime) ?: null;
 
+        // #626: ein bestehender Notarbeit-Eintrag bleibt Notarbeit; sein Flag laesst
+        // den Urlaubs-Konflikt beim Bearbeiten durch (sonst waere er nur loeschbar).
+        $isEmergencyEntry = $entry->isEmergency();
+
         // Validate (including absence conflict check)
-        $errors = $this->validate($dateObj, $startTimeObj, $endTimeObj, $breakMinutes, $entry->getEmployeeId());
+        $errors = $this->validate($dateObj, $startTimeObj, $endTimeObj, $breakMinutes, $entry->getEmployeeId(), $isEmergencyEntry);
 
         // Company rule (#329): enforce required project / description when configured.
         $errors = array_merge($errors, $this->requiredFieldErrors($entry->getEmployeeId(), $projectId, $description));
+
+        // #626: die Begruendung (Beschreibung) bleibt auch beim Bearbeiten Pflicht.
+        if ($isEmergencyEntry && trim((string)$description) === '') {
+            $errors['description'] = [$this->l->t('Für Notarbeit im Urlaub ist eine Begründung erforderlich.')];
+        }
 
         // Check for overlapping entries (exclude current entry; only when times are valid)
         if ($startTimeObj !== null && $endTimeObj !== null) {
@@ -501,6 +511,13 @@ class TimeEntryService {
         }
         if ($entry->isEmergencyApproved()) {
             return $entry;
+        }
+
+        // #626: eine Freigabe wuerde die Ueberstunden erhoehen. Ist der Monat bereits
+        // abgeschlossen, darf das nicht still passieren — erst zur Korrektur freigeben.
+        $date = $entry->getDate();
+        if ($date !== null && $this->isMonthLocked($entry->getEmployeeId(), (int)$date->format('Y'), (int)$date->format('n'))) {
+            throw ValidationException::fromSingleError('month', $this->l->t('Der Monat ist bereits abgeschlossen. Bitte zuerst zur Korrektur freigeben, dann die Notarbeit genehmigen.'));
         }
 
         $oldValues = $entry->jsonSerialize();

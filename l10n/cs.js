@@ -731,6 +731,7 @@ OC.L10N.register(
     "Notarbeit im Urlaub erlauben" : "Povolit nouzovou práci během dovolené",
     "Wenn aktiv, können Mitarbeitende an einem genehmigten vollen Urlaubstag Notarbeit erfassen. Der Urlaub bleibt bestehen, die Arbeit zählt als Überstunden. Eine Begründung ist Pflicht, der/die Vorgesetzte wird informiert." : "Když je zapnuto, zaměstnanci mohou zaznamenat nouzovou práci ve schválený celý den dovolené. Dovolená zůstává a práce se počítá jako přesčas. Odůvodnění je povinné a nadřízený je informován.",
     "Notarbeit muss freigegeben werden" : "Nouzová práce musí být schválena",
-    "Wenn aktiv, zählt eine erfasste Notarbeit erst nach Freigabe durch den/die Vorgesetzte(n) in die Überstunden. Nur relevant, wenn Notarbeit im Urlaub erlaubt ist." : "Když je zapnuto, zaznamenaná nouzová práce se počítá do přesčasů až po schválení nadřízeným. Relevantní pouze, když je povolena nouzová práce během dovolené."
+    "Wenn aktiv, zählt eine erfasste Notarbeit erst nach Freigabe durch den/die Vorgesetzte(n) in die Überstunden. Nur relevant, wenn Notarbeit im Urlaub erlaubt ist." : "Když je zapnuto, zaznamenaná nouzová práce se počítá do přesčasů až po schválení nadřízeným. Relevantní pouze, když je povolena nouzová práce během dovolené.",
+    "Der Monat ist bereits abgeschlossen. Bitte zuerst zur Korrektur freigeben, dann die Notarbeit genehmigen." : "Měsíc je již uzavřen. Nejprve jej prosím otevřete k opravě a poté schvalte nouzovou práci."
 },
 "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;");
