@@ -56,7 +56,7 @@
         </div>
 
         <div v-if="emergencyEligible" class="form-group emergency-group">
-            <NcCheckboxRadioSwitch :checked.sync="form.isEmergency">
+            <NcCheckboxRadioSwitch :checked.sync="form.isEmergency" :disabled="isEdit">
                 {{ t('worktime', 'Notarbeit/Bereitschaft im Urlaub') }} <InfoIcon>{{ t('worktime', 'An diesem genehmigten Urlaubstag hast du außerplanmäßig gearbeitet. Der Urlaub bleibt bestehen, die Zeit zählt als Überstunden. Eine Begründung ist Pflicht, der/die Vorgesetzte wird informiert.') }}</InfoIcon>
             </NcCheckboxRadioSwitch>
         </div>
