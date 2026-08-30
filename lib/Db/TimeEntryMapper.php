@@ -357,6 +357,32 @@ class TimeEntryMapper extends QBMapper {
     }
 
     /**
+     * #626: Notarbeit-Eintraege der genannten Mitarbeitenden, die noch auf
+     * Freigabe warten (is_emergency=1 AND emergency_approved=0). Aelteste zuerst.
+     *
+     * @param int[] $employeeIds
+     * @return TimeEntry[]
+     */
+    public function findPendingEmergency(array $employeeIds): array {
+        if (empty($employeeIds)) {
+            return [];
+        }
+
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('is_emergency', $qb->createNamedParameter(1, IQueryBuilder::PARAM_INT)))
+            ->andWhere($qb->expr()->eq('emergency_approved', $qb->createNamedParameter(0, IQueryBuilder::PARAM_INT)))
+            ->andWhere($qb->expr()->in(
+                'employee_id',
+                $qb->createNamedParameter($employeeIds, IQueryBuilder::PARAM_INT_ARRAY)
+            ))
+            ->orderBy('date', 'ASC');
+
+        return $this->findEntities($qb);
+    }
+
+    /**
      * All approved time entries for the given employees, newest approval first.
      * Grouped into months by the service for the "approved months" view (#387).
      *

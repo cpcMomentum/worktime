@@ -133,7 +133,8 @@ class TimeEntryController extends BaseController {
         int $breakMinutes = 0,
         ?int $projectId = null,
         ?string $description = null,
-        ?string $reason = null
+        ?string $reason = null,
+        bool $isEmergency = false
     ): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
@@ -161,7 +162,8 @@ class TimeEntryController extends BaseController {
                 $description,
                 $this->userId,
                 $reason,
-                $allowLockedOverride
+                $allowLockedOverride,
+                $isEmergency
             );
 
             return $this->createdResponse($entry);
@@ -463,6 +465,42 @@ class TimeEntryController extends BaseController {
             'submitted' => $result['submitted'],
             'skipped' => $result['skipped'],
         ]);
+    }
+
+    /**
+     * #626: offene Notarbeit-Freigaben im Genehmiger-Bereich (fuer die Inbox).
+     */
+    #[NoAdminRequired]
+    public function pendingEmergency(): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+
+        $employeeIds = $this->permissionService->getApprovableEmployeeIds($this->userId);
+
+        return $this->successResponse($this->timeEntryService->findPendingEmergency($employeeIds));
+    }
+
+    /**
+     * #626: Notarbeit im Urlaub freigeben, damit sie in die Ueberstunden zaehlt.
+     */
+    #[NoAdminRequired]
+    public function approveEmergency(int $id): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+
+        try {
+            $entry = $this->timeEntryService->find($id);
+            if (!$this->permissionService->canApprove($this->userId, $entry->getEmployeeId())) {
+                return $this->forbiddenResponse();
+            }
+
+            $updated = $this->timeEntryService->approveEmergency($id, $this->userId);
+            return $this->successResponse($updated);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
     }
 
     #[NoAdminRequired]

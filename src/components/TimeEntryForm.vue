@@ -55,14 +55,20 @@
             </p>
         </div>
 
+        <div v-if="emergencyEligible" class="form-group emergency-group">
+            <NcCheckboxRadioSwitch :checked.sync="form.isEmergency">
+                {{ t('worktime', 'Notarbeit/Bereitschaft im Urlaub') }} <InfoIcon>{{ t('worktime', 'An diesem genehmigten Urlaubstag hast du außerplanmäßig gearbeitet. Der Urlaub bleibt bestehen, die Zeit zählt als Überstunden. Eine Begründung ist Pflicht, der/die Vorgesetzte wird informiert.') }}</InfoIcon>
+            </NcCheckboxRadioSwitch>
+        </div>
+
         <div class="form-group">
-            <label for="description">{{ t('worktime', 'Beschreibung') }}<span v-if="requireDescription"> *</span></label>
+            <label for="description">{{ t('worktime', 'Beschreibung') }}<span v-if="descriptionRequired"> *</span></label>
             <textarea id="description"
                 v-model="form.description"
                 :class="['description-input', { 'input-error': descriptionMissing }]"
                 rows="2" />
             <p v-if="descriptionMissing" class="field-hint field-hint--error">
-                {{ t('worktime', 'Beschreibung ist erforderlich.') }}
+                {{ form.isEmergency ? t('worktime', 'Für Notarbeit im Urlaub ist eine Begründung erforderlich.') : t('worktime', 'Beschreibung ist erforderlich.') }}
             </p>
         </div>
 
@@ -89,6 +95,7 @@
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js'
+import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
 import { mapGetters, mapActions } from 'vuex'
 import { formatDateISO } from '../utils/dateUtils.js'
 import { formatMinutesWithUnit, calculateWorkMinutes, suggestBreak as suggestBreakUtil } from '../utils/timeUtils.js'
@@ -104,6 +111,7 @@ export default {
         NcButton,
         NcSelect,
         NcDateTimePicker,
+        NcCheckboxRadioSwitch,
         CorrectionReasonModal,
     },
     props: {
@@ -130,6 +138,12 @@ export default {
             type: String,
             default: null,
         },
+        // #626: der Tag traegt einen genehmigten vollen Urlaub UND das Feature ist an,
+        // dann darf hier Notarbeit erfasst werden. Vom DayDetailPanel gereicht.
+        emergencyEligible: {
+            type: Boolean,
+            default: false,
+        },
     },
     data() {
         return {
@@ -142,6 +156,7 @@ export default {
                 breakMinutes: 30,
                 projectId: null,
                 description: '',
+                isEmergency: false,
             },
             showReasonModal: false,
             pendingData: null,
@@ -185,8 +200,12 @@ export default {
         projectMissing() {
             return this.projectRequired && !this.form.projectId
         },
+        descriptionRequired() {
+            // #626: bei Notarbeit im Urlaub ist die Beschreibung die Pflicht-Begründung.
+            return this.requireDescription || (this.emergencyEligible && this.form.isEmergency)
+        },
         descriptionMissing() {
-            return this.requireDescription && !(this.form.description && this.form.description.trim())
+            return this.descriptionRequired && !(this.form.description && this.form.description.trim())
         },
         isValid() {
             return this.form.date && this.form.startTime && this.form.endTime
@@ -207,6 +226,7 @@ export default {
                         breakMinutes: entry.breakMinutes,
                         projectId: entry.projectId,
                         description: entry.description || '',
+                        isEmergency: entry.isEmergency || false,
                     }
                 } else {
                     this.resetForm()
@@ -256,6 +276,7 @@ export default {
                 breakMinutes: 30,
                 projectId: null,
                 description: '',
+                isEmergency: false,
             }
             // Recalculate break based on default times
             this.$nextTick(() => {
@@ -280,6 +301,10 @@ export default {
                 breakMinutes: this.form.breakMinutes,
                 projectId: this.form.projectId,
                 description: this.form.description || null,
+            }
+            // #626: Notarbeit im Urlaub nur senden, wenn der Tag es zulaesst.
+            if (this.emergencyEligible && this.form.isEmergency) {
+                data.isEmergency = true
             }
             // In HR correction mode, capture a mandatory reason before saving.
             if (this.isCorrectionMode) {

@@ -21,6 +21,8 @@ return [
         ['name' => 'time_entry#punchOut', 'url' => '/api/time-entries/punch-out', 'verb' => 'POST'],
         ['name' => 'time_entry#submitMonth', 'url' => '/api/time-entries/submit-month', 'verb' => 'POST'],
         ['name' => 'time_entry#approveMonth', 'url' => '/api/time-entries/approve-month', 'verb' => 'POST'],
+        ['name' => 'time_entry#pendingEmergency', 'url' => '/api/time-entries/pending-emergency', 'verb' => 'GET'],
+        ['name' => 'time_entry#approveEmergency', 'url' => '/api/time-entries/{id}/approve-emergency', 'verb' => 'POST', 'requirements' => ['id' => '\d+']],
         ['name' => 'time_entry#reopenMonth', 'url' => '/api/time-entries/reopen-month', 'verb' => 'POST'],
         ['name' => 'time_entry#rejectMonth', 'url' => '/api/time-entries/reject-month', 'verb' => 'POST'],
         ['name' => 'time_entry#archiveStatus', 'url' => '/api/time-entries/archive-status', 'verb' => 'GET'],

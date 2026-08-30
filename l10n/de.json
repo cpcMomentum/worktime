@@ -718,7 +718,20 @@
 		"Wenn aktiv, können Mitarbeitende an einem Einzeltag stundenweise krank sein und die restliche Zeit arbeiten. Die Krank-Stunden füllen bis zum Tagessoll, ohne künstliche Überstunden.": "Wenn aktiv, können Mitarbeitende an einem Einzeltag stundenweise krank sein und die restliche Zeit arbeiten. Die Krank-Stunden füllen bis zum Tagessoll, ohne künstliche Überstunden.",
 		"Krank-Stunden für diesen Tag (leer = ganzer Tag)": "Krank-Stunden für diesen Tag (leer = ganzer Tag)",
 		"Std. krank": "Std. krank",
-		"Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert.": "Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert."
+		"Für Notarbeit im Urlaub ist eine Begründung erforderlich.": "Für Notarbeit im Urlaub ist eine Begründung erforderlich.",
+		"%1$s hat Notarbeit im Urlaub am %2$s erfasst": "%1$s hat Notarbeit im Urlaub am %2$s erfasst",
+		"Nur Notarbeit-Einträge können freigegeben werden.": "Nur Notarbeit-Einträge können freigegeben werden.",
+		"Notarbeit": "Notarbeit",
+		"wartet auf Freigabe": "wartet auf Freigabe",
+		"Notarbeit/Bereitschaft im Urlaub": "Notarbeit/Bereitschaft im Urlaub",
+		"An diesem genehmigten Urlaubstag hast du außerplanmäßig gearbeitet. Der Urlaub bleibt bestehen, die Zeit zählt als Überstunden. Eine Begründung ist Pflicht, der/die Vorgesetzte wird informiert.": "An diesem genehmigten Urlaubstag hast du außerplanmäßig gearbeitet. Der Urlaub bleibt bestehen, die Zeit zählt als Überstunden. Eine Begründung ist Pflicht, der/die Vorgesetzte wird informiert.",
+		"Notarbeit freigegeben": "Notarbeit freigegeben",
+		"Steuert firmenweit stundenweise Krankmeldungen und Notarbeit an genehmigten Urlaubstagen. Standardmäßig deaktiviert.": "Steuert firmenweit stundenweise Krankmeldungen und Notarbeit an genehmigten Urlaubstagen. Standardmäßig deaktiviert.",
+		"Notarbeit im Urlaub erlauben": "Notarbeit im Urlaub erlauben",
+		"Wenn aktiv, können Mitarbeitende an einem genehmigten vollen Urlaubstag Notarbeit erfassen. Der Urlaub bleibt bestehen, die Arbeit zählt als Überstunden. Eine Begründung ist Pflicht, der/die Vorgesetzte wird informiert.": "Wenn aktiv, können Mitarbeitende an einem genehmigten vollen Urlaubstag Notarbeit erfassen. Der Urlaub bleibt bestehen, die Arbeit zählt als Überstunden. Eine Begründung ist Pflicht, der/die Vorgesetzte wird informiert.",
+		"Notarbeit muss freigegeben werden": "Notarbeit muss freigegeben werden",
+		"Wenn aktiv, zählt eine erfasste Notarbeit erst nach Freigabe durch den/die Vorgesetzte(n) in die Überstunden. Nur relevant, wenn Notarbeit im Urlaub erlaubt ist.": "Wenn aktiv, zählt eine erfasste Notarbeit erst nach Freigabe durch den/die Vorgesetzte(n) in die Überstunden. Nur relevant, wenn Notarbeit im Urlaub erlaubt ist.",
+		"Der Monat ist bereits abgeschlossen. Bitte zuerst zur Korrektur freigeben, dann die Notarbeit genehmigen.": "Der Monat ist bereits abgeschlossen. Bitte zuerst zur Korrektur freigeben, dann die Notarbeit genehmigen."
 	},
 	"pluralForm": "nplurals=2; plural=(n != 1);"
 }

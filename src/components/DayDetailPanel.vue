@@ -28,6 +28,7 @@
             <TimeEntryForm embedded
                 :entry="editingEntry"
                 :preset-date="day.date"
+                :emergency-eligible="emergencyEligibleDay"
                 :prefill-start="prefillStart"
                 :prefill-end="prefillEnd"
                 @saved="onSaved"
@@ -37,7 +38,12 @@
             <ul v-if="day.entries.length" class="dp-entries">
                 <li v-for="entry in day.entries" :key="entry.id" class="dp-entry">
                     <div class="dp-entry-main">
-                        <div class="dp-entry-time">{{ entry.startTime }} – {{ entry.endTime }}</div>
+                        <div class="dp-entry-time">
+                            {{ entry.startTime }} – {{ entry.endTime }}
+                            <span v-if="entry.isEmergency" class="dp-emergency-badge">
+                                {{ t('worktime', 'Notarbeit') }}<template v-if="!entry.emergencyApproved"> · {{ t('worktime', 'wartet auf Freigabe') }}</template>
+                            </span>
+                        </div>
                         <div class="dp-entry-meta">
                             <span>{{ hoursLabel(entry.workMinutes) }}</span>
                             <span class="dp-dot-sep">·</span>
@@ -135,8 +141,14 @@ export default {
         }
     },
     computed: {
-        ...mapGetters('permissions', ['isCorrectionMode']),
+        ...mapGetters('permissions', ['isCorrectionMode', 'emergencyWorkEnabled']),
         ...mapGetters('employees', ['currentEmployee']),
+        // #626: an einem genehmigten vollen Urlaubstag darf Notarbeit erfasst werden.
+        emergencyEligibleDay() {
+            const a = this.day && this.day.absence
+            return !!(this.emergencyWorkEnabled && a
+                && a.type === 'vacation' && a.scope >= 1 && !a.absenceMinutes)
+        },
         dayTitle() {
             return formatDateWithWeekday(this.day.date)
         },
@@ -350,6 +362,18 @@ export default {
     font-weight: 600;
     font-size: 14px;
     font-variant-numeric: tabular-nums;
+}
+
+.dp-emergency-badge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--color-warning, #e9a13b);
+    color: var(--color-main-background, #fff);
+    vertical-align: middle;
 }
 
 .dp-entry-meta {

@@ -149,6 +149,37 @@ class NotificationService {
 	}
 
 	/**
+	 * #626: inform the supervisor when an employee records emergency work during an
+	 * approved vacation day — a different quality of entry that warrants proactive
+	 * visibility, independent of any approval gate.
+	 */
+	public function notifyEmergencyWorkRecorded(int $employeeId, string $dateFormatted, ?string $reason = null): void {
+		try {
+			$employee = $this->employeeMapper->find($employeeId);
+			$supervisorUserId = $this->getSupervisorUserId($employee->getSupervisorId());
+			if ($supervisorUserId === null) {
+				return;
+			}
+
+			$params = [
+				'employeeName' => $employee->getFullName(),
+				'date' => $dateFormatted,
+				'reason' => (string)$reason,
+			];
+
+			$notification = $this->createNotification('emergency_work_recorded', $supervisorUserId, $params);
+			$notification->setObject('time_entry', $employeeId . '-' . $dateFormatted);
+
+			$this->notificationManager->notify($notification);
+		} catch (\Throwable $e) {
+			$this->logger->error('Failed to send emergency_work_recorded notification', [
+				'exception' => $e,
+				'employeeId' => $employeeId,
+			]);
+		}
+	}
+
+	/**
 	 * Tell the archive admin that automatic PDF archiving for a month failed
 	 * permanently, instead of failing silently in the background (#323).
 	 */

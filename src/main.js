@@ -30,6 +30,9 @@ store.dispatch('permissions/setRequiredFields', {
 // #625: whether hourly sick leave for a single day is offered in the absence form.
 store.dispatch('permissions/setHourlySickEnabled', loadState('worktime', 'hourlySickEnabled', false))
 
+// #626: whether emergency work during an approved vacation day is offered.
+store.dispatch('permissions/setEmergencyWorkEnabled', loadState('worktime', 'emergencyWorkEnabled', false))
+
 // Restore last view from localStorage (if not already on a valid route)
 const savedView = localStorage.getItem('worktime_last_view')
 if (savedView && savedView !== '/' && router.currentRoute.path === '/') {
