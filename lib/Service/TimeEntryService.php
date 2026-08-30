@@ -169,9 +169,10 @@ class TimeEntryService {
         // Validate (including absence conflict check; emergency bypasses the vacation block)
         $errors = $this->validate($dateObj, $startTimeObj, $endTimeObj, $breakMinutes, $employeeId, $emergency['eligible']);
 
-        // #626: a reason is mandatory for emergency work.
-        if ($emergency['eligible'] && trim((string)$reason) === '') {
-            $errors['reason'] = [$this->l->t('Für Notarbeit im Urlaub ist eine Begründung erforderlich.')];
+        // #626: a reason is mandatory for emergency work. It lives in the entry's
+        // description so approvers and reports can see it directly.
+        if ($emergency['eligible'] && trim((string)$description) === '') {
+            $errors['description'] = [$this->l->t('Für Notarbeit im Urlaub ist eine Begründung erforderlich.')];
         }
 
         // Company rule (#329): enforce required project / description when configured.
@@ -228,16 +229,14 @@ class TimeEntryService {
             $newValues = $entry->jsonSerialize();
             if ($auditReason !== null) {
                 $newValues['reason'] = $auditReason;
-            } elseif ($emergency['eligible'] && trim((string)$reason) !== '') {
-                // #626: Notarbeit-Begruendung im Audit festhalten.
-                $newValues['reason'] = $reason;
             }
             $this->auditLogService->logCreate($currentUserId, 'time_entry', $entry->getId(), $newValues);
         }
 
         // #626: den/die Vorgesetzte(n) ueber die erfasste Notarbeit informieren.
+        // Die Begruendung steht in der Beschreibung des Eintrags.
         if ($emergency['eligible']) {
-            $this->notificationService->notifyEmergencyWorkRecorded($employeeId, $dateObj->format('d.m.Y'), $reason);
+            $this->notificationService->notifyEmergencyWorkRecorded($employeeId, $dateObj->format('d.m.Y'), $description);
         }
 
         // HR correction in a closed month: reopen the affected months for re-approval.
@@ -514,6 +513,42 @@ class TimeEntryService {
         }
 
         return $entry;
+    }
+
+    /**
+     * #626: offene Notarbeit-Freigaben fuer die Genehmigungs-Inbox, angereichert
+     * mit Mitarbeiter-Name/-Konto. Aelteste zuerst.
+     *
+     * @param int[] $employeeIds
+     * @return array<int, array<string, mixed>>
+     */
+    public function findPendingEmergency(array $employeeIds): array {
+        $entries = $this->timeEntryMapper->findPendingEmergency($employeeIds);
+
+        $employeeCache = [];
+        $items = [];
+        foreach ($entries as $entry) {
+            $employeeId = $entry->getEmployeeId();
+            if (!array_key_exists($employeeId, $employeeCache)) {
+                try {
+                    $employeeCache[$employeeId] = $this->employeeMapper->find($employeeId);
+                } catch (\Exception) {
+                    $employeeCache[$employeeId] = null;
+                }
+            }
+            $employee = $employeeCache[$employeeId];
+            $items[] = [
+                'id' => $entry->getId(),
+                'employeeId' => $employeeId,
+                'employeeName' => $employee?->getFullName() ?? '',
+                'employeeUserId' => $employee?->getUserId() ?? '',
+                'date' => $entry->getDate()?->format('Y-m-d'),
+                'workMinutes' => $entry->getWorkMinutes(),
+                'description' => $entry->getDescription() ?? '',
+            ];
+        }
+
+        return $items;
     }
 
     /**

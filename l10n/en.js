@@ -719,9 +719,18 @@ OC.L10N.register(
     "Wenn aktiv, können Mitarbeitende an einem Einzeltag stundenweise krank sein und die restliche Zeit arbeiten. Die Krank-Stunden füllen bis zum Tagessoll, ohne künstliche Überstunden." : "When enabled, employees can be sick for part of a single day and work the rest. The sick hours fill up to the daily target, without creating artificial overtime.",
     "Krank-Stunden für diesen Tag (leer = ganzer Tag)" : "Sick hours for this day (empty = full day)",
     "Std. krank" : "hrs sick",
-    "Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert." : "Controls company-wide hourly sick leave on a single day. Disabled by default.",
     "Für Notarbeit im Urlaub ist eine Begründung erforderlich." : "A reason is required for emergency work during vacation.",
     "%1$s hat Notarbeit im Urlaub am %2$s erfasst" : "%1$s recorded emergency work during vacation on %2$s",
-    "Nur Notarbeit-Einträge können freigegeben werden." : "Only emergency-work entries can be approved."
+    "Nur Notarbeit-Einträge können freigegeben werden." : "Only emergency-work entries can be approved.",
+    "Notarbeit" : "Emergency work",
+    "wartet auf Freigabe" : "awaiting approval",
+    "Notarbeit/Bereitschaft im Urlaub" : "Emergency/on-call work during vacation",
+    "An diesem genehmigten Urlaubstag hast du außerplanmäßig gearbeitet. Der Urlaub bleibt bestehen, die Zeit zählt als Überstunden. Eine Begründung ist Pflicht, der/die Vorgesetzte wird informiert." : "You worked unexpectedly on this approved vacation day. The vacation remains, the time counts as overtime. A reason is mandatory and your supervisor is notified.",
+    "Notarbeit freigegeben" : "Emergency work approved",
+    "Steuert firmenweit stundenweise Krankmeldungen und Notarbeit an genehmigten Urlaubstagen. Standardmäßig deaktiviert." : "Controls company-wide hourly sick leave and emergency work on approved vacation days. Disabled by default.",
+    "Notarbeit im Urlaub erlauben" : "Allow emergency work during vacation",
+    "Wenn aktiv, können Mitarbeitende an einem genehmigten vollen Urlaubstag Notarbeit erfassen. Der Urlaub bleibt bestehen, die Arbeit zählt als Überstunden. Eine Begründung ist Pflicht, der/die Vorgesetzte wird informiert." : "When enabled, employees can record emergency work on an approved full vacation day. The vacation remains and the work counts as overtime. A reason is mandatory and the supervisor is notified.",
+    "Notarbeit muss freigegeben werden" : "Emergency work must be approved",
+    "Wenn aktiv, zählt eine erfasste Notarbeit erst nach Freigabe durch den/die Vorgesetzte(n) in die Überstunden. Nur relevant, wenn Notarbeit im Urlaub erlaubt ist." : "When enabled, recorded emergency work counts toward overtime only after approval by a supervisor. Only relevant when emergency work during vacation is allowed."
 },
 "nplurals=2; plural=(n != 1);");

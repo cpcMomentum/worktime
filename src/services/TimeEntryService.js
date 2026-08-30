@@ -11,6 +11,26 @@ export default {
         }
     },
 
+    // #626: offene Notarbeit-Freigaben fuer die Genehmigungs-Inbox.
+    async getPendingEmergency() {
+        try {
+            const response = await api.get('/time-entries/pending-emergency')
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
+    // #626: eine erfasste Notarbeit freigeben.
+    async approveEmergency(id) {
+        try {
+            const response = await api.post(`/time-entries/${id}/approve-emergency`)
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
     async getApprovedMonths() {
         try {
             const response = await api.get('/time-entries/approved-months')

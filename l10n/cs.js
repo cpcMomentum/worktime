@@ -719,9 +719,18 @@ OC.L10N.register(
     "Wenn aktiv, können Mitarbeitende an einem Einzeltag stundenweise krank sein und die restliche Zeit arbeiten. Die Krank-Stunden füllen bis zum Tagessoll, ohne künstliche Überstunden." : "Když je zapnuto, zaměstnanci mohou být část jednoho dne nemocní a zbytek dne pracovat. Hodiny nemoci se doplní do denního cíle bez umělých přesčasů.",
     "Krank-Stunden für diesen Tag (leer = ganzer Tag)" : "Hodiny nemoci pro tento den (prázdné = celý den)",
     "Std. krank" : "h nemoc",
-    "Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert." : "Řídí celofiremně hodinovou nemocenskou v jednom dni. Ve výchozím nastavení vypnuto.",
     "Für Notarbeit im Urlaub ist eine Begründung erforderlich." : "Pro nouzovou práci během dovolené je vyžadováno odůvodnění.",
     "%1$s hat Notarbeit im Urlaub am %2$s erfasst" : "%1$s zaznamenal(a) nouzovou práci během dovolené dne %2$s",
-    "Nur Notarbeit-Einträge können freigegeben werden." : "Schválit lze pouze záznamy nouzové práce."
+    "Nur Notarbeit-Einträge können freigegeben werden." : "Schválit lze pouze záznamy nouzové práce.",
+    "Notarbeit" : "Nouzová práce",
+    "wartet auf Freigabe" : "čeká na schválení",
+    "Notarbeit/Bereitschaft im Urlaub" : "Nouzová práce / pohotovost během dovolené",
+    "An diesem genehmigten Urlaubstag hast du außerplanmäßig gearbeitet. Der Urlaub bleibt bestehen, die Zeit zählt als Überstunden. Eine Begründung ist Pflicht, der/die Vorgesetzte wird informiert." : "V tento schválený den dovolené jsi neplánovaně pracoval(a). Dovolená zůstává, čas se počítá jako přesčas. Odůvodnění je povinné a nadřízený je informován.",
+    "Notarbeit freigegeben" : "Nouzová práce schválena",
+    "Steuert firmenweit stundenweise Krankmeldungen und Notarbeit an genehmigten Urlaubstagen. Standardmäßig deaktiviert." : "Řídí celofiremně hodinovou nemocenskou a nouzovou práci ve schválených dnech dovolené. Ve výchozím nastavení vypnuto.",
+    "Notarbeit im Urlaub erlauben" : "Povolit nouzovou práci během dovolené",
+    "Wenn aktiv, können Mitarbeitende an einem genehmigten vollen Urlaubstag Notarbeit erfassen. Der Urlaub bleibt bestehen, die Arbeit zählt als Überstunden. Eine Begründung ist Pflicht, der/die Vorgesetzte wird informiert." : "Když je zapnuto, zaměstnanci mohou zaznamenat nouzovou práci ve schválený celý den dovolené. Dovolená zůstává a práce se počítá jako přesčas. Odůvodnění je povinné a nadřízený je informován.",
+    "Notarbeit muss freigegeben werden" : "Nouzová práce musí být schválena",
+    "Wenn aktiv, zählt eine erfasste Notarbeit erst nach Freigabe durch den/die Vorgesetzte(n) in die Überstunden. Nur relevant, wenn Notarbeit im Urlaub erlaubt ist." : "Když je zapnuto, zaznamenaná nouzová práce se počítá do přesčasů až po schválení nadřízeným. Relevantní pouze, když je povolena nouzová práce během dovolené."
 },
 "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;");
