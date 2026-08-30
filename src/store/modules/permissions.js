@@ -20,6 +20,8 @@ const state = {
     // Company rules for time-entry fields (#329)
     requireProject: false,
     requireDescription: false,
+    // #625: hourly sick leave for a single day offered in the absence form.
+    hourlySickEnabled: false,
     // HR/Admin correction context (#148): when set, the tracking and absence
     // views operate on this employee instead of the logged-in user.
     correction: {
@@ -42,6 +44,7 @@ const getters = {
     approvalRequired: (state) => state.approvalRequired,
     requireProject: (state) => state.requireProject,
     requireDescription: (state) => state.requireDescription,
+    hourlySickEnabled: (state) => state.hourlySickEnabled,
     isCorrectionMode: (state) => state.correction.targetEmployeeId !== null,
     correctionEmployeeName: (state) => state.correction.employeeName,
     // The employee whose data the views should load/edit: the correction target
@@ -77,6 +80,9 @@ const mutations = {
         state.requireProject = requireProject
         state.requireDescription = requireDescription
     },
+    SET_HOURLY_SICK_ENABLED(state, hourlySickEnabled) {
+        state.hourlySickEnabled = hourlySickEnabled
+    },
     SET_CORRECTION(state, { targetEmployeeId, employeeName }) {
         state.correction = { targetEmployeeId, employeeName }
     },
@@ -108,6 +114,10 @@ const actions = {
 
     setRequiredFields({ commit }, { requireProject, requireDescription }) {
         commit('SET_REQUIRED_FIELDS', { requireProject, requireDescription })
+    },
+
+    setHourlySickEnabled({ commit }, hourlySickEnabled) {
+        commit('SET_HOURLY_SICK_ENABLED', hourlySickEnabled)
     },
 
     startCorrection({ commit }, { employeeId, employeeName }) {

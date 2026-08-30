@@ -50,6 +50,9 @@ class PageController extends Controller {
         $this->initialState->provideInitialState('requireProject', $this->settingsService->isProjectRequired());
         $this->initialState->provideInitialState('requireDescription', $this->settingsService->isDescriptionRequired());
 
+        // #625: whether hourly sick leave for a single day is offered in the form.
+        $this->initialState->provideInitialState('hourlySickEnabled', $this->settingsService->isHourlySickEnabled());
+
         return new TemplateResponse(
             Application::APP_ID,
             'main'

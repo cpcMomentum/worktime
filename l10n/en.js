@@ -715,12 +715,10 @@ OC.L10N.register(
     "Ganzer freier Tag" : "Full day off",
     "Silvester (31.12.)" : "New Year's Eve (Dec 31)",
     "Teiltages-Absenzen" : "Partial-day absences",
-    "Steuert firmenweit stundenweise Krankmeldungen und Notarbeit an genehmigten Urlaubstagen. Standardmäßig deaktiviert." : "Controls company-wide hourly sick leave and emergency work on approved vacation days. Disabled by default.",
     "Stundenweise Krankmeldung erlauben" : "Allow hourly sick leave",
     "Wenn aktiv, können Mitarbeitende an einem Einzeltag stundenweise krank sein und die restliche Zeit arbeiten. Die Krank-Stunden füllen bis zum Tagessoll, ohne künstliche Überstunden." : "When enabled, employees can be sick for part of a single day and work the rest. The sick hours fill up to the daily target, without creating artificial overtime.",
-    "Notarbeit im Urlaub erlauben" : "Allow emergency work during vacation",
-    "Wenn aktiv, können Mitarbeitende an einem genehmigten vollen Urlaubstag Notarbeit erfassen. Der Urlaub bleibt bestehen, die Arbeit zählt als Überstunden." : "When enabled, employees can record emergency work on an approved full vacation day. The vacation remains, and the work counts as overtime.",
-    "Notarbeit muss freigegeben werden" : "Emergency work must be approved",
-    "Wenn aktiv, wird eine erfasste Notarbeit erst nach Freigabe wirksam. Nur relevant, wenn Notarbeit im Urlaub erlaubt ist." : "When enabled, recorded emergency work only takes effect after approval. Only relevant when emergency work during vacation is allowed."
+    "Krank-Stunden für diesen Tag (leer = ganzer Tag)" : "Sick hours for this day (empty = full day)",
+    "Std. krank" : "hrs sick",
+    "Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert." : "Controls company-wide hourly sick leave on a single day. Disabled by default."
 },
 "nplurals=2; plural=(n != 1);");

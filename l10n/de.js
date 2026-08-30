@@ -715,12 +715,10 @@ OC.L10N.register(
     "Ganzer freier Tag" : "Ganzer freier Tag",
     "Silvester (31.12.)" : "Silvester (31.12.)",
     "Teiltages-Absenzen" : "Teiltages-Absenzen",
-    "Steuert firmenweit stundenweise Krankmeldungen und Notarbeit an genehmigten Urlaubstagen. Standardmäßig deaktiviert." : "Steuert firmenweit stundenweise Krankmeldungen und Notarbeit an genehmigten Urlaubstagen. Standardmäßig deaktiviert.",
     "Stundenweise Krankmeldung erlauben" : "Stundenweise Krankmeldung erlauben",
     "Wenn aktiv, können Mitarbeitende an einem Einzeltag stundenweise krank sein und die restliche Zeit arbeiten. Die Krank-Stunden füllen bis zum Tagessoll, ohne künstliche Überstunden." : "Wenn aktiv, können Mitarbeitende an einem Einzeltag stundenweise krank sein und die restliche Zeit arbeiten. Die Krank-Stunden füllen bis zum Tagessoll, ohne künstliche Überstunden.",
-    "Notarbeit im Urlaub erlauben" : "Notarbeit im Urlaub erlauben",
-    "Wenn aktiv, können Mitarbeitende an einem genehmigten vollen Urlaubstag Notarbeit erfassen. Der Urlaub bleibt bestehen, die Arbeit zählt als Überstunden." : "Wenn aktiv, können Mitarbeitende an einem genehmigten vollen Urlaubstag Notarbeit erfassen. Der Urlaub bleibt bestehen, die Arbeit zählt als Überstunden.",
-    "Notarbeit muss freigegeben werden" : "Notarbeit muss freigegeben werden",
-    "Wenn aktiv, wird eine erfasste Notarbeit erst nach Freigabe wirksam. Nur relevant, wenn Notarbeit im Urlaub erlaubt ist." : "Wenn aktiv, wird eine erfasste Notarbeit erst nach Freigabe wirksam. Nur relevant, wenn Notarbeit im Urlaub erlaubt ist."
+    "Krank-Stunden für diesen Tag (leer = ganzer Tag)" : "Krank-Stunden für diesen Tag (leer = ganzer Tag)",
+    "Std. krank" : "Std. krank",
+    "Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert." : "Steuert firmenweit stundenweise Krankmeldungen an einem Einzeltag. Standardmäßig deaktiviert."
 },
 "nplurals=2; plural=(n != 1);");

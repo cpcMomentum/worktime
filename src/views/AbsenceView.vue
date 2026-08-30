@@ -117,6 +117,7 @@
                         mode="create"
                         :absence-types="absenceTypes"
                         :vacation-stats="vacationStats"
+                        :hourly-sick-enabled="hourlySickEnabled"
                         @save="onCreate"
                         @cancel="cancelCreate" />
                     <AbsenceRow
@@ -126,6 +127,7 @@
                         :mode="editingId === absence.id ? 'edit' : 'view'"
                         :absence-types="absenceTypes"
                         :vacation-stats="vacationStats"
+                        :hourly-sick-enabled="hourlySickEnabled"
                         @edit="startEdit(absence.id)"
                         @save="onUpdate"
                         @cancel="cancelEdit"
@@ -256,7 +258,7 @@ export default {
     },
     computed: {
         ...mapGetters('absences', ['absences', 'absenceTypes', 'vacationStats', 'loading']),
-        ...mapGetters('permissions', ['activeEmployeeId', 'isCorrectionMode']),
+        ...mapGetters('permissions', ['activeEmployeeId', 'isCorrectionMode', 'hourlySickEnabled']),
         ...mapGetters('employees', ['currentEmployee']),
         // Ruhende Mitarbeiter (#486) koennen nichts mehr beantragen.
         isResting() {

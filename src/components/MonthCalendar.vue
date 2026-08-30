@@ -16,9 +16,15 @@
                 <div class="n">{{ cell.num }}</div>
                 <template v-if="cell.day">
                     <div v-if="cell.day.holiday" class="mi h">{{ shortName(cell.day.holiday.name) }}</div>
-                    <div v-else-if="cell.day.absence" class="mi" :class="absMiClass(cell.day.absence.type)">
-                        {{ cell.day.absence.typeName }}
-                    </div>
+                    <template v-else-if="cell.day.absence">
+                        <div class="mi" :class="absMiClass(cell.day.absence.type)">
+                            {{ cell.day.absence.typeName }}
+                        </div>
+                        <!-- #625: an stundenweise-Krank-Tagen zusaetzlich die gearbeitete Zeit. -->
+                        <div v-if="cell.day.absence.absenceMinutes && cell.day.entries.length" class="hh">
+                            {{ hoursLabel(cell.day) }}
+                        </div>
+                    </template>
                     <div v-else-if="cell.day.entries.length" class="hh">{{ hoursLabel(cell.day) }}</div>
                 </template>
             </div>
