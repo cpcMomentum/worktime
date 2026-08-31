@@ -7,6 +7,12 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.17.1] - 2026-08-31
+
+### Fixed
+- **Stempeln am Urlaubstag lief in eine Sackgasse (#664)**: An einem genehmigten Urlaubstag konnte man per Stoppuhr einstempeln, aber nicht mehr ausstempeln, und die einzige angebotene Auflösung war das Löschen des Urlaubs. Jetzt greift die Notarbeit-Regelung auch beim Stempeln: Bei ausgeschalteter Notarbeit wird das Einstempeln am Urlaubstag früh und mit klarer Meldung verhindert; bei eingeschalteter Notarbeit läuft die Uhr, und beim Ausstempeln wird eine Begründung verlangt und die Zeit als Notarbeit im Urlaub gebucht (der Urlaub bleibt voll bestehen, die geleistete Zeit zählt zusätzlich als Überstunden).
+- **Urlaubsanspruch bei unterjährigem Eintritt um einen Tag zu hoch (#629)**: Bei Mitarbeitenden, deren erstes Arbeitszeitprofil erst im Laufe des Jahres beginnt (etwa bei Eintritt zur Jahresmitte), wurde der angezeigte Jahresurlaubsanspruch um einen Tag zu hoch berechnet und aufgerundet. Der Wert wurde nie falsch gespeichert, sondern nur falsch angezeigt. Der Zeitraum vor dem ersten Profil wird jetzt mit dem tatsächlichen Profil berechnet statt mit einem internen Standardwert. (Danke an Nils Dohms für die genaue Meldung samt Datenbank-Analyse.)
+
 ## [0.17.0] - 2026-08-30
 
 ### Added
