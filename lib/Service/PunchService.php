@@ -49,6 +49,18 @@ class PunchService {
 	}
 
 	/**
+	 * #664: Liegt diese offene Stempelung auf einem Notarbeit-berechtigten Tag
+	 * (ganztägiger genehmigter Urlaub + Feature an)? Der Ausstempel-Dialog nutzt
+	 * das, um den Notarbeit-Hinweis und das Pflicht-Begründungsfeld PROAKTIV zu
+	 * zeigen — nicht erst nach einem reason_required-409. Sonst bliebe die Buchung
+	 * still, wenn beim Einstempeln bereits eine (fachfremde) Notiz gesetzt wurde.
+	 */
+	public function isPunchEmergencyEligible(ActivePunch $punch): bool {
+		$startLocal = $this->reinterpretAsUtc($punch->getStartedAt())->setTimezone($this->dateTimeZone->getTimeZone());
+		return $this->timeEntryService->isEmergencyEligible($punch->getEmployeeId(), $startLocal);
+	}
+
+	/**
 	 * Start a punch. Fails if one is already open (DB unique index is the final
 	 * guard against a race between two devices).
 	 *
@@ -60,6 +72,17 @@ class PunchService {
 		}
 
 		$now = $this->nowUtc();
+
+		// #664: Abwesenheits-Sperre schon beim Einstempeln prüfen. Sonst startet am
+		// ganztägigen Urlaubstag eine Uhr, die punchOut später nicht mehr schließen
+		// kann (create() blockt dort). Ein Notarbeit-berechtigter Urlaubstag (Feature
+		// an) blockt nicht — dort läuft die Uhr bewusst, das Ausstempeln fragt dann
+		// nach der Begründung.
+		$startLocalDate = (clone $now)->setTimezone($this->dateTimeZone->getTimeZone());
+		$blockMessage = $this->timeEntryService->punchInBlockMessage($employeeId, $startLocalDate);
+		if ($blockMessage !== null) {
+			throw new PunchConflictException($blockMessage);
+		}
 		$punch = new ActivePunch();
 		$punch->setEmployeeId($employeeId);
 		$punch->setStartedAt($now);
@@ -127,6 +150,7 @@ class PunchService {
 	 *
 	 * @throws PunchConflictException          no open punch
 	 * @throws PunchConfirmationRequiredException  overlong and neither confirmed nor corrected
+	 * @throws PunchReasonRequiredException    emergency work on a vacation day without a reason (#664)
 	 * @throws ValidationException             from create() (overlap, locked month, absence, required fields)
 	 */
 	public function punchOut(
@@ -194,6 +218,23 @@ class PunchService {
 		$resolvedProject = $projectId ?? $punch->getProjectId();
 		$resolvedDescription = $description ?? $punch->getDescription();
 
+		// #664: Fällt die Stempelung auf einen Notarbeit-berechtigten Urlaubstag
+		// (voller genehmigter Urlaub + Feature an, #626), braucht sie eine Pflicht-
+		// Begründung. Fehlt sie, den Punch NICHT konsumieren, sondern per 409
+		// reason_required zurückfragen — analog zum Overlong-confirmation-Flow.
+		$isEmergency = $this->timeEntryService->isEmergencyEligible($employeeId, $startLocal);
+		if ($isEmergency && trim((string)$resolvedDescription) === '') {
+			throw new PunchReasonRequiredException(
+				[
+					'date' => $date,
+					'startTime' => $startTime,
+					'endTime' => $endTime,
+					'breakMinutes' => $resolvedBreak,
+				],
+				$this->l->t('Für Notarbeit im Urlaub ist eine Begründung erforderlich.'),
+			);
+		}
+
 		$this->db->beginTransaction();
 		try {
 			// Consume the punch first (inside the transaction). A concurrent
@@ -214,6 +255,9 @@ class PunchService {
 				$resolvedProject,
 				$resolvedDescription,
 				$userId,
+				null,
+				false,
+				$isEmergency,
 			);
 			$this->db->commit();
 			return $entry;
