@@ -349,6 +349,15 @@ class PunchServiceTest extends TestCase {
 		}
 	}
 
+	public function testIsPunchEmergencyEligibleDelegatesForTheOpenPunch(): void {
+		// #664: the punch-out dialog reads this to show the emergency hint proactively.
+		$punch = $this->punch($this->utc('2026-08-31 07:00:00'));
+		$this->timeEntryService->expects($this->once())->method('isEmergencyEligible')
+			->with(7, $this->isInstanceOf(DateTime::class))->willReturn(true);
+
+		$this->assertTrue($this->service->isPunchEmergencyEligible($punch));
+	}
+
 	public function testPunchOutEmergencyWithReasonBooksAsEmergency(): void {
 		// #664: with a reason, the entry books through the emergency path — create()
 		// receives isEmergency = true (11th argument).

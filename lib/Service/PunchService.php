@@ -49,6 +49,18 @@ class PunchService {
 	}
 
 	/**
+	 * #664: Liegt diese offene Stempelung auf einem Notarbeit-berechtigten Tag
+	 * (ganztägiger genehmigter Urlaub + Feature an)? Der Ausstempel-Dialog nutzt
+	 * das, um den Notarbeit-Hinweis und das Pflicht-Begründungsfeld PROAKTIV zu
+	 * zeigen — nicht erst nach einem reason_required-409. Sonst bliebe die Buchung
+	 * still, wenn beim Einstempeln bereits eine (fachfremde) Notiz gesetzt wurde.
+	 */
+	public function isPunchEmergencyEligible(ActivePunch $punch): bool {
+		$startLocal = $this->reinterpretAsUtc($punch->getStartedAt())->setTimezone($this->dateTimeZone->getTimeZone());
+		return $this->timeEntryService->isEmergencyEligible($punch->getEmployeeId(), $startLocal);
+	}
+
+	/**
 	 * Start a punch. Fails if one is already open (DB unique index is the final
 	 * guard against a race between two devices).
 	 *

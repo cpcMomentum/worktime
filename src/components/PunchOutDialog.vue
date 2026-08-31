@@ -116,8 +116,10 @@ export default {
 			maxDailyHours: 10,
 			saving: false,
 			error: null,
-			// #664: set once the server signals reason_required — punching out on a
-			// full approved vacation day is emergency work (#626) and needs a reason.
+			// #664: true when this punch is emergency work (#626) — a full approved
+			// vacation day with the feature on. Set proactively from the punch's
+			// emergencyEligible flag, and defensively on a reason_required 409.
+			// Drives the hint card and the mandatory reason field.
 			emergencyReasonRequired: false,
 		}
 	},
@@ -160,6 +162,14 @@ export default {
 	},
 	async created() {
 		this.prefill()
+		// #664: the server tags an open punch on a full approved vacation day
+		// (emergency work enabled) with emergencyEligible. Surface the hint and the
+		// mandatory reason field up front — not only reactively after a 409 — so an
+		// emergency booking is never silent, even when a punch-in note pre-fills the
+		// description.
+		if (this.punch.emergencyEligible) {
+			this.emergencyReasonRequired = true
+		}
 		try {
 			const value = await SettingsService.get('max_daily_hours')
 			if (value !== undefined && value !== null) {
