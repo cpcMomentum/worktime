@@ -13,6 +13,7 @@ use OCA\WorkTime\Db\CompanySettingMapper;
 use OCA\WorkTime\Db\TimeEntry;
 use OCA\WorkTime\Service\PunchConfirmationRequiredException;
 use OCA\WorkTime\Service\PunchConflictException;
+use OCA\WorkTime\Service\PunchReasonRequiredException;
 use OCA\WorkTime\Service\PunchService;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCA\WorkTime\Service\ValidationException;
@@ -102,6 +103,30 @@ class PunchServiceTest extends TestCase {
 		$this->assertSame('Aussentermin', $result->getDescription());
 		$this->assertSame('web', $result->getCreatedVia());
 		$this->assertNotNull($result->getStartedAt());
+	}
+
+	public function testPunchInBlockedByFullDayAbsenceThrowsConflict(): void {
+		// #664: a full-day absence must block punch-in early, so no clock starts that
+		// punch-out could not later close.
+		$this->mapper->method('findByEmployeeOrNull')->willReturn(null);
+		$this->timeEntryService->method('punchInBlockMessage')
+			->willReturn('An diesem Tag haben Sie Urlaub. Bitte stornieren Sie zuerst die Abwesenheit.');
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(PunchConflictException::class);
+		$this->service->punchIn(7, null, null, 'web');
+	}
+
+	public function testPunchInAllowedOnEmergencyEligibleVacationDay(): void {
+		// #664: emergency work enabled on a full vacation day → not blocked; the clock
+		// starts and punch-out will ask for the reason.
+		$this->mapper->method('findByEmployeeOrNull')->willReturn(null);
+		$this->timeEntryService->method('punchInBlockMessage')->willReturn(null);
+		$this->mapper->expects($this->once())->method('insert')
+			->willReturnCallback(fn (ActivePunch $p): ActivePunch => $p);
+
+		$result = $this->service->punchIn(7, null, null, 'ios');
+		$this->assertSame(7, $result->getEmployeeId());
 	}
 
 	// --- pause / resume ---------------------------------------------------
@@ -296,6 +321,47 @@ class PunchServiceTest extends TestCase {
 		$this->mapper->expects($this->once())->method('deleteById')->with(1)->willReturn(1);
 
 		$result = $this->service->punchOut(7, 'user1', null, null, null, null, true);
+		$this->assertInstanceOf(TimeEntry::class, $result);
+	}
+
+	// --- emergency work on a vacation day (#664 / #626) --------------------
+
+	public function testPunchOutEmergencyWithoutReasonAsksForReason(): void {
+		// #664: punching out on a full approved vacation day (emergency enabled) with
+		// no reason must not consume the punch — it asks for the reason via 409.
+		$punch = $this->punch($this->utc('2020-01-01 08:00:00'), 0);
+		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		$this->timeEntryService->method('suggestBreak')->willReturn(30);
+		$this->timeEntryService->method('isEmergencyEligible')->willReturn(true);
+		$this->timeEntryService->expects($this->never())->method('create');
+		$this->mapper->expects($this->never())->method('deleteById');
+		$this->db->expects($this->never())->method('beginTransaction');
+
+		try {
+			$this->service->punchOut(7, 'user1', null, null, null, '16:30', false);
+			$this->fail('Expected PunchReasonRequiredException');
+		} catch (PunchReasonRequiredException $e) {
+			$s = $e->getSuggested();
+			$this->assertSame('2020-01-01', $s['date']);
+			$this->assertSame('08:00', $s['startTime']);
+			$this->assertSame('16:30', $s['endTime']);
+			$this->assertSame(30, $s['breakMinutes']);
+		}
+	}
+
+	public function testPunchOutEmergencyWithReasonBooksAsEmergency(): void {
+		// #664: with a reason, the entry books through the emergency path — create()
+		// receives isEmergency = true (11th argument).
+		$punch = $this->punch($this->utc('2020-01-01 08:00:00'), 0);
+		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		$this->mapper->method('deleteById')->willReturn(1);
+		$this->timeEntryService->method('suggestBreak')->willReturn(30);
+		$this->timeEntryService->method('isEmergencyEligible')->willReturn(true);
+		$this->timeEntryService->expects($this->once())->method('create')
+			->with(7, '2020-01-01', '08:00', '16:30', 30, null, 'Serverausfall', 'user1', null, false, true)
+			->willReturn(new TimeEntry());
+
+		$result = $this->service->punchOut(7, 'user1', null, null, 'Serverausfall', '16:30', false);
 		$this->assertInstanceOf(TimeEntry::class, $result);
 	}
 

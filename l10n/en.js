@@ -728,6 +728,9 @@ OC.L10N.register(
     "Wenn aktiv, können Mitarbeitende an einem genehmigten vollen Urlaubstag Notarbeit erfassen. Der Urlaub bleibt bestehen, die Arbeit zählt als Überstunden. Eine Begründung ist Pflicht, der/die Vorgesetzte wird informiert." : "When enabled, employees can record emergency work on an approved full vacation day. The vacation remains and the work counts as overtime. A reason is mandatory and the supervisor is notified.",
     "Notarbeit muss freigegeben werden" : "Emergency work must be approved",
     "Wenn aktiv, zählt eine erfasste Notarbeit erst nach Freigabe durch den/die Vorgesetzte(n) in die Überstunden. Nur relevant, wenn Notarbeit im Urlaub erlaubt ist." : "When enabled, recorded emergency work counts toward overtime only after approval by a supervisor. Only relevant when emergency work during vacation is allowed.",
-    "Der Monat ist bereits abgeschlossen. Bitte zuerst zur Korrektur freigeben, dann die Notarbeit genehmigen." : "The month is already closed. Please reopen it for correction first, then approve the emergency work."
+    "Der Monat ist bereits abgeschlossen. Bitte zuerst zur Korrektur freigeben, dann die Notarbeit genehmigen." : "The month is already closed. Please reopen it for correction first, then approve the emergency work.",
+    "An diesem Tag haben Sie genehmigten Urlaub. Diese Zeit wird als Notarbeit im Urlaub gebucht (zusätzlich zum Urlaub). Bitte geben Sie eine Begründung an." : "You have approved vacation on this day. This time is booked as emergency work during vacation (in addition to the vacation). Please provide a reason.",
+    "Begründung (erforderlich)" : "Reason (required)",
+    "Grund für die Notarbeit im Urlaub" : "Reason for the emergency work during vacation"
 },
 "nplurals=2; plural=(n != 1);");

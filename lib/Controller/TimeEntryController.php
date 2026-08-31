@@ -20,6 +20,7 @@ use OCA\WorkTime\Service\PdfService;
 use OCA\WorkTime\Service\PermissionService;
 use OCA\WorkTime\Service\PunchConfirmationRequiredException;
 use OCA\WorkTime\Service\PunchConflictException;
+use OCA\WorkTime\Service\PunchReasonRequiredException;
 use OCA\WorkTime\Service\PunchService;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCP\AppFramework\Http;
@@ -300,6 +301,12 @@ class TimeEntryController extends BaseController {
         } catch (PunchConfirmationRequiredException $e) {
             return new JSONResponse(
                 ['error' => $e->getMessage(), 'code' => 'confirmation_required', 'suggested' => $e->getSuggested()],
+                Http::STATUS_CONFLICT
+            );
+        } catch (PunchReasonRequiredException $e) {
+            // #664: emergency work on a vacation day needs a mandatory reason.
+            return new JSONResponse(
+                ['error' => $e->getMessage(), 'code' => 'reason_required', 'suggested' => $e->getSuggested()],
                 Http::STATUS_CONFLICT
             );
         } catch (PunchConflictException $e) {

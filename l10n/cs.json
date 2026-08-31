@@ -727,7 +727,10 @@
 		"Wenn aktiv, können Mitarbeitende an einem genehmigten vollen Urlaubstag Notarbeit erfassen. Der Urlaub bleibt bestehen, die Arbeit zählt als Überstunden. Eine Begründung ist Pflicht, der/die Vorgesetzte wird informiert.": "Když je zapnuto, zaměstnanci mohou zaznamenat nouzovou práci ve schválený celý den dovolené. Dovolená zůstává a práce se počítá jako přesčas. Odůvodnění je povinné a nadřízený je informován.",
 		"Notarbeit muss freigegeben werden": "Nouzová práce musí být schválena",
 		"Wenn aktiv, zählt eine erfasste Notarbeit erst nach Freigabe durch den/die Vorgesetzte(n) in die Überstunden. Nur relevant, wenn Notarbeit im Urlaub erlaubt ist.": "Když je zapnuto, zaznamenaná nouzová práce se počítá do přesčasů až po schválení nadřízeným. Relevantní pouze, když je povolena nouzová práce během dovolené.",
-		"Der Monat ist bereits abgeschlossen. Bitte zuerst zur Korrektur freigeben, dann die Notarbeit genehmigen.": "Měsíc je již uzavřen. Nejprve jej prosím otevřete k opravě a poté schvalte nouzovou práci."
+		"Der Monat ist bereits abgeschlossen. Bitte zuerst zur Korrektur freigeben, dann die Notarbeit genehmigen.": "Měsíc je již uzavřen. Nejprve jej prosím otevřete k opravě a poté schvalte nouzovou práci.",
+		"An diesem Tag haben Sie genehmigten Urlaub. Diese Zeit wird als Notarbeit im Urlaub gebucht (zusätzlich zum Urlaub). Bitte geben Sie eine Begründung an.": "V tento den máte schválenou dovolenou. Tento čas bude zaúčtován jako nouzová práce během dovolené (nad rámec dovolené). Uveďte prosím odůvodnění.",
+		"Begründung (erforderlich)": "Odůvodnění (povinné)",
+		"Grund für die Notarbeit im Urlaub": "Důvod nouzové práce během dovolené"
 	},
 	"pluralForm": "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;"
 }
