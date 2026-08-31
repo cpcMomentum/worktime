@@ -569,6 +569,29 @@ class TimeEntryService {
     }
 
     /**
+     * #664: Kann an diesem Tag Notarbeit im Urlaub erfasst werden? True nur, wenn
+     * der Admin-Schalter aktiv ist UND ein ganztägiger genehmigter Urlaub vorliegt.
+     * Kapselt {@see resolveEmergency} für den Stempel-Weg ({@see PunchService}).
+     */
+    public function isEmergencyEligible(int $employeeId, DateTime $date): bool {
+        return $this->resolveEmergency($employeeId, $date, true)['eligible'];
+    }
+
+    /**
+     * #664: Meldung, wenn an diesem Tag NICHT eingestempelt werden darf, sonst null.
+     * Bisher prüfte nur das Ausstempeln die Abwesenheit (über create()), das
+     * Einstempeln nicht — dadurch startete am Urlaubstag eine Uhr, die sich nicht
+     * mehr schließen ließ. Wir nutzen dieselbe Abwesenheits-Logik wie das Buchen:
+     * ein Notarbeit-berechtigter Urlaubstag (Feature an) blockt NICHT, jede andere
+     * ganztägige Abwesenheit schon. workMinutes ist für die Ganztags-Sperre
+     * irrelevant, daher 0.
+     */
+    public function punchInBlockMessage(int $employeeId, DateTime $date): ?string {
+        $eligible = $this->isEmergencyEligible($employeeId, $date);
+        return $this->checkAbsenceConflict($employeeId, $date, 0, $eligible);
+    }
+
+    /**
      * @throws NotFoundException
      */
     public function approve(int $id, string $currentUserId = ''): TimeEntry {

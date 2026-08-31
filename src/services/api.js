@@ -29,8 +29,14 @@ export function handleApiError(error) {
                 throw new Error(messages.join('. '))
             }
         }
-        const message = error.response.data?.error || error.response.data?.message || 'Ein Fehler ist aufgetreten'
-        throw new Error(message)
+        const data = error.response.data
+        const message = data?.error || data?.message || 'Ein Fehler ist aufgetreten'
+        const err = new Error(message)
+        // Preserve the server's machine-readable hints (e.g. #664 reason_required,
+        // #584 confirmation_required) so callers can react beyond the message.
+        if (data?.code) err.code = data.code
+        if (data?.suggested) err.suggested = data.suggested
+        throw err
     }
     throw error
 }

@@ -10,6 +10,10 @@
 				{{ t('worktime', 'Du bist seit {hours} h eingestempelt. Bitte prüfe das Ende, bevor du buchst.', { hours: grossHours }) }}
 			</NcNoteCard>
 
+			<NcNoteCard v-if="emergencyReasonRequired" type="warning">
+				{{ t('worktime', 'An diesem Tag haben Sie genehmigten Urlaub. Diese Zeit wird als Notarbeit im Urlaub gebucht (zusätzlich zum Urlaub). Bitte geben Sie eine Begründung an.') }}
+			</NcNoteCard>
+
 			<div class="punch-out__grid">
 				<div class="form-group">
 					<label for="punch-date">{{ t('worktime', 'Datum') }}</label>
@@ -39,12 +43,12 @@
 			</div>
 
 			<div class="form-group">
-				<label for="punch-desc">{{ t('worktime', 'Notiz') }}</label>
+				<label for="punch-desc">{{ emergencyReasonRequired ? t('worktime', 'Begründung (erforderlich)') : t('worktime', 'Notiz') }}</label>
 				<textarea id="punch-desc"
 					v-model="form.description"
 					rows="2"
 					class="input-field"
-					:placeholder="t('worktime', 'Optionale Notiz')" />
+					:placeholder="emergencyReasonRequired ? t('worktime', 'Grund für die Notarbeit im Urlaub') : t('worktime', 'Optionale Notiz')" />
 			</div>
 
 			<p class="punch-out__net">
@@ -112,6 +116,11 @@ export default {
 			maxDailyHours: 10,
 			saving: false,
 			error: null,
+			// #664: true when this punch is emergency work (#626) — a full approved
+			// vacation day with the feature on. Set proactively from the punch's
+			// emergencyEligible flag, and defensively on a reason_required 409.
+			// Drives the hint card and the mandatory reason field.
+			emergencyReasonRequired: false,
 		}
 	},
 	computed: {
@@ -141,11 +150,26 @@ export default {
 			return this.grossMinutes > this.maxDailyHours * 60
 		},
 		isValid() {
-			return !!this.form.date && !!this.form.startTime && !!this.form.endTime && this.netMinutes > 0
+			if (!this.form.date || !this.form.startTime || !this.form.endTime || this.netMinutes <= 0) {
+				return false
+			}
+			// #664: emergency work on a vacation day requires a reason.
+			if (this.emergencyReasonRequired && this.form.description.trim() === '') {
+				return false
+			}
+			return true
 		},
 	},
 	async created() {
 		this.prefill()
+		// #664: the server tags an open punch on a full approved vacation day
+		// (emergency work enabled) with emergencyEligible. Surface the hint and the
+		// mandatory reason field up front — not only reactively after a 409 — so an
+		// emergency booking is never silent, even when a punch-in note pre-fills the
+		// description.
+		if (this.punch.emergencyEligible) {
+			this.emergencyReasonRequired = true
+		}
 		try {
 			const value = await SettingsService.get('max_daily_hours')
 			if (value !== undefined && value !== null) {
@@ -221,7 +245,13 @@ export default {
 				})
 				this.$emit('booked', entry)
 			} catch (e) {
-				// Server rejected (overlap, locked month, …). The punch stays open.
+				// #664: emergency work on a vacation day needs a reason. The server
+				// asks for it via reason_required; reveal the mandatory field and let
+				// the user fill it in — the punch stays open in the meantime.
+				if (e.code === 'reason_required') {
+					this.emergencyReasonRequired = true
+				}
+				// Server rejected (overlap, locked month, reason, …). The punch stays open.
 				this.error = e.message || this.t('worktime', 'Buchen fehlgeschlagen.')
 			} finally {
 				this.saving = false

@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Controller;
 
 use DateTime;
+use OCA\WorkTime\Db\ActivePunch;
 use OCA\WorkTime\Db\ArchiveQueue;
 use OCA\WorkTime\Db\ArchiveQueueMapper;
 use OCA\WorkTime\Db\CompanySetting;
@@ -20,6 +21,7 @@ use OCA\WorkTime\Service\PdfService;
 use OCA\WorkTime\Service\PermissionService;
 use OCA\WorkTime\Service\PunchConfirmationRequiredException;
 use OCA\WorkTime\Service\PunchConflictException;
+use OCA\WorkTime\Service\PunchReasonRequiredException;
 use OCA\WorkTime\Service\PunchService;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCP\AppFramework\Http;
@@ -187,7 +189,7 @@ class TimeEntryController extends BaseController {
             return $this->forbiddenResponse();
         }
 
-        return $this->successResponse($this->punchService->getActive($employeeId));
+        return $this->successResponse($this->punchPayload($this->punchService->getActive($employeeId)));
     }
 
     /**
@@ -206,7 +208,7 @@ class TimeEntryController extends BaseController {
         }
 
         try {
-            return $this->createdResponse($this->punchService->punchIn($employeeId, $projectId, $description, 'web'));
+            return $this->createdResponse($this->punchPayload($this->punchService->punchIn($employeeId, $projectId, $description, 'web')));
         } catch (PunchConflictException $e) {
             return $this->conflictResponse($e->getMessage());
         } catch (\Exception $e) {
@@ -230,7 +232,7 @@ class TimeEntryController extends BaseController {
         }
 
         try {
-            return $this->successResponse($this->punchService->punchPause($employeeId));
+            return $this->successResponse($this->punchPayload($this->punchService->punchPause($employeeId)));
         } catch (PunchConflictException $e) {
             return $this->conflictResponse($e->getMessage());
         } catch (\Exception $e) {
@@ -254,7 +256,7 @@ class TimeEntryController extends BaseController {
         }
 
         try {
-            return $this->successResponse($this->punchService->punchResume($employeeId));
+            return $this->successResponse($this->punchPayload($this->punchService->punchResume($employeeId)));
         } catch (PunchConflictException $e) {
             return $this->conflictResponse($e->getMessage());
         } catch (\Exception $e) {
@@ -302,6 +304,12 @@ class TimeEntryController extends BaseController {
                 ['error' => $e->getMessage(), 'code' => 'confirmation_required', 'suggested' => $e->getSuggested()],
                 Http::STATUS_CONFLICT
             );
+        } catch (PunchReasonRequiredException $e) {
+            // #664: emergency work on a vacation day needs a mandatory reason.
+            return new JSONResponse(
+                ['error' => $e->getMessage(), 'code' => 'reason_required', 'suggested' => $e->getSuggested()],
+                Http::STATUS_CONFLICT
+            );
         } catch (PunchConflictException $e) {
             return $this->conflictResponse($e->getMessage());
         } catch (\Exception $e) {
@@ -311,6 +319,18 @@ class TimeEntryController extends BaseController {
 
     private function conflictResponse(string $message): JSONResponse {
         return new JSONResponse(['error' => $message, 'code' => 'punch_conflict'], Http::STATUS_CONFLICT);
+    }
+
+    /**
+     * #664: serialize an open punch, enriched with emergencyEligible so the
+     * punch-out dialog can show the emergency-work hint proactively (rather than
+     * only reacting to a reason_required 409). null passes through unchanged.
+     */
+    private function punchPayload(?ActivePunch $punch): ?array {
+        if ($punch === null) {
+            return null;
+        }
+        return $punch->jsonSerialize() + ['emergencyEligible' => $this->punchService->isPunchEmergencyEligible($punch)];
     }
 
     #[NoAdminRequired]
