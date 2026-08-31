@@ -588,8 +588,15 @@ class WorkScheduleService {
             $gapEnd = clone $schedules[0]->getValidFrom();
             $gapEnd->modify('-1 day');
             if ($gapEnd >= $start) {
-                // Use fallback schedule for dates before the first schedule
-                $fallback = $this->getScheduleForDate($employeeId, $start);
+                // #629: extend the earliest real profile back over the gap, NOT the
+                // synthetic 40h/30-day default from getScheduleForDate(). The only
+                // caller that reaches this gap is the full-year entitlement
+                // (getVacationEntitlementForYear scans Jan-Dec); for a mid-year hire
+                // the 30-day default inflated the pro-rata sum and rounded the
+                // entitlement up by a day (nils: 28 -> 28.66 -> 29). The Soll paths
+                // clip their range to the entry date before calling and never reach
+                // here. $schedules is ordered by valid_from ASC, so [0] is earliest.
+                $fallback = $schedules[0];
                 array_unshift($segments, [
                     'schedule' => $fallback,
                     'start' => clone $start,

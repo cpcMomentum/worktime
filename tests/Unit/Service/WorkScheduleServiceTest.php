@@ -140,6 +140,27 @@ class WorkScheduleServiceTest extends TestCase {
         $this->assertSame(30, $this->service->getVacationDaysForYear(1, $pastYear));
     }
 
+    /**
+     * #629: a single profile that starts mid-year (e.g. a new hire on 1 May with
+     * a 28-day profile). The months before it have no profile; buildSegments must
+     * extend that same profile back over the gap, NOT the synthetic 30-day
+     * default. Otherwise the pro-rata sum (30 in the gap, 28 for the rest) lands
+     * around 28.66 and rounds the entitlement up to a wrong 29. The uniform
+     * profile must yield exactly its own full-year value.
+     */
+    public function testMidYearSingleProfileNotInflatedByGapDefault(): void {
+        $pastYear = (int)(new DateTime())->format('Y') - 1;
+        // No profile exists before valid_from, mirroring reality — so the old code
+        // fell through to the synthetic 30-day default here.
+        $this->mapper->method('findForDate')
+            ->willThrowException(new DoesNotExistException('before first profile'));
+        $this->mapper->method('findByEmployeeAndDateRange')
+            ->willReturn([$this->scheduleAt($pastYear . '-05-01', 28, 5)]);
+
+        $this->assertSame(28.0, $this->service->getVacationEntitlementForYear(1, $pastYear));
+        $this->assertSame(28, $this->service->getVacationDaysForYear(1, $pastYear));
+    }
+
     // ---------------------------------------------------------------------
     // #581: Anzeige-Profil bei zukünftigem Eintrittsdatum
     // ---------------------------------------------------------------------
