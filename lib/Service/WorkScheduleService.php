@@ -85,9 +85,11 @@ class WorkScheduleService {
      * this, the overview would show 40h/30 until the entry date is reached and the
      * employee could appear to have more leave than they do.
      *
-     * Display only: the calculation paths (buildSegments, calculateTargetMinutes)
-     * keep using getScheduleForDate() unchanged, so Soll and entitlement - which
-     * already clip by entry/exit date elsewhere - are untouched.
+     * Display only: getScheduleForDate() itself is unchanged. buildSegments()
+     * (used by calculateTargetMinutes/countWorkingDays/entitlement) has its own
+     * gap-fill (#629): it extends the earliest known profile backward instead of
+     * using the synthetic default, so it no longer matches getScheduleForDate()
+     * for dates before the first profile either.
      */
     public function getDisplaySchedule(int $employeeId): WorkSchedule {
         try {
