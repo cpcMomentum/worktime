@@ -738,6 +738,10 @@ OC.L10N.register(
     "Stempelung verwerfen" : "Discard punch",
     "Verwerfen fehlgeschlagen." : "Discard failed.",
     "Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte verwerfen Sie die Stempelung und erfassen Sie die Zeit manuell." : "This punch has been open for more than 24 hours and cannot be booked as a single time entry. Please discard the punch and enter the time manually.",
-    "Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte schließe diesen Dialog, verwirf die Stempelung und erfasse die Zeit manuell." : "This punch has been open for more than 24 hours and cannot be booked as a single time entry. Please close this dialog, discard the punch and enter the time manually."
+    "Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte schließe diesen Dialog, verwirf die Stempelung und erfasse die Zeit manuell." : "This punch has been open for more than 24 hours and cannot be booked as a single time entry. Please close this dialog, discard the punch and enter the time manually.",
+    "Ruhend ab" : "Resting from",
+    "Ab diesem Tag fällt kein Sollstunden-Zuwachs mehr an. Standard: heute." : "From this day on, no additional target hours accrue. Default: today.",
+    "Das Reaktivierungsdatum darf nicht vor dem Ruhend-ab-Datum liegen." : "The reactivation date must not be before the resting-from date.",
+    "Ungültiges Datum. Erwartet wird JJJJ-MM-TT." : "Invalid date. Expected YYYY-MM-DD."
 },
 "nplurals=2; plural=(n != 1);");

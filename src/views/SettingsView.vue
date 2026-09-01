@@ -1357,9 +1357,9 @@ export default {
                     : this.t('worktime', 'Mitarbeiter erstellt')
             )
         },
-        async handleSetResting({ employee, reason }) {
+        async handleSetResting({ employee, reason, restingFrom }) {
             try {
-                await EmployeeService.setResting(employee.id, true, reason || null)
+                await EmployeeService.setResting(employee.id, true, reason || null, restingFrom || null)
                 await this.$store.dispatch('employees/fetchEmployees', true)
                 showSuccessMessage(this.t('worktime', 'Mitarbeiter ruhend gesetzt'))
             } catch (error) {

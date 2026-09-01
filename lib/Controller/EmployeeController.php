@@ -236,7 +236,7 @@ class EmployeeController extends BaseController {
      * operation (#486).
      */
     #[NoAdminRequired]
-    public function setResting(int $id, bool $resting, ?string $reason = null): JSONResponse {
+    public function setResting(int $id, bool $resting, ?string $reason = null, ?string $restingFrom = null, ?string $restingUntil = null): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
         }
@@ -247,8 +247,8 @@ class EmployeeController extends BaseController {
 
         try {
             $employee = $resting
-                ? $this->employeeService->setResting($id, $reason, $this->userId)
-                : $this->employeeService->reactivate($id, $this->userId);
+                ? $this->employeeService->setResting($id, $reason, $this->userId, $restingFrom)
+                : $this->employeeService->reactivate($id, $this->userId, $restingUntil);
 
             return $this->successResponse($employee);
         } catch (\Exception $e) {

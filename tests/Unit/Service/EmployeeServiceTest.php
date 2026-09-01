@@ -14,6 +14,7 @@ use OCA\WorkTime\Service\EmployeeDeletionService;
 use OCA\WorkTime\Service\EmployeeService;
 use OCA\WorkTime\Service\ValidationException;
 use OCA\WorkTime\Service\WorkScheduleService;
+use OCP\IL10N;
 use OCP\IUserManager;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -42,6 +43,8 @@ class EmployeeServiceTest extends TestCase {
         $this->deletionService = $this->createMock(EmployeeDeletionService::class);
         $this->userManager = $this->createMock(IUserManager::class);
         $this->logger = $this->createMock(LoggerInterface::class);
+        $l = $this->createMock(IL10N::class);
+        $l->method('t')->willReturnCallback(fn (string $t, array $p = []): string => $p === [] ? $t : vsprintf($t, $p));
 
         $this->service = new EmployeeService(
             $this->employeeMapper,
@@ -51,6 +54,7 @@ class EmployeeServiceTest extends TestCase {
             $this->deletionService,
             $this->userManager,
             $this->logger,
+            $l,
         );
     }
 
