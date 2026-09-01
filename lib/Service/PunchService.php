@@ -215,7 +215,12 @@ class PunchService {
 			]);
 		}
 
-		$resolvedProject = $projectId ?? $punch->getProjectId();
+		// #615: distinguish "not specified" (inherit the punch-in project) from
+		// "explicitly cleared". A nullable int cannot express both, so the client
+		// sends the sentinel 0 to mean "no project"; null/omitted still inherits.
+		// Without this there was no way to remove a project at punch-out — the
+		// "Kein Projekt" choice in the dialog had no effect.
+		$resolvedProject = $projectId === 0 ? null : ($projectId ?? $punch->getProjectId());
 		$resolvedDescription = $description ?? $punch->getDescription();
 
 		// #664: Fällt die Stempelung auf einen Notarbeit-berechtigten Urlaubstag

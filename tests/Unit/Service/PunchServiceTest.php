@@ -255,6 +255,38 @@ class PunchServiceTest extends TestCase {
 		$this->service->punchOut(7, 'user1', null, null, null, '16:30', false);
 	}
 
+	public function testPunchOutClearsProjectWithSentinelZero(): void {
+		// #615: projectId 0 = explicit "no project" — the punch-in project (9) is
+		// dropped, create() receives null, not the inherited 9.
+		$punch = $this->punch($this->utc('2020-01-01 08:00:00'), 0);
+		$punch->setProjectId(9);
+		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		$this->mapper->method('deleteById')->willReturn(1);
+		$this->timeEntryService->method('suggestBreak')->willReturn(30);
+		// identicalTo(null): PHPUnit's default with() uses loose ==, and 0 == null in
+		// PHP — so a plain null would also match a leaked 0. Strict === is what
+		// actually distinguishes "cleared" (null) from the un-fixed sentinel (0).
+		$this->timeEntryService->expects($this->once())->method('create')
+			->with(7, '2020-01-01', '08:00', '16:30', 30, $this->identicalTo(null), null, 'user1')
+			->willReturn(new TimeEntry());
+
+		$this->service->punchOut(7, 'user1', null, 0, null, '16:30', false);
+	}
+
+	public function testPunchOutSetsExplicitProjectOverInherited(): void {
+		// #615: a real project id overrides the punch-in project.
+		$punch = $this->punch($this->utc('2020-01-01 08:00:00'), 0);
+		$punch->setProjectId(9);
+		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		$this->mapper->method('deleteById')->willReturn(1);
+		$this->timeEntryService->method('suggestBreak')->willReturn(30);
+		$this->timeEntryService->expects($this->once())->method('create')
+			->with(7, '2020-01-01', '08:00', '16:30', 30, 3, null, 'user1')
+			->willReturn(new TimeEntry());
+
+		$this->service->punchOut(7, 'user1', null, 3, null, '16:30', false);
+	}
+
 	public function testPunchOutCreateFailureLeavesPunchOpen(): void {
 		$punch = $this->punch($this->utc('2020-01-01 08:00:00'), 0);
 		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
