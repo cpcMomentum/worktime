@@ -163,6 +163,99 @@ class EmployeeServiceTest extends TestCase {
         $this->assertNull($result->getLockedReason());
     }
 
+    // ---------------------------------------------------------------------
+    // #497: resting_from / resting_until (Ruhend-Zeitraum)
+    // ---------------------------------------------------------------------
+
+    public function testSetRestingStoresProvidedRestingFromAndClearsUntil(): void {
+        $employee = $this->makeEmployee(3, '40.00', 30);
+        $employee->setRestingUntil(new DateTime('2026-01-01')); // stale, from a prior spell
+
+        $this->employeeMapper->method('find')->willReturn($employee);
+        $this->workScheduleService->method('getDisplaySchedule')
+            ->willReturn($this->makeSchedule(8.0, 30));
+        $this->employeeMapper->method('findAllByDeputy')->willReturn([]);
+        $this->employeeMapper->method('update')->willReturnArgument(0);
+
+        $result = $this->service->setResting(3, null, 'admin', '2026-05-01');
+
+        $this->assertSame('2026-05-01', $result->getRestingFrom()->format('Y-m-d'));
+        $this->assertNull($result->getRestingUntil());
+    }
+
+    public function testSetRestingDefaultsRestingFromToTodayWhenNotProvided(): void {
+        $employee = $this->makeEmployee(3, '40.00', 30);
+
+        $this->employeeMapper->method('find')->willReturn($employee);
+        $this->workScheduleService->method('getDisplaySchedule')
+            ->willReturn($this->makeSchedule(8.0, 30));
+        $this->employeeMapper->method('findAllByDeputy')->willReturn([]);
+        $this->employeeMapper->method('update')->willReturnArgument(0);
+
+        $result = $this->service->setResting(3, null, 'admin');
+
+        $this->assertSame((new DateTime('today'))->format('Y-m-d'), $result->getRestingFrom()->format('Y-m-d'));
+    }
+
+    public function testSetRestingRejectsMalformedRestingFrom(): void {
+        $employee = $this->makeEmployee(3, '40.00', 30);
+
+        $this->employeeMapper->method('find')->willReturn($employee);
+        $this->workScheduleService->method('getDisplaySchedule')
+            ->willReturn($this->makeSchedule(8.0, 30));
+        $this->employeeMapper->expects($this->never())->method('update');
+
+        $this->expectException(ValidationException::class);
+        $this->service->setResting(3, null, 'admin', '01.05.2026');
+    }
+
+    public function testReactivateStoresProvidedRestingUntil(): void {
+        $employee = $this->makeEmployee(3, '40.00', 30);
+        $employee->setIsActive(false);
+        $employee->setRestingFrom(new DateTime('2026-05-01'));
+
+        $this->employeeMapper->method('find')->willReturn($employee);
+        $this->workScheduleService->method('getDisplaySchedule')
+            ->willReturn($this->makeSchedule(8.0, 30));
+        $this->employeeMapper->method('update')->willReturnArgument(0);
+
+        $result = $this->service->reactivate(3, 'admin', '2026-08-01');
+
+        $this->assertSame('2026-08-01', $result->getRestingUntil()->format('Y-m-d'));
+    }
+
+    public function testReactivateRejectsRestingUntilBeforeRestingFrom(): void {
+        $employee = $this->makeEmployee(3, '40.00', 30);
+        $employee->setIsActive(false);
+        $employee->setRestingFrom(new DateTime('2026-05-01'));
+
+        $this->employeeMapper->method('find')->willReturn($employee);
+        $this->workScheduleService->method('getDisplaySchedule')
+            ->willReturn($this->makeSchedule(8.0, 30));
+        $this->employeeMapper->expects($this->never())->method('update');
+
+        $this->expectException(ValidationException::class);
+        $this->service->reactivate(3, 'admin', '2026-04-01');
+    }
+
+    public function testReactivateLeavesRestingUntilUntouchedWhenAlreadyClosed(): void {
+        // Guards against a double reactivate() call overwriting an already-closed
+        // spell's end date with a new one derived from "today".
+        $employee = $this->makeEmployee(3, '40.00', 30);
+        $employee->setIsActive(true);
+        $employee->setRestingFrom(new DateTime('2026-05-01'));
+        $employee->setRestingUntil(new DateTime('2026-06-01'));
+
+        $this->employeeMapper->method('find')->willReturn($employee);
+        $this->workScheduleService->method('getDisplaySchedule')
+            ->willReturn($this->makeSchedule(8.0, 30));
+        $this->employeeMapper->method('update')->willReturnArgument(0);
+
+        $result = $this->service->reactivate(3, 'admin');
+
+        $this->assertSame('2026-06-01', $result->getRestingUntil()->format('Y-m-d'));
+    }
+
     public function testCreateRejectsZeroWeeklyHours(): void {
         // weeklyHours = 0 would create a zero-hour initial schedule (0/5 per day),
         // which collapses every working-day/absence-day calculation to 0. Must be
