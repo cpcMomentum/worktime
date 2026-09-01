@@ -7,6 +7,8 @@ namespace OCA\WorkTime\Tests\Unit\Service;
 use DateTime;
 use OCA\WorkTime\Db\Absence;
 use OCA\WorkTime\Db\AbsenceMapper;
+use OCA\WorkTime\Db\ActivePunch;
+use OCA\WorkTime\Db\ActivePunchMapper;
 use OCA\WorkTime\Db\CompanySettingMapper;
 use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\EmployeeMapper;
@@ -24,6 +26,7 @@ use OCA\WorkTime\Service\ValidationException;
 use OCA\WorkTime\Service\CompanySettingsService;
 use OCA\WorkTime\Service\WorkScheduleService;
 use OCA\WorkTime\Service\YearlyCarryoverService;
+use OCP\IDateTimeZone;
 use OCP\IL10N;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -50,6 +53,7 @@ class AbsenceServiceTest extends TestCase {
     private HolidayService $holidayService;
     private YearlyCarryoverService $carryoverService;
     private CompanySettingsService $companySettingsService;
+    private ActivePunchMapper $activePunchMapper;
     /** @var array<int,int> Per-year override for getVacationDaysForYear (#501). */
     private array $scheduleEntitlementByYear = [];
     private LoggerInterface $logger;
@@ -89,6 +93,11 @@ class AbsenceServiceTest extends TestCase {
         );
 
         $this->companySettingsService = $this->createMock(CompanySettingsService::class);
+        $this->activePunchMapper = $this->createMock(ActivePunchMapper::class);
+        $dateTimeZone = $this->createMock(IDateTimeZone::class);
+        // Europe/Berlin (UTC+1/2), NOT UTC: a UTC mock hides the #665 timezone bug
+        // where local midnight lands before UTC midnight and drops the conflict.
+        $dateTimeZone->method('getTimeZone')->willReturn(new \DateTimeZone('Europe/Berlin'));
 
         $this->service = new AbsenceService(
             $this->absenceMapper,
@@ -101,6 +110,8 @@ class AbsenceServiceTest extends TestCase {
             $this->holidayService,
             $this->carryoverService,
             $this->companySettingsService,
+            $this->activePunchMapper,
+            $dateTimeZone,
             $this->logger,
             $this->l
         );
@@ -1560,5 +1571,88 @@ class AbsenceServiceTest extends TestCase {
 
         $result = $this->service->approve(99, 1, 'admin');
         $this->assertSame(Absence::STATUS_APPROVED, $result->getStatus());
+    }
+
+    // ---------------------------------------------------------------------
+    // #665: approving a full-day absence must also see a RUNNING punch, not
+    // only committed entries — otherwise the punch is trapped afterwards.
+    // ---------------------------------------------------------------------
+
+    private function makeActivePunch(string $startedAt): ActivePunch {
+        $punch = new ActivePunch();
+        $punch->setEmployeeId(1);
+        $punch->setStartedAt(new DateTime($startedAt));
+        return $punch;
+    }
+
+    public function testApproveBlocksWhenPunchRunningOnAbsenceDay(): void {
+        $absence = $this->makeAbsence(Absence::TYPE_SICK, Absence::STATUS_PENDING, new DateTime('2026-03-02'), new DateTime('2026-03-02'));
+        $this->absenceMapper->method('find')->willReturn($absence);
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]);
+        $this->activePunchMapper->method('findByEmployeeOrNull')->willReturn($this->makeActivePunch('2026-03-02 09:00:00'));
+        // No status flip: the approval is refused.
+        $this->absenceMapper->expects($this->never())->method('update');
+
+        $this->expectException(ValidationException::class);
+        $this->service->approve(99, 1, 'admin');
+    }
+
+    public function testApproveAllowsWhenPunchOnDifferentDay(): void {
+        $absence = $this->makeAbsence(Absence::TYPE_SICK, Absence::STATUS_PENDING, new DateTime('2026-03-02'), new DateTime('2026-03-02'));
+        $this->absenceMapper->method('find')->willReturn($absence);
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]);
+        // Punch is from another day — no conflict with this absence.
+        $this->activePunchMapper->method('findByEmployeeOrNull')->willReturn($this->makeActivePunch('2026-03-01 09:00:00'));
+        $this->absenceMapper->method('update')->willReturnArgument(0);
+
+        $this->assertSame(Absence::STATUS_APPROVED, $this->service->approve(99, 1, 'admin')->getStatus());
+    }
+
+    public function testApproveAllowsHalfDayDespiteRunningPunch(): void {
+        $absence = $this->makeAbsence(Absence::TYPE_SICK, Absence::STATUS_PENDING, new DateTime('2026-03-02'), new DateTime('2026-03-02'));
+        $absence->setScope('0.50');
+        $this->absenceMapper->method('find')->willReturn($absence);
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]);
+        $this->activePunchMapper->method('findByEmployeeOrNull')->willReturn($this->makeActivePunch('2026-03-02 09:00:00'));
+        $this->absenceMapper->method('update')->willReturnArgument(0);
+
+        // A half day coexists with work — no punch block.
+        $this->assertSame(Absence::STATUS_APPROVED, $this->service->approve(99, 1, 'admin')->getStatus());
+    }
+
+    public function testApproveAllowsHourlySickDespiteRunningPunch(): void {
+        $absence = $this->makeAbsence(Absence::TYPE_SICK, Absence::STATUS_PENDING, new DateTime('2026-03-02'), new DateTime('2026-03-02'));
+        $absence->setAbsenceMinutes(300);
+        $this->absenceMapper->method('find')->willReturn($absence);
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]);
+        $this->activePunchMapper->method('findByEmployeeOrNull')->willReturn($this->makeActivePunch('2026-03-02 09:00:00'));
+        $this->absenceMapper->method('update')->willReturnArgument(0);
+
+        // Hourly sick coexists with work — no punch block.
+        $this->assertSame(Absence::STATUS_APPROVED, $this->service->approve(99, 1, 'admin')->getStatus());
+    }
+
+    public function testApproveAllowsVacationWithEmergencyWorkEnabledDespiteRunningPunch(): void {
+        $absence = $this->makeAbsence(Absence::TYPE_VACATION, Absence::STATUS_PENDING, new DateTime('2026-03-02'), new DateTime('2026-03-02'));
+        $this->absenceMapper->method('find')->willReturn($absence);
+        $this->timeEntryMapper->method('findByEmployeeAndDateRange')->willReturn([]);
+        $this->activePunchMapper->method('findByEmployeeOrNull')->willReturn($this->makeActivePunch('2026-03-02 09:00:00'));
+        // Emergency work on: once approved the punch becomes emergency work (#664/#626)
+        // and punchOut succeeds, so approval must NOT be blocked.
+        $this->companySettingsService->method('isEmergencyWorkEnabled')->willReturn(true);
+        $this->absenceMapper->method('update')->willReturnArgument(0);
+
+        $this->assertSame(Absence::STATUS_APPROVED, $this->service->approve(99, 1, 'admin')->getStatus());
+    }
+
+    public function testCreateBlocksFullDaySickWhenPunchRunning(): void {
+        // An informational absence (Krank) is approved on create, so a full day of
+        // it must not slip past the running-punch guard the way approve() would.
+        $this->primeSuccessfulCreate();
+        $day = $this->currentMonthDate('11')->format('Y-m-d');
+        $this->activePunchMapper->method('findByEmployeeOrNull')->willReturn($this->makeActivePunch($day . ' 09:00:00'));
+
+        $this->expectException(ValidationException::class);
+        $this->createSick($day, $day, null);
     }
 }

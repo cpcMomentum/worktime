@@ -730,7 +730,8 @@
 		"Der Monat ist bereits abgeschlossen. Bitte zuerst zur Korrektur freigeben, dann die Notarbeit genehmigen.": "Měsíc je již uzavřen. Nejprve jej prosím otevřete k opravě a poté schvalte nouzovou práci.",
 		"An diesem Tag haben Sie genehmigten Urlaub. Diese Zeit wird als Notarbeit im Urlaub gebucht (zusätzlich zum Urlaub). Bitte geben Sie eine Begründung an.": "V tento den máte schválenou dovolenou. Tento čas bude zaúčtován jako nouzová práce během dovolené (nad rámec dovolené). Uveďte prosím odůvodnění.",
 		"Begründung (erforderlich)": "Odůvodnění (povinné)",
-		"Grund für die Notarbeit im Urlaub": "Důvod nouzové práce během dovolené"
+		"Grund für die Notarbeit im Urlaub": "Důvod nouzové práce během dovolené",
+		"Der Mitarbeiter hat am %s eine laufende Stempelung. Bitte zuerst die Stempelung beenden, dann die ganztägige Abwesenheit genehmigen.": "Zaměstnanec má dne %s spuštěné měření času. Nejprve prosím ukončete měření, poté schvalte celodenní nepřítomnost."
 	},
 	"pluralForm": "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;"
 }

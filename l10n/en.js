@@ -731,6 +731,7 @@ OC.L10N.register(
     "Der Monat ist bereits abgeschlossen. Bitte zuerst zur Korrektur freigeben, dann die Notarbeit genehmigen." : "The month is already closed. Please reopen it for correction first, then approve the emergency work.",
     "An diesem Tag haben Sie genehmigten Urlaub. Diese Zeit wird als Notarbeit im Urlaub gebucht (zusätzlich zum Urlaub). Bitte geben Sie eine Begründung an." : "You have approved vacation on this day. This time is booked as emergency work during vacation (in addition to the vacation). Please provide a reason.",
     "Begründung (erforderlich)" : "Reason (required)",
-    "Grund für die Notarbeit im Urlaub" : "Reason for the emergency work during vacation"
+    "Grund für die Notarbeit im Urlaub" : "Reason for the emergency work during vacation",
+    "Der Mitarbeiter hat am %s eine laufende Stempelung. Bitte zuerst die Stempelung beenden, dann die ganztägige Abwesenheit genehmigen." : "The employee has a running punch on %s. Please end the punch first, then approve the full-day absence."
 },
 "nplurals=2; plural=(n != 1);");
