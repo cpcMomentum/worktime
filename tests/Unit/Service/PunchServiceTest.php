@@ -15,6 +15,7 @@ use OCA\WorkTime\Service\PunchConfirmationRequiredException;
 use OCA\WorkTime\Service\PunchConflictException;
 use OCA\WorkTime\Service\PunchReasonRequiredException;
 use OCA\WorkTime\Service\PunchService;
+use OCA\WorkTime\Service\PunchTooLongException;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCA\WorkTime\Service\ValidationException;
 use OCP\IDateTimeZone;
@@ -255,6 +256,38 @@ class PunchServiceTest extends TestCase {
 		$this->service->punchOut(7, 'user1', null, null, null, '16:30', false);
 	}
 
+	public function testPunchOutClearsProjectWithSentinelZero(): void {
+		// #615: projectId 0 = explicit "no project" — the punch-in project (9) is
+		// dropped, create() receives null, not the inherited 9.
+		$punch = $this->punch($this->utc('2020-01-01 08:00:00'), 0);
+		$punch->setProjectId(9);
+		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		$this->mapper->method('deleteById')->willReturn(1);
+		$this->timeEntryService->method('suggestBreak')->willReturn(30);
+		// identicalTo(null): PHPUnit's default with() uses loose ==, and 0 == null in
+		// PHP — so a plain null would also match a leaked 0. Strict === is what
+		// actually distinguishes "cleared" (null) from the un-fixed sentinel (0).
+		$this->timeEntryService->expects($this->once())->method('create')
+			->with(7, '2020-01-01', '08:00', '16:30', 30, $this->identicalTo(null), null, 'user1')
+			->willReturn(new TimeEntry());
+
+		$this->service->punchOut(7, 'user1', null, 0, null, '16:30', false);
+	}
+
+	public function testPunchOutSetsExplicitProjectOverInherited(): void {
+		// #615: a real project id overrides the punch-in project.
+		$punch = $this->punch($this->utc('2020-01-01 08:00:00'), 0);
+		$punch->setProjectId(9);
+		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		$this->mapper->method('deleteById')->willReturn(1);
+		$this->timeEntryService->method('suggestBreak')->willReturn(30);
+		$this->timeEntryService->expects($this->once())->method('create')
+			->with(7, '2020-01-01', '08:00', '16:30', 30, 3, null, 'user1')
+			->willReturn(new TimeEntry());
+
+		$this->service->punchOut(7, 'user1', null, 3, null, '16:30', false);
+	}
+
 	public function testPunchOutCreateFailureLeavesPunchOpen(): void {
 		$punch = $this->punch($this->utc('2020-01-01 08:00:00'), 0);
 		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
@@ -310,6 +343,38 @@ class PunchServiceTest extends TestCase {
 			$this->assertArrayHasKey('startTime', $s);
 			$this->assertArrayHasKey('endTime', $s);
 		}
+	}
+
+	public function testPunchOutOver24hRejectedAsTooLong(): void {
+		// #613: open > 24h spans multiple calendar days — cannot book as one entry.
+		// Rejected unconditionally, even with confirm=true.
+		$startedAt = (new DateTime('now', new DateTimeZone('UTC')))->modify('-25 hours');
+		$punch = $this->punch($startedAt, 0);
+		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		$this->timeEntryService->method('suggestBreak')->willReturn(45);
+		$this->timeEntryService->expects($this->never())->method('create');
+		$this->mapper->expects($this->never())->method('deleteById');
+
+		$this->expectException(PunchTooLongException::class);
+		$this->service->punchOut(7, 'user1', null, null, null, null, true);
+	}
+
+	public function testDiscardRemovesOpenPunch(): void {
+		// #613: discard drops the punch without booking anything.
+		$punch = $this->punch($this->utc('2020-01-01 08:00:00'));
+		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		$this->mapper->expects($this->once())->method('deleteById')->with(1)->willReturn(1);
+		$this->timeEntryService->expects($this->never())->method('create');
+
+		$this->service->discard(7);
+	}
+
+	public function testDiscardWithoutOpenPunchThrows(): void {
+		$this->mapper->method('findByEmployeeOrNull')->willReturn(null);
+		$this->mapper->expects($this->never())->method('deleteById');
+
+		$this->expectException(PunchConflictException::class);
+		$this->service->discard(7);
 	}
 
 	public function testOverlongPunchWithConfirmBooks(): void {

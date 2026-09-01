@@ -88,6 +88,12 @@
                 :label="t('worktime', 'Grund (optional)')"
                 :placeholder="t('worktime', 'z. B. Elternzeit, Langzeiterkrankung, ausgeschieden')" />
 
+            <div class="resting-from">
+                <label for="resting-from">{{ t('worktime', 'Ruhend ab') }}</label>
+                <input id="resting-from" v-model="restingFrom" type="date" class="resting-from__input">
+                <p class="resting-from__hint">{{ t('worktime', 'Ab diesem Tag fällt kein Sollstunden-Zuwachs mehr an. Standard: heute.') }}</p>
+            </div>
+
             <p v-if="impactLoading" class="impact-loading">{{ t('worktime', 'Auswirkungen werden geprüft …') }}</p>
 
             <div v-if="impact && impact.deputyFor.length > 0" class="impact-block">
@@ -217,6 +223,7 @@ export default {
             showRestingDialog: false,
             employeeToRest: null,
             restingReason: '',
+            restingFrom: '',
             impact: null,
             impactLoading: false,
         }
@@ -253,6 +260,8 @@ export default {
         async confirmResting(employee) {
             this.employeeToRest = employee
             this.restingReason = ''
+            // #497: default the resting start to today (local), editable by the admin.
+            this.restingFrom = new Date().toLocaleDateString('en-CA')
             this.impact = null
             this.showRestingDialog = true
             this.impactLoading = true
@@ -278,10 +287,11 @@ export default {
             this.showRestingDialog = false
             this.employeeToRest = null
             this.restingReason = ''
+            this.restingFrom = ''
             this.impact = null
         },
         restingConfirmed() {
-            this.$emit('rest', { employee: this.employeeToRest, reason: this.restingReason })
+            this.$emit('rest', { employee: this.employeeToRest, reason: this.restingReason, restingFrom: this.restingFrom || null })
             this.closeRestingDialog()
         },
         async confirmDelete(employee) {
@@ -393,6 +403,21 @@ td.actions-col {
 .locked-reason {
     font-size: 0.85em;
     color: var(--color-text-maxcontrast);
+    margin-top: 2px;
+}
+
+.resting-from {
+    margin-top: 12px;
+}
+
+.resting-from__input {
+    display: block;
+    margin-top: 4px;
+}
+
+.resting-from__hint {
+    color: var(--color-text-maxcontrast);
+    font-size: 0.85em;
     margin-top: 2px;
 }
 

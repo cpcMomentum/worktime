@@ -731,6 +731,17 @@ OC.L10N.register(
     "Der Monat ist bereits abgeschlossen. Bitte zuerst zur Korrektur freigeben, dann die Notarbeit genehmigen." : "Der Monat ist bereits abgeschlossen. Bitte zuerst zur Korrektur freigeben, dann die Notarbeit genehmigen.",
     "An diesem Tag haben Sie genehmigten Urlaub. Diese Zeit wird als Notarbeit im Urlaub gebucht (zusätzlich zum Urlaub). Bitte geben Sie eine Begründung an." : "An diesem Tag haben Sie genehmigten Urlaub. Diese Zeit wird als Notarbeit im Urlaub gebucht (zusätzlich zum Urlaub). Bitte geben Sie eine Begründung an.",
     "Begründung (erforderlich)" : "Begründung (erforderlich)",
-    "Grund für die Notarbeit im Urlaub" : "Grund für die Notarbeit im Urlaub"
+    "Grund für die Notarbeit im Urlaub" : "Grund für die Notarbeit im Urlaub",
+    "Der Mitarbeiter hat am %s eine laufende Stempelung. Bitte zuerst die Stempelung beenden, dann die ganztägige Abwesenheit genehmigen." : "Der Mitarbeiter hat am %s eine laufende Stempelung. Bitte zuerst die Stempelung beenden, dann die ganztägige Abwesenheit genehmigen.",
+    "Verwerfen" : "Verwerfen",
+    "Die laufende Stempelung wird ohne Buchung verworfen. Fortfahren?" : "Die laufende Stempelung wird ohne Buchung verworfen. Fortfahren?",
+    "Stempelung verwerfen" : "Stempelung verwerfen",
+    "Verwerfen fehlgeschlagen." : "Verwerfen fehlgeschlagen.",
+    "Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte verwerfen Sie die Stempelung und erfassen Sie die Zeit manuell." : "Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte verwerfen Sie die Stempelung und erfassen Sie die Zeit manuell.",
+    "Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte schließe diesen Dialog, verwirf die Stempelung und erfasse die Zeit manuell." : "Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte schließe diesen Dialog, verwirf die Stempelung und erfasse die Zeit manuell.",
+    "Ruhend ab" : "Ruhend ab",
+    "Ab diesem Tag fällt kein Sollstunden-Zuwachs mehr an. Standard: heute." : "Ab diesem Tag fällt kein Sollstunden-Zuwachs mehr an. Standard: heute.",
+    "Das Reaktivierungsdatum darf nicht vor dem Ruhend-ab-Datum liegen." : "Das Reaktivierungsdatum darf nicht vor dem Ruhend-ab-Datum liegen.",
+    "Ungültiges Datum. Erwartet wird JJJJ-MM-TT." : "Ungültiges Datum. Erwartet wird JJJJ-MM-TT."
 },
 "nplurals=2; plural=(n != 1);");

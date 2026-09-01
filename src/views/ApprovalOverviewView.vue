@@ -501,7 +501,10 @@ export default {
                 await this.loadData()
             } catch (error) {
                 console.error('Failed to approve absence:', error)
-                showError(t('worktime', 'Fehler beim Genehmigen'))
+                // #665: surface the server's reason (e.g. running punch, existing
+                // time entries) instead of a generic message — the approver needs
+                // to know WHY, so they can ask the employee to clock out first.
+                showError(error.message || t('worktime', 'Fehler beim Genehmigen'))
             } finally {
                 this.processingAbsence = null
             }
@@ -514,7 +517,7 @@ export default {
                 await this.loadData()
             } catch (error) {
                 console.error('Failed to approve emergency work:', error)
-                showError(t('worktime', 'Fehler beim Genehmigen'))
+                showError(error.message || t('worktime', 'Fehler beim Genehmigen'))
             } finally {
                 this.processingEmergency = null
             }

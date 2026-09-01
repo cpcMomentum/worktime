@@ -42,6 +42,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setEntryDate(?DateTime $entryDate)
  * @method DateTime|null getExitDate()
  * @method void setExitDate(?DateTime $exitDate)
+ * @method DateTime|null getRestingFrom()
+ * @method void setRestingFrom(?DateTime $restingFrom)
+ * @method DateTime|null getRestingUntil()
+ * @method void setRestingUntil(?DateTime $restingUntil)
  * @method int getIsActive()
  * @method string|null getLockedReason()
  * @method void setLockedReason(?string $lockedReason)
@@ -96,6 +100,8 @@ class Employee extends Entity implements JsonSerializable {
     protected string $federalState = 'BY';
     protected ?DateTime $entryDate = null;
     protected ?DateTime $exitDate = null;
+    protected ?DateTime $restingFrom = null;
+    protected ?DateTime $restingUntil = null;
     protected int $workingDaysPerWeek = 5;
     protected bool $vacationTransferred = false;
     protected int $isActive = 1;
@@ -116,6 +122,8 @@ class Employee extends Entity implements JsonSerializable {
         $this->addType('vacationTransferred', 'boolean');
         $this->addType('entryDate', 'datetime');
         $this->addType('exitDate', 'datetime');
+        $this->addType('restingFrom', 'datetime');
+        $this->addType('restingUntil', 'datetime');
         $this->addType('isActive', 'integer');
         $this->addType('createdAt', 'datetime');
         $this->addType('updatedAt', 'datetime');
@@ -169,6 +177,8 @@ class Employee extends Entity implements JsonSerializable {
             'federalStateName' => self::FEDERAL_STATES[$this->federalState] ?? $this->federalState,
             'entryDate' => $this->entryDate?->format('Y-m-d'),
             'exitDate' => $this->exitDate?->format('Y-m-d'),
+            'restingFrom' => $this->restingFrom?->format('Y-m-d'),
+            'restingUntil' => $this->restingUntil?->format('Y-m-d'),
             'isActive' => (bool)$this->isActive,
             'lockedReason' => $this->lockedReason,
             'createdAt' => $this->createdAt?->format('c'),

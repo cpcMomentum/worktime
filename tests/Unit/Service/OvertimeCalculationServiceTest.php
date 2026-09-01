@@ -230,4 +230,34 @@ class OvertimeCalculationServiceTest extends TestCase {
         $this->assertSame(0.5, $stats['paidAbsenceDays']);
         $this->assertSame(0.5, $stats['absenceDays']);
     }
+
+    // ---------------------------------------------------------------------
+    // #497: no target (Soll) accrues during a resting spell
+    // ---------------------------------------------------------------------
+
+    public function testRestingSpellRemovesMonthlyTarget(): void {
+        // "today" after June → June is a past month. An open resting spell covering
+        // June leaves no Soll, so no minus hours pile up (the reported bug).
+        $service = $this->futureMonthService('2026-07-15');
+        $employee = new Employee();
+        $employee->setId(1);
+        $employee->setRestingFrom(new DateTime('2026-05-01')); // open spell (no until)
+
+        $stats = $service->getMonthlyStats($employee, 2026, 6, [], [], []);
+
+        $this->assertSame(0, $stats['monthlyTargetMinutes']);
+        $this->assertSame(0, $stats['targetMinutes']);
+        $this->assertSame(0, $stats['overtimeMinutes']);
+    }
+
+    public function testWithoutRestingMonthlyTargetIsCharged(): void {
+        // Control: same month without a resting spell keeps the full target (480).
+        $service = $this->futureMonthService('2026-07-15');
+        $employee = new Employee();
+        $employee->setId(1);
+
+        $stats = $service->getMonthlyStats($employee, 2026, 6, [], [], []);
+
+        $this->assertSame(480, $stats['monthlyTargetMinutes']);
+    }
 }

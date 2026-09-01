@@ -107,9 +107,9 @@ export default {
         }
     },
 
-    async setResting(id, resting, reason = null) {
+    async setResting(id, resting, reason = null, restingFrom = null) {
         try {
-            const response = await api.put(`/employees/${id}/resting`, { resting, reason })
+            const response = await api.put(`/employees/${id}/resting`, { resting, reason, restingFrom })
             return response.data
         } catch (error) {
             handleApiError(error)

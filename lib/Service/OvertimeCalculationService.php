@@ -151,6 +151,16 @@ class OvertimeCalculationService {
         $workingDays = $this->workScheduleService->countWorkingDays($employeeId, $startDate, $endDate, $holidays);
         $targetMinutes = $this->workScheduleService->calculateTargetMinutes($employeeId, $startDate, $endDate, $holidays);
 
+        // #497: no target accrues while the employee is on a resting spell
+        // (Elternzeit, Langzeiterkrankung, …). Subtract the resting window's share
+        // of the target/working days — mirrors the entry/exit clipping above, but
+        // as an interior exclusion since a spell can sit inside the range.
+        [$restStart, $restEnd] = $this->restingOverlap($employee, $startDate, $endDate);
+        if ($restStart !== null) {
+            $workingDays = max(0.0, $workingDays - $this->workScheduleService->countWorkingDays($employeeId, $restStart, $restEnd, $holidays));
+            $targetMinutes = max(0, $targetMinutes - $this->workScheduleService->calculateTargetMinutes($employeeId, $restStart, $restEnd, $holidays));
+        }
+
         $targetReductionTypes = [Absence::TYPE_UNPAID];
         $overtimeConsumingTypes = [Absence::TYPE_COMPENSATORY];
 
@@ -195,7 +205,9 @@ class OvertimeCalculationService {
             }
         }
 
-        $adjustedTargetMinutes = $targetMinutes - $targetReductionMinutes;
+        // #497: clamp at 0 — resting already trimmed the target; an overlapping
+        // unpaid absence must not double-subtract into a negative target.
+        $adjustedTargetMinutes = max(0, $targetMinutes - $targetReductionMinutes);
 
         $workedMinutes = 0;
         foreach ($timeEntries as $entry) {
@@ -342,6 +354,21 @@ class OvertimeCalculationService {
             ? $this->workScheduleService->calculateTargetMinutes($employeeId, $startDate, $endDateForActual, $holidays)
             : 0;
 
+        // #497: no target accrues during a resting spell — subtract its share from
+        // both the full-month and the proportional-until-today figures.
+        [$restStart, $restEnd] = $this->restingOverlap($employee, $startDate, $monthEndDate);
+        if ($restStart !== null) {
+            $workingDaysMonth = max(0.0, $workingDaysMonth - $this->workScheduleService->countWorkingDays($employeeId, $restStart, $restEnd, $holidays));
+            $monthlyTargetMinutes = max(0, $monthlyTargetMinutes - $this->workScheduleService->calculateTargetMinutes($employeeId, $restStart, $restEnd, $holidays));
+        }
+        if ($hasProportionalRange) {
+            [$restStartP, $restEndP] = $this->restingOverlap($employee, $startDate, $endDateForActual);
+            if ($restStartP !== null) {
+                $workingDaysUntilToday = max(0.0, $workingDaysUntilToday - $this->workScheduleService->countWorkingDays($employeeId, $restStartP, $restEndP, $holidays));
+                $proportionalTargetMinutes = max(0, $proportionalTargetMinutes - $this->workScheduleService->calculateTargetMinutes($employeeId, $restStartP, $restEndP, $holidays));
+            }
+        }
+
         // dailyMinutes approximation for display
         $dailyMinutes = $workingDaysMonth > 0 ? (int)round($monthlyTargetMinutes / $workingDaysMonth) : 0;
 
@@ -440,8 +467,11 @@ class OvertimeCalculationService {
         }
 
         // Adjust targets for unpaid leave (compensatory time deliberately keeps the target).
-        $adjustedMonthlyTargetMinutes = $monthlyTargetMinutes - $targetReductionMinutesMonth;
-        $adjustedProportionalTargetMinutes = $proportionalTargetMinutes - $targetReductionMinutesUntilToday;
+        // #497: clamp at 0 — the resting reduction already trimmed the target, and an
+        // unpaid absence on the same (retroactively resting) days must not push it
+        // negative through double subtraction.
+        $adjustedMonthlyTargetMinutes = max(0, $monthlyTargetMinutes - $targetReductionMinutesMonth);
+        $adjustedProportionalTargetMinutes = max(0, $proportionalTargetMinutes - $targetReductionMinutesUntilToday);
 
         // Sum actual work minutes from time entries
         $workedMinutes = 0;
@@ -559,6 +589,27 @@ class OvertimeCalculationService {
         }
 
         return $totalMinutes;
+    }
+
+    /**
+     * #497: the overlap of the employee's resting spell with [start, end], or
+     * [null, null] if there is none. An open spell (resting_until NULL) runs to the
+     * range end; a closed one is a bounded interior hole.
+     *
+     * @return array{0: ?DateTime, 1: ?DateTime}
+     */
+    private function restingOverlap(Employee $employee, DateTime $start, DateTime $end): array {
+        $from = $employee->getRestingFrom();
+        if ($from === null) {
+            return [null, null];
+        }
+        $until = $employee->getRestingUntil() ?? $end;
+        $overlapStart = $from > $start ? clone $from : clone $start;
+        $overlapEnd = $until < $end ? clone $until : clone $end;
+        if ($overlapStart > $overlapEnd) {
+            return [null, null];
+        }
+        return [$overlapStart, $overlapEnd];
     }
 
     /**
