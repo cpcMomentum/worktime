@@ -7,6 +7,16 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-09-01
+
+### Added
+- **Kein Sollstunden-Aufbau während einer Ruhendstellung (#497)**: Ruhend gestellte Mitarbeitende ohne Austrittsdatum (Elternzeit, Mutterschutz, Langzeiterkrankung, Sabbatical) sammelten bisher weiter Sollstunden und damit unabbaubare Minusstunden. Die Ruhendstellung ist jetzt ein Zeitraum: Beim Ruhendsetzen wird ein „Ruhend ab"-Datum erfasst (Standard: heute), ab dem kein Soll mehr anfällt; die Reaktivierung schließt den Zeitraum. Bereits vor diesem Update inaktiv gesetzte Mitarbeitende behalten ihren Stand, bis das Ruhend-ab-Datum nachgetragen wird.
+
+### Fixed
+- **Genehmigung einer ganztägigen Abwesenheit bei laufender Stempelung (#665)**: Lief eine Stempeluhr und wurde für denselben Tag eine ganztägige Abwesenheit genehmigt, saß die Stempelung fest (ließ sich nicht mehr beenden). Die Genehmigung prüft jetzt auch die laufende Stempelung und blockt mit klarer Meldung, wenn sie sonst in der Falle säße; die Begründung wird dem/der Genehmigenden nun angezeigt.
+- **Projekt beim Ausstempeln entfernen (#615)**: Die Auswahl „Kein Projekt" im Ausstempel-Dialog hatte keine Wirkung – der Eintrag behielt das beim Einstempeln gesetzte Projekt. Ein Projekt lässt sich jetzt beim Ausstempeln wieder entfernen.
+- **Vergessene Stempelung über 24 Stunden (#613)**: Eine über mehrere Kalendertage offen gebliebene Stempelung wurde still auf ~24 Stunden gedeckelt gebucht. Solche Stempelungen werden jetzt beim Ausstempeln abgelehnt; stattdessen gibt es einen „Verwerfen"-Button, um die Stempelung zu verwerfen und die Zeit manuell zu erfassen.
+
 ## [0.17.1] - 2026-08-31
 
 ### Fixed
