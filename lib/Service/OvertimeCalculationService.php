@@ -587,13 +587,6 @@ class OvertimeCalculationService {
     }
 
     /**
-     * Sum worked minutes per calendar day (Y-m-d). Only real TimeEntry rows carry
-     * a date; lightweight test doubles without one are ignored.
-     *
-     * @param TimeEntry[] $timeEntries
-     * @return array<string, int>
-     */
-    /**
      * #497: the overlap of the employee's resting spell with [start, end], or
      * [null, null] if there is none. An open spell (resting_until NULL) runs to the
      * range end; a closed one is a bounded interior hole.
@@ -614,6 +607,13 @@ class OvertimeCalculationService {
         return [$overlapStart, $overlapEnd];
     }
 
+    /**
+     * Sum worked minutes per calendar day (Y-m-d). Only real TimeEntry rows carry
+     * a date; lightweight test doubles without one are ignored.
+     *
+     * @param TimeEntry[] $timeEntries
+     * @return array<string, int>
+     */
     private function workedMinutesByDate(array $timeEntries): array {
         $map = [];
         foreach ($timeEntries as $entry) {
