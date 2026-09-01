@@ -10,13 +10,17 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Service;
 
 use DateTime;
+use DateTimeZone;
 use OCA\WorkTime\Db\Absence;
 use OCA\WorkTime\Db\AbsenceMapper;
+use OCA\WorkTime\Db\ActivePunch;
+use OCA\WorkTime\Db\ActivePunchMapper;
 use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\EmployeeMapper;
 use OCA\WorkTime\Db\HolidayMapper;
 use OCA\WorkTime\Notification\NotificationService;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\IDateTimeZone;
 use OCP\IL10N;
 use Psr\Log\LoggerInterface;
 
@@ -46,6 +50,8 @@ class AbsenceService {
         private HolidayService $holidayService,
         private YearlyCarryoverService $carryoverService,
         private CompanySettingsService $companySettingsService,
+        private ActivePunchMapper $activePunchMapper,
+        private IDateTimeZone $dateTimeZone,
         private LoggerInterface $logger,
         private IL10N $l,
     ) {
@@ -233,6 +239,12 @@ class AbsenceService {
         $absence->setUpdatedAt(new DateTime());
 
         if ($isInformational) {
+            // #665: informational absences (Krank/Kind krank) are approved on the
+            // spot, so a full day of one would trap a running punch immediately —
+            // the same trap approve() guards against for pending absences. A pending
+            // (non-informational) create cannot trap anything yet, so it is not
+            // checked here; approve() catches it later.
+            $this->checkActivePunchConflict($absence);
             // Krankheit/Kind krank werden nicht genehmigt — direkt approved
             $absence->setStatus(Absence::STATUS_APPROVED);
             $absence->setApprovedAt(new DateTime());
@@ -730,6 +742,9 @@ class AbsenceService {
         $absence->setUpdatedAt(new DateTime());
 
         if ($isInformational) {
+            // #665: stays approved without a re-approval step, so re-check the
+            // running punch here too (same trap as create/approve).
+            $this->checkActivePunchConflict($absence);
             // Krankheit/Kind krank bleiben approved (kein Re-Approval noetig)
             $absence->setStatus(Absence::STATUS_APPROVED);
             $absence->setApprovedAt(new DateTime());
@@ -829,6 +844,11 @@ class AbsenceService {
             $absence->getEndDate(),
             $absence->getScopeValue()
         );
+
+        // #665: a running punch is invisible to the committed-entry check above, but
+        // approving a full-day absence over it would trap it (punchOut can no longer
+        // book). Block the approval until the punch is closed.
+        $this->checkActivePunchConflict($absence);
 
         $absence->setStatus(Absence::STATUS_APPROVED);
         $absence->setApprovedBy($approverEmployeeId);
@@ -1082,6 +1102,64 @@ class AbsenceService {
                 [implode(', ', array_values($dates))]
             )],
         ]);
+    }
+
+    /**
+     * #665: block approving a full-day absence while the employee has a running
+     * punch on a day the absence covers. Otherwise the punch is trapped: punchOut()
+     * books through create(), which blocks a full-day absence, the transaction rolls
+     * back, and the open punch cannot be closed until the absence is cancelled.
+     *
+     * Mirrors checkTimeEntryConflict's coexistence rules — hourly (absenceMinutes)
+     * and half-day absences never block work, so a punch is fine there. And a
+     * vacation day with emergency work enabled is deliberately allowed: once
+     * approved, the running punch becomes emergency work (#664/#626) and punchOut()
+     * succeeds, so there is no trap to prevent.
+     */
+    private function checkActivePunchConflict(Absence $absence): void {
+        if ($absence->getAbsenceMinutes() !== null || $absence->getScopeValue() < 1.0) {
+            return;
+        }
+        if ($absence->getType() === Absence::TYPE_VACATION && $this->companySettingsService->isEmergencyWorkEnabled()) {
+            return;
+        }
+
+        $punch = $this->activePunchMapper->findByEmployeeOrNull($absence->getEmployeeId());
+        if ($punch === null) {
+            return;
+        }
+
+        // Compare calendar days as Y-m-d strings, NOT DateTime instants: the punch
+        // day is in the local zone while the absence dates are UTC-midnight, so a
+        // setTime()+instant comparison would place local midnight two hours before
+        // UTC midnight and silently drop the conflict (found live in a UTC+2 zone).
+        // Formatting each in its own zone yields the intended calendar day, and
+        // lexicographic Y-m-d order equals chronological order.
+        $punchLocal = $this->punchLocalDate($punch);
+        $punchDay = $punchLocal->format('Y-m-d');
+        if ($punchDay < $absence->getStartDate()->format('Y-m-d')
+            || $punchDay > $absence->getEndDate()->format('Y-m-d')) {
+            return;
+        }
+
+        throw new ValidationException([
+            'activePunchConflict' => [$this->l->t(
+                'Der Mitarbeiter hat am %s eine laufende Stempelung. Bitte zuerst die Stempelung beenden, dann die ganztägige Abwesenheit genehmigen.',
+                [$punchLocal->format('d.m.Y')]
+            )],
+        ]);
+    }
+
+    /**
+     * The running punch's local calendar day. Stored datetimes are UTC wall-clock
+     * digits hydrated with the PHP default timezone (see ActivePunch::jsonSerialize
+     * and PunchService); reinterpret them as UTC, then convert to the configured
+     * local zone so the day is correct regardless of the server's default timezone.
+     */
+    private function punchLocalDate(ActivePunch $punch): DateTime {
+        $stored = $punch->getStartedAt();
+        $utc = DateTime::createFromFormat('Y-m-d H:i:s', $stored->format('Y-m-d H:i:s'), new DateTimeZone('UTC')) ?: $stored;
+        return $utc->setTimezone($this->dateTimeZone->getTimeZone());
     }
 
     /**

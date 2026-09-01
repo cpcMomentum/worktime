@@ -731,6 +731,7 @@ OC.L10N.register(
     "Der Monat ist bereits abgeschlossen. Bitte zuerst zur Korrektur freigeben, dann die Notarbeit genehmigen." : "Der Monat ist bereits abgeschlossen. Bitte zuerst zur Korrektur freigeben, dann die Notarbeit genehmigen.",
     "An diesem Tag haben Sie genehmigten Urlaub. Diese Zeit wird als Notarbeit im Urlaub gebucht (zusätzlich zum Urlaub). Bitte geben Sie eine Begründung an." : "An diesem Tag haben Sie genehmigten Urlaub. Diese Zeit wird als Notarbeit im Urlaub gebucht (zusätzlich zum Urlaub). Bitte geben Sie eine Begründung an.",
     "Begründung (erforderlich)" : "Begründung (erforderlich)",
-    "Grund für die Notarbeit im Urlaub" : "Grund für die Notarbeit im Urlaub"
+    "Grund für die Notarbeit im Urlaub" : "Grund für die Notarbeit im Urlaub",
+    "Der Mitarbeiter hat am %s eine laufende Stempelung. Bitte zuerst die Stempelung beenden, dann die ganztägige Abwesenheit genehmigen." : "Der Mitarbeiter hat am %s eine laufende Stempelung. Bitte zuerst die Stempelung beenden, dann die ganztägige Abwesenheit genehmigen."
 },
 "nplurals=2; plural=(n != 1);");
