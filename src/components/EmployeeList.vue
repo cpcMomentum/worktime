@@ -406,6 +406,21 @@ td.actions-col {
     margin-top: 2px;
 }
 
+.resting-from {
+    margin-top: 12px;
+}
+
+.resting-from__input {
+    display: block;
+    margin-top: 4px;
+}
+
+.resting-from__hint {
+    color: var(--color-text-maxcontrast);
+    font-size: 0.85em;
+    margin-top: 2px;
+}
+
 .impact-loading {
     color: var(--color-text-maxcontrast);
     font-size: 0.9em;
