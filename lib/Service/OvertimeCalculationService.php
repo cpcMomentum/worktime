@@ -205,7 +205,9 @@ class OvertimeCalculationService {
             }
         }
 
-        $adjustedTargetMinutes = $targetMinutes - $targetReductionMinutes;
+        // #497: clamp at 0 — resting already trimmed the target; an overlapping
+        // unpaid absence must not double-subtract into a negative target.
+        $adjustedTargetMinutes = max(0, $targetMinutes - $targetReductionMinutes);
 
         $workedMinutes = 0;
         foreach ($timeEntries as $entry) {
@@ -465,8 +467,11 @@ class OvertimeCalculationService {
         }
 
         // Adjust targets for unpaid leave (compensatory time deliberately keeps the target).
-        $adjustedMonthlyTargetMinutes = $monthlyTargetMinutes - $targetReductionMinutesMonth;
-        $adjustedProportionalTargetMinutes = $proportionalTargetMinutes - $targetReductionMinutesUntilToday;
+        // #497: clamp at 0 — the resting reduction already trimmed the target, and an
+        // unpaid absence on the same (retroactively resting) days must not push it
+        // negative through double subtraction.
+        $adjustedMonthlyTargetMinutes = max(0, $monthlyTargetMinutes - $targetReductionMinutesMonth);
+        $adjustedProportionalTargetMinutes = max(0, $proportionalTargetMinutes - $targetReductionMinutesUntilToday);
 
         // Sum actual work minutes from time entries
         $workedMinutes = 0;
