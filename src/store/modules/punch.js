@@ -65,6 +65,12 @@ const actions = {
         commit('SET_ACTIVE_PUNCH', null)
         return entry
     },
+
+    async punchDiscard({ commit }, employeeId) {
+        // #613: drop the open punch without booking (stale / multi-day / mistaken).
+        await TimeEntryService.punchDiscard(employeeId)
+        commit('SET_ACTIVE_PUNCH', null)
+    },
 }
 
 export default {

@@ -53,6 +53,12 @@
 						</template>
 						{{ t('worktime', 'Ausstempeln') }}
 					</NcButton>
+					<NcButton type="tertiary" :disabled="busy" @click="doDiscard">
+						<template #icon>
+							<DeleteIcon :size="20" />
+						</template>
+						{{ t('worktime', 'Verwerfen') }}
+					</NcButton>
 				</div>
 			</div>
 		</template>
@@ -81,7 +87,9 @@ import ClockIcon from 'vue-material-design-icons/Clock.vue'
 import PlayIcon from 'vue-material-design-icons/Play.vue'
 import PauseIcon from 'vue-material-design-icons/Pause.vue'
 import StopIcon from 'vue-material-design-icons/Stop.vue'
+import DeleteIcon from 'vue-material-design-icons/Delete.vue'
 import PunchOutDialog from './PunchOutDialog.vue'
+import { confirmAction } from '../utils/errorHandler.js'
 
 export default {
 	name: 'PunchPanel',
@@ -93,6 +101,7 @@ export default {
 		PlayIcon,
 		PauseIcon,
 		StopIcon,
+		DeleteIcon,
 		PunchOutDialog,
 	},
 	props: {
@@ -211,6 +220,25 @@ export default {
 		onBooked() {
 			this.closePunchOut()
 			this.$emit('booked')
+		},
+		async doDiscard() {
+			// #613: discarding books nothing and cannot be undone — confirm first.
+			const ok = await confirmAction(
+				this.t('worktime', 'Die laufende Stempelung wird ohne Buchung verworfen. Fortfahren?'),
+				this.t('worktime', 'Stempelung verwerfen'),
+				this.t('worktime', 'Verwerfen'),
+				true,
+			)
+			if (!ok) return
+			this.busy = true
+			this.error = null
+			try {
+				await this.$store.dispatch('punch/punchDiscard', this.employeeId)
+			} catch (e) {
+				this.error = e.message || this.t('worktime', 'Verwerfen fehlgeschlagen.')
+			} finally {
+				this.busy = false
+			}
 		},
 	},
 }

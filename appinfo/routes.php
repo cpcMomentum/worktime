@@ -19,6 +19,7 @@ return [
         ['name' => 'time_entry#punchPause', 'url' => '/api/time-entries/punch-pause', 'verb' => 'POST'],
         ['name' => 'time_entry#punchResume', 'url' => '/api/time-entries/punch-resume', 'verb' => 'POST'],
         ['name' => 'time_entry#punchOut', 'url' => '/api/time-entries/punch-out', 'verb' => 'POST'],
+        ['name' => 'time_entry#punchDiscard', 'url' => '/api/time-entries/punch-discard', 'verb' => 'POST'],
         ['name' => 'time_entry#submitMonth', 'url' => '/api/time-entries/submit-month', 'verb' => 'POST'],
         ['name' => 'time_entry#approveMonth', 'url' => '/api/time-entries/approve-month', 'verb' => 'POST'],
         ['name' => 'time_entry#pendingEmergency', 'url' => '/api/time-entries/pending-emergency', 'verb' => 'GET'],

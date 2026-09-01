@@ -732,6 +732,12 @@ OC.L10N.register(
     "An diesem Tag haben Sie genehmigten Urlaub. Diese Zeit wird als Notarbeit im Urlaub gebucht (zusätzlich zum Urlaub). Bitte geben Sie eine Begründung an." : "V tento den máte schválenou dovolenou. Tento čas bude zaúčtován jako nouzová práce během dovolené (nad rámec dovolené). Uveďte prosím odůvodnění.",
     "Begründung (erforderlich)" : "Odůvodnění (povinné)",
     "Grund für die Notarbeit im Urlaub" : "Důvod nouzové práce během dovolené",
-    "Der Mitarbeiter hat am %s eine laufende Stempelung. Bitte zuerst die Stempelung beenden, dann die ganztägige Abwesenheit genehmigen." : "Zaměstnanec má dne %s spuštěné měření času. Nejprve prosím ukončete měření, poté schvalte celodenní nepřítomnost."
+    "Der Mitarbeiter hat am %s eine laufende Stempelung. Bitte zuerst die Stempelung beenden, dann die ganztägige Abwesenheit genehmigen." : "Zaměstnanec má dne %s spuštěné měření času. Nejprve prosím ukončete měření, poté schvalte celodenní nepřítomnost.",
+    "Verwerfen" : "Zahodit",
+    "Die laufende Stempelung wird ohne Buchung verworfen. Fortfahren?" : "Probíhající měření času bude zahozeno bez zaúčtování. Pokračovat?",
+    "Stempelung verwerfen" : "Zahodit měření času",
+    "Verwerfen fehlgeschlagen." : "Zahození se nezdařilo.",
+    "Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte verwerfen Sie die Stempelung und erfassen Sie die Zeit manuell." : "Toto měření času je otevřené déle než 24 hodin a nelze jej zaúčtovat jako jeden časový záznam. Zrušte prosím měření a zadejte čas ručně.",
+    "Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte schließe diesen Dialog, verwirf die Stempelung und erfasse die Zeit manuell." : "Toto měření času je otevřené déle než 24 hodin a nelze jej zaúčtovat jako jeden časový záznam. Zavřete prosím toto okno, zrušte měření a zadejte čas ručně."
 },
 "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;");

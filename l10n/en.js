@@ -732,6 +732,12 @@ OC.L10N.register(
     "An diesem Tag haben Sie genehmigten Urlaub. Diese Zeit wird als Notarbeit im Urlaub gebucht (zusätzlich zum Urlaub). Bitte geben Sie eine Begründung an." : "You have approved vacation on this day. This time is booked as emergency work during vacation (in addition to the vacation). Please provide a reason.",
     "Begründung (erforderlich)" : "Reason (required)",
     "Grund für die Notarbeit im Urlaub" : "Reason for the emergency work during vacation",
-    "Der Mitarbeiter hat am %s eine laufende Stempelung. Bitte zuerst die Stempelung beenden, dann die ganztägige Abwesenheit genehmigen." : "The employee has a running punch on %s. Please end the punch first, then approve the full-day absence."
+    "Der Mitarbeiter hat am %s eine laufende Stempelung. Bitte zuerst die Stempelung beenden, dann die ganztägige Abwesenheit genehmigen." : "The employee has a running punch on %s. Please end the punch first, then approve the full-day absence.",
+    "Verwerfen" : "Discard",
+    "Die laufende Stempelung wird ohne Buchung verworfen. Fortfahren?" : "The running punch will be discarded without booking. Continue?",
+    "Stempelung verwerfen" : "Discard punch",
+    "Verwerfen fehlgeschlagen." : "Discard failed.",
+    "Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte verwerfen Sie die Stempelung und erfassen Sie die Zeit manuell." : "This punch has been open for more than 24 hours and cannot be booked as a single time entry. Please discard the punch and enter the time manually.",
+    "Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte schließe diesen Dialog, verwirf die Stempelung und erfasse die Zeit manuell." : "This punch has been open for more than 24 hours and cannot be booked as a single time entry. Please close this dialog, discard the punch and enter the time manually."
 },
 "nplurals=2; plural=(n != 1);");

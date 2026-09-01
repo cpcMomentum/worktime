@@ -6,7 +6,11 @@
 				{{ t('worktime', 'Prüfe die Zeiten und bestätige, um den Zeiteintrag anzulegen.') }}
 			</p>
 
-			<NcNoteCard v-if="isOverlong" type="warning">
+			<NcNoteCard v-if="isPunchTooLong" type="error">
+				{{ t('worktime', 'Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte schließe diesen Dialog, verwirf die Stempelung und erfasse die Zeit manuell.') }}
+			</NcNoteCard>
+
+			<NcNoteCard v-else-if="isOverlong" type="warning">
 				{{ t('worktime', 'Du bist seit {hours} h eingestempelt. Bitte prüfe das Ende, bevor du buchst.', { hours: grossHours }) }}
 			</NcNoteCard>
 
@@ -149,7 +153,20 @@ export default {
 		isOverlong() {
 			return this.grossMinutes > this.maxDailyHours * 60
 		},
+		punchElapsedHours() {
+			if (!this.punch || !this.punch.startedAt) return 0
+			return (Date.now() - new Date(this.punch.startedAt).getTime()) / 3600000
+		},
+		isPunchTooLong() {
+			// #613: open > 24h spans several days — cannot be one entry. Booking is
+			// blocked here (the server rejects the raw path too); the user discards
+			// the punch and enters the time manually.
+			return this.punchElapsedHours > 24
+		},
 		isValid() {
+			if (this.isPunchTooLong) {
+				return false
+			}
 			if (!this.form.date || !this.form.startTime || !this.form.endTime || this.netMinutes <= 0) {
 				return false
 			}
