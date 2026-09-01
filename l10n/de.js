@@ -738,6 +738,10 @@ OC.L10N.register(
     "Stempelung verwerfen" : "Stempelung verwerfen",
     "Verwerfen fehlgeschlagen." : "Verwerfen fehlgeschlagen.",
     "Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte verwerfen Sie die Stempelung und erfassen Sie die Zeit manuell." : "Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte verwerfen Sie die Stempelung und erfassen Sie die Zeit manuell.",
-    "Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte schließe diesen Dialog, verwirf die Stempelung und erfasse die Zeit manuell." : "Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte schließe diesen Dialog, verwirf die Stempelung und erfasse die Zeit manuell."
+    "Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte schließe diesen Dialog, verwirf die Stempelung und erfasse die Zeit manuell." : "Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte schließe diesen Dialog, verwirf die Stempelung und erfasse die Zeit manuell.",
+    "Ruhend ab" : "Ruhend ab",
+    "Ab diesem Tag fällt kein Sollstunden-Zuwachs mehr an. Standard: heute." : "Ab diesem Tag fällt kein Sollstunden-Zuwachs mehr an. Standard: heute.",
+    "Das Reaktivierungsdatum darf nicht vor dem Ruhend-ab-Datum liegen." : "Das Reaktivierungsdatum darf nicht vor dem Ruhend-ab-Datum liegen.",
+    "Ungültiges Datum. Erwartet wird JJJJ-MM-TT." : "Ungültiges Datum. Erwartet wird JJJJ-MM-TT."
 },
 "nplurals=2; plural=(n != 1);");

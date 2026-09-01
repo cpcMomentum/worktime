@@ -15,6 +15,7 @@ use OCA\WorkTime\Db\EmployeeMapper;
 use OCA\WorkTime\Db\WorkSchedule;
 use OCA\WorkTime\Db\WorkScheduleMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\IL10N;
 use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
 
@@ -31,6 +32,7 @@ class EmployeeService {
         private EmployeeDeletionService $deletionService,
         private IUserManager $userManager,
         private LoggerInterface $logger,
+        private IL10N $l,
     ) {
     }
 
@@ -331,9 +333,13 @@ class EmployeeService {
      * @throws NotFoundException
      * @throws ValidationException
      */
-    public function setResting(int $id, ?string $reason, string $currentUserId = ''): Employee {
+    public function setResting(int $id, ?string $reason, string $currentUserId = '', ?string $restingFrom = null): Employee {
         $employee = $this->find($id);
         $oldValues = $employee->jsonSerialize();
+
+        // #497: the resting state carries a start date so no target (Soll) accrues
+        // from that day on. Default to today when the caller does not specify one.
+        $restingFromDate = $this->parseRestingDate($restingFrom, 'restingFrom');
 
         $reason = $reason !== null ? trim($reason) : null;
         if ($reason !== null && mb_strlen($reason) > self::MAX_LOCKED_REASON_LENGTH) {
@@ -362,6 +368,9 @@ class EmployeeService {
 
         $employee->setIsActive(false);
         $employee->setLockedReason($reason === '' ? null : $reason);
+        // #497: a fresh resting spell — start set, open end.
+        $employee->setRestingFrom($restingFromDate);
+        $employee->setRestingUntil(null);
         $employee->setUpdatedAt(new DateTime());
 
         $employee = $this->withActiveSchedule($this->employeeMapper->update($employee));
@@ -380,9 +389,19 @@ class EmployeeService {
      *
      * @throws NotFoundException
      */
-    public function reactivate(int $id, string $currentUserId = ''): Employee {
+    public function reactivate(int $id, string $currentUserId = '', ?string $restingUntil = null): Employee {
         $employee = $this->find($id);
         $oldValues = $employee->jsonSerialize();
+
+        // #497: close the resting spell so Soll resumes after this date. Only set
+        // when the employee actually had an open resting_from (guards odd states).
+        if ($employee->getRestingFrom() !== null && $employee->getRestingUntil() === null) {
+            $until = $this->parseRestingDate($restingUntil, 'restingUntil');
+            if ($until < $employee->getRestingFrom()) {
+                throw ValidationException::fromSingleError('restingUntil', $this->l->t('Das Reaktivierungsdatum darf nicht vor dem Ruhend-ab-Datum liegen.'));
+            }
+            $employee->setRestingUntil($until);
+        }
 
         $employee->setIsActive(true);
         $employee->setLockedReason(null);
@@ -395,6 +414,25 @@ class EmployeeService {
         }
 
         return $employee;
+    }
+
+    /**
+     * #497: parse a resting date (JJJJ-MM-TT), defaulting to today. Strict, so
+     * relative expressions like "+1 week" (which new DateTime() would accept, #537)
+     * are rejected.
+     *
+     * @throws ValidationException
+     */
+    private function parseRestingDate(?string $date, string $field): DateTime {
+        if ($date === null || $date === '') {
+            return new DateTime('today');
+        }
+        $parsed = DateTime::createFromFormat('!Y-m-d', $date);
+        $errors = DateTime::getLastErrors();
+        if ($parsed === false || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))) {
+            throw ValidationException::fromSingleError($field, $this->l->t('Ungültiges Datum. Erwartet wird JJJJ-MM-TT.'));
+        }
+        return $parsed;
     }
 
     /**
