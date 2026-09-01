@@ -172,6 +172,15 @@ export default {
         }
     },
 
+    async punchDiscard(employeeId) {
+        try {
+            const response = await api.post('/time-entries/punch-discard', { employeeId })
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
     async submitMonth(employeeId, year, month) {
         try {
             const response = await api.post('/time-entries/submit-month', { employeeId, year, month })

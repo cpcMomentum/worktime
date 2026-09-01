@@ -150,6 +150,7 @@ class PunchService {
 	 *
 	 * @throws PunchConflictException          no open punch
 	 * @throws PunchConfirmationRequiredException  overlong and neither confirmed nor corrected
+	 * @throws PunchTooLongException           open more than 24h — cannot be booked as one entry (#613)
 	 * @throws PunchReasonRequiredException    emergency work on a vacation day without a reason (#664)
 	 * @throws ValidationException             from create() (overlap, locked month, absence, required fields)
 	 */
@@ -192,6 +193,18 @@ class PunchService {
 		// It runs to the effective end (pausedAt when punching out of a pause), so a
 		// punch left paused for hours is not falsely flagged as overlong.
 		$realElapsedMinutes = (int)floor(($effectiveEndUtc->getTimestamp() - $startedUtc->getTimestamp()) / 60);
+
+		// #613: a punch open for more than 24h spans several calendar days and
+		// cannot be booked as a single entry (one date + start/end covers at most
+		// one midnight). On the automatic path (no endTime supplied) refuse the
+		// booking — the client points the user at discarding the stale punch and
+		// entering time manually. A supplied endTime is a deliberate correction
+		// (HR fixing a single day) and is trusted, mirroring the overlong guard
+		// below; the punch-out dialog additionally blocks this case client-side
+		// from the known start timestamp before it ever sends an endTime.
+		if ($endTimeOverride === null && $realElapsedMinutes > 24 * 60) {
+			throw new PunchTooLongException($this->l->t('Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte verwerfen Sie die Stempelung und erfassen Sie die Zeit manuell.'));
+		}
 
 		// Break: explicit override wins; otherwise the accumulated live break;
 		// otherwise the automatic §4 suggestion.
@@ -269,6 +282,20 @@ class PunchService {
 		} catch (\Throwable $e) {
 			$this->db->rollBack();
 			throw $e;
+		}
+	}
+
+	/**
+	 * #613: discard the open punch without booking anything. The way out for a
+	 * stale punch (e.g. left open across days, or an accidental punch-in) — the
+	 * user then enters the actual time manually.
+	 *
+	 * @throws PunchConflictException  no open punch
+	 */
+	public function discard(int $employeeId): void {
+		$punch = $this->requireOpen($employeeId);
+		if ($this->mapper->deleteById($punch->getId()) === 0) {
+			throw new PunchConflictException($this->l->t('Es läuft keine Stempelung.'));
 		}
 	}
 

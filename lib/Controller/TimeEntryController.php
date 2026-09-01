@@ -23,6 +23,7 @@ use OCA\WorkTime\Service\PunchConfirmationRequiredException;
 use OCA\WorkTime\Service\PunchConflictException;
 use OCA\WorkTime\Service\PunchReasonRequiredException;
 use OCA\WorkTime\Service\PunchService;
+use OCA\WorkTime\Service\PunchTooLongException;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -265,6 +266,31 @@ class TimeEntryController extends BaseController {
     }
 
     /**
+     * Discard the open punch without booking (#613).
+     */
+    #[NoAdminRequired]
+    public function punchDiscard(?int $employeeId = null): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+        if ($error = $this->requireEmployeeId($employeeId)) {
+            return $error;
+        }
+        if (!$this->permissionService->canEditTimeEntry($this->userId, $employeeId)) {
+            return $this->forbiddenResponse();
+        }
+
+        try {
+            $this->punchService->discard($employeeId);
+            return $this->successResponse(null);
+        } catch (PunchConflictException $e) {
+            return $this->conflictResponse($e->getMessage());
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    /**
      * End the punch and book a time entry (#584). On an overlong punch without
      * confirmation/correction, returns 409 with the derived values so the client
      * can show a confirm/correct dialog.
@@ -308,6 +334,12 @@ class TimeEntryController extends BaseController {
             // #664: emergency work on a vacation day needs a mandatory reason.
             return new JSONResponse(
                 ['error' => $e->getMessage(), 'code' => 'reason_required', 'suggested' => $e->getSuggested()],
+                Http::STATUS_CONFLICT
+            );
+        } catch (PunchTooLongException $e) {
+            // #613: open > 24h — cannot be one entry. Client offers to discard.
+            return new JSONResponse(
+                ['error' => $e->getMessage(), 'code' => 'punch_too_long'],
                 Http::STATUS_CONFLICT
             );
         } catch (PunchConflictException $e) {
