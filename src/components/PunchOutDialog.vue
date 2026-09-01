@@ -236,7 +236,10 @@ export default {
 				const entry = await this.$store.dispatch('punch/punchOut', {
 					employeeId: this.punch.employeeId,
 					breakMinutes: this.form.breakMinutes,
-					projectId: this.form.projectId,
+					// #615: the dialog is authoritative about the project. Send 0 as
+					// the explicit "no project" sentinel when the user cleared it, so
+					// the entry drops the punch-in project instead of keeping it.
+					projectId: this.form.projectId === null ? 0 : this.form.projectId,
 					description: this.form.description || null,
 					endTime: this.form.endTime,
 					// The user reviewed the values in this dialog — that is the
