@@ -28,7 +28,7 @@
     "author": "cpcMomentum GmbH",
     "license": "AGPL-3.0-or-later",
     "dependencies": {
-        "@nextcloud/axios": "^2.5.0",
+        "@nextcloud/axios": "^2.6.0",
         "@nextcloud/dialogs": "^5.3.0",
         "@nextcloud/initial-state": "^2.2.0",
         "@nextcloud/l10n": "^3.1.0",
@@ -48,8 +48,9 @@
         "eslint": "^8.57.0",
         "jest": "^29.7.0",
         "nc-app-tooling": "github:cpcMomentum/nc-app-tooling#v1.14.0",
+        "terser-webpack-plugin": "^5.6.1",
         "vue-loader": "^17.4.2",
-        "webpack": "^5.94.0",
+        "webpack": "^5.110.1",
         "webpack-cli": "^6.0.1"
     },
     "engines": {
