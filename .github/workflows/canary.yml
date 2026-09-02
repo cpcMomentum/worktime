@@ -25,4 +25,4 @@ concurrency:
 
 jobs:
   canary:
-    uses: cpcMomentum/nc-app-tooling/.github/workflows/canary.yml@v1.5.0
+    uses: cpcMomentum/nc-app-tooling/.github/workflows/canary.yml@v1.14.0
