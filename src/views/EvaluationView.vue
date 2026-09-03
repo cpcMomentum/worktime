@@ -74,6 +74,15 @@
 
                 <!-- Übersicht: flache Tabelle, eine Zeile je Mitarbeiter (Projekte-Look) -->
                 <div v-show="teamSubtab === 'overview'" class="ev-card">
+                    <div v-if="teamDepartmentOptions.length > 1 || teamFilterDepartmentId !== null" class="ev-dept-filter">
+                        <label for="teamDeptFilter">{{ t('worktime', 'Abteilung') }}</label>
+                        <NcSelect id="teamDeptFilter"
+                            v-model="selectedTeamDepartment"
+                            :options="teamDepartmentOptions"
+                            :placeholder="t('worktime', 'Alle Abteilungen')"
+                            label="label"
+                            class="ev-dept-select" />
+                    </div>
                     <table class="ev-table">
                         <thead>
                             <tr>
@@ -120,7 +129,7 @@
 
                 <!-- Monatsdetail: bestehende Monats-Grids -->
                 <div v-show="teamSubtab === 'months'">
-                    <TeamYearTable :report="teamReport" :year="teamYear" />
+                    <TeamYearTable :report="filteredTeamReport" :year="teamYear" />
                 </div>
             </template>
             <NcEmptyContent v-else :name="t('worktime', 'Kein Team')">
@@ -155,6 +164,16 @@
                     <input v-model="projectSearch" type="text" :placeholder="t('worktime', 'Projekt suchen …')">
                 </label>
             </div>
+        </div>
+
+        <div v-if="projectDepartmentOptions.length > 1 || projectFilterDepartmentId !== null" class="ev-filter">
+            <div class="ev-filter__label">{{ t('worktime', 'Abteilung') }}</div>
+            <NcSelect id="projectDeptFilter"
+                v-model="selectedProjectDepartment"
+                :options="projectDepartmentOptions"
+                :placeholder="t('worktime', 'Alle Abteilungen')"
+                label="label"
+                class="ev-dept-select" />
         </div>
 
         <div class="ev-filter">
@@ -319,6 +338,8 @@ import CalendarRangeIcon from 'vue-material-design-icons/CalendarRange.vue'
 import CalendarOutlineIcon from 'vue-material-design-icons/CalendarOutline.vue'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import NcAvatar from '@nextcloud/vue/dist/Components/NcAvatar.js'
+import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
+import { mapGetters } from 'vuex'
 import YearPicker from '../components/YearPicker.vue'
 import TeamYearTable from '../components/TeamYearTable.vue'
 import ReportService from '../services/ReportService.js'
@@ -326,6 +347,7 @@ import { formatMinutes } from '../utils/timeUtils.js'
 import { formatDate as formatDateUtil, getMonthName } from '../utils/dateUtils.js'
 import { textColorOn } from '../utils/colorUtils.js'
 import { showErrorMessage } from '../utils/errorHandler.js'
+import { departmentFilterOptions, matchesDepartment } from '../utils/departmentFilter.js'
 
 export default {
     name: 'EvaluationView',
@@ -334,6 +356,7 @@ export default {
         NcLoadingIcon,
         NcEmptyContent,
         NcAvatar,
+        NcSelect,
         ChevronLeftIcon,
         ChevronRightIcon,
         DownloadIcon,
@@ -379,22 +402,90 @@ export default {
             employeeSearch: '',
             projectsExpanded: false,
             employeesExpanded: false,
+            teamFilterDepartmentId: null,
+            projectFilterDepartmentId: null,
         }
     },
     computed: {
+        ...mapGetters('departments', ['departments']),
+        ...mapGetters('employees', ['employees']),
+        /** departmentId -> name, for label lookup (client-side join, G2). */
+        departmentsById() {
+            const map = {}
+            for (const d of this.departments) {
+                map[d.id] = d
+            }
+            return map
+        },
+        departmentName() {
+            return (id) => this.departmentsById[id]?.name || this.t('worktime', 'Abteilung')
+        },
+        /** employeeId -> departmentId, from the (scoped) employees store. */
+        employeeDepartmentById() {
+            const map = {}
+            for (const e of this.employees) {
+                map[e.id] = e.departmentId ?? null
+            }
+            return map
+        },
+        /**
+         * Team report narrowed by the department filter. The filter is a pure
+         * subset of the already permission-scoped teamReport — it never adds
+         * anyone (#570 P2).
+         */
+        filteredTeamReport() {
+            if (this.teamFilterDepartmentId === null) {
+                return this.teamReport
+            }
+            return this.teamReport.filter(m =>
+                matchesDepartment(m.employee?.departmentId ?? null, this.teamFilterDepartmentId),
+            )
+        },
+        teamDepartmentOptions() {
+            return departmentFilterOptions(
+                this.teamReport,
+                m => m.employee?.departmentId ?? null,
+                id => this.departmentName(id),
+                this.t('worktime', 'Ohne Abteilung'),
+            )
+        },
+        selectedTeamDepartment: {
+            get() {
+                return this.teamDepartmentOptions.find(o => o.id === this.teamFilterDepartmentId) || null
+            },
+            set(value) {
+                this.teamFilterDepartmentId = value ? value.id : null
+            },
+        },
+        projectDepartmentOptions() {
+            return departmentFilterOptions(
+                this.employeeChipsRaw,
+                e => this.employeeDepartmentById[e.id] ?? null,
+                id => this.departmentName(id),
+                this.t('worktime', 'Ohne Abteilung'),
+            )
+        },
+        selectedProjectDepartment: {
+            get() {
+                return this.projectDepartmentOptions.find(o => o.id === this.projectFilterDepartmentId) || null
+            },
+            set(value) {
+                this.projectFilterDepartmentId = value ? value.id : null
+            },
+        },
         teamKpis() {
             let overtimeMinutes = 0
             let vacationUsed = 0
             let vacationTotal = 0
-            for (const m of this.teamReport) {
+            for (const m of this.filteredTeamReport) {
                 overtimeMinutes += m.totalOvertimeMinutes || 0
                 vacationUsed += m.vacationStats?.used || 0
                 vacationTotal += m.vacationStats?.total || 0
             }
-            return { count: this.teamReport.length, overtimeMinutes, vacationUsed, vacationTotal }
+            return { count: this.filteredTeamReport.length, overtimeMinutes, vacationUsed, vacationTotal }
         },
         teamOverviewRows() {
-            const rows = this.teamReport.map(m => {
+            const rows = this.filteredTeamReport.map(m => {
                 const used = m.vacationStats?.used || 0
                 const total = m.vacationStats?.total || 0
                 const remaining = total - used
@@ -447,7 +538,7 @@ export default {
             }
             return Object.values(seen).sort((a, b) => a.name.localeCompare(b.name))
         },
-        employeeChips() {
+        employeeChipsRaw() {
             const seen = {}
             for (const r of this.rows) {
                 if (!seen[r.employeeId]) {
@@ -455,6 +546,12 @@ export default {
                 }
             }
             return Object.values(seen).sort((a, b) => a.name.localeCompare(b.name))
+        },
+        employeeChips() {
+            // Narrow the employee chips to the selected department (subset only).
+            return this.employeeChipsRaw.filter(e =>
+                matchesDepartment(this.employeeDepartmentById[e.id] ?? null, this.projectFilterDepartmentId),
+            )
         },
         projectMinutes() {
             const m = {}
@@ -475,7 +572,8 @@ export default {
         filteredRows() {
             return this.rows.filter(r =>
                 (!this.selectedProjects.size || this.selectedProjects.has(r.projectId))
-                && (!this.selectedEmployees.size || this.selectedEmployees.has(r.employeeId)),
+                && (!this.selectedEmployees.size || this.selectedEmployees.has(r.employeeId))
+                && matchesDepartment(this.employeeDepartmentById[r.employeeId] ?? null, this.projectFilterDepartmentId),
             )
         },
         totals() {
@@ -515,7 +613,8 @@ export default {
         detailRows() {
             const filtered = this.entries.filter(e =>
                 (!this.selectedProjects.size || this.selectedProjects.has(e.projectId))
-                && (!this.selectedEmployees.size || this.selectedEmployees.has(e.employeeId)),
+                && (!this.selectedEmployees.size || this.selectedEmployees.has(e.employeeId))
+                && matchesDepartment(this.employeeDepartmentById[e.employeeId] ?? null, this.projectFilterDepartmentId),
             )
             const s = this.sort
             return filtered.slice().sort((a, b) => {
@@ -532,6 +631,11 @@ export default {
     created() {
         this.loadTeamReport()
         this.refresh()
+        // Departments back the filter labels; employees provide the
+        // employeeId -> departmentId map for the project evaluation. Both are
+        // permission-scoped by their endpoints, so the filter can only narrow.
+        this.$store.dispatch('departments/fetchDepartments')
+        this.$store.dispatch('employees/fetchEmployees')
     },
     methods: {
         textColorOn,
@@ -708,7 +812,12 @@ export default {
                 month: this.month,
                 period: this.period,
                 projectIds: [...this.selectedProjects],
-                employeeIds: [...this.selectedEmployees],
+                // With a department filter active, export exactly what is on screen
+                // (the department-narrowed rows); otherwise the explicit chip
+                // selection. The endpoint stays permission-scoped either way.
+                employeeIds: this.projectFilterDepartmentId !== null
+                    ? [...new Set(this.filteredRows.map(r => r.employeeId))]
+                    : [...this.selectedEmployees],
                 mode: this.tab, // 'agg' or 'detail' — export matches the current view
             })
         },
@@ -796,6 +905,23 @@ export default {
     color: var(--color-text-maxcontrast);
     font-size: 0.85em;
     margin-bottom: 8px;
+}
+
+.ev-dept-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.ev-dept-filter label {
+    color: var(--color-text-maxcontrast);
+    font-size: 0.85em;
+    font-weight: 500;
+}
+
+.ev-dept-select {
+    min-width: 240px;
 }
 
 .ev-chips {
