@@ -613,7 +613,8 @@ export default {
         detailRows() {
             const filtered = this.entries.filter(e =>
                 (!this.selectedProjects.size || this.selectedProjects.has(e.projectId))
-                && (!this.selectedEmployees.size || this.selectedEmployees.has(e.employeeId)),
+                && (!this.selectedEmployees.size || this.selectedEmployees.has(e.employeeId))
+                && matchesDepartment(this.employeeDepartmentById[e.employeeId] ?? null, this.projectFilterDepartmentId),
             )
             const s = this.sort
             return filtered.slice().sort((a, b) => {
