@@ -7,6 +7,11 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-09-03
+
+### Added
+- **Abteilungen / Organisationseinheiten (#570)**: Mitarbeitende lassen sich jetzt zusätzlich zum Vorgesetzten einer Abteilung zuordnen (z. B. Wohngruppe, Standort, Fachbereich). Abteilungen werden in den Einstellungen zentral verwaltet – anlegen, umbenennen, deaktivieren, löschen; beim Löschen bleibt die Zeiterfassung unberührt, die Mitglieder verlieren nur die Zuordnung. Die Mitarbeiterliste erhält eine Abteilungs-Spalte und einen Abteilungsfilter. In der Auswertung (Mitarbeiter- und Projektansicht) und in den Genehmigungen gibt es ebenfalls einen Abteilungsfilter. Wichtig: Der Filter grenzt immer nur die Daten ein, die man ohnehin sehen darf, und weitet nie den Zugriff – ein Abteilungsleiter, der Vorgesetzter seiner Abteilung ist, sieht und filtert weiterhin genau sein Team. Die Abteilung ist ein rein organisatorisches, optionales Feld: Wer keine Abteilungen anlegt, merkt nichts von der Funktion. (Danke an Wendepunkt Velbert und Thorsten Vogt für die Anregung.)
+
 ## [0.18.0] - 2026-09-01
 
 ### Added
