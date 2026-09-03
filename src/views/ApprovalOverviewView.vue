@@ -40,6 +40,15 @@
                             {{ t('worktime', 'Notarbeit') }}
                         </button>
                     </div>
+                    <div v-if="departmentOptions.length > 1" class="dept-filter">
+                        <label for="approvalDeptFilter">{{ t('worktime', 'Abteilung') }}</label>
+                        <NcSelect id="approvalDeptFilter"
+                            v-model="selectedDepartment"
+                            :options="departmentOptions"
+                            :placeholder="t('worktime', 'Alle Abteilungen')"
+                            label="label"
+                            class="dept-filter-select" />
+                    </div>
                 </div>
 
                 <div class="approval-card">
@@ -263,6 +272,8 @@ import CalendarIcon from 'vue-material-design-icons/Calendar.vue'
 import ClockOutlineIcon from 'vue-material-design-icons/ClockOutline.vue'
 import AlertOutlineIcon from 'vue-material-design-icons/AlertOutline.vue'
 import RestoreIcon from 'vue-material-design-icons/Restore.vue'
+import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
+import { mapGetters } from 'vuex'
 import TimeEntryService from '../services/TimeEntryService.js'
 import AbsenceService from '../services/AbsenceService.js'
 import { formatDate } from '../utils/dateUtils.js'
@@ -271,12 +282,14 @@ import { formatMinutes } from '../utils/timeUtils.js'
 import { showSuccess, showError } from '@nextcloud/dialogs'
 import InfoIcon from '../components/InfoIcon.vue'
 import MonthApprovalModal from '../components/MonthApprovalModal.vue'
+import { departmentFilterOptions, matchesDepartment } from '../utils/departmentFilter.js'
 
 export default {
     name: 'ApprovalOverviewView',
     components: {
         InfoIcon,
         MonthApprovalModal,
+        NcSelect,
         NcLoadingIcon,
         NcEmptyContent,
         NcAvatar,
@@ -298,6 +311,7 @@ export default {
             informationalAbsences: [],
             loading: false,
             kindFilter: 'all',
+            filterDepartmentId: null,
             processingAbsence: null,
             processingMonth: null,
             processingEmergency: null,
@@ -320,6 +334,65 @@ export default {
         }
     },
     computed: {
+        ...mapGetters('departments', ['departments']),
+        ...mapGetters('employees', ['employees']),
+        departmentsById() {
+            const map = {}
+            for (const d of this.departments) {
+                map[d.id] = d
+            }
+            return map
+        },
+        departmentName() {
+            return (id) => this.departmentsById[id]?.name || this.t('worktime', 'Abteilung')
+        },
+        /**
+         * departmentId for an inbox item. Month items carry employeeId; absence
+         * and emergency items carry employeeUserId — both resolve via the
+         * (permission-scoped) employees store. Missing lookups fall through to
+         * the "no department" bucket, so the filter can only ever narrow.
+         */
+        employeeDeptById() {
+            const map = {}
+            for (const e of this.employees) {
+                map[e.id] = e.departmentId ?? null
+            }
+            return map
+        },
+        employeeDeptByUserId() {
+            const map = {}
+            for (const e of this.employees) {
+                map[e.userId] = e.departmentId ?? null
+            }
+            return map
+        },
+        itemDepartmentId() {
+            return (item) => {
+                if (item.employeeId != null) {
+                    return this.employeeDeptById[item.employeeId] ?? null
+                }
+                if (item.employeeUserId != null) {
+                    return this.employeeDeptByUserId[item.employeeUserId] ?? null
+                }
+                return null
+            }
+        },
+        departmentOptions() {
+            return departmentFilterOptions(
+                this.inboxItems,
+                item => this.itemDepartmentId(item),
+                id => this.departmentName(id),
+                this.t('worktime', 'Ohne Abteilung'),
+            )
+        },
+        selectedDepartment: {
+            get() {
+                return this.departmentOptions.find(o => o.id === this.filterDepartmentId) || null
+            },
+            set(value) {
+                this.filterDepartmentId = value ? value.id : null
+            },
+        },
         absenceItems() {
             return this.pendingAbsences.map(a => ({
                 key: 'a-' + a.id,
@@ -370,8 +443,10 @@ export default {
             return this.monthItems.length
         },
         filteredItems() {
-            if (this.kindFilter === 'all') return this.inboxItems
-            return this.inboxItems.filter(i => i.kind === this.kindFilter)
+            return this.inboxItems.filter(i =>
+                (this.kindFilter === 'all' || i.kind === this.kindFilter)
+                && matchesDepartment(this.itemDepartmentId(i), this.filterDepartmentId),
+            )
         },
         visibleApprovedMonths() {
             return this.approvedMonths.slice(0, this.approvedVisible)
@@ -379,6 +454,10 @@ export default {
     },
     created() {
         this.loadData()
+        // Departments (labels) + employees (employeeId/userId -> departmentId map)
+        // back the department filter. Both endpoints are permission-scoped.
+        this.$store.dispatch('departments/fetchDepartments')
+        this.$store.dispatch('employees/fetchEmployees')
     },
     beforeDestroy() {
         if (this._approvedObserver) {
@@ -637,6 +716,22 @@ export default {
     flex-wrap: wrap;
     gap: 16px;
     margin-bottom: 20px;
+}
+
+.dept-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dept-filter label {
+    color: var(--color-text-maxcontrast);
+    font-size: 0.85em;
+    font-weight: 500;
+}
+
+.dept-filter-select {
+    min-width: 220px;
 }
 
 .view-header__nav {
