@@ -405,6 +405,28 @@ class EmployeeServiceTest extends TestCase {
     }
 
     /**
+     * #570: the department assignment is threaded through create() (append-last
+     * parameter) and persisted on the employee, untouched by the schedule logic.
+     */
+    public function testCreatePersistsDepartmentId(): void {
+        $this->employeeMapper->method('existsByUserId')->willReturn(false);
+        $captured = null;
+        $this->employeeMapper->method('insert')->willReturnCallback(
+            function (Employee $e) use (&$captured): Employee {
+                $captured = $e;
+                $e->setId(11);
+                return $e;
+            }
+        );
+
+        // ... vacationDaysUsed, vacationTransferred, departmentId (last param).
+        $this->service->create('user11', 'Dana', 'Abt', null, null, 40.0, 30, null, 'BY', null, 'admin', 5, null, false, 3);
+
+        $this->assertNotNull($captured);
+        $this->assertSame(3, $captured->getDepartmentId());
+    }
+
+    /**
      * A 5-day week keeps the previous Mon-Fri / weeklyHours-÷-5 behaviour
      * unchanged (regression guard for the default path).
      */

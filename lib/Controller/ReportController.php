@@ -855,6 +855,10 @@ class ReportController extends BaseController {
                     'userId' => $employee->getUserId(),
                     'fullName' => $employee->getFullName(),
                     'weeklyHours' => $employee->getWeeklyHours(),
+                    // #570 P2: department backs the client-side filter in the
+                    // employee evaluation. The set stays permission-scoped
+                    // (getVisibleTeamMembers) — the filter only narrows it.
+                    'departmentId' => $employee->getDepartmentId(),
                 ],
                 'vacationStats' => $vacationStats,
                 'months' => $months,

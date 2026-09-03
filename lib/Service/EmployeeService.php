@@ -173,7 +173,8 @@ class EmployeeService {
         string $currentUserId = '',
         int $workingDaysPerWeek = 5,
         ?float $vacationDaysUsed = null,
-        bool $vacationTransferred = false
+        bool $vacationTransferred = false,
+        ?int $departmentId = null
     ): Employee {
         // Validate
         $errors = $this->validate($userId, $firstName, $lastName, $federalState);
@@ -206,6 +207,7 @@ class EmployeeService {
         $employee->setWeeklyHours((string)$weeklyHours);
         $employee->setVacationDays($vacationDays);
         $employee->setSupervisorId($supervisorId);
+        $employee->setDepartmentId($departmentId);
         $employee->setWorkingDaysPerWeek(max(1, min(7, $workingDaysPerWeek)));
         $employee->setFederalState($federalState);
 
@@ -249,7 +251,8 @@ class EmployeeService {
         ?string $exitDate = null,
         string $currentUserId = '',
         ?float $vacationDaysUsed = null,
-        bool $vacationTransferred = false
+        bool $vacationTransferred = false,
+        ?int $departmentId = null
     ): Employee {
         $employee = $this->find($id);
         $oldValues = $employee->jsonSerialize();
@@ -279,6 +282,7 @@ class EmployeeService {
         $employee->setEmail($email);
         $employee->setPersonnelNumber($personnelNumber);
         $employee->setSupervisorId($supervisorId);
+        $employee->setDepartmentId($departmentId);
         $employee->setFederalState($federalState);
 
         $employee->setEntryDate($entryDate ? new DateTime($entryDate) : null);

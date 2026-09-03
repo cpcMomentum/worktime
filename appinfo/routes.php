@@ -97,6 +97,15 @@ return [
         ['name' => 'project#update', 'url' => '/api/projects/{id}', 'verb' => 'PUT', 'requirements' => ['id' => '\d+']],
         ['name' => 'project#destroy', 'url' => '/api/projects/{id}', 'verb' => 'DELETE', 'requirements' => ['id' => '\d+']],
 
+        // Departments API (#570) — specific routes before {id}
+        ['name' => 'department#indexAll', 'url' => '/api/departments/all', 'verb' => 'GET'],
+        ['name' => 'department#index', 'url' => '/api/departments', 'verb' => 'GET'],
+        ['name' => 'department#create', 'url' => '/api/departments', 'verb' => 'POST'],
+        ['name' => 'department#deletionImpact', 'url' => '/api/departments/{id}/deletion-impact', 'verb' => 'GET', 'requirements' => ['id' => '\d+']],
+        ['name' => 'department#show', 'url' => '/api/departments/{id}', 'verb' => 'GET', 'requirements' => ['id' => '\d+']],
+        ['name' => 'department#update', 'url' => '/api/departments/{id}', 'verb' => 'PUT', 'requirements' => ['id' => '\d+']],
+        ['name' => 'department#destroy', 'url' => '/api/departments/{id}', 'verb' => 'DELETE', 'requirements' => ['id' => '\d+']],
+
         // Settings API (specific routes before {key})
         ['name' => 'settings#resetAll', 'url' => '/api/settings/reset-all', 'verb' => 'POST'],
         ['name' => 'settings#permissions', 'url' => '/api/settings/permissions', 'verb' => 'GET'],

@@ -1,5 +1,15 @@
 <template>
     <div class="employee-list">
+        <div v-if="hasDepartments && employees.length > 0" class="list-filter">
+            <label for="employeeDeptFilter">{{ t('worktime', 'Abteilung') }}</label>
+            <NcSelect id="employeeDeptFilter"
+                v-model="selectedFilterDepartment"
+                :options="departmentFilterOptions"
+                :placeholder="t('worktime', 'Alle Abteilungen')"
+                label="label"
+                class="dept-filter-select" />
+        </div>
+
         <table v-if="employees.length > 0" class="employees-table">
             <thead>
                 <tr>
@@ -8,12 +18,13 @@
                     <th class="text-right">{{ t('worktime', 'Wochenstd.') }}</th>
                     <th class="text-right">{{ t('worktime', 'Urlaubstage') }}</th>
                     <th>{{ t('worktime', 'Bundesland') }}</th>
+                    <th v-if="hasDepartments">{{ t('worktime', 'Abteilung') }}</th>
                     <th>{{ t('worktime', 'Status') }}</th>
                     <th class="actions-col">{{ t('worktime', 'Aktionen') }}</th>
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="employee in employees" :key="employee.id">
+                <tr v-for="employee in filteredEmployees" :key="employee.id">
                     <td>
                         <strong>{{ employee.fullName }}</strong>
                         <div v-if="employee.email" class="employee-email">{{ employee.email }}</div>
@@ -22,6 +33,7 @@
                     <td class="text-right">{{ employee.weeklyHours }}</td>
                     <td class="text-right">{{ employee.vacationDays }}</td>
                     <td>{{ employee.federalStateName }}</td>
+                    <td v-if="hasDepartments">{{ departmentName(employee.departmentId) }}</td>
                     <td>
                         <span :class="['status-badge', employee.isActive ? 'active' : 'inactive']">
                             {{ employee.isActive ? t('worktime', 'Aktiv') : t('worktime', 'Ruhend') }}
@@ -67,7 +79,11 @@
             </tbody>
         </table>
 
-        <NcEmptyContent v-else
+        <p v-if="employees.length > 0 && filteredEmployees.length === 0" class="no-filter-match">
+            {{ t('worktime', 'Keine Mitarbeitenden in dieser Abteilung.') }}
+        </p>
+
+        <NcEmptyContent v-if="employees.length === 0"
             :name="t('worktime', 'Keine Mitarbeiter')"
             :description="t('worktime', 'Legen Sie Mitarbeiter an, um die Zeiterfassung zu nutzen.')">
             <template #icon>
@@ -183,6 +199,8 @@ import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
 import NcNoteCard from '@nextcloud/vue/dist/Components/NcNoteCard.js'
 import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
+import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
+import { mapGetters } from 'vuex'
 import InfoIcon from './InfoIcon.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Close from 'vue-material-design-icons/Close.vue'
@@ -200,6 +218,7 @@ export default {
         NcDialog,
         NcNoteCard,
         NcTextField,
+        NcSelect,
         InfoIcon,
         Pencil,
         Close,
@@ -226,9 +245,50 @@ export default {
             restingFrom: '',
             impact: null,
             impactLoading: false,
+            filterDepartmentId: null,
         }
     },
     computed: {
+        ...mapGetters('departments', ['departments']),
+        hasDepartments() {
+            return this.departments.length > 0
+        },
+        departmentsById() {
+            const map = {}
+            for (const d of this.departments) {
+                map[d.id] = d
+            }
+            return map
+        },
+        departmentFilterOptions() {
+            // Only departments that actually occur on an employee, plus a bucket
+            // for the unassigned — filtering by an empty department is pointless.
+            const usedIds = new Set(this.employees.map(e => e.departmentId).filter(id => id != null))
+            const options = this.departments
+                .filter(d => usedIds.has(d.id))
+                .map(d => ({ id: d.id, label: d.name }))
+            if (this.employees.some(e => e.departmentId == null)) {
+                options.push({ id: 0, label: this.t('worktime', 'Ohne Abteilung') })
+            }
+            return options
+        },
+        selectedFilterDepartment: {
+            get() {
+                return this.departmentFilterOptions.find(o => o.id === this.filterDepartmentId) || null
+            },
+            set(value) {
+                this.filterDepartmentId = value ? value.id : null
+            },
+        },
+        filteredEmployees() {
+            if (this.filterDepartmentId === null) {
+                return this.employees
+            }
+            if (this.filterDepartmentId === 0) {
+                return this.employees.filter(e => e.departmentId == null)
+            }
+            return this.employees.filter(e => e.departmentId === this.filterDepartmentId)
+        },
         /**
          * The record counts worth showing: everything the backend reports as
          * greater than zero, in a fixed order so the dialog does not reshuffle
@@ -256,7 +316,20 @@ export default {
                 .map(([key, label]) => ({ key, label, count: this.deleteImpact.counts[key] }))
         },
     },
+    created() {
+        // Departments back the column join and the filter. EmployeeList is used by
+        // employee managers, so the /all endpoint is permitted.
+        if (!this.departments.length) {
+            this.$store.dispatch('departments/fetchDepartments', true)
+        }
+    },
     methods: {
+        departmentName(departmentId) {
+            if (departmentId == null) {
+                return '–'
+            }
+            return this.departmentsById[departmentId]?.name || '–'
+        },
         async confirmResting(employee) {
             this.employeeToRest = employee
             this.restingReason = ''
@@ -332,6 +405,27 @@ export default {
 </script>
 
 <style scoped>
+.list-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.list-filter label {
+    font-weight: 500;
+    color: var(--color-text-maxcontrast);
+}
+
+.dept-filter-select {
+    min-width: 240px;
+}
+
+.no-filter-match {
+    margin: 16px 4px;
+    color: var(--color-text-maxcontrast);
+}
+
 .employee-list {
     margin-top: 16px;
     /* Die vierte Aktion (#486) sprengt bei schmalem Fenster die Breite —

@@ -741,7 +741,28 @@
 		"Ruhend ab": "Klidový stav od",
 		"Ab diesem Tag fällt kein Sollstunden-Zuwachs mehr an. Standard: heute.": "Od tohoto dne se již nenačítají žádné cílové hodiny. Výchozí: dnes.",
 		"Das Reaktivierungsdatum darf nicht vor dem Ruhend-ab-Datum liegen.": "Datum reaktivace nesmí být dříve než datum začátku klidového stavu.",
-		"Ungültiges Datum. Erwartet wird JJJJ-MM-TT.": "Neplatné datum. Očekává se RRRR-MM-DD."
+		"Ungültiges Datum. Erwartet wird JJJJ-MM-TT.": "Neplatné datum. Očekává se RRRR-MM-DD.",
+		"Abteilung bearbeiten": "Abteilung bearbeiten",
+		"Neue Abteilung": "Neue Abteilung",
+		"Inaktive Abteilungen stehen nicht mehr zur Auswahl.": "Inaktive Abteilungen stehen nicht mehr zur Auswahl.",
+		"Abteilung aktualisiert": "Abteilung aktualisiert",
+		"Abteilung erstellt": "Abteilung erstellt",
+		"Keine Abteilungen": "Keine Abteilungen",
+		"Legen Sie Abteilungen an, um Mitarbeitende Organisationseinheiten zuzuordnen.": "Legen Sie Abteilungen an, um Mitarbeitende Organisationseinheiten zuzuordnen.",
+		"Abteilung löschen?": "Abteilung löschen?",
+		"Möchten Sie die Abteilung \"{name}\" wirklich löschen?": "Möchten Sie die Abteilung \"{name}\" wirklich löschen?",
+		"_%n Mitarbeitende/r wird dieser Abteilung entzogen. Die Zeiterfassung bleibt unberührt._::_%n Mitarbeitende werden dieser Abteilung entzogen. Die Zeiterfassung bleibt unberührt._": [
+			"%n Mitarbeitende/r wird dieser Abteilung entzogen. Die Zeiterfassung bleibt unberührt.",
+			"%n Mitarbeitende werden dieser Abteilung entzogen. Die Zeiterfassung bleibt unberührt."
+		],
+		"Abteilung": "Abteilung",
+		"Ordnet den Mitarbeiter einer Organisationseinheit zu. Rein organisatorisch – unabhängig vom Vorgesetzten und ohne Einfluss auf Berechtigungen.": "Ordnet den Mitarbeiter einer Organisationseinheit zu. Rein organisatorisch – unabhängig vom Vorgesetzten und ohne Einfluss auf Berechtigungen.",
+		"Keine Abteilung": "Keine Abteilung",
+		"Alle Abteilungen": "Alle Abteilungen",
+		"Keine Mitarbeitenden in dieser Abteilung.": "Keine Mitarbeitenden in dieser Abteilung.",
+		"Ohne Abteilung": "Ohne Abteilung",
+		"Abteilungen": "Abteilungen",
+		"Abteilung gelöscht": "Abteilung gelöscht"
 	},
 	"pluralForm": "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;"
 }

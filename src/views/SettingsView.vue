@@ -56,6 +56,33 @@
                 </NcModal>
             </NcSettingsSection>
 
+            <NcSettingsSection v-if="canManageEmployees"
+                v-show="activeSection === 'sec-abteilungen'"
+                id="sec-abteilungen" :name="t('worktime', 'Abteilungen')">
+                <div class="section-header-actions">
+                    <NcButton type="primary" @click="openNewDepartmentForm">
+                        <template #icon>
+                            <Plus :size="20" />
+                        </template>
+                        {{ t('worktime', 'Neue Abteilung') }}
+                    </NcButton>
+                </div>
+
+                <DepartmentList
+                    :departments="allDepartments"
+                    @edit="editDepartment"
+                    @delete="handleDeleteDepartment" />
+
+                <NcModal v-if="showDepartmentForm"
+                    :name="editingDepartment ? t('worktime', 'Abteilung bearbeiten') : t('worktime', 'Neue Abteilung')"
+                    @close="closeDepartmentForm">
+                    <DepartmentForm
+                        :department="editingDepartment"
+                        @saved="onDepartmentSaved"
+                        @cancel="closeDepartmentForm" />
+                </NcModal>
+            </NcSettingsSection>
+
             <NcSettingsSection v-if="canManageProjects"
                 v-show="activeSection === 'sec-projekte'"
                 id="sec-projekte" :name="t('worktime', 'Projekte')">
@@ -862,6 +889,8 @@ import EmployeeList from '../components/EmployeeList.vue'
 import BetriebsferienSettings from '../components/BetriebsferienSettings.vue'
 import ProjectForm from '../components/ProjectForm.vue'
 import ProjectList from '../components/ProjectList.vue'
+import DepartmentForm from '../components/DepartmentForm.vue'
+import DepartmentList from '../components/DepartmentList.vue'
 import { showSuccessMessage, showErrorMessage, confirmAction } from '../utils/errorHandler.js'
 import { getCurrentYear, getLocale, formatDateISO, getMonthName } from '../utils/dateUtils.js'
 import YearlyCarryoverService from '../services/YearlyCarryoverService.js'
@@ -913,6 +942,8 @@ export default {
         BetriebsferienSettings,
         ProjectForm,
         ProjectList,
+        DepartmentForm,
+        DepartmentList,
     },
     data() {
         return {
@@ -924,6 +955,8 @@ export default {
             editingEmployee: null,
             showProjectForm: false,
             editingProject: null,
+            showDepartmentForm: false,
+            editingDepartment: null,
             availablePrincipals: [],
             hrManagers: [],
             previousHrManagers: [],
@@ -985,6 +1018,7 @@ export default {
         ...mapGetters('holidays', ['federalStates']),
         ...mapGetters('employees', { employees: 'employees' }),
         ...mapGetters('projects', { allProjects: 'projects' }),
+        ...mapGetters('departments', { allDepartments: 'departments' }),
         carryoverYearOptions() {
             const current = getCurrentYear()
             const years = []
@@ -1080,6 +1114,7 @@ export default {
             return [
                 group(this.t('worktime', 'Team'), [
                     { id: 'sec-mitarbeiter', label: this.t('worktime', 'Mitarbeiter'), icon: 'AccountGroup', visible: this.canManageEmployees },
+                    { id: 'sec-abteilungen', label: this.t('worktime', 'Abteilungen'), icon: 'OfficeBuilding', visible: this.canManageEmployees },
                     { id: 'sec-projekte', label: this.t('worktime', 'Projekte'), icon: 'Folder', visible: this.canManageProjects },
                     { id: 'sec-berechtigungen', label: this.t('worktime', 'Berechtigungen'), icon: 'KeyVariant', visible: this.canManageSettings },
                 ]),
@@ -1123,6 +1158,7 @@ export default {
         })
         if (this.canManageEmployees) {
             this.$store.dispatch('employees/fetchEmployees')
+            this.fetchDepartments(true)
         }
         if (this.canManageSettings) {
             this.loadHrManagers()
@@ -1154,6 +1190,7 @@ export default {
         ...mapActions('holidays', ['generateAllHolidays']),
         ...mapActions('employees', ['deleteEmployee']),
         ...mapActions('projects', ['fetchProjects', 'deleteProject']),
+        ...mapActions('departments', ['fetchDepartments', 'deleteDepartment']),
         archiveMonthLabel(month) {
             return getMonthName(month)
         },
@@ -1403,6 +1440,32 @@ export default {
             try {
                 await this.deleteProject(project.id)
                 showSuccessMessage(this.t('worktime', 'Projekt gelöscht'))
+            } catch (error) {
+                showErrorMessage(error.message)
+            }
+        },
+        openNewDepartmentForm() {
+            this.editingDepartment = null
+            this.showDepartmentForm = true
+        },
+        editDepartment(department) {
+            this.editingDepartment = department
+            this.showDepartmentForm = true
+        },
+        closeDepartmentForm() {
+            this.showDepartmentForm = false
+            this.editingDepartment = null
+        },
+        async onDepartmentSaved() {
+            this.closeDepartmentForm()
+            await this.fetchDepartments(true)
+        },
+        async handleDeleteDepartment(department) {
+            try {
+                await this.deleteDepartment(department.id)
+                showSuccessMessage(this.t('worktime', 'Abteilung gelöscht'))
+                // Members lost their assignment server-side; refresh the list.
+                await this.$store.dispatch('employees/fetchEmployees')
             } catch (error) {
                 showErrorMessage(error.message)
             }
