@@ -108,6 +108,24 @@ class EmployeeMapper extends QBMapper {
     }
 
     /**
+     * Every employee assigned to a department, regardless of their own active
+     * state (#570). Bewusst OHNE is_active-Filter: beim Loeschen einer Abteilung
+     * muessen auch ruhende/inaktive Mitglieder genullt werden.
+     *
+     * @return Employee[]
+     */
+    public function findByDepartment(int $departmentId): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('department_id', $qb->createNamedParameter($departmentId, IQueryBuilder::PARAM_INT)))
+            ->orderBy('last_name', 'ASC')
+            ->addOrderBy('first_name', 'ASC');
+
+        return $this->findEntities($qb);
+    }
+
+    /**
      * Active employees who named this employee as their deputy (#343). Typically
      * the supervisors this person stands in for while they are absent.
      *

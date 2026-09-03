@@ -132,6 +132,14 @@
                     :placeholder="t('worktime', 'Kein Vorgesetzter')"
                     label="label" />
             </div>
+            <div class="form-group">
+                <label for="department">{{ t('worktime', 'Abteilung') }} <InfoIcon>{{ t('worktime', 'Ordnet den Mitarbeiter einer Organisationseinheit zu. Rein organisatorisch – unabhängig vom Vorgesetzten und ohne Einfluss auf Berechtigungen.') }}</InfoIcon></label>
+                <NcSelect id="department"
+                    v-model="selectedDepartment"
+                    :options="departmentOptions"
+                    :placeholder="t('worktime', 'Keine Abteilung')"
+                    label="label" />
+            </div>
         </div>
 
         <div class="form-row">
@@ -235,6 +243,7 @@ export default {
                 vacationDays: 30,
                 workingDaysPerWeek: 5,
                 supervisorId: null,
+                departmentId: null,
                 federalState: this.defaultFederalState,
                 entryDate: null,
                 exitDate: null,
@@ -245,6 +254,7 @@ export default {
     },
     computed: {
         ...mapGetters('employees', ['employees', 'federalStates', 'availableUsers']),
+        ...mapGetters('departments', ['departments']),
         isEdit() {
             return !!this.employee
         },
@@ -327,6 +337,24 @@ export default {
                 this.form.supervisorId = value?.id || null
             },
         },
+        departmentOptions() {
+            // Keep an already-assigned but now-inactive department in the list so
+            // editing and saving the employee does not silently drop the assignment.
+            return this.departments
+                .filter(d => d.isActive || d.id === this.form.departmentId)
+                .map(d => ({
+                    id: d.id,
+                    label: d.name,
+                }))
+        },
+        selectedDepartment: {
+            get() {
+                return this.departmentOptions.find(d => d.id === this.form.departmentId) || null
+            },
+            set(value) {
+                this.form.departmentId = value?.id || null
+            },
+        },
         isValid() {
             const baseValid = (this.isEdit || this.form.userId)
                 && this.form.firstName.trim()
@@ -355,6 +383,7 @@ export default {
                         vacationDays: employee.vacationDays,
                         workingDaysPerWeek: employee.workingDaysPerWeek ?? 5,
                         supervisorId: employee.supervisorId,
+                        departmentId: employee.departmentId ?? null,
                         federalState: employee.federalState,
                         entryDate: employee.entryDate ? new Date(employee.entryDate) : null,
                         exitDate: employee.exitDate ? new Date(employee.exitDate) : null,
@@ -370,6 +399,7 @@ export default {
     created() {
         this.$store.dispatch('employees/fetchFederalStates')
         this.$store.dispatch('employees/fetchEmployees')
+        this.$store.dispatch('departments/fetchDepartments', true)
         if (!this.isEdit) {
             this.$store.dispatch('employees/fetchAvailableUsers')
         }
@@ -409,6 +439,7 @@ export default {
                     vacationDays: this.form.vacationDays,
                     workingDaysPerWeek: this.form.workingDaysPerWeek,
                     supervisorId: this.form.supervisorId,
+                    departmentId: this.form.departmentId,
                     federalState: this.form.federalState,
                     entryDate: this.form.entryDate ? formatDateISO(this.form.entryDate) : null,
                     exitDate: this.form.exitDate ? formatDateISO(this.form.exitDate) : null,
