@@ -129,7 +129,7 @@
 
                 <!-- Monatsdetail: bestehende Monats-Grids -->
                 <div v-show="teamSubtab === 'months'">
-                    <TeamYearTable :report="teamReport" :year="teamYear" />
+                    <TeamYearTable :report="filteredTeamReport" :year="teamYear" />
                 </div>
             </template>
             <NcEmptyContent v-else :name="t('worktime', 'Kein Team')">
