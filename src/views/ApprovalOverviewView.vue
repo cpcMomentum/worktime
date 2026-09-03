@@ -40,7 +40,7 @@
                             {{ t('worktime', 'Notarbeit') }}
                         </button>
                     </div>
-                    <div v-if="departmentOptions.length > 1" class="dept-filter">
+                    <div v-if="departmentOptions.length > 1 || filterDepartmentId !== null" class="dept-filter">
                         <label for="approvalDeptFilter">{{ t('worktime', 'Abteilung') }}</label>
                         <NcSelect id="approvalDeptFilter"
                             v-model="selectedDepartment"

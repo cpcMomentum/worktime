@@ -74,7 +74,7 @@
 
                 <!-- Übersicht: flache Tabelle, eine Zeile je Mitarbeiter (Projekte-Look) -->
                 <div v-show="teamSubtab === 'overview'" class="ev-card">
-                    <div v-if="teamDepartmentOptions.length > 1" class="ev-dept-filter">
+                    <div v-if="teamDepartmentOptions.length > 1 || teamFilterDepartmentId !== null" class="ev-dept-filter">
                         <label for="teamDeptFilter">{{ t('worktime', 'Abteilung') }}</label>
                         <NcSelect id="teamDeptFilter"
                             v-model="selectedTeamDepartment"
@@ -166,7 +166,7 @@
             </div>
         </div>
 
-        <div v-if="projectDepartmentOptions.length > 1" class="ev-filter">
+        <div v-if="projectDepartmentOptions.length > 1 || projectFilterDepartmentId !== null" class="ev-filter">
             <div class="ev-filter__label">{{ t('worktime', 'Abteilung') }}</div>
             <NcSelect id="projectDeptFilter"
                 v-model="selectedProjectDepartment"
