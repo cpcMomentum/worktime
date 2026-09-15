@@ -365,6 +365,63 @@ class EmployeeServiceTest extends TestCase {
     }
 
     // ---------------------------------------------------------------------
+    // #696: personal default break (defaultBreakMinutes)
+    // ---------------------------------------------------------------------
+
+    public function testUpdateMyDefaultsPersistsBreakMinutes(): void {
+        $this->employeeMapper->method('findByUserId')->with('user2')->willReturn($this->makeEmployee(2, '40.00', 30));
+        $this->employeeMapper->method('update')->willReturnArgument(0);
+        $this->workScheduleService->method('getDisplaySchedule')->willReturn($this->makeSchedule(8.0, 30));
+
+        $result = $this->service->updateMyDefaults('user2', null, null, null, null, 50);
+
+        $this->assertSame(50, $result->getDefaultBreakMinutes());
+    }
+
+    public function testUpdateMyDefaultsClearsBreakWithNull(): void {
+        $employee = $this->makeEmployee(2, '40.00', 30);
+        $employee->setDefaultBreakMinutes(45);
+        $this->employeeMapper->method('findByUserId')->with('user2')->willReturn($employee);
+        $this->employeeMapper->method('update')->willReturnArgument(0);
+        $this->workScheduleService->method('getDisplaySchedule')->willReturn($this->makeSchedule(8.0, 30));
+
+        $result = $this->service->updateMyDefaults('user2', null, null, null, null, null);
+
+        $this->assertNull($result->getDefaultBreakMinutes());
+    }
+
+    public function testUpdateMyDefaultsLeavesBreakUntouchedWhenNotSent(): void {
+        // A partial save (e.g. visibility only) must not wipe the personal break.
+        $employee = $this->makeEmployee(2, '40.00', 30);
+        $employee->setDefaultBreakMinutes(40);
+        $this->employeeMapper->method('findByUserId')->with('user2')->willReturn($employee);
+        $this->employeeMapper->method('update')->willReturnArgument(0);
+        $this->workScheduleService->method('getDisplaySchedule')->willReturn($this->makeSchedule(8.0, 30));
+
+        // defaultBreakMinutes omitted -> falls back to the UNSET_BREAK sentinel.
+        $result = $this->service->updateMyDefaults('user2', null, null, 'team', null);
+
+        $this->assertSame(40, $result->getDefaultBreakMinutes());
+        $this->assertSame('team', $result->getAbsenceVisibility());
+    }
+
+    public function testUpdateMyDefaultsRejectsBreakAboveMax(): void {
+        $this->employeeMapper->method('findByUserId')->with('user2')->willReturn($this->makeEmployee(2, '40.00', 30));
+        $this->workScheduleService->method('getDisplaySchedule')->willReturn($this->makeSchedule(8.0, 30));
+
+        $this->expectException(\OCA\WorkTime\Service\ValidationException::class);
+        $this->service->updateMyDefaults('user2', null, null, null, null, 481);
+    }
+
+    public function testUpdateMyDefaultsRejectsNegativeBreak(): void {
+        $this->employeeMapper->method('findByUserId')->with('user2')->willReturn($this->makeEmployee(2, '40.00', 30));
+        $this->workScheduleService->method('getDisplaySchedule')->willReturn($this->makeSchedule(8.0, 30));
+
+        $this->expectException(\OCA\WorkTime\Service\ValidationException::class);
+        $this->service->updateMyDefaults('user2', null, null, null, null, -10);
+    }
+
+    // ---------------------------------------------------------------------
     // #573: workingDaysPerWeek is owned by the profile day pattern
     // ---------------------------------------------------------------------
 

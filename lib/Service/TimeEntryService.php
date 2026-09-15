@@ -833,8 +833,12 @@ class TimeEntryService {
      * - ≤6h working time: 0 min break
      * - >6h to 9h working time: break6h (default 30)
      * - >9h working time: break9h (default 45)
+     *
+     * @param int $personalDefaultMinutes #696: the employee's personal default
+     *   break. The result is max(legal minimum, personal default) — the law can
+     *   never be undercut. 0 (default) = no personal default.
      */
-    public function suggestBreak(string $startTime, string $endTime): int {
+    public function suggestBreak(string $startTime, string $endTime, int $personalDefaultMinutes = 0): int {
         $startTimeObj = DateTime::createFromFormat('H:i', $startTime);
         $startErrors = DateTime::getLastErrors();
         $endTimeObj = DateTime::createFromFormat('H:i', $endTime);
@@ -861,12 +865,18 @@ class TimeEntryService {
         $break9h = $this->settingsMapper->getValueAsInt(CompanySetting::KEY_MIN_BREAK_MINUTES_9H);
 
         if ($grossMinutes <= 6 * 60) {
-            return 0;
+            $legalMinimum = 0;
         } elseif ($grossMinutes <= 9 * 60 + $break6h) {
-            return $break6h;
+            $legalMinimum = $break6h;
         } else {
-            return $break9h;
+            $legalMinimum = $break9h;
         }
+
+        // #696: the employee's personal default break raises the suggestion, but
+        // can never undercut the legal minimum. max() makes the law win, so both
+        // web and mobile receive a compliant value from one server-authoritative
+        // place. The hard §4 ArbZG gate stays validateBreak().
+        return max($legalMinimum, max(0, $personalDefaultMinutes));
     }
 
     /**

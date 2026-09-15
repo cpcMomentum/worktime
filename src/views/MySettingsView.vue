@@ -29,6 +29,19 @@
                             @change="saveWorkTimes">
                     </div>
 
+                    <div class="form-group">
+                        <label for="defaultBreakMinutes">{{ t('worktime', 'Pause (Minuten)') }}</label>
+                        <input id="defaultBreakMinutes"
+                            v-model="form.defaultBreakMinutes"
+                            type="number"
+                            min="0"
+                            max="480"
+                            step="5"
+                            class="break-input"
+                            :placeholder="t('worktime', 'z.B. 45')"
+                            @change="saveWorkTimes">
+                    </div>
+
                     <div class="save-indicator">
                         <NcLoadingIcon v-if="savingWorkTimes" :size="20" />
                         <span v-if="workTimesSaved" class="saved-hint">{{ t('worktime', 'Gespeichert') }}</span>
@@ -37,6 +50,9 @@
 
                 <p class="hint">
                     {{ t('worktime', 'Leer lassen für Standardwerte (08:00 - 17:00).') }}
+                </p>
+                <p class="hint">
+                    {{ t('worktime', 'Ihre gewohnte Pause wird bei neuen Einträgen vorausgefüllt. Sie kann die gesetzliche Mindestpause (§4 ArbZG) nie unterschreiten — bei Bedarf wird automatisch der gesetzliche Wert verwendet. Leer lassen für die gesetzliche Mindestpause.') }}
                 </p>
             </div>
         </NcSettingsSection>
@@ -124,6 +140,7 @@ export default {
             form: {
                 defaultStartTime: '',
                 defaultEndTime: '',
+                defaultBreakMinutes: '',
                 absenceVisibility: 'none',
                 absenceDetail: 'hidden',
                 deputyId: null,
@@ -131,6 +148,7 @@ export default {
             originalValues: {
                 defaultStartTime: '',
                 defaultEndTime: '',
+                defaultBreakMinutes: '',
                 absenceVisibility: 'none',
                 absenceDetail: 'hidden',
             },
@@ -211,11 +229,15 @@ export default {
         loadFromEmployee(employee) {
             this.form.defaultStartTime = employee.defaultStartTime || '08:00'
             this.form.defaultEndTime = employee.defaultEndTime || '17:00'
+            // 0 und null sind gleichbedeutend („keine persönliche Vorgabe") und
+            // werden als leeres Feld angezeigt (#696).
+            this.form.defaultBreakMinutes = employee.defaultBreakMinutes ? String(employee.defaultBreakMinutes) : ''
             this.form.absenceVisibility = employee.absenceVisibility || 'none'
             this.form.absenceDetail = employee.absenceDetail || 'hidden'
             this.form.deputyId = employee.deputyId ?? null
             this.originalValues.defaultStartTime = this.form.defaultStartTime
             this.originalValues.defaultEndTime = this.form.defaultEndTime
+            this.originalValues.defaultBreakMinutes = this.form.defaultBreakMinutes
             this.originalValues.absenceVisibility = this.form.absenceVisibility
             this.originalValues.absenceDetail = this.form.absenceDetail
         },
@@ -226,9 +248,16 @@ export default {
                 await this.updateMyDefaults({
                     defaultStartTime: this.form.defaultStartTime || null,
                     defaultEndTime: this.form.defaultEndTime || null,
+                    // Leeres Feld = 0 („keine persönliche Vorgabe"). Bewusst 0 statt
+                    // null: das NC-AppFramework ersetzt einen null-Body-Wert durch den
+                    // Parameter-Default, sodass null nie als „leeren" im Service ankäme.
+                    defaultBreakMinutes: this.form.defaultBreakMinutes === '' || this.form.defaultBreakMinutes === null
+                        ? 0
+                        : Number(this.form.defaultBreakMinutes),
                 })
                 this.originalValues.defaultStartTime = this.form.defaultStartTime
                 this.originalValues.defaultEndTime = this.form.defaultEndTime
+                this.originalValues.defaultBreakMinutes = this.form.defaultBreakMinutes
                 this.workTimesSaved = true
                 setTimeout(() => { this.workTimesSaved = false }, 2000)
             } catch (error) {
@@ -330,6 +359,13 @@ export default {
 }
 
 .time-input {
+    width: 8rem;
+    padding: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+}
+
+.break-input {
     width: 8rem;
     padding: 8px;
     border: 1px solid var(--color-border);
