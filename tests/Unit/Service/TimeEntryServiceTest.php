@@ -322,6 +322,48 @@ class TimeEntryServiceTest extends TestCase {
         $this->assertEquals(30, $result); // 8h requires 30min break
     }
 
+    /**
+     * #696: the personal default break raises the suggestion, but the legal
+     * minimum (§4 ArbZG) always wins — result = max(legal, personal).
+     *
+     * @dataProvider personalBreakProvider
+     */
+    public function testSuggestBreakWithPersonalDefault(string $startTime, string $endTime, int $personalDefault, int $expected): void {
+        $result = $this->service->suggestBreak($startTime, $endTime, $personalDefault);
+
+        $this->assertEquals(
+            $expected,
+            $result,
+            "max(legal, personal=$personalDefault) for $startTime - $endTime should be $expected"
+        );
+    }
+
+    public static function personalBreakProvider(): array {
+        // settingsMapper mock: break6h = 30, break9h = 45.
+        return [
+            // Personal higher than legal -> personal wins
+            ['08:00', '17:00', 50, 50],  // 9h, legal 30, personal 50 -> 50
+            ['08:00', '15:00', 45, 45],  // 7h, legal 30, personal 45 -> 45
+            // Personal below legal -> legal wins (never undercut)
+            ['08:00', '15:00', 10, 30],  // 7h, legal 30, personal 10 -> 30
+            ['08:00', '18:00', 20, 45],  // 10h, legal 45, personal 20 -> 45
+            // Personal on a short day where no break is legally due
+            ['08:00', '12:00', 20, 20],  // 4h, legal 0, personal 20 -> 20
+            ['08:00', '12:00', 0, 0],    // 4h, legal 0, personal 0 -> 0
+            // Equal
+            ['08:00', '17:00', 30, 30],  // 9h, legal 30, personal 30 -> 30
+            // Negative personal (defensive) is clamped to 0, legal wins
+            ['08:00', '17:00', -5, 30],
+        ];
+    }
+
+    public function testSuggestBreakInvalidInputIgnoresPersonalDefault(): void {
+        // Garbage times must return 0 even with a personal default set — no bogus
+        // suggestion from invalid input.
+        $this->assertEquals(0, $this->service->suggestBreak('invalid', 'format', 50));
+        $this->assertEquals(0, $this->service->suggestBreak('25:00', '17:00', 50));
+    }
+
     public function testGetMonthlyStats(): void {
         $this->timeEntryMapper->method('sumWorkMinutesByEmployeeAndMonth')
             ->with(1, 2026, 1)

@@ -63,6 +63,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setDefaultStartTime(?DateTime $defaultStartTime)
  * @method DateTime|null getDefaultEndTime()
  * @method void setDefaultEndTime(?DateTime $defaultEndTime)
+ * @method int|null getDefaultBreakMinutes()
+ * @method void setDefaultBreakMinutes(?int $defaultBreakMinutes)
  * @method string getAbsenceVisibility()
  * @method void setAbsenceVisibility(string $absenceVisibility)
  * @method string getAbsenceDetail()
@@ -113,6 +115,7 @@ class Employee extends Entity implements JsonSerializable {
     protected ?DateTime $updatedAt = null;
     protected ?DateTime $defaultStartTime = null;
     protected ?DateTime $defaultEndTime = null;
+    protected ?int $defaultBreakMinutes = null;
     protected string $absenceVisibility = 'none';
     protected string $absenceDetail = 'hidden';
 
@@ -133,6 +136,7 @@ class Employee extends Entity implements JsonSerializable {
         $this->addType('updatedAt', 'datetime');
         $this->addType('defaultStartTime', 'time');
         $this->addType('defaultEndTime', 'time');
+        $this->addType('defaultBreakMinutes', 'integer');
     }
 
     public function setIsActive(bool|int $isActive): void {
@@ -190,6 +194,7 @@ class Employee extends Entity implements JsonSerializable {
             'updatedAt' => $this->updatedAt?->format('c'),
             'defaultStartTime' => $this->defaultStartTime?->format('H:i'),
             'defaultEndTime' => $this->defaultEndTime?->format('H:i'),
+            'defaultBreakMinutes' => $this->defaultBreakMinutes,
             'absenceVisibility' => $this->absenceVisibility,
             'absenceDetail' => $this->absenceDetail,
         ];

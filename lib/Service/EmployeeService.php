@@ -24,6 +24,14 @@ class EmployeeService {
     /** Matches the locked_reason column width (Version000022). */
     private const MAX_LOCKED_REASON_LENGTH = 500;
 
+    /**
+     * #696: sentinel meaning "defaultBreakMinutes was not sent" (leave untouched),
+     * as opposed to an explicit null (clear the personal default). Must match the
+     * controller default. Upper cap for a sane personal break value.
+     */
+    public const UNSET_BREAK = -1;
+    private const MAX_BREAK_MINUTES = 480;
+
     public function __construct(
         private EmployeeMapper $employeeMapper,
         private WorkScheduleMapper $workScheduleMapper,
@@ -502,7 +510,8 @@ class EmployeeService {
         ?string $defaultStartTime = null,
         ?string $defaultEndTime = null,
         ?string $absenceVisibility = null,
-        ?string $absenceDetail = null
+        ?string $absenceDetail = null,
+        ?int $defaultBreakMinutes = self::UNSET_BREAK
     ): Employee {
         $employee = $this->findByUserId($userId);
         $oldValues = $employee->jsonSerialize();
@@ -517,6 +526,22 @@ class EmployeeService {
 
         $employee->setDefaultStartTime($defaultStartTime ? new DateTime($defaultStartTime) : null);
         $employee->setDefaultEndTime($defaultEndTime ? new DateTime($defaultEndTime) : null);
+
+        // #696: personal default break. UNSET_BREAK = field not sent → leave it
+        // untouched (a partial save, e.g. visibility only, must not wipe it).
+        // A value of 0 means "no personal default" (max(legal, 0) = legal), which
+        // is how clients clear the field: the NC AppFramework substitutes the
+        // parameter default for a null request body, so a literal null never
+        // reaches here — clients send 0 to clear. null is still handled here
+        // defensively (equivalent to clearing). This is only a prefill; the §4
+        // ArbZG gate in TimeEntryService::validateBreak() stays authoritative and
+        // can never be undercut.
+        if ($defaultBreakMinutes !== self::UNSET_BREAK) {
+            if ($defaultBreakMinutes !== null && ($defaultBreakMinutes < 0 || $defaultBreakMinutes > self::MAX_BREAK_MINUTES)) {
+                throw ValidationException::fromSingleError('defaultBreakMinutes', 'Break must be between 0 and 480 minutes.');
+            }
+            $employee->setDefaultBreakMinutes($defaultBreakMinutes);
+        }
 
         if ($absenceVisibility !== null && in_array($absenceVisibility, ['all', 'team', 'none'], true)) {
             $employee->setAbsenceVisibility($absenceVisibility);

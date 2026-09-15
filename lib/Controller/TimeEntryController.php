@@ -823,7 +823,12 @@ class TimeEntryController extends BaseController {
             return $authError;
         }
 
-        $breakMinutes = $this->timeEntryService->suggestBreak($startTime, $endTime);
+        // #696: fold the employee's personal default break into the suggestion so
+        // web and mobile both get max(legal, personal) from one place.
+        $employee = $this->permissionService->getEmployeeForUser($this->userId);
+        $personalDefault = $employee?->getDefaultBreakMinutes() ?? 0;
+
+        $breakMinutes = $this->timeEntryService->suggestBreak($startTime, $endTime, $personalDefault);
 
         return $this->successResponse(['breakMinutes' => $breakMinutes]);
     }

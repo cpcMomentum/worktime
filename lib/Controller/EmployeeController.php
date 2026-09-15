@@ -279,7 +279,7 @@ class EmployeeController extends BaseController {
     }
 
     #[NoAdminRequired]
-    public function updateMyDefaults(?string $defaultStartTime = null, ?string $defaultEndTime = null, ?string $absenceVisibility = null, ?string $absenceDetail = null): JSONResponse {
+    public function updateMyDefaults(?string $defaultStartTime = null, ?string $defaultEndTime = null, ?string $absenceVisibility = null, ?string $absenceDetail = null, ?int $defaultBreakMinutes = EmployeeService::UNSET_BREAK): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
         }
@@ -290,7 +290,8 @@ class EmployeeController extends BaseController {
                 $defaultStartTime,
                 $defaultEndTime,
                 $absenceVisibility,
-                $absenceDetail
+                $absenceDetail,
+                $defaultBreakMinutes
             );
 
             return $this->successResponse($employee);

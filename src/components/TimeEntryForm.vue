@@ -268,10 +268,14 @@ export default {
             })
         },
         onTimeChange() {
-            // Automatisch die konfigurierte Mindestpause eintragen
+            // Automatisch die Pause vorbelegen: max(gesetzliche Mindestpause,
+            // persönliche Standard-Pause). Das Gesetz (§4 ArbZG) gewinnt immer,
+            // spiegelt die server-autoritative Logik in TimeEntryService::suggestBreak (#696).
             if (this.form.startTime && this.form.endTime) {
                 const grossMinutes = calculateWorkMinutes(this.form.startTime, this.form.endTime, 0)
-                this.form.breakMinutes = suggestBreakUtil(grossMinutes, this.break6h, this.break9h)
+                const legal = suggestBreakUtil(grossMinutes, this.break6h, this.break9h)
+                const personal = this.currentEmployee?.defaultBreakMinutes ?? 0
+                this.form.breakMinutes = Math.max(legal, personal)
             }
         },
         cancel() {
