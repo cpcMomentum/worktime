@@ -199,6 +199,39 @@ class ProjectService {
     }
 
     /**
+     * #682: filter an already-scoped list of projects by a free-text query and
+     * cap the result size. Kept as a pure in-memory helper over a pre-authorised
+     * set (e.g. getProjectsForEmployee()) so the search can never widen what the
+     * caller may already see — it only narrows. Matches the project name and the
+     * code (the two parts of the display name), case-insensitively. The input
+     * order is preserved (callers pass the code-sorted set from #550).
+     *
+     * @param Project[] $projects already visibility-scoped projects
+     * @param string $query free-text needle; empty = no filtering
+     * @param int $limit max results (<= 0 means no limit)
+     * @return Project[]
+     */
+    public function search(array $projects, string $query, int $limit = 20): array {
+        $query = trim($query);
+        if ($query !== '') {
+            $needle = mb_strtolower($query);
+            $projects = array_values(array_filter(
+                $projects,
+                static function (Project $p) use ($needle): bool {
+                    $haystack = mb_strtolower(trim(($p->getCode() ?? '') . ' ' . $p->getName()));
+                    return str_contains($haystack, $needle);
+                }
+            ));
+        }
+
+        if ($limit > 0 && count($projects) > $limit) {
+            $projects = array_slice($projects, 0, $limit);
+        }
+
+        return $projects;
+    }
+
+    /**
      * Whether the given employee may book on the given project (#58).
      */
     public function isProjectAllowedForEmployee(int $projectId, int $employeeId): bool {

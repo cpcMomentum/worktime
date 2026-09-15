@@ -45,6 +45,31 @@ class ProjectController extends BaseController {
         return $this->successResponse($projects);
     }
 
+    /**
+     * #682: server-side project search for clients that cannot load the whole
+     * bookable list at once (the mobile app with several hundred projects).
+     * Uses exactly the same visibility scope as index() and only ever narrows
+     * it, so a search can never surface a project the user could not already
+     * book on. Result size is capped (default 20, hard max 100).
+     */
+    #[NoAdminRequired]
+    public function search(string $q = '', int $limit = 20): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+
+        $limit = max(1, min($limit, 100));
+
+        $employee = $this->permissionService->getEmployeeForUser($this->userId);
+        if ($employee === null) {
+            $projects = $this->projectService->findAllActive();
+        } else {
+            $projects = $this->projectService->getProjectsForEmployee($employee->getId());
+        }
+
+        return $this->successResponse($this->projectService->search($projects, $q, $limit));
+    }
+
     #[NoAdminRequired]
     public function indexAll(): JSONResponse {
         if ($authError = $this->requireAuth()) {

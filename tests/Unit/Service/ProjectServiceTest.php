@@ -124,4 +124,74 @@ class ProjectServiceTest extends TestCase {
 
         $this->service->delete(7);
     }
+
+    // ---------------------------------------------------------------------
+    // #682: server-side project search (pure filter over a scoped set)
+    // ---------------------------------------------------------------------
+
+    private function makeNamed(int $id, string $name, ?string $code): Project {
+        $project = new Project();
+        $project->setId($id);
+        $project->setName($name);
+        $project->setCode($code);
+        return $project;
+    }
+
+    private function nameList(array $projects): array {
+        return array_map(static fn (Project $p): string => $p->getName(), $projects);
+    }
+
+    public function testSearchMatchesName(): void {
+        $projects = [
+            $this->makeNamed(1, 'Website Relaunch', 'P-100'),
+            $this->makeNamed(2, 'Mobile App', 'P-200'),
+            $this->makeNamed(3, 'Intranet', 'P-300'),
+        ];
+        $this->assertSame(['Mobile App'], $this->nameList($this->service->search($projects, 'mobile', 20)));
+    }
+
+    public function testSearchMatchesCode(): void {
+        $projects = [
+            $this->makeNamed(1, 'Website Relaunch', 'P-100'),
+            $this->makeNamed(2, 'Mobile App', 'P-200'),
+        ];
+        $this->assertSame(['Mobile App'], $this->nameList($this->service->search($projects, 'P-200', 20)));
+    }
+
+    public function testSearchIsCaseInsensitive(): void {
+        $projects = [$this->makeNamed(1, 'Website Relaunch', 'P-100')];
+        $this->assertCount(1, $this->service->search($projects, 'WEBSITE', 20));
+        $this->assertCount(1, $this->service->search($projects, 'relaunch', 20));
+    }
+
+    public function testSearchEmptyQueryReturnsAllWithinLimit(): void {
+        $projects = [
+            $this->makeNamed(1, 'A', null),
+            $this->makeNamed(2, 'B', null),
+            $this->makeNamed(3, 'C', null),
+        ];
+        $this->assertCount(3, $this->service->search($projects, '', 20));
+        $this->assertCount(3, $this->service->search($projects, '   ', 20));
+    }
+
+    public function testSearchAppliesLimitAndPreservesOrder(): void {
+        $projects = [
+            $this->makeNamed(1, 'Alpha', null),
+            $this->makeNamed(2, 'Aladin', null),
+            $this->makeNamed(3, 'Alarm', null),
+        ];
+        $result = $this->service->search($projects, 'Al', 2);
+        $this->assertSame(['Alpha', 'Aladin'], $this->nameList($result));
+    }
+
+    public function testSearchHandlesProjectsWithoutCode(): void {
+        $projects = [$this->makeNamed(1, 'Onboarding', null)];
+        $this->assertCount(1, $this->service->search($projects, 'onboard', 20));
+        $this->assertCount(0, $this->service->search($projects, 'xyz', 20));
+    }
+
+    public function testSearchNoMatchReturnsEmpty(): void {
+        $projects = [$this->makeNamed(1, 'Website', 'P-100')];
+        $this->assertSame([], $this->service->search($projects, 'nonexistent', 20));
+    }
 }

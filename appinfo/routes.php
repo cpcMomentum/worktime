@@ -91,6 +91,7 @@ return [
 
         // Projects API (specific routes before {id})
         ['name' => 'project#indexAll', 'url' => '/api/projects/all', 'verb' => 'GET'],
+        ['name' => 'project#search', 'url' => '/api/projects/search', 'verb' => 'GET'],
         ['name' => 'project#index', 'url' => '/api/projects', 'verb' => 'GET'],
         ['name' => 'project#create', 'url' => '/api/projects', 'verb' => 'POST'],
         ['name' => 'project#show', 'url' => '/api/projects/{id}', 'verb' => 'GET', 'requirements' => ['id' => '\d+']],

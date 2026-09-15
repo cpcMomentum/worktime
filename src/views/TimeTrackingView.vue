@@ -6,7 +6,6 @@
 
         <PunchPanel v-if="showPunchPanel"
             :employee-id="employeeId"
-            :project-options="punchProjectOptions"
             @booked="loadData" />
 
         <div class="view-toolbar">
@@ -287,9 +286,6 @@ export default {
         showPunchPanel() {
             return this.isEmployee && !!this.employeeId && !this.isCorrectionMode
         },
-        punchProjectOptions() {
-            return this.activeProjects.map((p) => ({ id: p.id, label: p.displayName || p.name }))
-        },
         rangeInvalid() {
             return !!(this.rangeStart && this.rangeEnd && new Date(this.rangeEnd) < new Date(this.rangeStart))
         },
@@ -424,7 +420,8 @@ export default {
         },
     },
     mounted() {
-        this.$store.dispatch('projects/fetchProjects')
+        // #682: keine Projekt-Gesamtliste mehr vorladen. Die Buchungs-Picker
+        // (ProjectSelect) suchen serverseitig, die Listen nutzen entry.projectName.
         this.updateIsNarrow()
         window.addEventListener('resize', this.updateIsNarrow)
     },

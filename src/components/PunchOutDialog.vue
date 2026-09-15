@@ -37,12 +37,11 @@
 				</div>
 			</div>
 
-			<div v-if="projectOptions.length > 0" class="form-group">
+			<div class="form-group">
 				<label for="punch-project">{{ t('worktime', 'Projekt') }}</label>
-				<NcSelect id="punch-project"
-					v-model="selectedProject"
-					:options="projectOptions"
-					label="label"
+				<ProjectSelect
+					v-model="form.projectId"
+					input-id="punch-project"
 					:placeholder="t('worktime', 'Kein Projekt')" />
 			</div>
 
@@ -81,9 +80,9 @@
 <script>
 import NcModal from '@nextcloud/vue/dist/Components/NcModal.js'
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import NcNoteCard from '@nextcloud/vue/dist/Components/NcNoteCard.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
+import ProjectSelect from './ProjectSelect.vue'
 import TimeEntryService from '../services/TimeEntryService.js'
 import SettingsService from '../services/SettingsService.js'
 
@@ -92,18 +91,14 @@ export default {
 	components: {
 		NcModal,
 		NcButton,
-		NcSelect,
 		NcNoteCard,
 		NcLoadingIcon,
+		ProjectSelect,
 	},
 	props: {
 		punch: {
 			type: Object,
 			required: true,
-		},
-		projectOptions: {
-			type: Array,
-			default: () => [],
 		},
 	},
 	emits: ['booked', 'close'],
@@ -128,14 +123,6 @@ export default {
 		}
 	},
 	computed: {
-		selectedProject: {
-			get() {
-				return this.projectOptions.find((p) => p.id === this.form.projectId) || null
-			},
-			set(value) {
-				this.form.projectId = value?.id || null
-			},
-		},
 		grossMinutes() {
 			return this.spanMinutes(this.form.startTime, this.form.endTime)
 		},

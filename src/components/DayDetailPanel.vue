@@ -48,9 +48,9 @@
                             <span>{{ hoursLabel(entry.workMinutes) }}</span>
                             <span class="dp-dot-sep">·</span>
                             <span>{{ t('worktime', '{min} Min Pause', { min: entry.breakMinutes }) }}</span>
-                            <template v-if="projectName(entry.projectId)">
+                            <template v-if="projectName(entry)">
                                 <span class="dp-dot-sep">·</span>
-                                <span>{{ projectName(entry.projectId) }}</span>
+                                <span>{{ projectName(entry) }}</span>
                             </template>
                         </div>
                         <div v-if="entry.description" class="dp-entry-desc">{{ entry.description }}</div>
@@ -214,10 +214,13 @@ export default {
         hoursLabel(minutes) {
             return `${formatMinutes(minutes)} h`
         },
-        projectName(projectId) {
-            if (!projectId) return ''
-            const project = this.projects.find(p => p.id === projectId)
-            return project?.name || project?.displayName || ''
+        projectName(entry) {
+            if (!entry || !entry.projectId) return ''
+            // #682: der Eintrag liefert den Projektnamen selbst mit; die volle
+            // Projektliste (projects-Prop) ist nur noch Fallback.
+            if (entry.projectName) return entry.projectName
+            const project = this.projects.find(p => p.id === entry.projectId)
+            return project?.displayName || project?.name || ''
         },
         absenceColorClass: getAbsenceColorClass,
         startAdd() {

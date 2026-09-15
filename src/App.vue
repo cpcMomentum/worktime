@@ -203,7 +203,6 @@ export default {
 			return isNavVisible(routeName, this.accessProfile)
 		},
 		...mapActions('employees', ['fetchCurrentEmployee', 'fetchFederalStates']),
-		...mapActions('projects', ['fetchProjects']),
 		...mapActions('absences', ['fetchAbsenceTypes']),
 		...mapActions('permissions', ['endCorrection']),
 		exitCorrection() {
@@ -211,10 +210,11 @@ export default {
 			this.$router.push('/settings').catch(() => {})
 		},
 		async initializeApp() {
-			// Load initial data
+			// Load initial data. #682: die Projekt-Gesamtliste wird NICHT mehr
+			// vorgeladen — Buchungs-Picker suchen serverseitig (ProjectSelect),
+			// Listen nutzen entry.projectName.
 			await Promise.all([
 				this.fetchFederalStates(),
-				this.fetchProjects(),
 				this.fetchAbsenceTypes(),
 			])
 

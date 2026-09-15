@@ -7,6 +7,15 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-09-15
+
+### Added
+- **Persönliche Standard-Pause pro Mitarbeiter (#696)**: Jede und jeder kann in „Meine Einstellungen" bei den Standard-Arbeitszeiten eine gewohnte Pause hinterlegen (z. B. 45 Minuten), die neue Zeiteinträge vorbelegt. Die gesetzliche Mindestpause (§4 ArbZG) wird dabei nie unterschritten: Vorbelegt wird immer der höhere der beiden Werte, und die Server-Prüfung bleibt unverändert. Leer lassen bedeutet weiterhin die gesetzliche Mindestpause. Der Wert steht auch der mobilen App zur Verfügung.
+- **Projektsuche in der Zeiterfassung (#682)**: Die Projektauswahl beim Erfassen und Stempeln sucht jetzt serverseitig. Beim Tippen werden nur die passenden Projekte geladen, statt beim Öffnen die komplette Liste vorzuhalten. Das macht die Auswahl bei Instanzen mit sehr vielen aktiven Projekten (mehrere hundert oder mehr) schnell und übersichtlich. Es gibt auch einen neuen API-Endpunkt für die Projektsuche, den die mobile App nutzt. (Danke an Thorsten Vogt für die Anregung.)
+
+### Changed
+- Die Zeiterfassung lädt nicht mehr beim Start die gesamte Projektliste; Einträge in den Tages- und Detailansichten bekommen den Projektnamen direkt vom Server.
+
 ## [0.19.0] - 2026-09-03
 
 ### Added
