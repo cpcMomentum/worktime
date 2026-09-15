@@ -40,15 +40,6 @@ export default {
         }
     },
 
-    async get(id) {
-        try {
-            const response = await api.get(`/projects/${id}`)
-            return response.data
-        } catch (error) {
-            handleApiError(error)
-        }
-    },
-
     async create(data) {
         try {
             const response = await api.post('/projects', data)
