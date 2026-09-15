@@ -91,17 +91,20 @@ export default {
         },
     },
     methods: {
-        projectName(projectId) {
-            if (!projectId) return ''
-            const project = this.projects.find(p => p.id === projectId)
-            return project?.name || project?.displayName || ''
+        projectName(entry) {
+            if (!entry || !entry.projectId) return ''
+            // #682: der Eintrag liefert den Projektnamen selbst mit; die volle
+            // Projektliste (projects-Prop) ist nur noch Fallback.
+            if (entry.projectName) return entry.projectName
+            const project = this.projects.find(p => p.id === entry.projectId)
+            return project?.displayName || project?.name || ''
         },
         // Pro Eintrag eine kompakte Zeile „Projekt · Bemerkung"; Einträge ohne
         // beides werden ausgelassen.
         entryLines(day) {
             return (day.entries || [])
                 .map(e => {
-                    const text = [this.projectName(e.projectId), (e.description || '').trim()]
+                    const text = [this.projectName(e), (e.description || '').trim()]
                         .filter(Boolean)
                         .join(' · ')
                     return { id: e.id, text }
