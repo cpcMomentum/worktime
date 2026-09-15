@@ -68,11 +68,12 @@ export default {
         }
     },
     watch: {
-        value: {
-            immediate: true,
-            handler() {
-                this.syncSelected()
-            },
+        // Not `immediate`: the initial sync already happens in created() after
+        // loadInitial(), so options are populated by the time it runs. An
+        // immediate watcher would race it and fire a second, redundant
+        // ProjectService.getById() for the edit case (#682).
+        value() {
+            this.syncSelected()
         },
     },
     async created() {
@@ -95,6 +96,7 @@ export default {
                 // überhaupt buchbare Projekte gibt, #329).
                 this.$emit('loaded', this.options.length)
             } catch (e) {
+                console.error('Failed to load projects:', e)
                 this.options = []
             } finally {
                 this.loading = false
@@ -116,6 +118,7 @@ export default {
                     }
                     this.options = options
                 } catch (e) {
+                    console.error('Failed to search projects:', e)
                     // Treffer unverändert lassen
                 } finally {
                     this.loading = false
@@ -150,6 +153,7 @@ export default {
                     }
                 }
             } catch (e) {
+                console.error('Failed to load project ' + id + ':', e)
                 this.selected = { id, label: '#' + id }
             }
         },
