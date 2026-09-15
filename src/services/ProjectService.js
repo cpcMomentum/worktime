@@ -19,6 +19,27 @@ export default {
         }
     },
 
+    // #682: server-side search over the bookable, visibility-scoped projects.
+    // Returns only matches (name or code), capped by `limit`, so the client
+    // never has to load the whole project list.
+    async search(query = '', limit = 20) {
+        try {
+            const response = await api.get('/projects/search', { params: { q: query, limit } })
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
+    async getById(id) {
+        try {
+            const response = await api.get(`/projects/${id}`)
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
     async get(id) {
         try {
             const response = await api.get(`/projects/${id}`)

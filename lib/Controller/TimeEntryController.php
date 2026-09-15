@@ -19,6 +19,7 @@ use OCA\WorkTime\Service\CompanySettingsService;
 use OCA\WorkTime\Service\EmployeeService;
 use OCA\WorkTime\Service\PdfService;
 use OCA\WorkTime\Service\PermissionService;
+use OCA\WorkTime\Service\ProjectService;
 use OCA\WorkTime\Service\PunchConfirmationRequiredException;
 use OCA\WorkTime\Service\PunchConflictException;
 use OCA\WorkTime\Service\PunchReasonRequiredException;
@@ -44,9 +45,31 @@ class TimeEntryController extends BaseController {
         private EmployeeService $employeeService,
         private ArchiveService $archiveService,
         private PunchService $punchService,
+        private ProjectService $projectService,
         private LoggerInterface $logger,
     ) {
         parent::__construct($request, $userId);
+    }
+
+    /**
+     * #682: serialise entries and add each entry's projectName (display name).
+     * The web lists resolve the project name from this field instead of holding
+     * the full project list in memory, so the client no longer has to preload
+     * every project just to label entries. One findAll() query, mapped in memory.
+     *
+     * @param \OCA\WorkTime\Db\TimeEntry[] $entries
+     */
+    private function withProjectNames(array $entries): array {
+        $names = [];
+        foreach ($this->projectService->findAll() as $project) {
+            $names[$project->getId()] = $project->getDisplayName();
+        }
+
+        return array_map(static function ($entry) use ($names): array {
+            $data = $entry->jsonSerialize();
+            $data['projectName'] = $entry->getProjectId() ? ($names[$entry->getProjectId()] ?? null) : null;
+            return $data;
+        }, $entries);
     }
 
     #[NoAdminRequired]
@@ -69,7 +92,7 @@ class TimeEntryController extends BaseController {
             $entries = $this->timeEntryService->findByEmployee($employeeId);
         }
 
-        return $this->successResponse($entries);
+        return $this->successResponse($this->withProjectNames($entries));
     }
 
     /**

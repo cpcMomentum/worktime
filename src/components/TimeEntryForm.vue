@@ -44,12 +44,11 @@
 
         <div class="form-group">
             <label for="project">{{ t('worktime', 'Projekt') }}<span v-if="projectRequired"> *</span></label>
-            <NcSelect id="project"
-                v-model="selectedProject"
-                :options="projectOptions"
-                :placeholder="t('worktime', 'Projekt auswählen')"
-                :clearable="true"
-                :class="{ 'input-error': projectMissing }" />
+            <ProjectSelect
+                v-model="form.projectId"
+                input-id="project"
+                :has-error="projectMissing"
+                @loaded="onProjectsLoaded" />
             <p v-if="projectMissing" class="field-hint field-hint--error">
                 {{ t('worktime', 'Projekt ist erforderlich.') }}
             </p>
@@ -93,7 +92,6 @@
 
 <script>
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
 import { mapGetters, mapActions } from 'vuex'
@@ -102,14 +100,15 @@ import { formatMinutesWithUnit, calculateWorkMinutes, suggestBreak as suggestBre
 import { showErrorMessage } from '../utils/errorHandler.js'
 import SettingsService from '../services/SettingsService.js'
 import InfoIcon from '../components/InfoIcon.vue'
+import ProjectSelect from '../components/ProjectSelect.vue'
 import CorrectionReasonModal from '../components/CorrectionReasonModal.vue'
 
 export default {
     name: 'TimeEntryForm',
     components: {
         InfoIcon,
+        ProjectSelect,
         NcButton,
-        NcSelect,
         NcDateTimePicker,
         NcCheckboxRadioSwitch,
         CorrectionReasonModal,
@@ -160,11 +159,11 @@ export default {
             },
             showReasonModal: false,
             pendingData: null,
+            hasProjects: false,
         }
     },
     computed: {
         ...mapGetters('permissions', ['isCorrectionMode', 'requireProject', 'requireDescription']),
-        ...mapGetters('projects', ['activeProjects']),
         ...mapGetters('employees', ['currentEmployee']),
         requiredBreak() {
             if (!this.form.startTime || !this.form.endTime) return 0
@@ -174,20 +173,6 @@ export default {
         isEdit() {
             return !!this.entry
         },
-        projectOptions() {
-            return this.activeProjects.map(p => ({
-                id: p.id,
-                label: p.displayName || p.name,
-            }))
-        },
-        selectedProject: {
-            get() {
-                return this.projectOptions.find(p => p.id === this.form.projectId) || null
-            },
-            set(value) {
-                this.form.projectId = value?.id || null
-            },
-        },
         calculatedWorkMinutes() {
             if (!this.form.startTime || !this.form.endTime) return 0
             return calculateWorkMinutes(this.form.startTime, this.form.endTime, this.form.breakMinutes)
@@ -195,7 +180,7 @@ export default {
         projectRequired() {
             // "Projekt erforderlich" only applies when the employee actually has a
             // selectable project (#329 follow-up): otherwise they could not book at all.
-            return this.requireProject && this.projectOptions.length > 0
+            return this.requireProject && this.hasProjects
         },
         projectMissing() {
             return this.projectRequired && !this.form.projectId
@@ -244,7 +229,6 @@ export default {
         },
     },
     async created() {
-        this.$store.dispatch('projects/fetchProjects')
         try {
             const [b6h, b9h] = await Promise.all([
                 SettingsService.get('min_break_minutes_6h'),
@@ -292,6 +276,10 @@ export default {
         },
         cancel() {
             this.$emit('cancel')
+        },
+        onProjectsLoaded(count) {
+            // #329: Projekt-Pflicht nur, wenn es überhaupt buchbare Projekte gibt.
+            this.hasProjects = count > 0
         },
         save() {
             const data = {

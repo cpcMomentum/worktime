@@ -4,11 +4,9 @@
 		<template v-if="!isPunchedIn">
 			<div class="punch-panel__idle">
 				<div class="punch-panel__idle-fields">
-					<NcSelect v-if="projectOptions.length > 0"
-						v-model="selectedProject"
+					<ProjectSelect
+						v-model="projectId"
 						class="punch-panel__project"
-						:options="projectOptions"
-						label="label"
 						:placeholder="t('worktime', 'Projekt (optional)')" />
 					<input v-model="note"
 						type="text"
@@ -72,7 +70,6 @@
 		     down before its "booked" event can fire (the refresh would be lost). -->
 		<PunchOutDialog v-if="showPunchOut && punchSnapshot"
 			:punch="punchSnapshot"
-			:project-options="projectOptions"
 			@booked="onBooked"
 			@close="closePunchOut" />
 	</div>
@@ -81,7 +78,6 @@
 <script>
 import { mapGetters } from 'vuex'
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import NcNoteCard from '@nextcloud/vue/dist/Components/NcNoteCard.js'
 import ClockIcon from 'vue-material-design-icons/Clock.vue'
 import PlayIcon from 'vue-material-design-icons/Play.vue'
@@ -89,13 +85,13 @@ import PauseIcon from 'vue-material-design-icons/Pause.vue'
 import StopIcon from 'vue-material-design-icons/Stop.vue'
 import DeleteIcon from 'vue-material-design-icons/Delete.vue'
 import PunchOutDialog from './PunchOutDialog.vue'
+import ProjectSelect from './ProjectSelect.vue'
 import { confirmAction } from '../utils/errorHandler.js'
 
 export default {
 	name: 'PunchPanel',
 	components: {
 		NcButton,
-		NcSelect,
 		NcNoteCard,
 		ClockIcon,
 		PlayIcon,
@@ -103,15 +99,12 @@ export default {
 		StopIcon,
 		DeleteIcon,
 		PunchOutDialog,
+		ProjectSelect,
 	},
 	props: {
 		employeeId: {
 			type: Number,
 			required: true,
-		},
-		projectOptions: {
-			type: Array,
-			default: () => [],
 		},
 	},
 	emits: ['booked'],
@@ -129,14 +122,6 @@ export default {
 	},
 	computed: {
 		...mapGetters('punch', ['activePunch', 'isPunchedIn', 'isPunchPaused']),
-		selectedProject: {
-			get() {
-				return this.projectOptions.find((p) => p.id === this.projectId) || null
-			},
-			set(value) {
-				this.projectId = value?.id || null
-			},
-		},
 		elapsedLabel() {
 			if (!this.activePunch?.startedAt) return '00:00:00'
 			const started = new Date(this.activePunch.startedAt).getTime()
