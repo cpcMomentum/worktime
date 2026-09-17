@@ -165,11 +165,12 @@ class PdfService {
         // Column widths (landscape A4 content width ~267mm)
         $cols = [
             ['Datum', 24, 'L'],
-            ['Projekt', 55, 'L'],
-            ['Kunde', 40, 'L'],
-            ['Mitarbeiter', 45, 'L'],
+            ['Zeit', 24, 'L'],
+            ['Projekt', 50, 'L'],
+            ['Kunde', 36, 'L'],
+            ['Mitarbeiter', 38, 'L'],
             ['Stunden', 20, 'R'],
-            ['Tätigkeit', 83, 'L'],
+            ['Tätigkeit', 75, 'L'],
         ];
 
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_SMALL);
@@ -182,8 +183,12 @@ class PdfService {
         $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_SMALL);
         foreach ($entries as $entry) {
             $date = (new DateTime($entry['date']))->format('d.m.Y');
+            $start = $entry['startTime'] ?? null;
+            $end = $entry['endTime'] ?? null;
+            $time = ($start !== null && $start !== '' && $end !== null && $end !== '') ? $start . '–' . $end : '–';
             $row = [
                 $date,
+                $time,
                 $entry['projectName'] ?? 'Kein Projekt',
                 $entry['customer'] ?? '',
                 $entry['employeeName'] ?? '',
@@ -198,9 +203,9 @@ class PdfService {
 
         // Totals
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_SMALL);
-        $pdf->Cell(164, 7, 'Gesamt', 1, 0, 'R');
+        $pdf->Cell(172, 7, 'Gesamt', 1, 0, 'R');
         $pdf->Cell(20, 7, $this->minutesToHours($totals['totalMinutes']), 1, 0, 'R');
-        $pdf->Cell(83, 7, '', 1, 0, 'L');
+        $pdf->Cell(75, 7, '', 1, 0, 'L');
         $pdf->Ln();
 
         return $pdf->Output('', 'S');

@@ -282,6 +282,7 @@
             <thead>
                 <tr>
                     <th class="sortable" @click="sortBy('date')">{{ t('worktime', 'Datum') }}{{ sortArrow('date') }}</th>
+                    <th>{{ t('worktime', 'Zeit') }}</th>
                     <th>{{ t('worktime', 'Projekt') }}</th>
                     <th>{{ t('worktime', 'Kunde') }}</th>
                     <th class="sortable" @click="sortBy('name')">{{ t('worktime', 'Mitarbeiter') }}{{ sortArrow('name') }}</th>
@@ -292,6 +293,7 @@
             <tbody>
                 <tr v-for="entry in detailRows" :key="entry.id">
                     <td>{{ formatDate(entry.date) }}</td>
+                    <td class="ev-muted">{{ timeRange(entry) }}</td>
                     <td class="ev-name">
                         <span class="ev-cdot" :style="{ background: entry.color || 'var(--color-border-dark)' }" />
                         <span>{{ entry.projectName || t('worktime', 'Kein Projekt') }}</span>
@@ -304,7 +306,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="4">{{ t('worktime', 'Gesamt') }}</td>
+                    <td colspan="5">{{ t('worktime', 'Gesamt') }}</td>
                     <td class="ev-num">{{ hours(totals.totalMinutes) }}</td>
                     <td />
                 </tr>
@@ -685,6 +687,13 @@ export default {
             this.loadTeamReport()
         },
         hours(minutes) { return `${formatMinutes(minutes || 0)} h` },
+        // Tatsächliche Buchungszeit "08:00–09:00"; "–" wenn keine Uhrzeit erfasst
+        // (manuelle Dauer-Nachträge ohne Start/Ende).
+        timeRange(entry) {
+            const s = entry.startTime
+            const e = entry.endTime
+            return (s && e) ? `${s}–${e}` : '–'
+        },
         // Wochenstunden ohne überflüssige Nullen: "40.00" → "40", "37.50" → "37.5"
         weeklyLabel(h) {
             if (h == null || h === '') return ''
@@ -1206,12 +1215,26 @@ export default {
     table-layout: fixed;
 }
 
-.ev-entries th:nth-child(1) { width: 9%; }   /* Datum */
-.ev-entries th:nth-child(2) { width: 21%; }  /* Projekt */
-.ev-entries th:nth-child(3) { width: 14%; }  /* Kunde */
-.ev-entries th:nth-child(4) { width: 15%; }  /* Mitarbeiter */
-.ev-entries th:nth-child(5) { width: 9%; }   /* Stunden */
-.ev-entries th:nth-child(6) { width: 32%; }  /* Beschreibung */
+.ev-entries th:nth-child(1) { width: 11%; }  /* Datum */
+.ev-entries th:nth-child(2) { width: 11%; }  /* Zeit */
+.ev-entries th:nth-child(3) { width: 17%; }  /* Projekt */
+.ev-entries th:nth-child(4) { width: 11%; }  /* Kunde */
+.ev-entries th:nth-child(5) { width: 13%; }  /* Mitarbeiter */
+.ev-entries th:nth-child(6) { width: 11%; }  /* Stunden (inkl. Sortierpfeil) */
+.ev-entries th:nth-child(7) { width: 26%; }  /* Beschreibung */
+
+/* Datum, Zeit und Stunden nie umbrechen (feste, kurze Werte). */
+.ev-entries td:nth-child(1),
+.ev-entries td:nth-child(2),
+.ev-entries td:nth-child(6) {
+    white-space: nowrap;
+}
+
+/* Langer Beschreibungstext bricht innerhalb der festen Spaltenbreite um,
+   statt die Tabelle in den horizontalen Scroll (.ev-card overflow-x) zu schieben. */
+.ev-entries td:nth-child(7) {
+    overflow-wrap: anywhere;
+}
 
 .ev-table td {
     padding: 8px 12px;

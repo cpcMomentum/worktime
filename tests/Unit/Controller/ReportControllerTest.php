@@ -83,7 +83,7 @@ class ReportControllerTest extends TestCase {
         return $e;
     }
 
-    private function timeEntry(int $id, string $date, int $projectId, int $employeeId, int $minutes, string $desc = ''): TimeEntry {
+    private function timeEntry(int $id, string $date, int $projectId, int $employeeId, int $minutes, string $desc = '', ?string $start = null, ?string $end = null): TimeEntry {
         $te = new TimeEntry();
         $te->setId($id);
         $te->setDate(new DateTime($date));
@@ -91,6 +91,12 @@ class ReportControllerTest extends TestCase {
         $te->setEmployeeId($employeeId);
         $te->setWorkMinutes($minutes);
         $te->setDescription($desc);
+        if ($start !== null) {
+            $te->setStartTime(new DateTime($start));
+        }
+        if ($end !== null) {
+            $te->setEndTime(new DateTime($end));
+        }
         return $te;
     }
 
@@ -173,6 +179,40 @@ class ReportControllerTest extends TestCase {
         $this->assertSame('Acme', $entry['projectName']);
         $this->assertSame('Test User', $entry['employeeName']);
         $this->assertTrue($entry['isBillable']);
+    }
+
+    public function testProjectEntriesIncludeStartAndEndTime(): void {
+        $this->projectService->method('findAll')->willReturn([$this->project(2, 'Acme', true)]);
+        $this->employeeService->method('findAll')->willReturn([$this->employee(5, 'Test', 'User')]);
+        $this->timeEntryMapper->method('findByDateRange')->willReturn([
+            $this->timeEntry(10, '2026-06-15', 2, 5, 120, 'Arbeit', '08:00', '10:00'),
+            $this->timeEntry(11, '2026-06-16', 2, 5, 60, 'Nachtrag'), // ohne Uhrzeit
+        ]);
+
+        $entries = $this->controller->projectEntries(2026, 6, 'month')->getData()['entries'];
+
+        // Mit Uhrzeit → als H:i durchgereicht.
+        $this->assertSame('08:00', $entries[0]['startTime']);
+        $this->assertSame('10:00', $entries[0]['endTime']);
+        // Ohne Uhrzeit → null (nullable, defensiver Pfad für Dauer-Nachträge).
+        $this->assertNull($entries[1]['startTime']);
+        $this->assertNull($entries[1]['endTime']);
+    }
+
+    public function testProjectsCsvDetailRendersTimeRange(): void {
+        $this->projectService->method('findAll')->willReturn([$this->project(2, 'Acme', true)]);
+        $this->employeeService->method('findAll')->willReturn([$this->employee(5, 'Test', 'User')]);
+        $this->timeEntryMapper->method('findByDateRange')->willReturn([
+            $this->timeEntry(10, '2026-06-15', 2, 5, 120, 'Arbeit', '08:00', '10:00'),
+            $this->timeEntry(11, '2026-06-16', 2, 5, 60, 'Nachtrag'), // ohne Uhrzeit
+        ]);
+
+        $csv = $this->controller->projectsCsv(2026, 6, 'month', false, '', '', 'detail')->render();
+
+        $this->assertStringContainsString('Zeit', $csv);            // Spaltenüberschrift
+        $this->assertStringContainsString('08:00–10:00', $csv);     // Bereich gerendert
+        // Ohne Uhrzeit: leere Zeit-Zelle zwischen Datum und Projekt.
+        $this->assertStringContainsString('"16.06.2026";"";"Acme"', $csv);
     }
 
     public function testProjectsCsvDetailContainsBookingRow(): void {
