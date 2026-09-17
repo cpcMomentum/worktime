@@ -331,11 +331,12 @@ class ReportController extends BaseController {
                     ]));
                 }
             } else {
-                $headers = ['Datum', 'Projekt', 'Projektcode', 'Kunde', 'Mitarbeiter', 'Stunden', 'Tätigkeit'];
+                $headers = ['Datum', 'Zeit', 'Projekt', 'Projektcode', 'Kunde', 'Mitarbeiter', 'Stunden', 'Tätigkeit'];
                 $lines = [implode(';', array_map([$this, 'csvCell'], $headers))];
                 foreach ($entries as $entry) {
                     $lines[] = implode(';', array_map([$this, 'csvCell'], [
                         (new DateTime($entry['date']))->format('d.m.Y'),
+                        $this->formatTimeRange($entry['startTime'] ?? null, $entry['endTime'] ?? null, ''),
                         $entry['projectName'] ?? 'Kein Projekt',
                         $entry['projectCode'] ?? '',
                         $entry['customer'] ?? '',
@@ -421,6 +422,8 @@ class ReportController extends BaseController {
             $entries[] = [
                 'id' => $te->getId(),
                 'date' => $te->getDate()->format('Y-m-d'),
+                'startTime' => $te->getStartTime()?->format('H:i'),
+                'endTime' => $te->getEndTime()?->format('H:i'),
                 'projectId' => $projectId,
                 'projectName' => $project?->getName(),
                 'projectCode' => $project?->getCode(),
@@ -439,6 +442,17 @@ class ReportController extends BaseController {
         }
 
         return [$start, $end, $label, $entries, ['totalMinutes' => $totalMinutes, 'billableMinutes' => $billableMinutes], $projects, $employees];
+    }
+
+    /**
+     * Format a start/end time pair as "HH:MM–HH:MM". Returns $empty when either
+     * side is missing (e.g. manual duration-only entries without punch times).
+     */
+    private function formatTimeRange(?string $start, ?string $end, string $empty = '–'): string {
+        if ($start === null || $start === '' || $end === null || $end === '') {
+            return $empty;
+        }
+        return $start . '–' . $end;
     }
 
     /**

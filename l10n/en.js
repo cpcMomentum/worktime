@@ -762,6 +762,7 @@ OC.L10N.register(
     "Abteilungen" : "Departments",
     "Abteilung gelöscht" : "Department deleted",
     "z.B. 45" : "e.g. 45",
-    "Ihre gewohnte Pause wird bei neuen Einträgen vorausgefüllt. Sie kann die gesetzliche Mindestpause (§4 ArbZG) nie unterschreiten — bei Bedarf wird automatisch der gesetzliche Wert verwendet. Leer lassen für die gesetzliche Mindestpause." : "Your usual break is prefilled for new entries. It can never fall below the statutory minimum break (§4 ArbZG) — the statutory value is used automatically when needed. Leave empty for the statutory minimum break."
+    "Ihre gewohnte Pause wird bei neuen Einträgen vorausgefüllt. Sie kann die gesetzliche Mindestpause (§4 ArbZG) nie unterschreiten — bei Bedarf wird automatisch der gesetzliche Wert verwendet. Leer lassen für die gesetzliche Mindestpause." : "Your usual break is prefilled for new entries. It can never fall below the statutory minimum break (§4 ArbZG) — the statutory value is used automatically when needed. Leave empty for the statutory minimum break.",
+    "Zeit" : "Time"
 },
 "nplurals=2; plural=(n != 1);");

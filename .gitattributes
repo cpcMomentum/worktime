@@ -1,1 +1,29 @@
+# Gebautes JS-Bundle: bei Merges die lokale (gebaute) Version behalten, nicht als
+# Diff oder Sprache werten.
 js/** merge=ours -diff linguist-generated
+
+# Release-Hygiene (#702, cpcMomentum/nc-app-tooling#21): alles aus dem
+# `git archive HEAD`-Tarball halten, was NICHT in der Check-9-Whitelist steht
+# (appinfo, CHANGELOG.md, css, img, js, l10n, lib, LICENSE, README.md, templates,
+# vendor). vendor bleibt drin — tcpdf ist eine Runtime-Dependency.
+# Verifikation: git archive HEAD | tar t | sed 's|/.*||' | sort -u
+/.claude export-ignore
+/.eslintignore export-ignore
+/.eslintrc.js export-ignore
+/.gitattributes export-ignore
+/.githooks export-ignore
+/.github export-ignore
+/.gitignore export-ignore
+/CODEOWNERS export-ignore
+/composer.json export-ignore
+/composer.lock export-ignore
+/docs export-ignore
+/jest.config.js export-ignore
+/package-lock.json export-ignore
+/package.json export-ignore
+/phpunit.xml export-ignore
+/screenshots export-ignore
+/sessions export-ignore
+/src export-ignore
+/tests export-ignore
+/webpack.config.js export-ignore

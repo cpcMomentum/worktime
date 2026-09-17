@@ -7,6 +7,14 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-09-17
+
+### Added
+- **Uhrzeit in den Einzelbuchungen der Auswertung (#703)**: Die Einzelbuchungs-Tabelle zeigt jetzt zusätzlich die tatsächliche Buchungszeit als eigene Spalte „Zeit" (z. B. 08:00–17:00) – in der Weboberfläche sowie im CSV- und PDF-Export. Ist bei einem Eintrag keine Uhrzeit hinterlegt (reiner Dauer-Nachtrag), steht dort „–".
+
+### Fixed
+- In der Einzelbuchungs-Ansicht lief langer Beschreibungstext aus der Tabelle heraus (horizontaler Überlauf). Lange Beschreibungen brechen jetzt innerhalb der Spalte um; Datum, Zeit und Stunden bleiben einzeilig.
+
 ## [0.20.0] - 2026-09-15
 
 ### Added
