@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace OCA\WorkTime\Tests\Unit\Service;
 
+use OCA\WorkTime\Db\EmployeeFavoriteProjectMapper;
 use OCA\WorkTime\Db\Project;
 use OCA\WorkTime\Db\ProjectEmployeeMapper;
 use OCA\WorkTime\Db\ProjectMapper;
 use OCA\WorkTime\Service\AuditLogService;
 use OCA\WorkTime\Service\ProjectService;
+use OCA\WorkTime\Service\NotFoundException;
 use OCA\WorkTime\Service\ValidationException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -20,14 +22,17 @@ class ProjectServiceTest extends TestCase {
 
     private ProjectMapper $projectMapper;
     private ProjectEmployeeMapper $projectEmployeeMapper;
+    private EmployeeFavoriteProjectMapper $favoriteMapper;
     private ProjectService $service;
 
     protected function setUp(): void {
         $this->projectMapper = $this->createMock(ProjectMapper::class);
         $this->projectEmployeeMapper = $this->createMock(ProjectEmployeeMapper::class);
+        $this->favoriteMapper = $this->createMock(EmployeeFavoriteProjectMapper::class);
         $this->service = new ProjectService(
             $this->projectMapper,
             $this->projectEmployeeMapper,
+            $this->favoriteMapper,
             $this->createMock(AuditLogService::class),
             $this->createMock(LoggerInterface::class),
         );
@@ -193,5 +198,34 @@ class ProjectServiceTest extends TestCase {
     public function testSearchNoMatchReturnsEmpty(): void {
         $projects = [$this->makeNamed(1, 'Website', 'P-100')];
         $this->assertSame([], $this->service->search($projects, 'nonexistent', 20));
+    }
+
+    // --- Projekt-Favoriten (#710) ---
+
+    public function testGetFavoriteProjectIdsDelegatesToMapper(): void {
+        $this->favoriteMapper->method('findProjectIdsForEmployee')->with(7)->willReturn([3, 9]);
+        $this->assertSame([3, 9], $this->service->getFavoriteProjectIds(7));
+    }
+
+    public function testAddFavoriteStoresWhenProjectIsBookable(): void {
+        // Open project → bookable → favourite is stored.
+        $this->projectMapper->method('find')->willReturn($this->makeProject(4, true));
+        $this->favoriteMapper->expects($this->once())->method('add')->with(7, 4);
+        $this->service->addFavorite(7, 4);
+    }
+
+    public function testAddFavoriteRejectsProjectTheEmployeeCannotBook(): void {
+        // Restricted project, employee not assigned → not bookable → must NOT be
+        // stored, and reported as not found (never widen the visible set, #682).
+        $this->projectMapper->method('find')->willReturn($this->makeProject(5, false));
+        $this->projectEmployeeMapper->method('findEmployeeIdsForProject')->willReturn([1, 2]);
+        $this->favoriteMapper->expects($this->never())->method('add');
+        $this->expectException(NotFoundException::class);
+        $this->service->addFavorite(7, 5);
+    }
+
+    public function testRemoveFavoriteDelegatesToMapper(): void {
+        $this->favoriteMapper->expects($this->once())->method('remove')->with(7, 4);
+        $this->service->removeFavorite(7, 4);
     }
 }

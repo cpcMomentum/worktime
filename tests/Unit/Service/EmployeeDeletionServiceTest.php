@@ -10,6 +10,7 @@ use OCA\WorkTime\Db\AuditLogMapper;
 use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\EmployeeMapper;
 use OCA\WorkTime\Db\OvertimePayoutMapper;
+use OCA\WorkTime\Db\EmployeeFavoriteProjectMapper;
 use OCA\WorkTime\Db\ProjectEmployeeMapper;
 use OCA\WorkTime\Db\TimeEntryMapper;
 use OCA\WorkTime\Db\WorkScheduleMapper;
@@ -34,6 +35,7 @@ class EmployeeDeletionServiceTest extends TestCase {
     private YearlyCarryoverMapper $yearlyCarryoverMapper;
     private OvertimePayoutMapper $overtimePayoutMapper;
     private ProjectEmployeeMapper $projectEmployeeMapper;
+    private EmployeeFavoriteProjectMapper $favoriteMapper;
     private ArchiveQueueMapper $archiveQueueMapper;
     private AuditLogMapper $auditLogMapper;
     private AuditLogService $auditLogService;
@@ -47,6 +49,7 @@ class EmployeeDeletionServiceTest extends TestCase {
         $this->yearlyCarryoverMapper = $this->createMock(YearlyCarryoverMapper::class);
         $this->overtimePayoutMapper = $this->createMock(OvertimePayoutMapper::class);
         $this->projectEmployeeMapper = $this->createMock(ProjectEmployeeMapper::class);
+        $this->favoriteMapper = $this->createMock(EmployeeFavoriteProjectMapper::class);
         $this->archiveQueueMapper = $this->createMock(ArchiveQueueMapper::class);
         $this->auditLogMapper = $this->createMock(AuditLogMapper::class);
         $this->auditLogService = $this->createMock(AuditLogService::class);
@@ -88,6 +91,7 @@ class EmployeeDeletionServiceTest extends TestCase {
             $this->yearlyCarryoverMapper,
             $this->overtimePayoutMapper,
             $this->projectEmployeeMapper,
+            $this->favoriteMapper,
             $this->archiveQueueMapper,
             $this->auditLogMapper,
             $this->auditLogService,
