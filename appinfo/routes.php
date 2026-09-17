@@ -97,6 +97,9 @@ return [
         ['name' => 'project#show', 'url' => '/api/projects/{id}', 'verb' => 'GET', 'requirements' => ['id' => '\d+']],
         ['name' => 'project#update', 'url' => '/api/projects/{id}', 'verb' => 'PUT', 'requirements' => ['id' => '\d+']],
         ['name' => 'project#destroy', 'url' => '/api/projects/{id}', 'verb' => 'DELETE', 'requirements' => ['id' => '\d+']],
+        // Personal project favourites (#710) — employee-scoped via session, not a request param
+        ['name' => 'project#addFavorite', 'url' => '/api/projects/{id}/favorite', 'verb' => 'PUT', 'requirements' => ['id' => '\d+']],
+        ['name' => 'project#removeFavorite', 'url' => '/api/projects/{id}/favorite', 'verb' => 'DELETE', 'requirements' => ['id' => '\d+']],
 
         // Departments API (#570) — specific routes before {id}
         ['name' => 'department#indexAll', 'url' => '/api/departments/all', 'verb' => 'GET'],

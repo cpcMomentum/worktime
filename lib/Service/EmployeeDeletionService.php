@@ -15,6 +15,7 @@ use OCA\WorkTime\Db\ArchiveQueueMapper;
 use OCA\WorkTime\Db\AuditLog;
 use OCA\WorkTime\Db\AuditLogMapper;
 use OCA\WorkTime\Db\Employee;
+use OCA\WorkTime\Db\EmployeeFavoriteProjectMapper;
 use OCA\WorkTime\Db\EmployeeMapper;
 use OCA\WorkTime\Db\OvertimePayoutMapper;
 use OCA\WorkTime\Db\ProjectEmployeeMapper;
@@ -49,6 +50,7 @@ class EmployeeDeletionService {
         private YearlyCarryoverMapper $yearlyCarryoverMapper,
         private OvertimePayoutMapper $overtimePayoutMapper,
         private ProjectEmployeeMapper $projectEmployeeMapper,
+        private EmployeeFavoriteProjectMapper $favoriteMapper,
         private ArchiveQueueMapper $archiveQueueMapper,
         private AuditLogMapper $auditLogMapper,
         private AuditLogService $auditLogService,
@@ -154,6 +156,7 @@ class EmployeeDeletionService {
                 'carryovers' => $this->yearlyCarryoverMapper->deleteByEmployeeId($id),
                 'payouts' => $this->overtimePayoutMapper->deleteByEmployeeId($id),
                 'projectAssignments' => $this->projectEmployeeMapper->deleteByEmployeeId($id),
+                'favoriteProjects' => $this->favoriteMapper->deleteByEmployeeId($id),
                 'archiveJobs' => $this->archiveQueueMapper->deleteByEmployeeId($id),
                 'auditLogs' => $this->auditLogMapper->deleteForEmployee($userId, $id),
             ];
