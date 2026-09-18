@@ -36,6 +36,11 @@
                     {{ monthStatusLabel }}
                 </span>
 
+                <span v-if="monthStatus === 'approved' && !isYearMode && monthApproval.approverName"
+                    class="approved-by">
+                    {{ t('worktime', 'von {name} am {date}', { name: monthApproval.approverName, date: monthApproval.approvedAtLabel }) }}
+                </span>
+
                 <NcButton v-if="!isYearMode && approvalRequired && monthStatus === 'draft' && hasSubmittableEntries"
                     type="secondary"
                     @click="confirmSubmitMonth">
@@ -343,6 +348,17 @@ export default {
                 submitted: this.t('worktime', 'Eingereicht – wartet auf Genehmigung'),
                 approved: this.t('worktime', 'Genehmigt'),
             }[this.monthStatus] || ''
+        },
+        // #707: who approved the month and when, taken from the latest approved
+        // entry (all entries of an approved month share the same approver).
+        monthApproval() {
+            const approved = this.timeEntries.filter(e => e.status === 'approved' && e.approvedAt)
+            if (!approved.length) return { approverName: '', approvedAtLabel: '' }
+            const latest = approved.reduce((a, b) => (a.approvedAt > b.approvedAt ? a : b))
+            return {
+                approverName: latest.approverName || '',
+                approvedAtLabel: latest.approvedAt ? new Date(latest.approvedAt).toLocaleDateString(getLocale()) : '',
+            }
         },
         absenceByDate() {
             const map = {}
@@ -658,6 +674,11 @@ export default {
 .month-badge.approved {
     background: var(--color-background-hover);
     color: var(--wt-vacation);
+}
+
+.approved-by {
+    font-size: 12.5px;
+    color: var(--color-text-maxcontrast);
 }
 
 .lock-banner {
