@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace OCA\WorkTime\Controller;
 
+use OCA\WorkTime\Service\AbsenceService;
 use OCA\WorkTime\Service\PermissionService;
 use OCA\WorkTime\Service\WorkScheduleService;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -22,6 +23,7 @@ class WorkScheduleController extends BaseController {
         ?string $userId,
         private WorkScheduleService $workScheduleService,
         private PermissionService $permissionService,
+        private AbsenceService $absenceService,
     ) {
         parent::__construct($request, $userId);
     }
@@ -78,6 +80,9 @@ class WorkScheduleController extends BaseController {
                 $this->userId
             );
 
+            // #717: refresh future vacation deductions against the new profile.
+            $this->absenceService->recomputeFutureVacationDays($employeeId);
+
             return $this->createdResponse($schedule);
         } catch (\Exception $e) {
             return $this->handleException($e);
@@ -108,6 +113,9 @@ class WorkScheduleController extends BaseController {
                 $this->userId
             );
 
+            // #717: refresh future vacation deductions against the changed profile.
+            $this->absenceService->recomputeFutureVacationDays($employeeId);
+
             return $this->successResponse($schedule);
         } catch (\Exception $e) {
             return $this->handleException($e);
@@ -126,6 +134,10 @@ class WorkScheduleController extends BaseController {
 
         try {
             $this->workScheduleService->delete($id, $employeeId, $this->userId);
+
+            // #717: a removed profile changes which schedule covers future days.
+            $this->absenceService->recomputeFutureVacationDays($employeeId);
+
             return $this->deletedResponse();
         } catch (\Exception $e) {
             return $this->handleException($e);

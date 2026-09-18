@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Tests\Unit\Controller;
 
 use OCA\WorkTime\Controller\WorkScheduleController;
+use OCA\WorkTime\Service\AbsenceService;
 use OCA\WorkTime\Service\PermissionService;
 use OCA\WorkTime\Service\WorkScheduleService;
 use OCP\IRequest;
@@ -20,10 +21,12 @@ class WorkScheduleControllerTest extends TestCase {
 
     private WorkScheduleService $workScheduleService;
     private PermissionService $permissionService;
+    private AbsenceService $absenceService;
 
     protected function setUp(): void {
         $this->workScheduleService = $this->createMock(WorkScheduleService::class);
         $this->permissionService = $this->createMock(PermissionService::class);
+        $this->absenceService = $this->createMock(AbsenceService::class);
     }
 
     private function makeController(string $userId = 'employee'): WorkScheduleController {
@@ -32,6 +35,7 @@ class WorkScheduleControllerTest extends TestCase {
             $userId,
             $this->workScheduleService,
             $this->permissionService,
+            $this->absenceService,
         );
     }
 
