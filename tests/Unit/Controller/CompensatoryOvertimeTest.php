@@ -11,6 +11,7 @@ use OCA\WorkTime\Db\OvertimePayoutMapper;
 use OCA\WorkTime\Service\AbsenceService;
 use OCA\WorkTime\Service\EmployeeService;
 use OCA\WorkTime\Service\HolidayService;
+use OCP\IDateTimeZone;
 use OCA\WorkTime\Service\OvertimeCalculationService;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCA\WorkTime\Service\WorkScheduleService;
@@ -36,6 +37,7 @@ class CompensatoryOvertimeTest extends TestCase {
 			$this->createMock(TimeEntryService::class),
 			$this->createMock(AbsenceService::class),
 			$this->createMock(HolidayService::class),
+			$this->createConfiguredMock(IDateTimeZone::class, ['getTimeZone' => new \DateTimeZone('Europe/Berlin')]),
 		);
 	}
 

@@ -89,7 +89,8 @@ class AbsenceServiceTest extends TestCase {
             $this->notificationService,
             $projectService,
             $this->logger,
-            $this->l
+            $this->l,
+            $this->createMock(IDateTimeZone::class),
         );
 
         $this->companySettingsService = $this->createMock(CompanySettingsService::class);
