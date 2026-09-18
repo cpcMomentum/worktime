@@ -83,6 +83,7 @@ export default {
             selected: null,
             loading: false,
             searchTimer: null,
+            pendingFavoriteIds: new Set(),
         }
     },
     watch: {
@@ -160,6 +161,13 @@ export default {
         // so an in-place mutation would persist server-side but not re-render
         // the star until the list reloads.
         async toggleFavorite(option) {
+            // Guard against a double-click firing add/remove concurrently, which
+            // could otherwise resolve out of order and leave the UI showing the
+            // wrong state.
+            if (this.pendingFavoriteIds.has(option.id)) {
+                return
+            }
+            this.pendingFavoriteIds.add(option.id)
             const next = !option.isFavorite
             try {
                 if (next) {
@@ -173,6 +181,8 @@ export default {
                 }
             } catch (e) {
                 console.error('Failed to toggle project favorite:', e)
+            } finally {
+                this.pendingFavoriteIds.delete(option.id)
             }
         },
         async syncSelected() {
