@@ -99,4 +99,34 @@ class WorkScheduleControllerTest extends TestCase {
 
         $this->assertSame(403, $this->makeController()->destroy(3, 5)->getStatus());
     }
+
+    /**
+     * #717: eine Profiländerung muss die Neuberechnung zukünftiger Urlaube für
+     * genau den betroffenen Mitarbeiter anstoßen.
+     */
+    public function testCreateScheduleRecomputesFutureVacationDays(): void {
+        $this->permissionService->method('canManageEmployees')->willReturn(true);
+        $this->workScheduleService->method('create')->willReturn(['id' => 1]);
+        $this->absenceService->expects($this->once())
+            ->method('recomputeFutureVacationDays')->with(3);
+
+        $this->assertSame(201, $this->makeController('admin')->create(3, '2026-01-01')->getStatus());
+    }
+
+    public function testUpdateScheduleRecomputesFutureVacationDays(): void {
+        $this->permissionService->method('canManageEmployees')->willReturn(true);
+        $this->workScheduleService->method('update')->willReturn(['id' => 5]);
+        $this->absenceService->expects($this->once())
+            ->method('recomputeFutureVacationDays')->with(3);
+
+        $this->assertSame(200, $this->makeController('admin')->update(3, 5)->getStatus());
+    }
+
+    public function testDeleteScheduleRecomputesFutureVacationDays(): void {
+        $this->permissionService->method('canManageEmployees')->willReturn(true);
+        $this->absenceService->expects($this->once())
+            ->method('recomputeFutureVacationDays')->with(3);
+
+        $this->assertSame(200, $this->makeController('admin')->destroy(3, 5)->getStatus());
+    }
 }
