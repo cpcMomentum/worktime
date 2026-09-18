@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Tests\Unit\Controller;
 
 use OCA\WorkTime\Controller\WorkScheduleController;
+use OCA\WorkTime\Db\WorkSchedule;
 use OCA\WorkTime\Service\AbsenceService;
 use OCA\WorkTime\Service\PermissionService;
 use OCA\WorkTime\Service\WorkScheduleService;
@@ -106,7 +107,7 @@ class WorkScheduleControllerTest extends TestCase {
      */
     public function testCreateScheduleRecomputesFutureVacationDays(): void {
         $this->permissionService->method('canManageEmployees')->willReturn(true);
-        $this->workScheduleService->method('create')->willReturn(['id' => 1]);
+        $this->workScheduleService->method('create')->willReturn($this->createMock(WorkSchedule::class));
         $this->absenceService->expects($this->once())
             ->method('recomputeFutureVacationDays')->with(3);
 
@@ -115,7 +116,7 @@ class WorkScheduleControllerTest extends TestCase {
 
     public function testUpdateScheduleRecomputesFutureVacationDays(): void {
         $this->permissionService->method('canManageEmployees')->willReturn(true);
-        $this->workScheduleService->method('update')->willReturn(['id' => 5]);
+        $this->workScheduleService->method('update')->willReturn($this->createMock(WorkSchedule::class));
         $this->absenceService->expects($this->once())
             ->method('recomputeFutureVacationDays')->with(3);
 
