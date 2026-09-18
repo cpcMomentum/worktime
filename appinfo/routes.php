@@ -7,6 +7,9 @@ return [
         // Page routes
         ['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],
 
+        // Capabilities (#714): version + feature probe for clients (esp. mobile).
+        ['name' => 'capabilities#index', 'url' => '/api/capabilities', 'verb' => 'GET'],
+
         // Push (#593): device-token registration for APNs.
         ['name' => 'push#register', 'url' => '/api/push/register', 'verb' => 'POST'],
         ['name' => 'push#unregister', 'url' => '/api/push/token', 'verb' => 'DELETE'],
