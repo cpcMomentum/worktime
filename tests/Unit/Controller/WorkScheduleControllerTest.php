@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Tests\Unit\Controller;
 
 use OCA\WorkTime\Controller\WorkScheduleController;
+use OCA\WorkTime\Db\WorkSchedule;
+use OCA\WorkTime\Service\AbsenceService;
 use OCA\WorkTime\Service\PermissionService;
 use OCA\WorkTime\Service\WorkScheduleService;
 use OCP\IRequest;
@@ -20,10 +22,12 @@ class WorkScheduleControllerTest extends TestCase {
 
     private WorkScheduleService $workScheduleService;
     private PermissionService $permissionService;
+    private AbsenceService $absenceService;
 
     protected function setUp(): void {
         $this->workScheduleService = $this->createMock(WorkScheduleService::class);
         $this->permissionService = $this->createMock(PermissionService::class);
+        $this->absenceService = $this->createMock(AbsenceService::class);
     }
 
     private function makeController(string $userId = 'employee'): WorkScheduleController {
@@ -32,6 +36,7 @@ class WorkScheduleControllerTest extends TestCase {
             $userId,
             $this->workScheduleService,
             $this->permissionService,
+            $this->absenceService,
         );
     }
 
@@ -94,5 +99,35 @@ class WorkScheduleControllerTest extends TestCase {
         $this->workScheduleService->expects($this->never())->method('delete');
 
         $this->assertSame(403, $this->makeController()->destroy(3, 5)->getStatus());
+    }
+
+    /**
+     * #717: eine Profiländerung muss die Neuberechnung zukünftiger Urlaube für
+     * genau den betroffenen Mitarbeiter anstoßen.
+     */
+    public function testCreateScheduleRecomputesFutureVacationDays(): void {
+        $this->permissionService->method('canManageEmployees')->willReturn(true);
+        $this->workScheduleService->method('create')->willReturn($this->createMock(WorkSchedule::class));
+        $this->absenceService->expects($this->once())
+            ->method('recomputeFutureVacationDays')->with(3);
+
+        $this->assertSame(201, $this->makeController('admin')->create(3, '2026-01-01')->getStatus());
+    }
+
+    public function testUpdateScheduleRecomputesFutureVacationDays(): void {
+        $this->permissionService->method('canManageEmployees')->willReturn(true);
+        $this->workScheduleService->method('update')->willReturn($this->createMock(WorkSchedule::class));
+        $this->absenceService->expects($this->once())
+            ->method('recomputeFutureVacationDays')->with(3);
+
+        $this->assertSame(200, $this->makeController('admin')->update(3, 5)->getStatus());
+    }
+
+    public function testDeleteScheduleRecomputesFutureVacationDays(): void {
+        $this->permissionService->method('canManageEmployees')->willReturn(true);
+        $this->absenceService->expects($this->once())
+            ->method('recomputeFutureVacationDays')->with(3);
+
+        $this->assertSame(200, $this->makeController('admin')->destroy(3, 5)->getStatus());
     }
 }
