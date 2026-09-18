@@ -161,7 +161,11 @@ class ProjectController extends BaseController {
 
         try {
             $project = $this->projectService->find($id);
-            $data = $project->jsonSerialize();
+            $employee = $this->permissionService->getEmployeeForUser($this->userId);
+            // #711: enrich with isFavorite too, so the single-project fetch used
+            // to show an already-selected project (e.g. when editing an entry)
+            // reflects the star state consistently with index()/search().
+            $data = $this->withFavorites([$project], $employee)[0];
             // Member assignment is management data — only expose it to managers.
             if ($this->permissionService->canManageProjects($this->userId)) {
                 $data['memberIds'] = $this->projectService->getMemberIds($id);

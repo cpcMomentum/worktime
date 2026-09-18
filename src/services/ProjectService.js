@@ -65,4 +65,24 @@ export default {
             handleApiError(error)
         }
     },
+
+    // #711: per-employee project favorites (backend #710). Toggle the star on a
+    // bookable project; the server scopes it to the current employee.
+    async addFavorite(id) {
+        try {
+            const response = await api.put(`/projects/${id}/favorite`)
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
+    async removeFavorite(id) {
+        try {
+            const response = await api.delete(`/projects/${id}/favorite`)
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
 }
