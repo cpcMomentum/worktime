@@ -11,11 +11,29 @@
         label="label"
         :class="{ 'input-error': hasError }"
         @search="onSearch"
-        @input="onInput" />
+        @input="onInput">
+        <template #option="option">
+            <span class="project-option">
+                <span class="project-option__label">{{ option.label }}</span>
+                <button type="button"
+                    class="project-option__star"
+                    :class="{ 'is-favorite': option.isFavorite }"
+                    :aria-label="option.isFavorite ? t('worktime', 'Aus Favoriten entfernen') : t('worktime', 'Zu Favoriten hinzufügen')"
+                    :title="option.isFavorite ? t('worktime', 'Aus Favoriten entfernen') : t('worktime', 'Zu Favoriten hinzufügen')"
+                    @mousedown.stop.prevent
+                    @click.stop.prevent="toggleFavorite(option)">
+                    <Star v-if="option.isFavorite" :size="18" />
+                    <StarOutline v-else :size="18" />
+                </button>
+            </span>
+        </template>
+    </NcSelect>
 </template>
 
 <script>
 import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
+import Star from 'vue-material-design-icons/Star.vue'
+import StarOutline from 'vue-material-design-icons/StarOutline.vue'
 import ProjectService from '../services/ProjectService.js'
 
 /**
@@ -31,7 +49,7 @@ import ProjectService from '../services/ProjectService.js'
  */
 export default {
     name: 'ProjectSelect',
-    components: { NcSelect },
+    components: { NcSelect, Star, StarOutline },
     props: {
         // v-model (Vue 2): die gewählte projectId
         value: {
@@ -85,13 +103,17 @@ export default {
     },
     methods: {
         toOption(project) {
-            return { id: project.id, label: project.displayName || project.name }
+            return { id: project.id, label: project.displayName || project.name, isFavorite: project.isFavorite === true }
+        },
+        // #711: favorites first, otherwise keep the server's (name) order. Stable.
+        sortFavoritesFirst(options) {
+            return [...options].sort((a, b) => (b.isFavorite === true) - (a.isFavorite === true))
         },
         async loadInitial() {
             this.loading = true
             try {
                 const results = await ProjectService.search('', 20) || []
-                this.options = results.map(this.toOption)
+                this.options = this.sortFavoritesFirst(results.map(this.toOption))
                 // Parent kann darauf reagieren (z. B. Projekt-Pflicht nur wenn es
                 // überhaupt buchbare Projekte gibt, #329).
                 this.$emit('loaded', this.options.length)
@@ -110,7 +132,7 @@ export default {
                 this.loading = true
                 try {
                     const results = await ProjectService.search(query || '', 20) || []
-                    let options = results.map(this.toOption)
+                    let options = this.sortFavoritesFirst(results.map(this.toOption))
                     // Die aktuell gewählte Option sichtbar halten, auch wenn sie
                     // nicht in den Treffern ist.
                     if (this.selected && !options.some(o => o.id === this.selected.id)) {
@@ -128,6 +150,30 @@ export default {
         onInput(option) {
             this.selected = option || null
             this.$emit('input', option ? option.id : null)
+        },
+        // #711: toggle the favorite star without selecting the option. The star
+        // flips immediately; re-sorting favorites-first happens on the next
+        // open/search so the clicked row does not jump under the cursor.
+        //
+        // We replace the option object (new array) instead of mutating it in
+        // place: NcSelect/vue-select renders from an internal copy of `options`,
+        // so an in-place mutation would persist server-side but not re-render
+        // the star until the list reloads.
+        async toggleFavorite(option) {
+            const next = !option.isFavorite
+            try {
+                if (next) {
+                    await ProjectService.addFavorite(option.id)
+                } else {
+                    await ProjectService.removeFavorite(option.id)
+                }
+                this.options = this.options.map(o => (o.id === option.id ? { ...o, isFavorite: next } : o))
+                if (this.selected && this.selected.id === option.id) {
+                    this.selected = { ...this.selected, isFavorite: next }
+                }
+            } catch (e) {
+                console.error('Failed to toggle project favorite:', e)
+            }
         },
         async syncSelected() {
             const id = this.value
@@ -160,3 +206,42 @@ export default {
     },
 }
 </script>
+
+<style scoped>
+.project-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+}
+
+.project-option__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.project-option__star {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--color-text-maxcontrast);
+    cursor: pointer;
+}
+
+.project-option__star:hover {
+    background: var(--color-background-hover);
+}
+
+.project-option__star.is-favorite {
+    color: #d4a000;
+}
+</style>
