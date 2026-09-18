@@ -9,13 +9,13 @@ declare(strict_types=1);
 
 namespace OCA\WorkTime\Service;
 
-use DateTime;
 use OCA\WorkTime\AppInfo\Application;
 use OCA\WorkTime\Db\AbsenceMapper;
 use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\EmployeeMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IConfig;
+use OCP\IDateTimeZone;
 use OCP\IGroupManager;
 
 /**
@@ -33,6 +33,7 @@ class PermissionService {
         private IGroupManager $groupManager,
         private EmployeeMapper $employeeMapper,
         private AbsenceMapper $absenceMapper,
+        private IDateTimeZone $dateTimeZone,
     ) {
     }
 
@@ -202,7 +203,7 @@ class PermissionService {
      * of activating the deputy fallback.
      */
     public function isSupervisorAbsentToday(int $supervisorEmployeeId): bool {
-        $today = new DateTime('today');
+        $today = LocalDate::today($this->dateTimeZone->getTimeZone());
         foreach ($this->absenceMapper->findByEmployeeAndDate($supervisorEmployeeId, $today) as $absence) {
             if ($absence->isApproved()) {
                 return true;

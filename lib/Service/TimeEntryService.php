@@ -19,6 +19,7 @@ use OCA\WorkTime\Db\TimeEntry;
 use OCA\WorkTime\Db\TimeEntryMapper;
 use OCA\WorkTime\Notification\NotificationService;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\IDateTimeZone;
 use OCP\IL10N;
 use Psr\Log\LoggerInterface;
 
@@ -34,7 +35,17 @@ class TimeEntryService {
         private ProjectService $projectService,
         private LoggerInterface $logger,
         private IL10N $l,
+        private IDateTimeZone $dateTimeZone,
     ) {
+    }
+
+    /**
+     * Today as a calendar date (UTC midnight), seen through the user's timezone
+     * (#713). Wrapped in a method so tests can pin "today" and check the
+     * future-date guard deterministically.
+     */
+    protected function today(): DateTime {
+        return LocalDate::today($this->dateTimeZone->getTimeZone());
     }
 
     /**
@@ -1311,7 +1322,7 @@ class TimeEntryService {
 
         // Check future dates
         $allowFuture = $this->settingsMapper->getValueAsBool(CompanySetting::KEY_ALLOW_FUTURE_ENTRIES);
-        if (!$allowFuture && $date > new DateTime('today')) {
+        if (!$allowFuture && $date > $this->today()) {
             $errors['date'] = [$this->l->t('Zukünftige Einträge sind nicht erlaubt')];
         }
 

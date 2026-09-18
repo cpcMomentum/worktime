@@ -14,6 +14,7 @@ use OCA\WorkTime\Service\EmployeeDeletionService;
 use OCA\WorkTime\Service\EmployeeService;
 use OCA\WorkTime\Service\ValidationException;
 use OCA\WorkTime\Service\WorkScheduleService;
+use OCP\IDateTimeZone;
 use OCP\IL10N;
 use OCP\IUserManager;
 use PHPUnit\Framework\TestCase;
@@ -46,6 +47,9 @@ class EmployeeServiceTest extends TestCase {
         $l = $this->createMock(IL10N::class);
         $l->method('t')->willReturnCallback(fn (string $t, array $p = []): string => $p === [] ? $t : vsprintf($t, $p));
 
+        $dateTimeZone = $this->createMock(IDateTimeZone::class);
+        $dateTimeZone->method('getTimeZone')->willReturn(new \DateTimeZone('Europe/Berlin'));
+
         $this->service = new EmployeeService(
             $this->employeeMapper,
             $this->workScheduleMapper,
@@ -55,6 +59,7 @@ class EmployeeServiceTest extends TestCase {
             $this->userManager,
             $this->logger,
             $l,
+            $dateTimeZone,
         );
     }
 
