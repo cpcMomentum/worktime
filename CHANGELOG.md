@@ -7,6 +7,17 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-09-19
+
+### Added
+- **Projekt-Favoriten in der Zeiterfassung (#710, #711)**: Häufig gebuchte Projekte lassen sich jetzt mit einem Stern als Favorit markieren. Favoriten stehen in der Projektauswahl ganz oben, das Setzen und Entfernen geschieht direkt im Auswahl-Dropdown. Die Favoriten gelten pro Mitarbeiterin und Mitarbeiter und stehen auch der mobilen App zur Verfügung.
+- **Genehmiger sichtbar im Monats-Überblick (#707)**: Ist ein Monat genehmigt, sehen Mitarbeitende jetzt, wer ihn wann genehmigt hat („Genehmigt von … am …"). (Danke an Florian Sick für die Anregung.)
+- **Capabilities-Endpunkt für Clients (#714)**: Ein neuer Endpunkt `GET /api/capabilities` liefert die Backend-Version und die verfügbaren Funktionen. Damit kann vor allem die mobile App die Server-Version anzeigen und neue Funktionen gezielt freischalten.
+
+### Fixed
+- **Nächtliche Buchungen außerhalb von UTC (#713)**: Zwischen Mitternacht und den frühen Morgenstunden ließ sich für das heutige Datum kein Zeiteintrag anlegen; es kam fälschlich „Zukünftige Einträge sind nicht erlaubt". Ursache war, dass „heute" in der Weltzeit (UTC) statt in der lokalen Zeitzone bestimmt wurde. Das betraf praktisch alle Installationen in Deutschland. „Heute" wird jetzt in der Zeitzone der Nutzerin oder des Nutzers ermittelt. (Danke an Moira für die genaue Fehlerbeschreibung.)
+- **Zukünftige Urlaube bei Wechsel des Arbeitszeitprofils (#717)**: Wurde ein Arbeitszeitprofil geändert (z. B. von zwei auf vier Arbeitstage pro Woche), blieb der Urlaubsabzug bereits geplanter, in der Zukunft liegender Urlaube auf dem alten Wert stehen. Diese Urlaube werden jetzt bei einer Profiländerung automatisch neu berechnet, sodass der Abzug zum neuen Profil passt. (Danke an Udo Dahl für den Hinweis.)
+
 ## [0.21.0] - 2026-09-17
 
 ### Added
