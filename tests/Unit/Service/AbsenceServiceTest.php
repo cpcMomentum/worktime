@@ -89,7 +89,8 @@ class AbsenceServiceTest extends TestCase {
             $this->notificationService,
             $projectService,
             $this->logger,
-            $this->l
+            $this->l,
+            $this->createMock(IDateTimeZone::class),
         );
 
         $this->companySettingsService = $this->createMock(CompanySettingsService::class);
@@ -1654,5 +1655,79 @@ class AbsenceServiceTest extends TestCase {
 
         $this->expectException(ValidationException::class);
         $this->createSick($day, $day, null);
+    }
+
+    // ---------------------------------------------------------------------
+    // #717: Neurechnung zukünftiger Urlaube bei Profiländerung
+    // ---------------------------------------------------------------------
+
+    private function futureVacation(string $start, string $end, string $storedDays, float $scope = 1.0): Absence {
+        $vac = new Absence();
+        $vac->setId(10);
+        $vac->setEmployeeId(1);
+        $vac->setType(Absence::TYPE_VACATION);
+        $vac->setStatus(Absence::STATUS_APPROVED);
+        $vac->setStartDate(new \DateTime($start));
+        $vac->setEndDate(new \DateTime($end));
+        $vac->setDays($storedDays);
+        $vac->setScopeValue($scope);
+        return $vac;
+    }
+
+    private function employeeForRecompute(): Employee {
+        $employee = new Employee();
+        $employee->setId(1);
+        $employee->setFederalState('BW');
+        $employee->setVacationDays(30);
+        return $employee;
+    }
+
+    public function testRecomputeUpdatesStaleFutureVacationAfterProfileChange(): void {
+        // Vacation was booked under a 2-day-week profile (stored days = 2). The
+        // profile later changes to 4 working days in that week → deduction must
+        // be refreshed to 4.
+        $this->employeeMapper->method('find')->willReturn($this->employeeForRecompute());
+        $this->absenceMapper->method('findByEmployee')
+            ->willReturn([$this->futureVacation('2099-06-01', '2099-06-07', '2.00')]);
+        $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
+        $this->workScheduleService->method('countWorkingDays')->willReturn(4.0);
+
+        $captured = null;
+        $this->absenceMapper->expects($this->once())->method('update')
+            ->willReturnCallback(function (Absence $a) use (&$captured) {
+                $captured = $a;
+                return $a;
+            });
+
+        $count = $this->service->recomputeFutureVacationDays(1);
+
+        $this->assertSame(1, $count);
+        $this->assertSame('4.00', $captured->getDays());
+    }
+
+    public function testRecomputeLeavesPastVacationUntouched(): void {
+        // A past vacation must not be rewritten, even if the schedule now differs.
+        $this->employeeMapper->method('find')->willReturn($this->employeeForRecompute());
+        $this->absenceMapper->method('findByEmployee')
+            ->willReturn([$this->futureVacation('2000-06-01', '2000-06-07', '2.00')]);
+        $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
+        $this->workScheduleService->method('countWorkingDays')->willReturn(4.0);
+
+        $this->absenceMapper->expects($this->never())->method('update');
+
+        $this->assertSame(0, $this->service->recomputeFutureVacationDays(1));
+    }
+
+    public function testRecomputeSkipsWhenDaysUnchanged(): void {
+        // No change (still 2 working days) → no write.
+        $this->employeeMapper->method('find')->willReturn($this->employeeForRecompute());
+        $this->absenceMapper->method('findByEmployee')
+            ->willReturn([$this->futureVacation('2099-06-01', '2099-06-07', '2.00')]);
+        $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
+        $this->workScheduleService->method('countWorkingDays')->willReturn(2.0);
+
+        $this->absenceMapper->expects($this->never())->method('update');
+
+        $this->assertSame(0, $this->service->recomputeFutureVacationDays(1));
     }
 }

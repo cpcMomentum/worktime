@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace OCA\WorkTime\Controller;
 
+use OCA\WorkTime\Db\Employee;
+use OCA\WorkTime\Db\Project;
 use OCA\WorkTime\Service\PermissionService;
 use OCA\WorkTime\Service\ProjectService;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -42,7 +44,7 @@ class ProjectController extends BaseController {
             $projects = $this->projectService->getProjectsForEmployee($employee->getId());
         }
 
-        return $this->successResponse($projects);
+        return $this->successResponse($this->withFavorites($projects, $employee));
     }
 
     /**
@@ -67,7 +69,67 @@ class ProjectController extends BaseController {
             $projects = $this->projectService->getProjectsForEmployee($employee->getId());
         }
 
-        return $this->successResponse($this->projectService->search($projects, $q, $limit));
+        $scoped = $this->projectService->search($projects, $q, $limit);
+        return $this->successResponse($this->withFavorites($scoped, $employee));
+    }
+
+    /**
+     * Mark a project as favourite for the current employee (#710). Idempotent.
+     * A pure admin without an employee record has no favourites.
+     */
+    #[NoAdminRequired]
+    public function addFavorite(int $id): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+        $employee = $this->permissionService->getEmployeeForUser($this->userId);
+        if ($employee === null) {
+            return $this->forbiddenResponse();
+        }
+        try {
+            $this->projectService->addFavorite($employee->getId(), $id);
+            return $this->successResponse(['projectId' => $id, 'isFavorite' => true]);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    /**
+     * Remove a project from the current employee's favourites (#710). No-op
+     * when it is not set.
+     */
+    #[NoAdminRequired]
+    public function removeFavorite(int $id): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+        $employee = $this->permissionService->getEmployeeForUser($this->userId);
+        if ($employee === null) {
+            return $this->forbiddenResponse();
+        }
+        $this->projectService->removeFavorite($employee->getId(), $id);
+        return $this->successResponse(['projectId' => $id, 'isFavorite' => false]);
+    }
+
+    /**
+     * Enrich a bookable project list with the current employee's `isFavorite`
+     * flag (#710) — consumers show favourites first / auto-select a single one.
+     * The favourite ids are loaded once, not per project. A pure admin (no
+     * employee record) has no favourites, so every flag is false.
+     *
+     * @param Project[] $projects
+     * @return array[] serialised projects with an added isFavorite bool
+     */
+    private function withFavorites(array $projects, ?Employee $employee): array {
+        $favIds = $employee === null
+            ? []
+            : array_fill_keys($this->projectService->getFavoriteProjectIds($employee->getId()), true);
+
+        return array_map(static function (Project $p) use ($favIds): array {
+            $data = $p->jsonSerialize();
+            $data['isFavorite'] = isset($favIds[$p->getId()]);
+            return $data;
+        }, $projects);
     }
 
     #[NoAdminRequired]
@@ -99,7 +161,11 @@ class ProjectController extends BaseController {
 
         try {
             $project = $this->projectService->find($id);
-            $data = $project->jsonSerialize();
+            $employee = $this->permissionService->getEmployeeForUser($this->userId);
+            // #711: enrich with isFavorite too, so the single-project fetch used
+            // to show an already-selected project (e.g. when editing an entry)
+            // reflects the star state consistently with index()/search().
+            $data = $this->withFavorites([$project], $employee)[0];
             // Member assignment is management data — only expose it to managers.
             if ($this->permissionService->canManageProjects($this->userId)) {
                 $data['memberIds'] = $this->projectService->getMemberIds($id);

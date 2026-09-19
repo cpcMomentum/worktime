@@ -19,6 +19,7 @@ use OCA\WorkTime\Service\ProjectService;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCA\WorkTime\Service\ValidationException;
 use OCA\WorkTime\Service\ForbiddenException;
+use OCP\IDateTimeZone;
 use OCP\IL10N;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -37,6 +38,7 @@ class TimeEntryServiceTest extends TestCase {
     private ProjectService $projectService;
     private LoggerInterface $logger;
     private IL10N $l;
+    private IDateTimeZone $dateTimeZone;
 
     protected function setUp(): void {
         $this->timeEntryMapper = $this->createMock(TimeEntryMapper::class);
@@ -53,6 +55,10 @@ class TimeEntryServiceTest extends TestCase {
         $this->l->method('t')->willReturnCallback(
             fn(string $text, array $parameters = []): string => $parameters === [] ? $text : vsprintf($text, $parameters)
         );
+        // Europe/Berlin (UTC+1/2), NOT UTC: a UTC mock would hide the #713
+        // timezone bug where "today" is computed against the UTC calendar day.
+        $this->dateTimeZone = $this->createMock(IDateTimeZone::class);
+        $this->dateTimeZone->method('getTimeZone')->willReturn(new \DateTimeZone('Europe/Berlin'));
 
         // Default settings
         $this->settingsMapper->method('getValueAsInt')
@@ -85,7 +91,8 @@ class TimeEntryServiceTest extends TestCase {
             $this->notificationService,
             $this->projectService,
             $this->logger,
-            $this->l
+            $this->l,
+            $this->dateTimeZone,
         );
     }
 
@@ -514,6 +521,7 @@ class TimeEntryServiceTest extends TestCase {
             $projectService,
             $this->logger,
             $this->l,
+            $this->dateTimeZone,
         );
         // No overlapping entries and no absence on that day.
         $this->timeEntryMapper->method('findByEmployeeAndDate')->willReturn([]);
@@ -527,6 +535,56 @@ class TimeEntryServiceTest extends TestCase {
         } catch (ValidationException $e) {
             $this->assertArrayHasKey('projectId', $e->getErrors());
         }
+    }
+
+    /**
+     * #713: the future-date guard compares against *today*, and "today" must be
+     * the local calendar day. We pin today via the seam so the comparison is
+     * deterministic: an entry for today is allowed, one for tomorrow is not.
+     * (Before the fix "today" was the UTC calendar day, so between local
+     * midnight and the UTC offset today's own bookings were rejected.)
+     */
+    public function testFutureDateGuardComparesAgainstLocalToday(): void {
+        $service = new class(
+            $this->timeEntryMapper,
+            $this->settingsMapper,
+            $this->employeeMapper,
+            $this->absenceMapper,
+            $this->auditLogService,
+            $this->notificationService,
+            $this->projectService,
+            $this->logger,
+            $this->l,
+            $this->dateTimeZone,
+        ) extends TimeEntryService {
+            protected function today(): DateTime {
+                return new DateTime('2026-09-18');
+            }
+        };
+
+        $validate = new \ReflectionMethod($service, 'validate');
+
+        $errorsToday = $validate->invoke(
+            $service,
+            new DateTime('2026-09-18'),
+            new DateTime('2026-09-18 08:00'),
+            new DateTime('2026-09-18 16:00'),
+            0,
+            null,
+            false,
+        );
+        $this->assertArrayNotHasKey('date', $errorsToday, 'A same-day entry must not be rejected as future.');
+
+        $errorsTomorrow = $validate->invoke(
+            $service,
+            new DateTime('2026-09-19'),
+            new DateTime('2026-09-19 08:00'),
+            new DateTime('2026-09-19 16:00'),
+            0,
+            null,
+            false,
+        );
+        $this->assertArrayHasKey('date', $errorsTomorrow, 'A next-day entry must be rejected as future.');
     }
 
     // ---------------------------------------------------------------------
@@ -800,6 +858,7 @@ class TimeEntryServiceTest extends TestCase {
             $projectService,
             $this->logger,
             $this->l,
+            $this->dateTimeZone,
         );
     }
 

@@ -13,6 +13,7 @@ use OCA\WorkTime\Db\EmployeeMapper;
 use OCA\WorkTime\Service\PermissionService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IConfig;
+use OCP\IDateTimeZone;
 use OCP\IGroupManager;
 use PHPUnit\Framework\TestCase;
 
@@ -29,12 +30,15 @@ class PermissionServiceTest extends TestCase {
         $this->groupManager = $this->createMock(IGroupManager::class);
         $this->employeeMapper = $this->createMock(EmployeeMapper::class);
         $this->absenceMapper = $this->createMock(AbsenceMapper::class);
+        $dateTimeZone = $this->createMock(IDateTimeZone::class);
+        $dateTimeZone->method('getTimeZone')->willReturn(new \DateTimeZone('Europe/Berlin'));
 
         $this->service = new PermissionService(
             $this->config,
             $this->groupManager,
             $this->employeeMapper,
-            $this->absenceMapper
+            $this->absenceMapper,
+            $dateTimeZone,
         );
     }
 

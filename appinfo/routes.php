@@ -7,6 +7,9 @@ return [
         // Page routes
         ['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],
 
+        // Capabilities (#714): version + feature probe for clients (esp. mobile).
+        ['name' => 'capabilities#index', 'url' => '/api/capabilities', 'verb' => 'GET'],
+
         // Push (#593): device-token registration for APNs.
         ['name' => 'push#register', 'url' => '/api/push/register', 'verb' => 'POST'],
         ['name' => 'push#unregister', 'url' => '/api/push/token', 'verb' => 'DELETE'],
@@ -97,6 +100,9 @@ return [
         ['name' => 'project#show', 'url' => '/api/projects/{id}', 'verb' => 'GET', 'requirements' => ['id' => '\d+']],
         ['name' => 'project#update', 'url' => '/api/projects/{id}', 'verb' => 'PUT', 'requirements' => ['id' => '\d+']],
         ['name' => 'project#destroy', 'url' => '/api/projects/{id}', 'verb' => 'DELETE', 'requirements' => ['id' => '\d+']],
+        // Personal project favourites (#710) — employee-scoped via session, not a request param
+        ['name' => 'project#addFavorite', 'url' => '/api/projects/{id}/favorite', 'verb' => 'PUT', 'requirements' => ['id' => '\d+']],
+        ['name' => 'project#removeFavorite', 'url' => '/api/projects/{id}/favorite', 'verb' => 'DELETE', 'requirements' => ['id' => '\d+']],
 
         // Departments API (#570) — specific routes before {id}
         ['name' => 'department#indexAll', 'url' => '/api/departments/all', 'verb' => 'GET'],

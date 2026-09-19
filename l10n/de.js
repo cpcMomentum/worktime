@@ -763,6 +763,9 @@ OC.L10N.register(
     "Abteilung gelöscht" : "Abteilung gelöscht",
     "z.B. 45" : "z.B. 45",
     "Ihre gewohnte Pause wird bei neuen Einträgen vorausgefüllt. Sie kann die gesetzliche Mindestpause (§4 ArbZG) nie unterschreiten — bei Bedarf wird automatisch der gesetzliche Wert verwendet. Leer lassen für die gesetzliche Mindestpause." : "Ihre gewohnte Pause wird bei neuen Einträgen vorausgefüllt. Sie kann die gesetzliche Mindestpause (§4 ArbZG) nie unterschreiten — bei Bedarf wird automatisch der gesetzliche Wert verwendet. Leer lassen für die gesetzliche Mindestpause.",
-    "Zeit" : "Zeit"
+    "Zeit" : "Zeit",
+    "von {name} am {date}" : "von {name} am {date}",
+    "Aus Favoriten entfernen" : "Aus Favoriten entfernen",
+    "Zu Favoriten hinzufügen" : "Zu Favoriten hinzufügen"
 },
 "nplurals=2; plural=(n != 1);");

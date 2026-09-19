@@ -1032,6 +1032,60 @@ class AbsenceService {
     }
 
     /**
+     * #717: after a work-schedule change, future vacation deductions can be
+     * stale. The per-absence `days` is computed and stored at creation from the
+     * schedule active then (see create()); a later profile change (more/fewer
+     * working days per week) covering an already-planned future vacation is not
+     * reflected, so the quota keeps deducting the old day count.
+     *
+     * Recompute and persist `days` for the employee's future (start >= today),
+     * approved/pending vacation absences, using the same schedule-aware count as
+     * creation. Returns the number of absences actually changed.
+     *
+     * Scope is deliberately narrow: vacation only (it is what consumes the
+     * quota) and only future absences, so historical/locked records stay
+     * untouched. Called by WorkScheduleController after create/update/delete —
+     * kept out of WorkScheduleService to avoid a circular dependency (this
+     * service already depends on WorkScheduleService).
+     */
+    public function recomputeFutureVacationDays(int $employeeId): int {
+        $today = LocalDate::today($this->dateTimeZone->getTimeZone());
+        $federalState = $this->employeeMapper->find($employeeId)->getFederalState();
+
+        $updated = 0;
+        foreach ($this->absenceMapper->findByEmployee($employeeId) as $absence) {
+            if ($absence->getType() !== Absence::TYPE_VACATION) {
+                continue;
+            }
+            if ($absence->getStatus() !== Absence::STATUS_APPROVED
+                && $absence->getStatus() !== Absence::STATUS_PENDING) {
+                continue;
+            }
+            if ($absence->getStartDate() < $today) {
+                continue;
+            }
+
+            $newDays = $this->calculateWorkingDays(
+                $absence->getStartDate(),
+                $absence->getEndDate(),
+                $federalState,
+                $employeeId
+            ) * $absence->getScopeValue();
+
+            if (abs($newDays - (float)$absence->getDays()) < 0.0001) {
+                continue;
+            }
+
+            $absence->setDays(number_format($newDays, 2, '.', ''));
+            $absence->setUpdatedAt(new DateTime());
+            $this->absenceMapper->update($absence);
+            $updated++;
+        }
+
+        return $updated;
+    }
+
+    /**
      * #360: A full-day absence is logically incompatible with time entries on the
      * same day — you cannot work and take the whole day off, and the overtime
      * would be counted twice (the absence consumes the daily target while the

@@ -57,6 +57,10 @@ class TimeEntryController extends BaseController {
      * the full project list in memory, so the client no longer has to preload
      * every project just to label entries. One findAll() query, mapped in memory.
      *
+     * #707: also add each entry's approverName (display name of the employee who
+     * approved it), so an employee can see who approved their month. approvedBy
+     * holds the approver's employee id; the name is resolved once per approver.
+     *
      * @param \OCA\WorkTime\Db\TimeEntry[] $entries
      */
     private function withProjectNames(array $entries): array {
@@ -65,9 +69,23 @@ class TimeEntryController extends BaseController {
             $names[$project->getId()] = $project->getDisplayName();
         }
 
-        return array_map(static function ($entry) use ($names): array {
+        $approverNames = [];
+        foreach ($entries as $entry) {
+            $approverId = $entry->getApprovedBy();
+            if ($approverId !== null && !array_key_exists($approverId, $approverNames)) {
+                try {
+                    $approverNames[$approverId] = $this->employeeService->find($approverId)->getFullName();
+                } catch (\Throwable) {
+                    $approverNames[$approverId] = null;
+                }
+            }
+        }
+
+        return array_map(static function ($entry) use ($names, $approverNames): array {
             $data = $entry->jsonSerialize();
             $data['projectName'] = $entry->getProjectId() ? ($names[$entry->getProjectId()] ?? null) : null;
+            $approverId = $entry->getApprovedBy();
+            $data['approverName'] = $approverId !== null ? ($approverNames[$approverId] ?? null) : null;
             return $data;
         }, $entries);
     }

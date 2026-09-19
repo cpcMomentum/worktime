@@ -13,6 +13,7 @@ use DateTime;
 use OCA\WorkTime\Db\Project;
 use OCA\WorkTime\Db\ProjectMapper;
 use OCA\WorkTime\Db\ProjectEmployeeMapper;
+use OCA\WorkTime\Db\EmployeeFavoriteProjectMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
 
@@ -21,6 +22,7 @@ class ProjectService {
     public function __construct(
         private ProjectMapper $projectMapper,
         private ProjectEmployeeMapper $projectEmployeeMapper,
+        private EmployeeFavoriteProjectMapper $favoriteMapper,
         private AuditLogService $auditLogService,
         private LoggerInterface $logger,
     ) {
@@ -160,6 +162,7 @@ class ProjectService {
         }
 
         $this->projectEmployeeMapper->deleteForProject($id);
+        $this->favoriteMapper->deleteForProject($id);
         $this->projectMapper->delete($project);
     }
 
@@ -244,6 +247,37 @@ class ProjectService {
             return true;
         }
         return in_array($employeeId, $this->projectEmployeeMapper->findEmployeeIdsForProject($projectId), true);
+    }
+
+    /**
+     * Project IDs the employee marked as favourite (#710).
+     *
+     * @return int[]
+     */
+    public function getFavoriteProjectIds(int $employeeId): array {
+        return $this->favoriteMapper->findProjectIdsForEmployee($employeeId);
+    }
+
+    /**
+     * Mark a project as favourite for the employee. Scoped exactly like the
+     * bookable list (#682 principle): an employee can only favourite a project
+     * they may actually book on, never widening the visible set. A project the
+     * employee cannot book is reported as not found (no existence leak).
+     *
+     * @throws NotFoundException when the project is not bookable for the employee
+     */
+    public function addFavorite(int $employeeId, int $projectId): void {
+        if (!$this->isProjectAllowedForEmployee($projectId, $employeeId)) {
+            throw new NotFoundException('Project not found');
+        }
+        $this->favoriteMapper->add($employeeId, $projectId);
+    }
+
+    /**
+     * Remove a favourite. No-op when it is not set.
+     */
+    public function removeFavorite(int $employeeId, int $projectId): void {
+        $this->favoriteMapper->remove($employeeId, $projectId);
     }
 
     /**
