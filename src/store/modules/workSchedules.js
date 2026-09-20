@@ -53,20 +53,23 @@ const actions = {
 	},
 
 	async createSchedule({ commit }, { employeeId, data }) {
-		const schedule = await WorkScheduleService.create(employeeId, data)
+		// #724: the response carries the schedule fields plus quotaWarnings; keep
+		// the stored entity clean and hand the warnings back to the caller.
+		const { quotaWarnings = [], ...schedule } = await WorkScheduleService.create(employeeId, data)
 		commit('ADD_SCHEDULE', schedule)
-		return schedule
+		return { schedule, quotaWarnings }
 	},
 
 	async updateSchedule({ commit }, { employeeId, id, data }) {
-		const schedule = await WorkScheduleService.update(employeeId, id, data)
+		const { quotaWarnings = [], ...schedule } = await WorkScheduleService.update(employeeId, id, data)
 		commit('UPDATE_SCHEDULE', schedule)
-		return schedule
+		return { schedule, quotaWarnings }
 	},
 
 	async deleteSchedule({ commit }, { employeeId, id }) {
-		await WorkScheduleService.delete(employeeId, id)
+		const { quotaWarnings = [] } = await WorkScheduleService.delete(employeeId, id) || {}
 		commit('REMOVE_SCHEDULE', id)
+		return { quotaWarnings }
 	},
 }
 

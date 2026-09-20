@@ -107,18 +107,24 @@ class WorkScheduleControllerTest extends TestCase {
      */
     public function testCreateScheduleRecomputesFutureVacationDays(): void {
         $this->permissionService->method('canManageEmployees')->willReturn(true);
-        $this->workScheduleService->method('create')->willReturn($this->createMock(WorkSchedule::class));
+        $schedule = $this->createMock(WorkSchedule::class);
+        $schedule->method('jsonSerialize')->willReturn(['id' => 5]);
+        $this->workScheduleService->method('create')->willReturn($schedule);
         $this->absenceService->expects($this->once())
-            ->method('recomputeFutureVacationDays')->with(3);
+            ->method('recomputeFutureVacationDays')->with(3)
+            ->willReturn(['updated' => 0, 'quotaWarnings' => []]);
 
         $this->assertSame(201, $this->makeController('admin')->create(3, '2026-01-01')->getStatus());
     }
 
     public function testUpdateScheduleRecomputesFutureVacationDays(): void {
         $this->permissionService->method('canManageEmployees')->willReturn(true);
-        $this->workScheduleService->method('update')->willReturn($this->createMock(WorkSchedule::class));
+        $schedule = $this->createMock(WorkSchedule::class);
+        $schedule->method('jsonSerialize')->willReturn(['id' => 5]);
+        $this->workScheduleService->method('update')->willReturn($schedule);
         $this->absenceService->expects($this->once())
-            ->method('recomputeFutureVacationDays')->with(3);
+            ->method('recomputeFutureVacationDays')->with(3)
+            ->willReturn(['updated' => 0, 'quotaWarnings' => []]);
 
         $this->assertSame(200, $this->makeController('admin')->update(3, 5)->getStatus());
     }
@@ -126,8 +132,28 @@ class WorkScheduleControllerTest extends TestCase {
     public function testDeleteScheduleRecomputesFutureVacationDays(): void {
         $this->permissionService->method('canManageEmployees')->willReturn(true);
         $this->absenceService->expects($this->once())
-            ->method('recomputeFutureVacationDays')->with(3);
+            ->method('recomputeFutureVacationDays')->with(3)
+            ->willReturn(['updated' => 0, 'quotaWarnings' => []]);
 
         $this->assertSame(200, $this->makeController('admin')->destroy(3, 5)->getStatus());
+    }
+
+    /**
+     * #724: quota warnings from the recompute reach the API response so the
+     * frontend can surface them (create path stands in for update/delete).
+     */
+    public function testCreateSchedulePropagatesQuotaWarnings(): void {
+        $this->permissionService->method('canManageEmployees')->willReturn(true);
+        $schedule = $this->createMock(WorkSchedule::class);
+        $schedule->method('jsonSerialize')->willReturn(['id' => 5]);
+        $this->workScheduleService->method('create')->willReturn($schedule);
+        $this->absenceService->method('recomputeFutureVacationDays')->with(3)
+            ->willReturn(['updated' => 1, 'quotaWarnings' => [['year' => 2099, 'over' => 5.0]]]);
+
+        $response = $this->makeController('admin')->create(3, '2026-01-01');
+        $data = $response->getData();
+
+        $this->assertSame(5, $data['id']);
+        $this->assertSame([['year' => 2099, 'over' => 5.0]], $data['quotaWarnings']);
     }
 }

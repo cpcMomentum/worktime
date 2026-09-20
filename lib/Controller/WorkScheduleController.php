@@ -81,9 +81,13 @@ class WorkScheduleController extends BaseController {
             );
 
             // #717: refresh future vacation deductions against the new profile.
-            $this->absenceService->recomputeFutureVacationDays($employeeId);
+            // #724: surface any year the recompute pushed over quota.
+            $recompute = $this->absenceService->recomputeFutureVacationDays($employeeId);
 
-            return $this->createdResponse($schedule);
+            return $this->createdResponse(array_merge(
+                $schedule->jsonSerialize(),
+                ['quotaWarnings' => $recompute['quotaWarnings']]
+            ));
         } catch (\Exception $e) {
             return $this->handleException($e);
         }
@@ -114,9 +118,13 @@ class WorkScheduleController extends BaseController {
             );
 
             // #717: refresh future vacation deductions against the changed profile.
-            $this->absenceService->recomputeFutureVacationDays($employeeId);
+            // #724: surface any year the recompute pushed over quota.
+            $recompute = $this->absenceService->recomputeFutureVacationDays($employeeId);
 
-            return $this->successResponse($schedule);
+            return $this->successResponse(array_merge(
+                $schedule->jsonSerialize(),
+                ['quotaWarnings' => $recompute['quotaWarnings']]
+            ));
         } catch (\Exception $e) {
             return $this->handleException($e);
         }
@@ -136,9 +144,13 @@ class WorkScheduleController extends BaseController {
             $this->workScheduleService->delete($id, $employeeId, $this->userId);
 
             // #717: a removed profile changes which schedule covers future days.
-            $this->absenceService->recomputeFutureVacationDays($employeeId);
+            // #724: surface any year the recompute pushed over quota.
+            $recompute = $this->absenceService->recomputeFutureVacationDays($employeeId);
 
-            return $this->deletedResponse();
+            return $this->successResponse([
+                'status' => 'deleted',
+                'quotaWarnings' => $recompute['quotaWarnings'],
+            ]);
         } catch (\Exception $e) {
             return $this->handleException($e);
         }

@@ -30,7 +30,8 @@ export default {
 
 	async delete(employeeId, id) {
 		try {
-			await api.delete(`/employees/${employeeId}/schedules/${id}`)
+			const response = await api.delete(`/employees/${employeeId}/schedules/${id}`)
+			return response.data
 		} catch (error) {
 			handleApiError(error)
 		}
