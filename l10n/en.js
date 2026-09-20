@@ -766,6 +766,7 @@ OC.L10N.register(
     "Zeit" : "Time",
     "von {name} am {date}" : "by {name} on {date}",
     "Aus Favoriten entfernen" : "Remove from favorites",
-    "Zu Favoriten hinzufügen" : "Add to favorites"
+    "Zu Favoriten hinzufügen" : "Add to favorites",
+    "Achtung: Durch die Profiländerung überschreitet der Urlaub {year} das Kontingent um {days} Tage. Bitte die geplanten Urlaube dieses Mitarbeiters prüfen." : "Warning: after this profile change, the vacation in {year} exceeds the quota by {days} days. Please review this employee's planned vacation."
 },
 "nplurals=2; plural=(n != 1);");
