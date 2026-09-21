@@ -52,6 +52,30 @@ class AbsenceMapper extends QBMapper {
     }
 
     /**
+     * Future vacation absences of an employee that still consume the quota
+     * (approved + pending, start_date >= today). #724: the profile-change
+     * recompute only ever touches these — filtering in SQL avoids loading the
+     * employee's full absence history just to discard most of it in PHP.
+     *
+     * @return Absence[]
+     */
+    public function findFutureVacationByEmployee(int $employeeId, DateTime $today): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('employee_id', $qb->createNamedParameter($employeeId, IQueryBuilder::PARAM_INT)))
+            ->andWhere($qb->expr()->eq('type', $qb->createNamedParameter(Absence::TYPE_VACATION)))
+            ->andWhere($qb->expr()->in('status', $qb->createNamedParameter(
+                [Absence::STATUS_APPROVED, Absence::STATUS_PENDING],
+                IQueryBuilder::PARAM_STR_ARRAY
+            )))
+            ->andWhere($qb->expr()->gte('start_date', $qb->createNamedParameter($today, IQueryBuilder::PARAM_DATE)))
+            ->orderBy('start_date', 'ASC');
+
+        return $this->findEntities($qb);
+    }
+
+    /**
      * @return Absence[]
      */
     public function findByEmployeeAndYear(int $employeeId, int $year): array {
@@ -284,11 +308,12 @@ class AbsenceMapper extends QBMapper {
      * Filter: approved, type in sick/child_sick, end_date >= heute.
      *
      * @param int $supervisorEmployeeId 0 = alle (Admin/HR), >0 = nur Team des Supervisors
+     * @param string $today Kalendertag (Y-m-d) in der Nutzer-Zeitzone (#716) — vom
+     *   Aufrufer via LocalDate::today() gereicht, statt hier UTC-"heute" zu bilden.
      * @return Absence[]
      */
-    public function findActiveInformationalForSupervisor(int $supervisorEmployeeId): array {
+    public function findActiveInformationalForSupervisor(int $supervisorEmployeeId, string $today): array {
         $qb = $this->db->getQueryBuilder();
-        $today = (new DateTime())->format('Y-m-d');
 
         $qb->select('*')
             ->from($this->getTableName())

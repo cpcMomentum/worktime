@@ -138,7 +138,10 @@ class AbsenceService {
      * @return Absence[]
      */
     public function findActiveInformationalForSupervisor(int $supervisorEmployeeId): array {
-        return $this->absenceMapper->findActiveInformationalForSupervisor($supervisorEmployeeId);
+        // #716: "heute" in der Nutzer-Zeitzone bilden und an den Mapper reichen,
+        // damit der end_date-Filter nicht am UTC-Tag haengt.
+        $today = LocalDate::today($this->dateTimeZone->getTimeZone())->format('Y-m-d');
+        return $this->absenceMapper->findActiveInformationalForSupervisor($supervisorEmployeeId, $today);
     }
 
     public function findPendingForApproval(int $supervisorEmployeeId): array {
@@ -1040,7 +1043,19 @@ class AbsenceService {
      *
      * Recompute and persist `days` for the employee's future (start >= today),
      * approved/pending vacation absences, using the same schedule-aware count as
-     * creation. Returns the number of absences actually changed.
+     * creation.
+     *
+     * #724: after persisting, re-check the yearly quota for every year a changed
+     * absence touches. The profile change is an admin action and must not be
+     * blocked, but a recompute that pushes a year over its quota (deduction grew
+     * because the new profile has more working days) would otherwise silently
+     * leave the vacation account negative. Such years are reported back so the
+     * caller can warn the admin. The message text is built in the frontend; the
+     * backend only returns structured data.
+     *
+     * @return array{updated: int, quotaWarnings: list<array{year: int, over: float}>}
+     *   `updated` = number of absences actually rewritten; `quotaWarnings` = one
+     *   entry per touched year now over quota, with `over` = days above the quota.
      *
      * Scope is deliberately narrow: vacation only (it is what consumes the
      * quota) and only future absences, so historical/locked records stay
@@ -1048,19 +1063,15 @@ class AbsenceService {
      * kept out of WorkScheduleService to avoid a circular dependency (this
      * service already depends on WorkScheduleService).
      */
-    public function recomputeFutureVacationDays(int $employeeId): int {
+    public function recomputeFutureVacationDays(int $employeeId): array {
         $today = LocalDate::today($this->dateTimeZone->getTimeZone());
         $federalState = $this->employeeMapper->find($employeeId)->getFederalState();
 
         $updated = 0;
-        foreach ($this->absenceMapper->findByEmployee($employeeId) as $absence) {
-            if ($absence->getType() !== Absence::TYPE_VACATION) {
-                continue;
-            }
-            if ($absence->getStatus() !== Absence::STATUS_APPROVED
-                && $absence->getStatus() !== Absence::STATUS_PENDING) {
-                continue;
-            }
+        $touchedYears = [];
+        foreach ($this->absenceMapper->findFutureVacationByEmployee($employeeId, $today) as $absence) {
+            // Defensive guard: the mapper already filters to future vacation, but
+            // keep the check so the service stays correct if the query ever changes.
             if ($absence->getStartDate() < $today) {
                 continue;
             }
@@ -1080,9 +1091,23 @@ class AbsenceService {
             $absence->setUpdatedAt(new DateTime());
             $this->absenceMapper->update($absence);
             $updated++;
+
+            $startYear = (int)$absence->getStartDate()->format('Y');
+            $endYear = (int)$absence->getEndDate()->format('Y');
+            for ($year = $startYear; $year <= $endYear; $year++) {
+                $touchedYears[$year] = true;
+            }
         }
 
-        return $updated;
+        $quotaWarnings = [];
+        foreach (array_keys($touchedYears) as $year) {
+            $remaining = $this->remainingVacationDays($employeeId, $year, $federalState);
+            if ($remaining < -0.0001) {
+                $quotaWarnings[] = ['year' => $year, 'over' => round(-$remaining, 2)];
+            }
+        }
+
+        return ['updated' => $updated, 'quotaWarnings' => $quotaWarnings];
     }
 
     /**

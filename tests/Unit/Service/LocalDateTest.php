@@ -24,6 +24,9 @@ class LocalDateTest extends TestCase {
 
         $this->assertSame($expected, $today->format('Y-m-d'));
         $this->assertSame('00:00:00', $today->format('H:i:s'));
+        // #716: the result is anchored at UTC midnight explicitly.
+        $this->assertSame('UTC', $today->getTimezone()->getName());
+        $this->assertSame(0, $today->getOffset());
     }
 
     /**

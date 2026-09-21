@@ -146,7 +146,7 @@ import Close from 'vue-material-design-icons/Close.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import InfoIcon from './InfoIcon.vue'
 import { mapGetters, mapActions } from 'vuex'
-import { showError } from '@nextcloud/dialogs'
+import { showError, showWarning } from '@nextcloud/dialogs'
 import { formatDateISO, getLocale } from '../utils/dateUtils.js'
 import SettingsService from '../services/SettingsService.js'
 
@@ -312,8 +312,9 @@ export default {
                     vacationDays: this.form.vacationDays,
                 }
 
+                let result
                 if (this.editingSchedule) {
-                    await this.updateSchedule({
+                    result = await this.updateSchedule({
                         employeeId: this.employeeId,
                         id: this.editingSchedule.id,
                         data,
@@ -322,7 +323,7 @@ export default {
                     data.validFrom = this.form.validFrom
                         ? formatDateISO(this.form.validFrom)
                         : formatDateISO(new Date())
-                    await this.createSchedule({
+                    result = await this.createSchedule({
                         employeeId: this.employeeId,
                         data,
                     })
@@ -331,6 +332,7 @@ export default {
                 this.showForm = false
                 this.editingSchedule = null
                 this.$emit('updated')
+                this.warnOnQuotaOverage(result?.quotaWarnings)
             } catch (error) {
                 console.error('Failed to save schedule:', error)
                 const data = error?.response?.data
@@ -349,11 +351,12 @@ export default {
         },
         async deleteConfirmed() {
             try {
-                await this.deleteSchedule({
+                const result = await this.deleteSchedule({
                     employeeId: this.employeeId,
                     id: this.scheduleToDelete.id,
                 })
                 this.$emit('updated')
+                this.warnOnQuotaOverage(result?.quotaWarnings)
             } catch (error) {
                 console.error('Failed to delete schedule:', error)
                 showError(t('worktime', 'Fehler beim Löschen des Profils'))
@@ -361,6 +364,21 @@ export default {
                 this.showDeleteDialog = false
                 this.scheduleToDelete = null
             }
+        },
+        // #724: a profile change can raise future vacation deductions and push a
+        // year over its quota. The change itself is not blocked (admin action) —
+        // the affected years are surfaced as a non-blocking warning instead.
+        warnOnQuotaOverage(quotaWarnings) {
+            if (!Array.isArray(quotaWarnings) || quotaWarnings.length === 0) {
+                return
+            }
+            quotaWarnings.forEach((w) => {
+                showWarning(t(
+                    'worktime',
+                    'Achtung: Durch die Profiländerung überschreitet der Urlaub {year} das Kontingent um {days} Tage. Bitte die geplanten Urlaube dieses Mitarbeiters prüfen.',
+                    { year: w.year, days: Number(w.over).toLocaleString(getLocale()) },
+                ))
+            })
         },
     },
 }

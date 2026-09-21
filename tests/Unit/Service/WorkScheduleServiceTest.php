@@ -15,6 +15,7 @@ use OCA\WorkTime\Service\CompanySettingsService;
 use OCA\WorkTime\Service\ValidationException;
 use OCA\WorkTime\Service\WorkScheduleService;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\IDateTimeZone;
 use OCP\IL10N;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -42,6 +43,9 @@ class WorkScheduleServiceTest extends TestCase {
             fn (string $text, array $params = []): string => vsprintf($text, $params)
         );
 
+        $dateTimeZone = $this->createMock(IDateTimeZone::class);
+        $dateTimeZone->method('getTimeZone')->willReturn(new \DateTimeZone('UTC'));
+
         $this->service = new WorkScheduleService(
             $this->mapper,
             $this->employeeMapper,
@@ -50,6 +54,7 @@ class WorkScheduleServiceTest extends TestCase {
             $this->createMock(AuditLogService::class),
             $this->createMock(LoggerInterface::class),
             $il10n,
+            $dateTimeZone,
         );
     }
 
@@ -328,5 +333,43 @@ class WorkScheduleServiceTest extends TestCase {
         $result = $this->service->create(1, '2026-07-01', $this->validHours(), 30, 'admin');
 
         $this->assertSame('2026-07-01', $result->getValidFrom()->format('Y-m-d'));
+    }
+
+    /**
+     * #716: the "active today" schedule lookup (getDisplaySchedule) must ask for
+     * the local calendar day, not the UTC one. Pin today via the seam and assert
+     * findForDate is queried with exactly that date.
+     */
+    public function testDisplayScheduleUsesLocalToday(): void {
+        $mapper = $this->createMock(WorkScheduleMapper::class);
+        $il10n = $this->createMock(IL10N::class);
+        $dtz = $this->createMock(IDateTimeZone::class);
+        $dtz->method('getTimeZone')->willReturn(new \DateTimeZone('UTC'));
+
+        $service = new class(
+            $mapper,
+            $this->createMock(EmployeeMapper::class),
+            $this->createMock(TimeEntryMapper::class),
+            $this->createMock(CompanySettingsService::class),
+            $this->createMock(AuditLogService::class),
+            $this->createMock(LoggerInterface::class),
+            $il10n,
+            $dtz,
+        ) extends WorkScheduleService {
+            protected function today(): DateTime {
+                return new DateTime('2026-09-20');
+            }
+        };
+
+        $expected = new WorkSchedule();
+        $expected->setEmployeeId(1);
+        $mapper->expects($this->once())
+            ->method('findForDate')
+            ->with(1, $this->callback(
+                static fn (DateTime $d): bool => $d->format('Y-m-d') === '2026-09-20'
+            ))
+            ->willReturn($expected);
+
+        $this->assertSame($expected, $service->getDisplaySchedule(1));
     }
 }

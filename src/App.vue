@@ -130,6 +130,9 @@
 			<!-- Alle anderen: normale Ansicht -->
 			<router-view v-else />
 		</NcAppContent>
+
+		<!-- Was ist neu? (#730): einmal je Nutzer und Version nach einem Update. -->
+		<WhatsNewDialog />
 	</NcContent>
 </template>
 
@@ -153,6 +156,7 @@ import WrenchIcon from 'vue-material-design-icons/Wrench.vue'
 import SleepIcon from 'vue-material-design-icons/Sleep.vue'
 import { mapGetters, mapActions } from 'vuex'
 import { isNavVisible } from './router/access.js'
+import WhatsNewDialog from './components/WhatsNewDialog.vue'
 
 export default {
 	name: 'App',
@@ -163,6 +167,7 @@ export default {
 		NcAppContent,
 		NcButton,
 		NcEmptyContent,
+		WhatsNewDialog,
 		ClockIcon,
 		CalendarIcon,
 		AccountGroupIcon,

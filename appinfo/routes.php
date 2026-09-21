@@ -10,6 +10,10 @@ return [
         // Capabilities (#714): version + feature probe for clients (esp. mobile).
         ['name' => 'capabilities#index', 'url' => '/api/capabilities', 'verb' => 'GET'],
 
+        // What's new (#730): unseen release notes for the current version + ack.
+        ['name' => 'whats_new#index', 'url' => '/api/whatsnew', 'verb' => 'GET'],
+        ['name' => 'whats_new#seen', 'url' => '/api/whatsnew/seen', 'verb' => 'POST'],
+
         // Push (#593): device-token registration for APNs.
         ['name' => 'push#register', 'url' => '/api/push/register', 'verb' => 'POST'],
         ['name' => 'push#unregister', 'url' => '/api/push/token', 'verb' => 'DELETE'],

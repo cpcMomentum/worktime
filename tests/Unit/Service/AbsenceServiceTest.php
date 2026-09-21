@@ -80,6 +80,8 @@ class AbsenceServiceTest extends TestCase {
         $settingsMapper = $this->createMock(CompanySettingMapper::class);
         $projectService = $this->createMock(ProjectService::class);
         $projectService->method('isProjectAllowedForEmployee')->willReturn(true);
+        $timeEntryDateTimeZone = $this->createMock(IDateTimeZone::class);
+        $timeEntryDateTimeZone->method('getTimeZone')->willReturn(new \DateTimeZone('Europe/Berlin'));
         $timeEntryService = new TimeEntryService(
             $this->timeEntryMapper,
             $settingsMapper,
@@ -90,7 +92,7 @@ class AbsenceServiceTest extends TestCase {
             $projectService,
             $this->logger,
             $this->l,
-            $this->createMock(IDateTimeZone::class),
+            $timeEntryDateTimeZone,
         );
 
         $this->companySettingsService = $this->createMock(CompanySettingsService::class);
@@ -1687,8 +1689,11 @@ class AbsenceServiceTest extends TestCase {
         // profile later changes to 4 working days in that week → deduction must
         // be refreshed to 4.
         $this->employeeMapper->method('find')->willReturn($this->employeeForRecompute());
-        $this->absenceMapper->method('findByEmployee')
+        $this->absenceMapper->method('findFutureVacationByEmployee')
             ->willReturn([$this->futureVacation('2099-06-01', '2099-06-07', '2.00')]);
+        // #724: quota re-check after the rewrite — plenty left, no warning.
+        $this->carryoverService->method('getVacationCarryoverDays')->willReturn(0.0);
+        $this->absenceMapper->method('findByEmployeeAndYear')->willReturn([]);
         $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
         $this->workScheduleService->method('countWorkingDays')->willReturn(4.0);
 
@@ -1699,35 +1704,92 @@ class AbsenceServiceTest extends TestCase {
                 return $a;
             });
 
-        $count = $this->service->recomputeFutureVacationDays(1);
+        $result = $this->service->recomputeFutureVacationDays(1);
 
-        $this->assertSame(1, $count);
+        $this->assertSame(1, $result['updated']);
+        $this->assertSame([], $result['quotaWarnings']);
         $this->assertSame('4.00', $captured->getDays());
     }
 
     public function testRecomputeLeavesPastVacationUntouched(): void {
         // A past vacation must not be rewritten, even if the schedule now differs.
+        // The mapper filters to the future, but the service keeps a defensive
+        // guard; feed it a past record to prove the guard still holds.
         $this->employeeMapper->method('find')->willReturn($this->employeeForRecompute());
-        $this->absenceMapper->method('findByEmployee')
+        $this->absenceMapper->method('findFutureVacationByEmployee')
             ->willReturn([$this->futureVacation('2000-06-01', '2000-06-07', '2.00')]);
         $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
         $this->workScheduleService->method('countWorkingDays')->willReturn(4.0);
 
         $this->absenceMapper->expects($this->never())->method('update');
 
-        $this->assertSame(0, $this->service->recomputeFutureVacationDays(1));
+        $result = $this->service->recomputeFutureVacationDays(1);
+        $this->assertSame(0, $result['updated']);
+        $this->assertSame([], $result['quotaWarnings']);
     }
 
     public function testRecomputeSkipsWhenDaysUnchanged(): void {
         // No change (still 2 working days) → no write.
         $this->employeeMapper->method('find')->willReturn($this->employeeForRecompute());
-        $this->absenceMapper->method('findByEmployee')
+        $this->absenceMapper->method('findFutureVacationByEmployee')
             ->willReturn([$this->futureVacation('2099-06-01', '2099-06-07', '2.00')]);
         $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
         $this->workScheduleService->method('countWorkingDays')->willReturn(2.0);
 
         $this->absenceMapper->expects($this->never())->method('update');
 
-        $this->assertSame(0, $this->service->recomputeFutureVacationDays(1));
+        $result = $this->service->recomputeFutureVacationDays(1);
+        $this->assertSame(0, $result['updated']);
+        $this->assertSame([], $result['quotaWarnings']);
+    }
+
+    public function testRecomputeWarnsWhenProfileChangePushesYearOverQuota(): void {
+        // #724: a future vacation grows from 2 to 25 working days after the
+        // profile change. With a 30-day quota but another 10 days already booked
+        // that year, the recompute pushes the year 5 days over quota → warning.
+        $this->employeeMapper->method('find')->willReturn($this->employeeForRecompute());
+        $this->absenceMapper->method('findFutureVacationByEmployee')
+            ->willReturn([$this->futureVacation('2099-06-01', '2099-07-05', '2.00')]);
+        $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
+        // The recomputed absence now counts 25 days; countWorkingDays feeds both
+        // the rewrite and the quota re-check via vacationDaysInYear.
+        $this->workScheduleService->method('countWorkingDays')->willReturn(25.0);
+        $this->carryoverService->method('getVacationCarryoverDays')->willReturn(0.0);
+        // Quota re-check reads the year's absences: the just-rewritten one (25)
+        // plus an unrelated approved vacation of 10 days → 35 used vs. 30 quota.
+        $other = $this->futureVacation('2099-02-01', '2099-02-14', '10.00');
+        $other->setId(20);
+        $rewritten = $this->futureVacation('2099-06-01', '2099-07-05', '25.00');
+        $this->absenceMapper->method('findByEmployeeAndYear')->willReturn([$rewritten, $other]);
+        $this->absenceMapper->method('update')->willReturnArgument(0);
+
+        $result = $this->service->recomputeFutureVacationDays(1);
+
+        $this->assertSame(1, $result['updated']);
+        $this->assertCount(1, $result['quotaWarnings']);
+        $this->assertSame(2099, $result['quotaWarnings'][0]['year']);
+        $this->assertEqualsWithDelta(5.0, $result['quotaWarnings'][0]['over'], 0.0001);
+    }
+
+    /**
+     * #716: the "Zur Kenntnisnahme" list must filter end_date against the local
+     * calendar day. The service computes "today" (user timezone) and hands it to
+     * the mapper as a Y-m-d string instead of the mapper forming a UTC "today".
+     */
+    public function testInformationalListPassesLocalTodayToMapper(): void {
+        $captured = null;
+        $this->absenceMapper->expects($this->once())
+            ->method('findActiveInformationalForSupervisor')
+            ->with(5, $this->callback(function ($today) use (&$captured): bool {
+                $captured = $today;
+                return is_string($today) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $today) === 1;
+            }))
+            ->willReturn([]);
+
+        $this->service->findActiveInformationalForSupervisor(5);
+
+        // Matches today's date in the configured timezone (Europe/Berlin in setUp).
+        $expected = (new \DateTime('now', new \DateTimeZone('Europe/Berlin')))->format('Y-m-d');
+        $this->assertSame($expected, $captured);
     }
 }

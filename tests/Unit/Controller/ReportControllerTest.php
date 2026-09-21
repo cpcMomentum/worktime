@@ -24,6 +24,7 @@ use OCA\WorkTime\Service\WorkScheduleService;
 use OCA\WorkTime\Service\YearlyCarryoverService;
 use OCA\WorkTime\Service\OvertimePayoutService;
 use OCA\WorkTime\Service\OvertimeCalculationService;
+use OCP\IDateTimeZone;
 use OCP\IL10N;
 use OCP\IRequest;
 use PHPUnit\Framework\TestCase;
@@ -39,6 +40,13 @@ class ReportControllerTest extends TestCase {
     private ProjectService $projectService;
     private PermissionService $permissionService;
     private ReportController $controller;
+
+    /** Configured IDateTimeZone mock so ReportController::today() (#716) works. */
+    private function dtzMock(): IDateTimeZone {
+        $dtz = $this->createMock(IDateTimeZone::class);
+        $dtz->method('getTimeZone')->willReturn(new \DateTimeZone('Europe/Berlin'));
+        return $dtz;
+    }
 
     protected function setUp(): void {
         $this->timeEntryMapper = $this->createMock(TimeEntryMapper::class);
@@ -64,6 +72,7 @@ class ReportControllerTest extends TestCase {
             $this->createMock(OvertimeCalculationService::class),
             $this->projectService,
             $this->createMock(IL10N::class),
+            $this->dtzMock(),
         );
     }
 
@@ -159,6 +168,7 @@ class ReportControllerTest extends TestCase {
             $this->createMock(YearlyCarryoverService::class), $this->createMock(OvertimePayoutService::class),
             $this->createMock(OvertimeCalculationService::class), $this->projectService,
             $this->createMock(IL10N::class),
+            $this->dtzMock(),
         );
 
         $this->assertSame(403, $controller->projects(2026, 6, 'month')->getStatus());
@@ -288,6 +298,7 @@ class ReportControllerTest extends TestCase {
             $this->createMock(OvertimeCalculationService::class),
             $this->createMock(ProjectService::class),
             $this->createMock(IL10N::class),
+            $this->dtzMock(),
         );
     }
 
@@ -376,6 +387,7 @@ class ReportControllerTest extends TestCase {
             $this->createMock(OvertimeCalculationService::class),
             $this->createMock(ProjectService::class),
             $this->createMock(IL10N::class),
+            $this->dtzMock(),
         );
 
         // Future year → the month loop breaks immediately, only dailyMinutes is computed.

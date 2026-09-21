@@ -17,6 +17,7 @@ use OCA\WorkTime\Db\TimeEntryMapper;
 use OCA\WorkTime\Db\WorkSchedule;
 use OCA\WorkTime\Db\WorkScheduleMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\IDateTimeZone;
 use OCP\IL10N;
 use Psr\Log\LoggerInterface;
 
@@ -30,7 +31,16 @@ class WorkScheduleService {
         private AuditLogService $auditLogService,
         private LoggerInterface $logger,
         private IL10N $l,
+        private IDateTimeZone $dateTimeZone,
     ) {
+    }
+
+    /**
+     * Today's calendar date in the user's timezone (#716). Wrapped in a method
+     * so tests can pin "today" for the "active today" schedule lookups.
+     */
+    protected function today(): DateTime {
+        return LocalDate::today($this->dateTimeZone->getTimeZone());
     }
 
     /**
@@ -93,7 +103,7 @@ class WorkScheduleService {
      */
     public function getDisplaySchedule(int $employeeId): WorkSchedule {
         try {
-            return $this->mapper->findForDate($employeeId, new DateTime());
+            return $this->mapper->findForDate($employeeId, $this->today());
         } catch (DoesNotExistException) {
             // No profile active today - fall back to the earliest one if any exist.
         }
@@ -108,7 +118,7 @@ class WorkScheduleService {
         }
 
         // Truly profile-less employee: keep the synthetic default.
-        return $this->getScheduleForDate($employeeId, new DateTime());
+        return $this->getScheduleForDate($employeeId, $this->today());
     }
 
     /**
@@ -619,7 +629,7 @@ class WorkScheduleService {
      */
     private function syncEmployeeFromActiveSchedule(int $employeeId): void {
         try {
-            $active = $this->getScheduleForDate($employeeId, new DateTime());
+            $active = $this->getScheduleForDate($employeeId, $this->today());
             $employee = $this->employeeMapper->find($employeeId);
             $employee->setWeeklyHours((string)$active->getWeeklyHours());
             $employee->setVacationDays($active->getVacationDays());
