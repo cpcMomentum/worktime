@@ -767,6 +767,12 @@ OC.L10N.register(
     "von {name} am {date}" : "von {name} am {date}",
     "Aus Favoriten entfernen" : "Aus Favoriten entfernen",
     "Zu Favoriten hinzufügen" : "Zu Favoriten hinzufügen",
-    "Achtung: Durch die Profiländerung überschreitet der Urlaub {year} das Kontingent um {days} Tage. Bitte die geplanten Urlaube dieses Mitarbeiters prüfen." : "Achtung: Durch die Profiländerung überschreitet der Urlaub {year} das Kontingent um {days} Tage. Bitte die geplanten Urlaube dieses Mitarbeiters prüfen."
+    "Achtung: Durch die Profiländerung überschreitet der Urlaub {year} das Kontingent um {days} Tage. Bitte die geplanten Urlaube dieses Mitarbeiters prüfen." : "Achtung: Durch die Profiländerung überschreitet der Urlaub {year} das Kontingent um {days} Tage. Bitte die geplanten Urlaube dieses Mitarbeiters prüfen.",
+    "Version {version}" : "Version {version}",
+    "Zu finden unter" : "Zu finden unter",
+    "(nur für Administratoren)" : "(nur für Administratoren)",
+    "Mehr zu WerkPlus" : "Mehr zu WerkPlus",
+    "Alles klar" : "Alles klar",
+    "Was ist neu in WorkTime" : "Was ist neu in WorkTime"
 },
 "nplurals=2; plural=(n != 1);");

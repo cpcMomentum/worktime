@@ -1,0 +1,38 @@
+{
+	"0.23.0": [
+		{
+			"title": {
+				"de": "Neuerungen erscheinen ab jetzt in diesem Fenster",
+				"en": "From now on new features appear in this window",
+				"cs": "Novinky se nyní zobrazují v tomto okně"
+			},
+			"text": {
+				"de": "Nach einem Update zeigt WorkTime hier kurz, was sich geändert hat. Einmal je Version, wegklickbar, danach kommt es nicht wieder.",
+				"en": "After an update WorkTime briefly shows you what has changed. Once per version, dismissable, and it will not come back.",
+				"cs": "Po aktualizaci vám WorkTime krátce ukáže, co se změnilo. Jednou za verzi, lze zavřít, a okno se už nevrátí."
+			},
+			"icon": "star",
+			"plus": false
+		},
+		{
+			"title": {
+				"de": "Warnung, wenn eine Profiländerung das Urlaubskontingent übersteigt",
+				"en": "Warning when a profile change exceeds the vacation quota",
+				"cs": "Upozornění, když změna profilu překročí limit dovolené"
+			},
+			"text": {
+				"de": "Wird ein Arbeitszeitprofil geändert, berechnet WorkTime bereits geplante Zukunftsurlaube neu. Schiebt das ein Urlaubsjahr über das Kontingent, erscheint jetzt ein Hinweis, welche Mitarbeiterin oder welcher Mitarbeiter betroffen ist – die Änderung selbst wird nicht blockiert.",
+				"en": "When a work-schedule profile is changed, WorkTime recalculates planned future vacation. If that pushes a year over its quota, a warning now names the affected employee – the change itself is not blocked.",
+				"cs": "Při změně pracovního profilu WorkTime přepočítá naplánovanou budoucí dovolenou. Pokud tím rok překročí limit, zobrazí se nyní upozornění s uvedením dotčeného zaměstnance – samotná změna se nezablokuje."
+			},
+			"icon": "account-group",
+			"where": {
+				"de": "Mitarbeiter › Arbeitszeitprofil",
+				"en": "Employees › Work schedule",
+				"cs": "Zaměstnanci › Pracovní profil"
+			},
+			"adminOnly": true,
+			"plus": false
+		}
+	]
+}

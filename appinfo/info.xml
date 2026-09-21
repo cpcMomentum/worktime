@@ -80,6 +80,7 @@ Behalten Sie den Überblick über Arbeitszeiten, Überstunden und Urlaub.
     <repair-steps>
         <post-migration>
             <step>OCA\WorkTime\Migration\CleanupExtraFiles</step>
+            <step>OCA\WorkTime\Migration\WhatsNewBootstrap</step>
         </post-migration>
     </repair-steps>
 
