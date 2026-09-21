@@ -35,6 +35,11 @@ final class LocalDate {
      * calendar dates.
      */
     public static function today(DateTimeZone $tz): DateTime {
-        return new DateTime((new DateTime('now', $tz))->format('Y-m-d'));
+        // Re-anchor at UTC midnight explicitly. Nextcloud forces the runtime zone
+        // to UTC, so an argument-less `new DateTime(...)` already lands there —
+        // but stating UTC makes the intent robust against a future runtime change
+        // (#716) and keeps the result directly comparable to WorkTime's stored,
+        // UTC-midnight calendar dates.
+        return new DateTime((new DateTime('now', $tz))->format('Y-m-d'), new DateTimeZone('UTC'));
     }
 }

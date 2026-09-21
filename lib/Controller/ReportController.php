@@ -18,6 +18,7 @@ use OCA\WorkTime\Service\AbsenceService;
 use OCA\WorkTime\Service\DateParser;
 use OCA\WorkTime\Service\EmployeeService;
 use OCA\WorkTime\Service\HolidayService;
+use OCA\WorkTime\Service\LocalDate;
 use OCA\WorkTime\Service\OvertimeCalculationService;
 use OCA\WorkTime\Service\OvertimePayoutService;
 use OCA\WorkTime\Service\PdfService;
@@ -31,6 +32,7 @@ use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IDateTimeZone;
 use OCP\IL10N;
 use OCP\IRequest;
 
@@ -56,8 +58,17 @@ class ReportController extends BaseController {
         private OvertimeCalculationService $overtimeCalc,
         private ProjectService $projectService,
         private IL10N $l,
+        private IDateTimeZone $dateTimeZone,
     ) {
         parent::__construct($request, $userId);
+    }
+
+    /**
+     * Today's calendar date in the user's timezone (#716) — for the
+     * "future month" guards, so they do not shift at the UTC day boundary.
+     */
+    private function today(): DateTime {
+        return LocalDate::today($this->dateTimeZone->getTimeZone());
     }
 
     /**
@@ -792,7 +803,7 @@ class ReportController extends BaseController {
                 $startDate = new DateTime("$year-$month-01");
 
                 // Future months: only load vacation, skip time entries
-                if ($startDate > new DateTime()) {
+                if ($startDate > $this->today()) {
                     $futureAbsences = $absencesByMonth[$month];
                     $futureVacationDays = 0;
                     foreach ($futureAbsences as $absence) {
@@ -908,7 +919,7 @@ class ReportController extends BaseController {
                 $startDate = new DateTime("$year-$month-01");
 
                 // Skip future months
-                if ($startDate > new DateTime()) {
+                if ($startDate > $this->today()) {
                     break;
                 }
 

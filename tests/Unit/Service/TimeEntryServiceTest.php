@@ -409,6 +409,40 @@ class TimeEntryServiceTest extends TestCase {
         $this->assertFalse($this->service->isMonthLocked(1, $year, 3));
     }
 
+    /**
+     * #716: "current year" for the past-year lock is taken from *today* in the
+     * user's timezone. Pinned to local New Year's Day, the previous December is
+     * locked (past year) while the pinned year's own month is not — before the
+     * fix the UTC calendar day could still name the old year around midnight.
+     */
+    public function testIsMonthLockedUsesLocalYearBoundary(): void {
+        $service = new class(
+            $this->timeEntryMapper,
+            $this->settingsMapper,
+            $this->employeeMapper,
+            $this->absenceMapper,
+            $this->auditLogService,
+            $this->notificationService,
+            $this->projectService,
+            $this->logger,
+            $this->l,
+            $this->dateTimeZone,
+        ) extends TimeEntryService {
+            protected function today(): DateTime {
+                return new DateTime('2027-01-01');
+            }
+        };
+
+        // December of the previous year → locked purely by the year rule.
+        $this->assertTrue($service->isMonthLocked(1, 2026, 12));
+
+        // A month in the pinned current year is not auto-locked by year; with no
+        // approvals it stays open.
+        $this->timeEntryMapper->method('getMonthlyStatusSummary')
+            ->willReturn(['draft' => 1, 'submitted' => 0, 'approved' => 0, 'rejected' => 0]);
+        $this->assertFalse($service->isMonthLocked(1, 2027, 1));
+    }
+
     public function testRequireReasonReturnsNullWhenNoLockedMonths(): void {
         $this->assertNull($this->service->requireReasonForLockedMonths([], true, null));
         $this->assertNull($this->service->requireReasonForLockedMonths([], false, 'whatever'));

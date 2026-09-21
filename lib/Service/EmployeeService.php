@@ -87,7 +87,8 @@ class EmployeeService {
         }
 
         $ids = array_map(static fn (Employee $e): int => $e->getId(), $employees);
-        $active = $this->workScheduleMapper->findActiveForEmployees($ids, new DateTime());
+        // #716: "aktiv heute" in der Nutzer-Zeitzone, nicht am UTC-Tag.
+        $active = $this->workScheduleMapper->findActiveForEmployees($ids, LocalDate::today($this->dateTimeZone->getTimeZone()));
 
         return array_map(
             fn (Employee $e): Employee => isset($active[$e->getId()])

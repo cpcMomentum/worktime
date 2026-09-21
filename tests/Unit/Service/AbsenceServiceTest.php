@@ -80,6 +80,8 @@ class AbsenceServiceTest extends TestCase {
         $settingsMapper = $this->createMock(CompanySettingMapper::class);
         $projectService = $this->createMock(ProjectService::class);
         $projectService->method('isProjectAllowedForEmployee')->willReturn(true);
+        $timeEntryDateTimeZone = $this->createMock(IDateTimeZone::class);
+        $timeEntryDateTimeZone->method('getTimeZone')->willReturn(new \DateTimeZone('Europe/Berlin'));
         $timeEntryService = new TimeEntryService(
             $this->timeEntryMapper,
             $settingsMapper,
@@ -90,7 +92,7 @@ class AbsenceServiceTest extends TestCase {
             $projectService,
             $this->logger,
             $this->l,
-            $this->createMock(IDateTimeZone::class),
+            $timeEntryDateTimeZone,
         );
 
         $this->companySettingsService = $this->createMock(CompanySettingsService::class);
@@ -1767,5 +1769,27 @@ class AbsenceServiceTest extends TestCase {
         $this->assertCount(1, $result['quotaWarnings']);
         $this->assertSame(2099, $result['quotaWarnings'][0]['year']);
         $this->assertEqualsWithDelta(5.0, $result['quotaWarnings'][0]['over'], 0.0001);
+    }
+
+    /**
+     * #716: the "Zur Kenntnisnahme" list must filter end_date against the local
+     * calendar day. The service computes "today" (user timezone) and hands it to
+     * the mapper as a Y-m-d string instead of the mapper forming a UTC "today".
+     */
+    public function testInformationalListPassesLocalTodayToMapper(): void {
+        $captured = null;
+        $this->absenceMapper->expects($this->once())
+            ->method('findActiveInformationalForSupervisor')
+            ->with(5, $this->callback(function ($today) use (&$captured): bool {
+                $captured = $today;
+                return is_string($today) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $today) === 1;
+            }))
+            ->willReturn([]);
+
+        $this->service->findActiveInformationalForSupervisor(5);
+
+        // Matches today's date in the configured timezone (Europe/Berlin in setUp).
+        $expected = (new \DateTime('now', new \DateTimeZone('Europe/Berlin')))->format('Y-m-d');
+        $this->assertSame($expected, $captured);
     }
 }
