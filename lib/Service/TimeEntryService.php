@@ -1184,7 +1184,8 @@ class TimeEntryService {
      * HR correction flow (reason + month reopening).
      */
     public function isMonthLocked(int $employeeId, int $year, int $month): bool {
-        $currentYear = (int)(new DateTime())->format('Y');
+        // #716: das laufende Jahr in der Nutzer-Zeitzone bestimmen (Silvester/Neujahr).
+        $currentYear = (int)$this->today()->format('Y');
         if ($year < $currentYear) {
             return true;
         }

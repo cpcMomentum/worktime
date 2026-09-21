@@ -12,11 +12,13 @@ namespace OCA\WorkTime\Controller;
 use OCA\WorkTime\Db\Absence;
 use OCA\WorkTime\Service\AbsenceService;
 use OCA\WorkTime\Service\EmployeeService;
+use OCA\WorkTime\Service\LocalDate;
 use OCA\WorkTime\Service\PermissionService;
 use OCA\WorkTime\Service\WorkScheduleService;
 use OCA\WorkTime\Service\YearlyCarryoverService;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IDateTimeZone;
 use OCP\IRequest;
 
 class AbsenceController extends BaseController {
@@ -29,6 +31,7 @@ class AbsenceController extends BaseController {
         private PermissionService $permissionService,
         private WorkScheduleService $workScheduleService,
         private YearlyCarryoverService $carryoverService,
+        private IDateTimeZone $dateTimeZone,
     ) {
         parent::__construct($request, $userId);
     }
@@ -383,7 +386,8 @@ class AbsenceController extends BaseController {
 
         try {
             if ($year === 0) {
-                $year = (int)(new \DateTime())->format('Y');
+                // #716: aktuelles Jahr in der Nutzer-Zeitzone, nicht am UTC-Tag.
+                $year = (int)LocalDate::today($this->dateTimeZone->getTimeZone())->format('Y');
             }
 
             // Base entitlement, carryover and the entry-year deduction are

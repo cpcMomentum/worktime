@@ -308,11 +308,12 @@ class AbsenceMapper extends QBMapper {
      * Filter: approved, type in sick/child_sick, end_date >= heute.
      *
      * @param int $supervisorEmployeeId 0 = alle (Admin/HR), >0 = nur Team des Supervisors
+     * @param string $today Kalendertag (Y-m-d) in der Nutzer-Zeitzone (#716) — vom
+     *   Aufrufer via LocalDate::today() gereicht, statt hier UTC-"heute" zu bilden.
      * @return Absence[]
      */
-    public function findActiveInformationalForSupervisor(int $supervisorEmployeeId): array {
+    public function findActiveInformationalForSupervisor(int $supervisorEmployeeId, string $today): array {
         $qb = $this->db->getQueryBuilder();
-        $today = (new DateTime())->format('Y-m-d');
 
         $qb->select('*')
             ->from($this->getTableName())

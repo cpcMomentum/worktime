@@ -138,7 +138,10 @@ class AbsenceService {
      * @return Absence[]
      */
     public function findActiveInformationalForSupervisor(int $supervisorEmployeeId): array {
-        return $this->absenceMapper->findActiveInformationalForSupervisor($supervisorEmployeeId);
+        // #716: "heute" in der Nutzer-Zeitzone bilden und an den Mapper reichen,
+        // damit der end_date-Filter nicht am UTC-Tag haengt.
+        $today = LocalDate::today($this->dateTimeZone->getTimeZone())->format('Y-m-d');
+        return $this->absenceMapper->findActiveInformationalForSupervisor($supervisorEmployeeId, $today);
     }
 
     public function findPendingForApproval(int $supervisorEmployeeId): array {
