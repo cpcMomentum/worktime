@@ -7,6 +7,15 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-09-21
+
+### Added
+- **„Was ist neu?"-Fenster (#730)**: Nach einem Update zeigt WorkTime einmal je Version kurz, was sich geändert hat. Das Fenster erscheint pro Nutzerin und Nutzer genau einmal, ist per Knopf, „X" oder Escape wegklickbar und kommt danach für diese Version nicht wieder. Bei einer Neuinstallation erscheint es bewusst nicht. Verfügbar in Deutsch, Englisch und Tschechisch.
+- **Hinweis bei Kontingent-Überschreitung nach Profiländerung (#724)**: Wird ein Arbeitszeitprofil geändert, berechnet WorkTime bereits geplante Zukunftsurlaube neu. Schiebt diese Neuberechnung ein Urlaubsjahr über das verfügbare Kontingent, erscheint jetzt eine nicht-blockierende Warnung, welche Mitarbeiterin oder welcher Mitarbeiter betroffen ist. Die Profiländerung selbst wird nicht verhindert.
+
+### Fixed
+- **Weitere „heute"-Stellen in der Nutzer-Zeitzone (#716)**: Als Folge des Zeitzonen-Fixes (#713) werden nun auch die übrigen kalendertagsbezogenen Prüfungen (u. a. „Zur Kenntnisnahme"-Liste, aktives Arbeitszeitprofil, Zukunfts-Monats-Erkennung in der Auswertung, Jahres­wechsel-Sperre) in der Zeitzone der Nutzerin oder des Nutzers statt in der Weltzeit ausgewertet. Damit sind die letzten Stellen geschlossen, an denen zwischen Mitternacht und den frühen Morgenstunden das Datum um einen Tag verrutschen konnte.
+
 ## [0.22.0] - 2026-09-19
 
 ### Added
