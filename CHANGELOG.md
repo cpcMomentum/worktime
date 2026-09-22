@@ -7,6 +7,9 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Changed
+- **Kompatibilität mit Nextcloud 35 (#727)**: `max-version` von 34 auf 35 gehoben. Die Unit-Suite läuft gegen die `nextcloud/ocp`-Stubs von NC 35 (PHP 8.4/8.5) durch und die App wurde auf einer echten `nextcloud:35`-Instanz gegengeprüft (Aktivierung, Tabellen, Oberfläche). `min-version` bleibt bei 32.
+
 ## [0.23.0] - 2026-09-21
 
 ### Added
