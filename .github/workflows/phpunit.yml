@@ -43,7 +43,12 @@ jobs:
       fail-fast: false
       matrix:
         # PHP-Raender des unterstuetzten Bereichs; NC/ocp kommt aus info.xml.
-        php-version: ['8.2', '8.4']
+        # 8.2 ist die Untergrenze der App (info.xml), 8.5 die Obergrenze des
+        # neuesten unterstuetzten NC. 8.4 bleibt stehen, weil "PHP 8.2" und
+        # "PHP 8.4" als Required Status Checks im develop-Ruleset haengen —
+        # ein Umbenennen liesse den Check lautlos verschwinden und wuerde jeden
+        # PR blockieren. Hinzufuegen ist gefahrlos, Umbenennen nicht.
+        php-version: ['8.2', '8.4', '8.5']
     name: PHP ${{ matrix.php-version }}
     steps:
       - uses: actions/checkout@v4
@@ -56,9 +61,21 @@ jobs:
           tools: composer:v2
 
       # Leitet die zu testenden nextcloud/ocp-Versionen aus info.xml ab
-      # (<nextcloud min-version max-version/>). NC 32-34 -> "^32.0 ^33.0 ^34.0".
+      # (<nextcloud min-version max-version/>). NC 32-35 -> "^32.0 ... ^35.0".
+      #
+      # Gefiltert nach der PHP-Untergrenze der jeweiligen ocp-Version: NC 35
+      # laesst PHP 8.2 fallen (nextcloud/ocp v35 verlangt ~8.3 || ~8.4 || ~8.5).
+      # Ohne diesen Filter wuerde der Job "PHP 8.2" an einer Aufloesung
+      # scheitern, die gar nicht scheitern soll — genau die Fehldiagnose, die
+      # nc-compat als "API-Aenderung in NC 35" gemeldet hat (#727).
+      #
+      # Die Untergrenze kommt aus Packagist, nicht aus einer Tabelle hier:
+      # gelesen wird die kleinste in der php-Anforderung genannte Version, was
+      # gegen die Schreibweise (~8.3, >=8.3, ^8.3) unempfindlich ist.
       - name: NC-Versionen aus info.xml ableiten
         id: derive
+        env:
+          PHPV: ${{ matrix.php-version }}
         run: |
           line=$(grep -oE '<nextcloud[^>]*/>' appinfo/info.xml)
           min=$(printf '%s' "$line" | grep -oE 'min-version="[0-9]+"' | grep -oE '[0-9]+')
@@ -66,9 +83,48 @@ jobs:
           if [ -z "$min" ] || [ -z "$max" ]; then
             echo "::error::Konnte min/max-version nicht aus info.xml lesen"; exit 1
           fi
-          ocp=$(seq "$min" "$max" | sed 's/.*/^&.0/' | paste -sd' ' -)
+          # Ausserhalb des Arbeitsverzeichnisses, damit der Checkout sauber bleibt.
+          liste="$RUNNER_TEMP/ocp-packagist.json"
+          # Hart scheitern statt still alles zu ueberspringen: ein stummer
+          # Netzfehler darf nicht als "alles gruen" durchgehen.
+          if ! curl -sSf https://repo.packagist.org/p2/nextcloud/ocp.json -o "$liste"; then
+            echo "::error::Packagist nicht erreichbar — PHP-Untergrenzen nicht ermittelbar"; exit 1
+          fi
+          ocp=""; uebersprungen=""
+          for v in $(seq "$min" "$max"); do
+            # `^v?`: nextcloud/ocp taggt derzeit mit v-Praefix (v35.0.0), aber der
+            # Filter darf nicht daran haengen. Griffe der Ausdruck ins Leere,
+            # fiele die Untergrenze weg und der Lauf kehrte still zum alten,
+            # ungefilterten Verhalten zurueck — genau der Fall, den er behebt.
+            #
+            # "nicht gefunden" und "gefunden, ohne php-Anforderung" sind deshalb
+            # getrennt: das erste ist ein Fehler, das zweite heisst wirklich
+            # "keine Einschraenkung".
+            req=$(jq -r --arg v "$v" '
+              [ .packages["nextcloud/ocp"][]
+                | select(.version | test("^v?" + $v + "\\.[0-9]+\\.[0-9]+$"))
+                | .require.php // "" ] as $treffer
+              | if ($treffer | length) == 0 then "NICHT_GEFUNDEN" else ($treffer | first) end' "$liste")
+            if [ "$req" = "NICHT_GEFUNDEN" ]; then
+              echo "::error::Packagist kennt keine Freigabe nextcloud/ocp $v.x — PHP-Untergrenze nicht ermittelbar (Tag-Schreibweise geaendert?)"
+              exit 1
+            fi
+            floor=$(printf '%s' "$req" | grep -oE '[0-9]+\.[0-9]+' | sort -V | head -1)
+            if [ -z "$floor" ] || [ "$(printf '%s\n%s\n' "$floor" "$PHPV" | sort -V | head -1)" = "$floor" ]; then
+              ocp="$ocp ^$v.0"
+            else
+              uebersprungen="$uebersprungen ^$v.0 (braucht PHP >= $floor)"
+            fi
+          done
+          ocp=$(printf '%s' "$ocp" | sed 's/^ //')
+          if [ -z "$ocp" ]; then
+            echo "::error::Keine ocp-Version laeuft auf PHP $PHPV — Matrix und info.xml passen nicht zusammen"; exit 1
+          fi
           echo "ocp=$ocp" >> "$GITHUB_OUTPUT"
-          echo "Abgeleitete ocp-Versionen: $ocp"
+          echo "Abgeleitete ocp-Versionen fuer PHP $PHPV: $ocp"
+          if [ -n "$uebersprungen" ]; then
+            echo "Uebersprungen:$uebersprungen"
+          fi
 
       # Der abgeleitete Wert geht ueber env in die Shell, nicht per ${{ }}-
       # Interpolation ins Skript: info.xml ist in einem PR aenderbar, direkte
@@ -76,7 +132,16 @@ jobs:
       - name: Unit-Tests gegen alle ocp-Versionen
         env:
           OCP_VERSIONS: ${{ steps.derive.outputs.ocp }}
+          PHPV: ${{ matrix.php-version }}
         run: |
+          # Fuer den Testlauf gilt ausdruecklich das PHP dieses Jobs. worktime
+          # pinnt in composer.json config.platform.php auf 8.2, damit das
+          # ausgelieferte vendor/ (tcpdf) dort laeuft. Ohne diese Zeile behielte
+          # auch der Job "PHP 8.4"/"PHP 8.5" den 8.2-Pin und lehnte nextcloud/ocp
+          # v35 ab (verlangt ~8.3 || ~8.4 || ~8.5) — genau die Fehldiagnose, die
+          # nc-compat als "API-Aenderung in NC 35" gemeldet hat (#727). Nur im
+          # Arbeitsverzeichnis des Laufs, nichts davon wird committet.
+          composer config platform.php "$PHPV"
           failed=""
           for ocp in $OCP_VERSIONS; do
             echo "::group::ocp $ocp"
