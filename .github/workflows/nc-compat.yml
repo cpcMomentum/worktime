@@ -76,6 +76,15 @@ jobs:
         env:
           OCP: ${{ steps.detect.outputs.constraint }}
         run: |
+          # Ein neues NC-Major hebt regelmaessig die PHP-Untergrenze (NC 35:
+          # ~8.3 || ~8.4 || ~8.5). worktime pinnt in composer.json
+          # config.platform.php auf 8.2, damit das ausgelieferte vendor/ (tcpdf)
+          # dort laeuft. Mit diesem Pin lehnt composer die Aufloesung von
+          # nextcloud/ocp v35 ab, BEVOR ein Test laeuft — und der Waechter meldet
+          # das faelschlich als API-Aenderung (Fehldiagnose, #727). Das --unset
+          # hebt den Pin nur fuer diesen Wegwerf-Lauf auf; composer.json bleibt
+          # unberuehrt, committet wird davon nichts.
+          composer config --unset platform.php
           composer require --dev --no-update "nextcloud/ocp:$OCP" \
             && composer update --no-interaction --no-progress --prefer-dist \
             && composer test
@@ -124,5 +133,5 @@ jobs:
             echo "Issue \"$titel\" existiert bereits — kein neues."
             exit 0
           fi
-          body="$(printf '`nc-compat` hat die App gegen `nextcloud/ocp:^%s.0` getestet — die Unit-Tests sind **fehlgeschlagen**. Das deutet auf eine API-Aenderung in NC %s (entfernte/geaenderte Signatur), die vor einem max-version-Bump zu klaeren ist.\n\nLauf mit Log: %s\n\nHinweis: geprueft ist nur die Stub-Ebene (API-Signaturen). Verhaltens-Aenderungen zeigen sich erst auf echtem NC %s.' "$NEU" "$NEU" "$RUN_URL" "$NEU")"
+          body="$(printf '`nc-compat` ist mit `nextcloud/ocp:^%s.0` **nicht durchgelaufen**. Vor einem max-version-Bump ist zu klaeren, woran.\n\n**Zuerst das Log lesen — es gibt zwei sehr verschiedene Ursachen:**\n1. `composer update` scheiterte (die Tests liefen gar nicht). Meist eine angehobene PHP-Untergrenze des neuen Majors, kein App-Problem.\n2. `composer test` scheiterte. Dann liegt tatsaechlich eine geaenderte oder entfernte OCP-Signatur vor.\n\nLauf mit Log: %s\n\nHinweis: geprueft ist nur die Stub-Ebene (API-Signaturen). Verhaltens-Aenderungen zeigen sich erst auf echtem NC %s.' "$NEU" "$RUN_URL" "$NEU")"
           gh issue create --title "$titel" --body "$body"
