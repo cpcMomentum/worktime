@@ -73,7 +73,7 @@ class EmployeeController extends BaseController {
 
         try {
             $employee = $this->employeeService->findByUserId($this->userId);
-            // #: today's Soll is day-specific (e.g. 0 on a scheduled non-working
+            // #739: today's Soll is day-specific (e.g. 0 on a scheduled non-working
             // day). Serve it authoritatively so the client stops averaging
             // weeklyHours / workingDaysPerWeek, which is wrong for non-uniform
             // weeks (showed 7:30 on a 0h Wednesday for a 30h/4-day part-timer).
