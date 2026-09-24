@@ -116,7 +116,7 @@ jobs:
 
       - name: Checkout repository
         if: steps.cycles.outputs.run == 'true'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           # Volle Historie: der Reviewer berechnet den PR-Diff via base...HEAD,
           # das braucht den Base-Branch + Merge-Base (sonst "no merge base").

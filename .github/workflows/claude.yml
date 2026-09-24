@@ -27,7 +27,7 @@ jobs:
       actions: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           # Volle Historie: Claude berechnet Diffs via base...HEAD und braucht
           # den Base-Branch + Merge-Base (sonst "no merge base" auf flachem Clone).
