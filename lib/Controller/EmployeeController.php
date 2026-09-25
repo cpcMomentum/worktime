@@ -12,6 +12,7 @@ namespace OCA\WorkTime\Controller;
 use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Service\EmployeeService;
 use OCA\WorkTime\Service\PermissionService;
+use OCA\WorkTime\Service\WorkScheduleService;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
@@ -23,6 +24,7 @@ class EmployeeController extends BaseController {
         ?string $userId,
         private EmployeeService $employeeService,
         private PermissionService $permissionService,
+        private WorkScheduleService $workScheduleService,
     ) {
         parent::__construct($request, $userId);
     }
@@ -71,7 +73,13 @@ class EmployeeController extends BaseController {
 
         try {
             $employee = $this->employeeService->findByUserId($this->userId);
-            return $this->successResponse($employee);
+            // #739: today's Soll is day-specific (e.g. 0 on a scheduled non-working
+            // day). Serve it authoritatively so the client stops averaging
+            // weeklyHours / workingDaysPerWeek, which is wrong for non-uniform
+            // weeks (showed 7:30 on a 0h Wednesday for a 30h/4-day part-timer).
+            $data = $employee->jsonSerialize();
+            $data['todayTargetMinutes'] = $this->workScheduleService->getTodayTargetMinutes($employee->getId());
+            return $this->successResponse($data);
         } catch (\Exception $e) {
             return $this->handleException($e);
         }
