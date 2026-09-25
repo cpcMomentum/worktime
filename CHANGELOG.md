@@ -8,7 +8,8 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 ## [Unreleased]
 
 ### Changed
-- **Kompatibilität mit Nextcloud 35 (#727)**: `max-version` von 34 auf 35 gehoben. Die Unit-Suite läuft gegen die `nextcloud/ocp`-Stubs von NC 35 (PHP 8.4/8.5) durch und die App wurde auf einer echten `nextcloud:35`-Instanz gegengeprüft (Aktivierung, Tabellen, Oberfläche). `min-version` bleibt bei 32.
+- **Kompatibilität mit Nextcloud 35 (#727)**: `max-version` von 34 auf 35 gehoben. Die Unit-Suite läuft gegen die `nextcloud/ocp`-Stubs von NC 35 (PHP 8.4/8.5) durch und die App wurde auf einer echten `nextcloud:35`-Instanz gegengeprüft (Aktivierung, Tabellen, Oberfläche).
+- **Mindestversion auf Nextcloud 33 gehoben (nc-app-tooling#15)**: `min-version` von 32 auf 33 angehoben (`max-version` bleibt 35). Ohne `<database>`-Deklaration legte NC bei min-version 32 die scharfen Oracle-11-Namensgrenzen (30/27/22 Zeichen) an; seit NC 33 gilt stattdessen eine einheitliche Grenze von 63 Zeichen. Oracle bleibt installierbar. Nutzerinnen und Nutzer auf NC 32 erhalten kein Update mehr.
 
 ## [0.23.0] - 2026-09-21
 
