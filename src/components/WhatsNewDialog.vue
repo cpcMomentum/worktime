@@ -4,35 +4,41 @@
         @close="dismiss">
         <div class="whatsnew">
             <h2 :id="TITLE_ID">{{ title }}</h2>
-            <p class="whatsnew__version">{{ t('worktime', 'Version {version}', { version }) }}</p>
+            <p v-if="archive && groups.length === 0" class="whatsnew__empty">
+                {{ t('worktime', 'Noch keine Neuerungen.') }}
+            </p>
 
-            <div v-for="(entry, index) in entries" :key="index" class="whatsnew__entry">
-                <div class="whatsnew__icon">
-                    <component :is="iconFor(entry.icon)" :size="22" />
-                </div>
-                <div class="whatsnew__body">
-                    <h3 class="whatsnew__entry-title">
-                        {{ entry.title }}
-                        <span v-if="entry.plus" class="whatsnew__badge">WerkPlus</span>
-                    </h3>
-                    <p class="whatsnew__entry-text">{{ entry.text }}</p>
-                    <p v-if="entry.where" class="whatsnew__where">
-                        {{ t('worktime', 'Zu finden unter') }}
-                        <b>{{ entry.where }}</b><span v-if="entry.adminOnly">{{ ' ' + t('worktime', '(nur für Administratoren)') }}</span>
-                    </p>
-                    <a v-if="entry.plus"
-                        class="whatsnew__link"
-                        :href="WERKPLUS_URL"
-                        target="_blank"
-                        rel="noreferrer noopener">
-                        {{ t('worktime', 'Mehr zu WerkPlus') }}
-                    </a>
+            <div v-for="group in groups" :key="group.version" class="whatsnew__group">
+                <p class="whatsnew__version">{{ t('worktime', 'Version {version}', { version: group.version }) }}</p>
+
+                <div v-for="(entry, index) in group.entries" :key="group.version + '-' + index" class="whatsnew__entry">
+                    <div class="whatsnew__icon">
+                        <component :is="iconFor(entry.icon)" :size="22" />
+                    </div>
+                    <div class="whatsnew__body">
+                        <h3 class="whatsnew__entry-title">
+                            {{ entry.title }}
+                            <span v-if="entry.plus" class="whatsnew__badge">WerkPlus</span>
+                        </h3>
+                        <p class="whatsnew__entry-text">{{ entry.text }}</p>
+                        <p v-if="entry.where" class="whatsnew__where">
+                            {{ t('worktime', 'Zu finden unter') }}
+                            <b>{{ entry.where }}</b><span v-if="entry.adminOnly">{{ ' ' + t('worktime', '(nur für Administratoren)') }}</span>
+                        </p>
+                        <a v-if="entry.plus"
+                            class="whatsnew__link"
+                            :href="WERKPLUS_URL"
+                            target="_blank"
+                            rel="noreferrer noopener">
+                            {{ t('worktime', 'Mehr zu WerkPlus') }}
+                        </a>
+                    </div>
                 </div>
             </div>
 
             <div class="actions">
                 <NcButton type="primary" @click="dismiss">
-                    {{ t('worktime', 'Alles klar') }}
+                    {{ archive ? t('worktime', 'Schließen') : t('worktime', 'Alles klar') }}
                 </NcButton>
             </div>
         </div>
@@ -59,7 +65,7 @@ import MagnifyIcon from 'vue-material-design-icons/Magnify.vue'
 import StarIcon from 'vue-material-design-icons/Star.vue'
 import TranslateIcon from 'vue-material-design-icons/Translate.vue'
 import WhatsNewService from '../services/WhatsNewService.js'
-import { shouldOpen } from '../utils/whatsnew.js'
+import { archiveGroups, shouldOpen } from '../utils/whatsnew.js'
 
 /** Zielseite der WerkPlus-Eintraege (Konzept v1.1, Abschnitt 2). */
 const WERKPLUS_URL = 'https://werkwolke.de'
@@ -101,8 +107,9 @@ export default {
     data() {
         return {
             open: false,
-            version: '',
-            entries: [],
+            // Popup: genau die neueste ungesehene Version; Archiv: alle
+            groups: [],
+            archive: false,
             WERKPLUS_URL,
             TITLE_ID,
         }
@@ -116,8 +123,8 @@ export default {
         try {
             const payload = await WhatsNewService.getPending()
             if (shouldOpen(payload)) {
-                this.version = payload.version
-                this.entries = payload.entries
+                this.groups = [{ version: payload.version, entries: payload.entries }]
+                this.archive = false
                 this.open = true
             }
         } catch (e) {
@@ -129,8 +136,22 @@ export default {
         iconFor(name) {
             return ICONS[name] || StarIcon
         },
+        /** Vom Menüeintrag „Neuerungen" in App.vue aufgerufen. */
+        async openArchive() {
+            try {
+                this.groups = archiveGroups(await WhatsNewService.getAll())
+                this.archive = true
+                this.open = true
+            } catch (e) {
+                // Kein Fenster ist besser als eine Fehlermeldung ueber Neuerungen.
+            }
+        },
         async dismiss() {
             this.open = false
+            // Nachlesen im Archiv ist kein Quittieren
+            if (this.archive) {
+                return
+            }
             try {
                 await WhatsNewService.markSeen()
             } catch (e) {
@@ -156,6 +177,15 @@ export default {
     margin: 2px 0 4px;
     color: var(--color-text-maxcontrast);
     font-size: 0.9em;
+}
+.whatsnew__empty {
+    margin: 8px 0;
+    color: var(--color-text-maxcontrast);
+}
+.whatsnew__group + .whatsnew__group {
+    margin-top: 16px;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-border);
 }
 .whatsnew__entry {
     display: flex;

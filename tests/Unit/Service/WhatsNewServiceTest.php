@@ -379,6 +379,41 @@ class WhatsNewServiceTest extends TestCase {
 		self::assertSame('0.5.3', $written['alice/' . WhatsNewService::KEY_LAST_SEEN] ?? null);
 	}
 
+	public function testArchivLiefertAlleVersionenNeuesteZuerst(): void {
+		$this->writeCatalogue($this->catalogueFixture());
+		$written = [];
+		$service = $this->buildService('0.5.3', [], $written);
+
+		$result = $service->getAll();
+
+		self::assertSame(
+			['0.5.3', '0.5.1'],
+			array_map(static fn (array $g): string => $g['version'], $result['versions']),
+		);
+		self::assertCount(2, $result['versions'][0]['entries']);
+		self::assertCount(1, $result['versions'][1]['entries']);
+		self::assertSame('Adresszusatz', $result['versions'][0]['entries'][0]['title']);
+		self::assertSame([], $written, 'Nachlesen ist kein Quittieren');
+	}
+
+	public function testArchivLaesstZukuenftigeVersionenAus(): void {
+		$this->writeCatalogue($this->catalogueFixture());
+		$written = [];
+		$service = $this->buildService('0.5.2', [], $written);
+
+		self::assertSame(
+			['0.5.1'],
+			array_map(static fn (array $g): string => $g['version'], $service->getAll()['versions']),
+		);
+	}
+
+	public function testArchivIstLeerOhneDatei(): void {
+		$written = [];
+		$service = $this->buildService('0.5.3', [], $written);
+
+		self::assertSame(['versions' => []], $service->getAll());
+	}
+
 	public function testDieAusgelieferteDateiIstGueltig(): void {
 		$file = dirname(__DIR__, 3) . '/whatsnew/whatsnew.json';
 		self::assertFileExists($file);

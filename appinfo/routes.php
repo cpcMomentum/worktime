@@ -12,6 +12,7 @@ return [
 
         // What's new (#730): unseen release notes for the current version + ack.
         ['name' => 'whats_new#index', 'url' => '/api/whatsnew', 'verb' => 'GET'],
+        ['name' => 'whats_new#all', 'url' => '/api/whatsnew/all', 'verb' => 'GET'],
         ['name' => 'whats_new#seen', 'url' => '/api/whatsnew/seen', 'verb' => 'POST'],
 
         // Push (#593): device-token registration for APNs.
