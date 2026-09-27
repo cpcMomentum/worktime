@@ -15,6 +15,16 @@ export default {
 		}
 	},
 
+	/** Alle bisherigen Neuerungen, nach Version gruppiert, neueste zuerst. */
+	async getAll() {
+		try {
+			const response = await api.get('/whatsnew/all')
+			return response.data
+		} catch (error) {
+			handleApiError(error)
+		}
+	},
+
 	/** Quittiert das Fenster; es kommt für diese Version nicht wieder. */
 	async markSeen() {
 		try {

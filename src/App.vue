@@ -65,6 +65,13 @@
 					</template>
 				</NcAppNavigationItem>
 				<NcAppNavigationItem
+					:name="t('worktime', 'Neuerungen')"
+					@click="openWhatsNew">
+					<template #icon>
+						<BullhornOutlineIcon :size="20" />
+					</template>
+				</NcAppNavigationItem>
+				<NcAppNavigationItem
 					v-if="navVisible('settings')"
 					:name="t('worktime', 'Einstellungen')"
 					to="/settings">
@@ -132,7 +139,7 @@
 		</NcAppContent>
 
 		<!-- Was ist neu? (#730): einmal je Nutzer und Version nach einem Update. -->
-		<WhatsNewDialog />
+		<WhatsNewDialog ref="whatsNew" />
 	</NcContent>
 </template>
 
@@ -152,6 +159,7 @@ import AccountCogIcon from 'vue-material-design-icons/AccountCog.vue'
 import AlertIcon from 'vue-material-design-icons/Alert.vue'
 import ShieldIcon from 'vue-material-design-icons/Shield.vue'
 import ChartBarIcon from 'vue-material-design-icons/ChartBar.vue'
+import BullhornOutlineIcon from 'vue-material-design-icons/BullhornOutline.vue'
 import WrenchIcon from 'vue-material-design-icons/Wrench.vue'
 import SleepIcon from 'vue-material-design-icons/Sleep.vue'
 import { mapGetters, mapActions } from 'vuex'
@@ -177,6 +185,7 @@ export default {
 		AlertIcon,
 		ShieldIcon,
 		ChartBarIcon,
+		BullhornOutlineIcon,
 		WrenchIcon,
 		SleepIcon,
 	},
@@ -210,6 +219,11 @@ export default {
 		...mapActions('employees', ['fetchCurrentEmployee', 'fetchFederalStates']),
 		...mapActions('absences', ['fetchAbsenceTypes']),
 		...mapActions('permissions', ['endCorrection']),
+		openWhatsNew(event) {
+			// Der Eintrag rendert href="#"; ohne das springt der Router auf die Startansicht
+			event?.preventDefault()
+			this.$refs.whatsNew.openArchive()
+		},
 		exitCorrection() {
 			this.endCorrection()
 			this.$router.push('/settings').catch(() => {})
