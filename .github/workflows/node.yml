@@ -44,6 +44,10 @@ jobs:
       - name: Frontend-Unit-Tests (Rolle×Route-Matrix, 0.12.0-Schutz)
         run: npm test
 
+      # Schema der whatsnew.json, zentral statt als PHPUnit-Methode je App
+      - name: Was-ist-neu-Schema
+        run: npm run whatsnew:check
+
       - name: Produktions-Build
         run: npm run build
 
