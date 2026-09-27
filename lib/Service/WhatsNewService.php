@@ -100,6 +100,28 @@ class WhatsNewService {
 		];
 	}
 
+	/**
+	 * @return array{versions: list<array{version: string, entries: list<array{title: string, text: string, icon: string, where: string, adminOnly: bool, plus: bool}>}>}
+	 */
+	public function getAll(): array {
+		$current = $this->currentVersion();
+		$versions = [];
+		foreach ($this->catalogue() as $version => $entries) {
+			if (version_compare((string)$version, $current, '>')) {
+				continue;
+			}
+			$localised = $this->localise($entries);
+			if ($localised === []) {
+				continue;
+			}
+			$versions[] = ['version' => (string)$version, 'entries' => $localised];
+		}
+
+		usort($versions, static fn (array $a, array $b): int => version_compare($b['version'], $a['version']));
+
+		return ['versions' => $versions];
+	}
+
 	/** Quittiert das Fenster: die laufende Version gilt als gesehen. */
 	public function markSeen(string $userId): void {
 		$this->config->setUserValue(

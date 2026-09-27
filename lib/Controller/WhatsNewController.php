@@ -47,6 +47,18 @@ class WhatsNewController extends BaseController {
 		return new JSONResponse($this->whatsNewService->getPending($this->userId));
 	}
 
+	/** Alle bisherigen Neuerungen für den Menüeintrag „Neuerungen". */
+	#[NoAdminRequired]
+	public function all(): JSONResponse {
+		if ($authError = $this->requireAuth()) {
+			return $authError;
+		}
+		if (!$this->permissionService->hasAccess($this->userId)) {
+			return $this->forbiddenResponse();
+		}
+		return new JSONResponse($this->whatsNewService->getAll());
+	}
+
 	/** Quittiert das Fenster: die laufende Version gilt als gesehen. */
 	#[NoAdminRequired]
 	public function seen(): JSONResponse {

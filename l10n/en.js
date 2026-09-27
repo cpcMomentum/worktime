@@ -773,6 +773,8 @@ OC.L10N.register(
     "(nur für Administratoren)" : "(administrators only)",
     "Mehr zu WerkPlus" : "More about WerkPlus",
     "Alles klar" : "Got it",
-    "Was ist neu in WorkTime" : "What's new in WorkTime"
+    "Was ist neu in WorkTime" : "What's new in WorkTime",
+    "Neuerungen" : "What's new",
+    "Noch keine Neuerungen." : "No news yet."
 },
 "nplurals=2; plural=(n != 1);");
