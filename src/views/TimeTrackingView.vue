@@ -473,6 +473,7 @@ export default {
                 this.overviewYear = this.selectedMonth.year
                 this.loadOvertime()
             }
+            this.$nextTick(() => this.scrollToTodayIfPending(false))
         },
         onYearChange(year) {
             this.overviewYear = Math.min(this.maxYear, Math.max(this.minYear, year))
@@ -518,9 +519,10 @@ export default {
             }
         },
         scrollToTodayIfPending(smooth) {
-            if (!this.scrollToTodayPending || this.loading) return
+            // Merker bleibt stehen, bis die Liste wirklich zu sehen ist (Kalender als Standard)
+            if (!this.scrollToTodayPending || this.loading || !this.$refs.dayList) return
             this.scrollToTodayPending = false
-            this.$refs.dayList?.scrollToDate(getToday(), smooth)
+            this.$refs.dayList.scrollToDate(getToday(), smooth)
         },
         async loadOvertime() {
             if (!this.activeEmployeeId) return

@@ -8,10 +8,10 @@ export const LEAD_DAYS = 2
  * @return {number} Index der Zeile oben im Sichtbereich, -1 wenn der Tag fehlt
  */
 export function scrollTargetIndex(dayIndex, lead = LEAD_DAYS) {
-	if (!Number.isInteger(dayIndex) || dayIndex < 0) {
-		return -1
-	}
-	return Math.max(0, dayIndex - lead)
+    if (!Number.isInteger(dayIndex) || dayIndex < 0) {
+        return -1
+    }
+    return Math.max(0, dayIndex - lead)
 }
 
 /**
@@ -20,10 +20,10 @@ export function scrollTargetIndex(dayIndex, lead = LEAD_DAYS) {
  * @return {boolean} true, wenn die Zeile ganz sichtbar ist und nicht gescrollt werden muss
  */
 export function isFullyVisible(row, view) {
-	if (!row || !view) {
-		return false
-	}
-	return row.top >= view.top && row.bottom <= view.bottom
+    if (!row || !view) {
+        return false
+    }
+    return row.top >= view.top && row.bottom <= view.bottom
 }
 
 /**
@@ -31,10 +31,10 @@ export function isFullyVisible(row, view) {
  * @return {HTMLElement|null} nächster scrollbarer Vorfahr
  */
 export function findScrollContainer(el) {
-	for (let node = el?.parentElement; node; node = node.parentElement) {
-		if (/(auto|scroll)/.test(getComputedStyle(node).overflowY) && node.scrollHeight > node.clientHeight) {
-			return node
-		}
-	}
-	return null
+    for (let node = el?.parentElement; node; node = node.parentElement) {
+        if (/(auto|scroll)/.test(getComputedStyle(node).overflowY) && node.scrollHeight > node.clientHeight) {
+            return node
+        }
+    }
+    return null
 }
