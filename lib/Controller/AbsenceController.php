@@ -18,7 +18,7 @@ use OCA\WorkTime\Service\WorkScheduleService;
 use OCA\WorkTime\Service\YearlyCarryoverService;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\IDateTimeZone;
+use OCA\WorkTime\Service\UserTimeZone;
 use OCP\IRequest;
 
 class AbsenceController extends BaseController {
@@ -31,7 +31,7 @@ class AbsenceController extends BaseController {
         private PermissionService $permissionService,
         private WorkScheduleService $workScheduleService,
         private YearlyCarryoverService $carryoverService,
-        private IDateTimeZone $dateTimeZone,
+        private UserTimeZone $dateTimeZone,
     ) {
         parent::__construct($request, $userId);
     }

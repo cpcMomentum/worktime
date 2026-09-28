@@ -24,7 +24,7 @@ use OCA\WorkTime\Service\WorkScheduleService;
 use OCA\WorkTime\Service\YearlyCarryoverService;
 use OCA\WorkTime\Service\OvertimePayoutService;
 use OCA\WorkTime\Service\OvertimeCalculationService;
-use OCP\IDateTimeZone;
+use OCA\WorkTime\Service\UserTimeZone;
 use OCP\IL10N;
 use OCP\IRequest;
 use PHPUnit\Framework\TestCase;
@@ -41,9 +41,9 @@ class ReportControllerTest extends TestCase {
     private PermissionService $permissionService;
     private ReportController $controller;
 
-    /** Configured IDateTimeZone mock so ReportController::today() (#716) works. */
-    private function dtzMock(): IDateTimeZone {
-        $dtz = $this->createMock(IDateTimeZone::class);
+    /** Configured UserTimeZone mock so ReportController::today() (#716) works. */
+    private function dtzMock(): UserTimeZone {
+        $dtz = $this->createMock(UserTimeZone::class);
         $dtz->method('getTimeZone')->willReturn(new \DateTimeZone('Europe/Berlin'));
         return $dtz;
     }

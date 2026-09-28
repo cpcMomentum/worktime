@@ -14,7 +14,8 @@ use OCA\WorkTime\Service\EmployeeDeletionService;
 use OCA\WorkTime\Service\EmployeeService;
 use OCA\WorkTime\Service\ValidationException;
 use OCA\WorkTime\Service\WorkScheduleService;
-use OCP\IDateTimeZone;
+use OCA\WorkTime\Service\LocalDate;
+use OCA\WorkTime\Service\UserTimeZone;
 use OCP\IL10N;
 use OCP\IUserManager;
 use PHPUnit\Framework\TestCase;
@@ -47,7 +48,7 @@ class EmployeeServiceTest extends TestCase {
         $l = $this->createMock(IL10N::class);
         $l->method('t')->willReturnCallback(fn (string $t, array $p = []): string => $p === [] ? $t : vsprintf($t, $p));
 
-        $dateTimeZone = $this->createMock(IDateTimeZone::class);
+        $dateTimeZone = $this->createMock(UserTimeZone::class);
         $dateTimeZone->method('getTimeZone')->willReturn(new \DateTimeZone('Europe/Berlin'));
 
         $this->service = new EmployeeService(
@@ -199,7 +200,7 @@ class EmployeeServiceTest extends TestCase {
 
         $result = $this->service->setResting(3, null, 'admin');
 
-        $this->assertSame((new DateTime('today'))->format('Y-m-d'), $result->getRestingFrom()->format('Y-m-d'));
+        $this->assertSame(LocalDate::today(new \DateTimeZone('Europe/Berlin'))->format('Y-m-d'), $result->getRestingFrom()->format('Y-m-d'));
     }
 
     public function testSetRestingRejectsMalformedRestingFrom(): void {

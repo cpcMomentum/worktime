@@ -19,7 +19,7 @@ use OCA\WorkTime\Service\ProjectService;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCA\WorkTime\Service\ValidationException;
 use OCA\WorkTime\Service\ForbiddenException;
-use OCP\IDateTimeZone;
+use OCA\WorkTime\Service\UserTimeZone;
 use OCP\IL10N;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -38,7 +38,7 @@ class TimeEntryServiceTest extends TestCase {
     private ProjectService $projectService;
     private LoggerInterface $logger;
     private IL10N $l;
-    private IDateTimeZone $dateTimeZone;
+    private UserTimeZone $dateTimeZone;
 
     protected function setUp(): void {
         $this->timeEntryMapper = $this->createMock(TimeEntryMapper::class);
@@ -57,7 +57,7 @@ class TimeEntryServiceTest extends TestCase {
         );
         // Europe/Berlin (UTC+1/2), NOT UTC: a UTC mock would hide the #713
         // timezone bug where "today" is computed against the UTC calendar day.
-        $this->dateTimeZone = $this->createMock(IDateTimeZone::class);
+        $this->dateTimeZone = $this->createMock(UserTimeZone::class);
         $this->dateTimeZone->method('getTimeZone')->willReturn(new \DateTimeZone('Europe/Berlin'));
 
         // Default settings

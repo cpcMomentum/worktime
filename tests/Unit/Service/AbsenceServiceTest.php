@@ -26,7 +26,7 @@ use OCA\WorkTime\Service\ValidationException;
 use OCA\WorkTime\Service\CompanySettingsService;
 use OCA\WorkTime\Service\WorkScheduleService;
 use OCA\WorkTime\Service\YearlyCarryoverService;
-use OCP\IDateTimeZone;
+use OCA\WorkTime\Service\UserTimeZone;
 use OCP\IL10N;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -80,7 +80,7 @@ class AbsenceServiceTest extends TestCase {
         $settingsMapper = $this->createMock(CompanySettingMapper::class);
         $projectService = $this->createMock(ProjectService::class);
         $projectService->method('isProjectAllowedForEmployee')->willReturn(true);
-        $timeEntryDateTimeZone = $this->createMock(IDateTimeZone::class);
+        $timeEntryDateTimeZone = $this->createMock(UserTimeZone::class);
         $timeEntryDateTimeZone->method('getTimeZone')->willReturn(new \DateTimeZone('Europe/Berlin'));
         $timeEntryService = new TimeEntryService(
             $this->timeEntryMapper,
@@ -97,7 +97,7 @@ class AbsenceServiceTest extends TestCase {
 
         $this->companySettingsService = $this->createMock(CompanySettingsService::class);
         $this->activePunchMapper = $this->createMock(ActivePunchMapper::class);
-        $dateTimeZone = $this->createMock(IDateTimeZone::class);
+        $dateTimeZone = $this->createMock(UserTimeZone::class);
         // Europe/Berlin (UTC+1/2), NOT UTC: a UTC mock hides the #665 timezone bug
         // where local midnight lands before UTC midnight and drops the conflict.
         $dateTimeZone->method('getTimeZone')->willReturn(new \DateTimeZone('Europe/Berlin'));
