@@ -379,6 +379,41 @@ class WhatsNewServiceTest extends TestCase {
 		self::assertSame('0.5.3', $written['alice/' . WhatsNewService::KEY_LAST_SEEN] ?? null);
 	}
 
+	public function testArchivLiefertAlleVersionenNeuesteZuerst(): void {
+		$this->writeCatalogue($this->catalogueFixture());
+		$written = [];
+		$service = $this->buildService('0.5.3', [], $written);
+
+		$result = $service->getAll();
+
+		self::assertSame(
+			['0.5.3', '0.5.1'],
+			array_map(static fn (array $g): string => $g['version'], $result['versions']),
+		);
+		self::assertCount(2, $result['versions'][0]['entries']);
+		self::assertCount(1, $result['versions'][1]['entries']);
+		self::assertSame('Adresszusatz', $result['versions'][0]['entries'][0]['title']);
+		self::assertSame([], $written, 'Nachlesen ist kein Quittieren');
+	}
+
+	public function testArchivLaesstZukuenftigeVersionenAus(): void {
+		$this->writeCatalogue($this->catalogueFixture());
+		$written = [];
+		$service = $this->buildService('0.5.2', [], $written);
+
+		self::assertSame(
+			['0.5.1'],
+			array_map(static fn (array $g): string => $g['version'], $service->getAll()['versions']),
+		);
+	}
+
+	public function testArchivIstLeerOhneDatei(): void {
+		$written = [];
+		$service = $this->buildService('0.5.3', [], $written);
+
+		self::assertSame(['versions' => []], $service->getAll());
+	}
+
 	public function testDieAusgelieferteDateiIstGueltig(): void {
 		$file = dirname(__DIR__, 3) . '/whatsnew/whatsnew.json';
 		self::assertFileExists($file);
@@ -387,26 +422,13 @@ class WhatsNewServiceTest extends TestCase {
 		self::assertIsArray($catalogue);
 		self::assertNotEmpty($catalogue);
 
+		// Das Schema prueft nc-whatsnew-check; hier nur, was der zentrale Check nicht kennt.
 		foreach ($catalogue as $version => $entries) {
-			self::assertMatchesRegularExpression('/^\d+\.\d+\.\d+$/', (string)$version);
 			self::assertIsArray($entries);
 			foreach ($entries as $entry) {
-				// de und en sind Pflicht (Konzept v1.1, Abschnitt 2).
-				foreach (['title', 'text'] as $field) {
-					self::assertArrayHasKey($field, $entry);
-					self::assertArrayHasKey('de', $entry[$field], "$version: $field braucht de");
-					self::assertArrayHasKey('en', $entry[$field], "$version: $field braucht en");
-					self::assertNotSame('', trim((string)$entry[$field]['de']));
-					self::assertNotSame('', trim((string)$entry[$field]['en']));
-				}
-				self::assertArrayHasKey('plus', $entry);
+				self::assertArrayHasKey('plus', $entry, "$version: plus ist in dieser App Pflicht");
 				self::assertIsBool($entry['plus']);
 
-				// Fundort ist optional, aber wenn da, dann zweisprachig.
-				if (isset($entry['where'])) {
-					self::assertArrayHasKey('de', $entry['where'], "$version: where braucht de");
-					self::assertArrayHasKey('en', $entry['where'], "$version: where braucht en");
-				}
 				// Symbol muss der Dialog kennen, sonst erscheint stumm der Stern.
 				if (isset($entry['icon'])) {
 					self::assertContains($entry['icon'], self::BEKANNTE_SYMBOLE, "$version: unbekanntes Symbol");

@@ -22,7 +22,7 @@ jobs:
   lint-and-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v7
         with:
@@ -43,6 +43,10 @@ jobs:
 
       - name: Frontend-Unit-Tests (Rolle×Route-Matrix, 0.12.0-Schutz)
         run: npm test
+
+      # Schema der whatsnew.json, zentral statt als PHPUnit-Methode je App
+      - name: Was-ist-neu-Schema
+        run: npm run whatsnew:check
 
       - name: Produktions-Build
         run: npm run build

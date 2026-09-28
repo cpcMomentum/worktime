@@ -27,3 +27,19 @@ export const KNOWN_ICONS = [
 export function shouldOpen(payload) {
 	return !!(payload && Array.isArray(payload.entries) && payload.entries.length > 0)
 }
+
+/**
+ * Versionsgruppen des Archivs aus der Server-Antwort; Kaputtes wird verworfen statt angezeigt.
+ *
+ * @param {{ versions?: unknown }} payload Antwort von GET /whatsnew/all
+ * @return {Array<{ version: string, entries: Array<object> }>}
+ */
+export function archiveGroups(payload) {
+	if (!payload || !Array.isArray(payload.versions)) {
+		return []
+	}
+	return payload.versions.filter(group => group
+		&& typeof group.version === 'string'
+		&& Array.isArray(group.entries)
+		&& group.entries.length > 0)
+}

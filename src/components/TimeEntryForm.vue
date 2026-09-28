@@ -236,8 +236,10 @@ export default {
             ])
             if (b6h !== undefined) this.break6h = parseInt(b6h, 10)
             if (b9h !== undefined) this.break9h = parseInt(b9h, 10)
-            // Pause neu berechnen mit geladenen Settings
-            this.onTimeChange()
+            // Beim Bearbeiten die gespeicherte Pause nicht mit dem Vorschlag überschreiben
+            if (!this.isEdit) {
+                this.onTimeChange()
+            }
         } catch (e) {
             // Fallback bleibt bei 30/45
         }

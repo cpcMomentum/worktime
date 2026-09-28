@@ -418,6 +418,20 @@ class WorkScheduleService {
     }
 
     /**
+     * Day-specific target minutes for the employee's "today" (user timezone).
+     *
+     * Uses the actual per-day schedule value for today's weekday, NOT a flat
+     * weekly average (weeklyHours / workingDaysPerWeek). The average is wrong for
+     * any non-uniform week: on a scheduled 0h day (e.g. Wednesday for a Mon-Tue-
+     * Thu-Fri part-timer) it must return 0, not the weekly mean. Consumed by
+     * EmployeeController::me() as `todayTargetMinutes` so the mobile client no
+     * longer has to (and must not) reconstruct the Soll itself.
+     */
+    public function getTodayTargetMinutes(int $employeeId): int {
+        return $this->getDailyMinutesForDate($employeeId, $this->today());
+    }
+
+    /**
      * Whole-day vacation entitlement for a calendar year (rounded per
      * getVacationEntitlementForYear + § 5 Abs. 2 BUrlG).
      */

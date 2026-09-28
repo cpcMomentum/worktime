@@ -372,4 +372,45 @@ class WorkScheduleServiceTest extends TestCase {
 
         $this->assertSame($expected, $service->getDisplaySchedule(1));
     }
+
+    /**
+     * #739: today's target must come from the day-specific schedule value, not
+     * a flat weekly average. A 30h/4-day part-timer has 0h on a scheduled
+     * Wednesday — averaging weeklyHours / workingDaysPerWeek would wrongly
+     * yield 7:30 for that day.
+     */
+    public function testGetTodayTargetMinutesUsesPerDayScheduleNotAverage(): void {
+        $mapper = $this->createMock(WorkScheduleMapper::class);
+        $il10n = $this->createMock(IL10N::class);
+        $dtz = $this->createMock(IDateTimeZone::class);
+        $dtz->method('getTimeZone')->willReturn(new \DateTimeZone('UTC'));
+
+        $service = new class(
+            $mapper,
+            $this->createMock(EmployeeMapper::class),
+            $this->createMock(TimeEntryMapper::class),
+            $this->createMock(CompanySettingsService::class),
+            $this->createMock(AuditLogService::class),
+            $this->createMock(LoggerInterface::class),
+            $il10n,
+            $dtz,
+        ) extends WorkScheduleService {
+            protected function today(): DateTime {
+                return new DateTime('2026-09-23'); // Wednesday
+            }
+        };
+
+        $schedule = new WorkSchedule();
+        $schedule->setEmployeeId(1);
+        $schedule->setMonHours('8.00');
+        $schedule->setTueHours('8.00');
+        $schedule->setWedHours('0.00');
+        $schedule->setThuHours('8.00');
+        $schedule->setFriHours('6.00');
+        $schedule->setSatHours('0.00');
+        $schedule->setSunHours('0.00');
+        $mapper->method('findForDate')->willReturn($schedule);
+
+        $this->assertSame(0, $service->getTodayTargetMinutes(1));
+    }
 }

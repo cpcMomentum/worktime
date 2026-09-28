@@ -44,7 +44,7 @@ Gesetzeskonforme Arbeitszeiterfassung für kleine Unternehmen in Deutschland.
 Behalten Sie den Überblick über Arbeitszeiten, Überstunden und Urlaub.
     ]]></description>
 
-    <version>0.23.0</version>
+    <version>0.24.0</version>
     <licence>AGPL-3.0-or-later</licence>
 
     <author mail="axel.deffner@cpcmomentum.com" homepage="https://github.com/cpcMomentum">Axel Deffner</author>
@@ -68,7 +68,7 @@ Behalten Sie den Überblick über Arbeitszeiten, Überstunden und Urlaub.
     <screenshot>https://raw.githubusercontent.com/cpcMomentum/worktime/main/screenshots/screenshot-settings.png</screenshot>
 
     <dependencies>
-        <nextcloud min-version="32" max-version="34"/>
+        <nextcloud min-version="33" max-version="35"/>
         <php min-version="8.2"/>
     </dependencies>
 

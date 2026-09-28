@@ -773,6 +773,8 @@ OC.L10N.register(
     "(nur für Administratoren)" : "(nur für Administratoren)",
     "Mehr zu WerkPlus" : "Mehr zu WerkPlus",
     "Alles klar" : "Alles klar",
-    "Was ist neu in WorkTime" : "Was ist neu in WorkTime"
+    "Was ist neu in WorkTime" : "Was ist neu in WorkTime",
+    "Neuerungen" : "Novinky",
+    "Noch keine Neuerungen." : "Zatím žádné novinky."
 },
 "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;");

@@ -1,4 +1,4 @@
-import { shouldOpen, KNOWN_ICONS } from '../../src/utils/whatsnew.js'
+import { archiveGroups, shouldOpen, KNOWN_ICONS } from '../../src/utils/whatsnew.js'
 
 /**
  * „Was ist neu?"-Fenster (#730): die zentrale Anzeige-Regel. WorkTimes Jest
@@ -30,5 +30,36 @@ describe('KNOWN_ICONS', () => {
 
 	it('has no duplicates', () => {
 		expect(new Set(KNOWN_ICONS).size).toBe(KNOWN_ICONS.length)
+	})
+})
+
+describe('archiveGroups', () => {
+	it('keeps all version groups in server order', () => {
+		const payload = {
+			versions: [
+				{ version: '0.24.0', entries: [{ title: 'a' }] },
+				{ version: '0.23.0', entries: [{ title: 'b' }, { title: 'c' }] },
+			],
+		}
+		expect(archiveGroups(payload).map(g => g.version)).toEqual(['0.24.0', '0.23.0'])
+	})
+
+	it('drops malformed or empty groups', () => {
+		const payload = {
+			versions: [
+				{ version: '0.24.0', entries: [] },
+				{ version: 23, entries: [{ title: 'x' }] },
+				{ version: '0.22.0' },
+				null,
+				{ version: '0.21.0', entries: [{ title: 'ok' }] },
+			],
+		}
+		expect(archiveGroups(payload).map(g => g.version)).toEqual(['0.21.0'])
+	})
+
+	it('returns an empty list for a missing or malformed payload', () => {
+		expect(archiveGroups(undefined)).toEqual([])
+		expect(archiveGroups({})).toEqual([])
+		expect(archiveGroups({ versions: 'nope' })).toEqual([])
 	})
 })
