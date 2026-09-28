@@ -7,6 +7,12 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Added
+- **Zeiterfassung springt zu „Heute" (#754)**: Beim Öffnen des aktuellen Monats scrollt die Listenansicht automatisch zum heutigen Tag, mit zwei Vortagen darüber. Ein neuer Knopf „Heute" neben der Monatsnavigation bringt aus jedem Monat zurück zum heutigen Tag.
+
+### Fixed
+- **Liste bleibt nach dem Speichern an ihrer Position (#754)**: Nach dem Anlegen, Bearbeiten oder Löschen eines Eintrags, nach dem Stempeln und nach dem Einreichen sprang die Liste bisher an den Monatsanfang zurück. Die Scrollposition bleibt jetzt erhalten.
+
 ## [0.24.0] - 2026-09-28
 
 ### Added
