@@ -7,12 +7,16 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-09-28
+
 ### Added
 - **Menüeintrag „Neuerungen" (#747)**: Unten in der Navigation öffnet „Neuerungen" jederzeit das „Was ist neu?"-Fenster mit allen bisherigen Punkten, nach Version gruppiert (neueste zuerst). Wer das Fenster nach einem Update verpasst oder weggeklickt hat, kann so nachlesen. Nachlesen quittiert nichts; das automatische Fenster nach einem Update bleibt unverändert.
+- **Tagessoll für heute über die API (#739)**: `/employees/me` liefert zusätzlich `todayTargetMinutes`, das Soll des heutigen Tages nach dem tatsächlichen Wochentagsmuster des Arbeitszeitprofils (an einem freien Tag 0). Der Mobile-Client rechnet damit nicht mehr selbst mit dem Wochendurchschnitt, der bei ungleich verteilten Wochen falsch war.
 
 ### Changed
 - **Kompatibilität mit Nextcloud 35 (#727)**: `max-version` von 34 auf 35 gehoben. Die Unit-Suite läuft gegen die `nextcloud/ocp`-Stubs von NC 35 (PHP 8.4/8.5) durch und die App wurde auf einer echten `nextcloud:35`-Instanz gegengeprüft (Aktivierung, Tabellen, Oberfläche).
 - **Mindestversion auf Nextcloud 33 gehoben (nc-app-tooling#15)**: `min-version` von 32 auf 33 angehoben (`max-version` bleibt 35). Ohne `<database>`-Deklaration legte NC bei min-version 32 die scharfen Oracle-11-Namensgrenzen (30/27/22 Zeichen) an; seit NC 33 gilt stattdessen eine einheitliche Grenze von 63 Zeichen. Oracle bleibt installierbar. Nutzerinnen und Nutzer auf NC 32 erhalten kein Update mehr.
+- **Abhängigkeiten aktualisiert**: PDF-Bibliothek TCPDF 6.11.4 (Monatsberichte), `@nextcloud/vue` 8.41.0, `@nextcloud/router` 3.2.0, webpack 5.111.1 sowie Entwicklungswerkzeuge (nc-app-tooling 1.17.0 mit zentraler Prüfung der Was-ist-neu-Datei, gemeinsame CI-Action für die getesteten Nextcloud-Versionen).
 
 ### Fixed
 - **Gespeicherte Pause beim Bearbeiten nicht mehr überschrieben (#729)**: Beim Öffnen eines bestehenden Eintrags zum Bearbeiten wurde die gespeicherte Pause bisher sofort durch den automatischen Vorschlag (gesetzliche Mindestpause bzw. persönliche Standard-Pause) ersetzt. Der Vorschlag wird jetzt nur noch beim Neuanlegen eines Eintrags berechnet; beim Bearbeiten bleibt der gespeicherte Wert erhalten, bis Beginn oder Ende manuell geändert werden.

@@ -1,4 +1,39 @@
 {
+	"0.24.0": [
+		{
+			"title": {
+				"de": "Neuer Menüpunkt „Neuerungen“",
+				"en": "New menu item “What's new”",
+				"cs": "Nová položka nabídky „Novinky“"
+			},
+			"text": {
+				"de": "Dieses Fenster lässt sich jetzt jederzeit wieder öffnen. Dort stehen alle bisherigen Neuerungen, nach Version sortiert, die neueste oben. Praktisch, wenn Sie das Fenster nach einem Update weggeklickt haben.",
+				"en": "You can now reopen this window at any time. It lists all previous updates by version, newest first. Handy if you dismissed the window after an update.",
+				"cs": "Toto okno lze nyní kdykoli znovu otevřít. Obsahuje všechny dosavadní novinky seřazené podle verze, nejnovější nahoře. Hodí se, pokud jste okno po aktualizaci zavřeli."
+			},
+			"icon": "star",
+			"where": {
+				"de": "Navigation unten › Neuerungen",
+				"en": "Navigation, bottom › What's new",
+				"cs": "Navigace dole › Novinky"
+			},
+			"plus": false
+		},
+		{
+			"title": {
+				"de": "Pause bleibt beim Bearbeiten erhalten",
+				"en": "Break is kept when editing",
+				"cs": "Přestávka se při úpravě zachová"
+			},
+			"text": {
+				"de": "Wer einen bestehenden Eintrag bearbeitet, sieht jetzt die gespeicherte Pause. Bisher wurde sie beim Öffnen durch den automatischen Vorschlag ersetzt. Ändern Sie Beginn oder Ende, schlägt WorkTime die Pause weiterhin neu vor.",
+				"en": "When you edit an existing entry, you now see the break you saved. Previously it was replaced by the automatic suggestion as soon as the form opened. If you change the start or end time, WorkTime still suggests a new break.",
+				"cs": "Při úpravě existujícího záznamu nyní uvidíte uloženou přestávku. Dříve ji při otevření nahradil automatický návrh. Pokud změníte začátek nebo konec, WorkTime přestávku nadále navrhne znovu."
+			},
+			"icon": "counter",
+			"plus": false
+		}
+	],
 	"0.23.0": [
 		{
 			"title": {
