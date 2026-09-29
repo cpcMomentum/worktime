@@ -20,7 +20,6 @@ use OCA\WorkTime\Db\EmployeeMapper;
 use OCA\WorkTime\Db\HolidayMapper;
 use OCA\WorkTime\Notification\NotificationService;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\IDateTimeZone;
 use OCP\IL10N;
 use Psr\Log\LoggerInterface;
 
@@ -51,7 +50,7 @@ class AbsenceService {
         private YearlyCarryoverService $carryoverService,
         private CompanySettingsService $companySettingsService,
         private ActivePunchMapper $activePunchMapper,
-        private IDateTimeZone $dateTimeZone,
+        private UserTimeZone $dateTimeZone,
         private LoggerInterface $logger,
         private IL10N $l,
     ) {

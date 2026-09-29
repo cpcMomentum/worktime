@@ -154,6 +154,14 @@
                         :options="federalStateOptions"
                         @input="saveSetting('default_federal_state')" />
                 </div>
+                <div class="form-group">
+                    <label for="timezone">{{ t('worktime', 'Zeitzone') }} <InfoIcon>{{ t('worktime', 'Gilt für alle, deren Zeitzone Nextcloud nicht kennt, etwa nach Anmeldung per SSO oder nur über die App. Sie bestimmt die Uhrzeit der Stempeluhr und welcher Tag „heute“ ist. Die Zeitzone aus den persönlichen Nextcloud-Einstellungen hat immer Vorrang.') }}</InfoIcon></label>
+                    <NcSelect id="timezone"
+                        v-model="selectedTimezone"
+                        :options="timezoneOptions"
+                        :clearable="false"
+                        @input="saveSetting('timezone')" />
+                </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="weeklyHours">{{ t('worktime', 'Standard-Wochenstunden') }} <InfoIcon>{{ t('worktime', 'Neue Mitarbeiter bekommen diese Wochenstunden voreingestellt. Sie können im Mitarbeiterprofil individuell angepasst werden.') }}</InfoIcon></label>
@@ -1029,6 +1037,28 @@ export default {
         },
         federalStateOptions() {
             return Object.entries(this.federalStates).map(([id, label]) => ({ id, label }))
+        },
+        timezoneOptions() {
+            let zones = []
+            try {
+                zones = Intl.supportedValuesOf('timeZone')
+            } catch (e) {
+                zones = ['Europe/Berlin', 'Europe/Vienna', 'Europe/Zurich']
+            }
+            if (!zones.includes('UTC')) zones = [...zones, 'UTC']
+            return [
+                { id: '', label: this.t('worktime', 'Automatisch (Server-Standard, sonst Europe/Berlin)') },
+                ...zones.map(z => ({ id: z, label: z })),
+            ]
+        },
+        selectedTimezone: {
+            get() {
+                const current = this.settings.timezone || ''
+                return this.timezoneOptions.find(o => o.id === current) || { id: current, label: current }
+            },
+            set(value) {
+                this.settings.timezone = value?.id || ''
+            },
         },
         selectedFederalState: {
             get() {

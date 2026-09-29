@@ -15,7 +15,6 @@ use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\Holiday;
 use OCA\WorkTime\Db\OvertimePayoutMapper;
 use OCA\WorkTime\Db\TimeEntry;
-use OCP\IDateTimeZone;
 
 /**
  * Overtime / monthly-statistics engine (#426).
@@ -38,7 +37,7 @@ class OvertimeCalculationService {
         private TimeEntryService $timeEntryService,
         private AbsenceService $absenceService,
         private HolidayService $holidayService,
-        private IDateTimeZone $dateTimeZone,
+        private UserTimeZone $dateTimeZone,
     ) {
     }
 

@@ -777,7 +777,10 @@
 		"Alles klar": "Alles klar",
 		"Was ist neu in WorkTime": "Was ist neu in WorkTime",
 		"Neuerungen": "Novinky",
-		"Noch keine Neuerungen.": "Zatím žádné novinky."
+		"Noch keine Neuerungen.": "Zatím žádné novinky.",
+		"Zeitzone": "Časové pásmo",
+		"Gilt für alle, deren Zeitzone Nextcloud nicht kennt, etwa nach Anmeldung per SSO oder nur über die App. Sie bestimmt die Uhrzeit der Stempeluhr und welcher Tag „heute“ ist. Die Zeitzone aus den persönlichen Nextcloud-Einstellungen hat immer Vorrang.": "Platí pro všechny, jejichž časové pásmo Nextcloud nezná, například po přihlášení přes SSO nebo pouze přes aplikaci. Určuje čas docházkových hodin a který den je „dnes“. Časové pásmo z osobních nastavení Nextcloudu má vždy přednost.",
+		"Automatisch (Server-Standard, sonst Europe/Berlin)": "Automaticky (výchozí nastavení serveru, jinak Europe/Berlin)"
 	},
 	"pluralForm": "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;"
 }

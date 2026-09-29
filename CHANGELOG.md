@@ -11,6 +11,7 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 - **Zeiterfassung springt zu „Heute" (#754)**: Beim Öffnen des aktuellen Monats scrollt die Listenansicht automatisch zum heutigen Tag, mit zwei Vortagen darüber. Ein neuer Knopf „Heute" neben der Monatsnavigation bringt aus jedem Monat zurück zum heutigen Tag.
 
 ### Fixed
+- **Stempeluhr bucht nicht mehr 1 bis 2 Stunden zu früh (#757)**: Ohne in Nextcloud gespeicherte Zeitzone (z. B. nach Anmeldung per SSO oder nur über die App) rechnete WorkTime Stempelzeiten und den Tag „heute“ in UTC. Die Zeitzone wird jetzt an einer zentralen Stelle bestimmt: Nutzer-Einstellung, sonst Zeitzone des Browsers (wird einmalig gespeichert), sonst die neue Einstellung **Zeitzone** unter Einstellungen › Firmendaten, sonst die Server-Standardzeitzone, sonst Europe/Berlin. Bereits falsch gebuchte Einträge werden nicht automatisch korrigiert.
 - **Liste bleibt nach dem Speichern an ihrer Position (#754)**: Nach dem Anlegen, Bearbeiten oder Löschen eines Eintrags, nach dem Stempeln und nach dem Einreichen sprang die Liste bisher an den Monatsanfang zurück. Die Scrollposition bleibt jetzt erhalten.
 
 ## [0.24.0] - 2026-09-28

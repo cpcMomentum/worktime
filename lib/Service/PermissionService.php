@@ -15,7 +15,6 @@ use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\EmployeeMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IConfig;
-use OCP\IDateTimeZone;
 use OCP\IGroupManager;
 
 /**
@@ -33,7 +32,7 @@ class PermissionService {
         private IGroupManager $groupManager,
         private EmployeeMapper $employeeMapper,
         private AbsenceMapper $absenceMapper,
-        private IDateTimeZone $dateTimeZone,
+        private UserTimeZone $dateTimeZone,
     ) {
     }
 

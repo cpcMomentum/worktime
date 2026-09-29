@@ -15,7 +15,7 @@ use OCA\WorkTime\Service\CompanySettingsService;
 use OCA\WorkTime\Service\ValidationException;
 use OCA\WorkTime\Service\WorkScheduleService;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\IDateTimeZone;
+use OCA\WorkTime\Service\UserTimeZone;
 use OCP\IL10N;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -43,7 +43,7 @@ class WorkScheduleServiceTest extends TestCase {
             fn (string $text, array $params = []): string => vsprintf($text, $params)
         );
 
-        $dateTimeZone = $this->createMock(IDateTimeZone::class);
+        $dateTimeZone = $this->createMock(UserTimeZone::class);
         $dateTimeZone->method('getTimeZone')->willReturn(new \DateTimeZone('UTC'));
 
         $this->service = new WorkScheduleService(
@@ -343,7 +343,7 @@ class WorkScheduleServiceTest extends TestCase {
     public function testDisplayScheduleUsesLocalToday(): void {
         $mapper = $this->createMock(WorkScheduleMapper::class);
         $il10n = $this->createMock(IL10N::class);
-        $dtz = $this->createMock(IDateTimeZone::class);
+        $dtz = $this->createMock(UserTimeZone::class);
         $dtz->method('getTimeZone')->willReturn(new \DateTimeZone('UTC'));
 
         $service = new class(
@@ -382,7 +382,7 @@ class WorkScheduleServiceTest extends TestCase {
     public function testGetTodayTargetMinutesUsesPerDayScheduleNotAverage(): void {
         $mapper = $this->createMock(WorkScheduleMapper::class);
         $il10n = $this->createMock(IL10N::class);
-        $dtz = $this->createMock(IDateTimeZone::class);
+        $dtz = $this->createMock(UserTimeZone::class);
         $dtz->method('getTimeZone')->willReturn(new \DateTimeZone('UTC'));
 
         $service = new class(

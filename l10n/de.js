@@ -775,6 +775,9 @@ OC.L10N.register(
     "Alles klar" : "Alles klar",
     "Was ist neu in WorkTime" : "Was ist neu in WorkTime",
     "Neuerungen" : "Neuerungen",
-    "Noch keine Neuerungen." : "Noch keine Neuerungen."
+    "Noch keine Neuerungen." : "Noch keine Neuerungen.",
+    "Zeitzone" : "Zeitzone",
+    "Gilt für alle, deren Zeitzone Nextcloud nicht kennt, etwa nach Anmeldung per SSO oder nur über die App. Sie bestimmt die Uhrzeit der Stempeluhr und welcher Tag „heute“ ist. Die Zeitzone aus den persönlichen Nextcloud-Einstellungen hat immer Vorrang." : "Gilt für alle, deren Zeitzone Nextcloud nicht kennt, etwa nach Anmeldung per SSO oder nur über die App. Sie bestimmt die Uhrzeit der Stempeluhr und welcher Tag „heute“ ist. Die Zeitzone aus den persönlichen Nextcloud-Einstellungen hat immer Vorrang.",
+    "Automatisch (Server-Standard, sonst Europe/Berlin)" : "Automatisch (Server-Standard, sonst Europe/Berlin)"
 },
 "nplurals=2; plural=(n != 1);");

@@ -19,7 +19,6 @@ use OCA\WorkTime\Db\TimeEntry;
 use OCA\WorkTime\Db\TimeEntryMapper;
 use OCA\WorkTime\Notification\NotificationService;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\IDateTimeZone;
 use OCP\IL10N;
 use Psr\Log\LoggerInterface;
 
@@ -35,7 +34,7 @@ class TimeEntryService {
         private ProjectService $projectService,
         private LoggerInterface $logger,
         private IL10N $l,
-        private IDateTimeZone $dateTimeZone,
+        private UserTimeZone $dateTimeZone,
     ) {
     }
 
