@@ -15,12 +15,14 @@ use OCA\WorkTime\Db\EmployeeMapper;
 use OCA\WorkTime\Db\WorkSchedule;
 use OCA\WorkTime\Db\WorkScheduleMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\IDateTimeZone;
 use OCP\IL10N;
 use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
 
 class EmployeeService {
+
+    /** Backend name the Guests app reports via IUser::getBackendClassName(). */
+    private const GUEST_BACKEND = 'Guests';
 
     /** Matches the locked_reason column width (Version000022). */
     private const MAX_LOCKED_REASON_LENGTH = 500;
@@ -42,7 +44,7 @@ class EmployeeService {
         private IUserManager $userManager,
         private LoggerInterface $logger,
         private IL10N $l,
-        private IDateTimeZone $dateTimeZone,
+        private UserTimeZone $dateTimeZone,
     ) {
     }
 
@@ -674,6 +676,7 @@ class EmployeeService {
 
     /**
      * Get all Nextcloud users that don't have an employee profile yet.
+     * Guest accounts (Guests app) and disabled accounts are not offered.
      *
      * @return array<array{user: string, displayName: string, subname: string}>
      */
@@ -682,6 +685,9 @@ class EmployeeService {
         $users = [];
 
         $this->userManager->callForAllUsers(function ($user) use (&$users, $existingUserIds) {
+            if (!$user->isEnabled() || $user->getBackendClassName() === self::GUEST_BACKEND) {
+                return;
+            }
             $uid = $user->getUID();
             if (!in_array($uid, $existingUserIds, true)) {
                 $users[] = [

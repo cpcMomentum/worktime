@@ -18,7 +18,7 @@ use OCA\WorkTime\Service\PunchService;
 use OCA\WorkTime\Service\PunchTooLongException;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCA\WorkTime\Service\ValidationException;
-use OCP\IDateTimeZone;
+use OCA\WorkTime\Service\UserTimeZone;
 use OCP\IDBConnection;
 use OCP\IL10N;
 use PHPUnit\Framework\TestCase;
@@ -29,7 +29,7 @@ class PunchServiceTest extends TestCase {
 	private ActivePunchMapper $mapper;
 	private TimeEntryService $timeEntryService;
 	private CompanySettingMapper $settingsMapper;
-	private IDateTimeZone $dateTimeZone;
+	private UserTimeZone $dateTimeZone;
 	private IDBConnection $db;
 	private LoggerInterface $logger;
 	private IL10N $l;
@@ -39,7 +39,7 @@ class PunchServiceTest extends TestCase {
 		$this->mapper = $this->createMock(ActivePunchMapper::class);
 		$this->timeEntryService = $this->createMock(TimeEntryService::class);
 		$this->settingsMapper = $this->createMock(CompanySettingMapper::class);
-		$this->dateTimeZone = $this->createMock(IDateTimeZone::class);
+		$this->dateTimeZone = $this->createMock(UserTimeZone::class);
 		$this->db = $this->createMock(IDBConnection::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->l = $this->createMock(IL10N::class);

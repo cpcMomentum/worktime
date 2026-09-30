@@ -6,7 +6,7 @@
 
         <PunchPanel v-if="showPunchPanel"
             :employee-id="employeeId"
-            @booked="loadData" />
+            @booked="refreshKeepingScroll" />
 
         <div class="view-toolbar">
             <div v-if="!isNarrow" class="layout-seg" role="group" :aria-label="t('worktime', 'Ansicht')">
@@ -67,6 +67,11 @@
             </div>
 
             <div class="view-header__nav">
+                <NcButton v-if="!isYearMode"
+                    type="tertiary"
+                    @click="goToToday">
+                    {{ t('worktime', 'Heute') }}
+                </NcButton>
                 <MonthPicker v-if="!isYearMode"
                     :year="selectedMonth.year"
                     :month="selectedMonth.month"
@@ -125,6 +130,7 @@
         <div v-else class="zlayout" :class="{ narrow: isNarrow }">
             <div class="zlayout-main">
                 <DayList v-if="effectiveLayout === 'list'"
+                    ref="dayList"
                     :days="days"
                     :month="selectedMonth.month"
                     :projects="projects"
@@ -142,7 +148,7 @@
                 <DayDetailPanel :day="selectedDay"
                     :projects="projects"
                     :month-status="monthStatus"
-                    @refresh="loadData" />
+                    @refresh="refreshKeepingScroll" />
             </div>
         </div>
 
@@ -153,7 +159,7 @@
                 <DayDetailPanel :day="selectedDay"
                     :projects="projects"
                     :month-status="monthStatus"
-                    @refresh="loadData" />
+                    @refresh="refreshKeepingScroll" />
             </div>
         </NcModal>
 
@@ -213,6 +219,7 @@ import { mapGetters, mapActions, mapState } from 'vuex'
 import { showSuccess, showError } from '@nextcloud/dialogs'
 import { confirmAction } from '../utils/errorHandler.js'
 import { getCurrentYear, getCurrentMonth, getMonthDays, getToday, formatDateISO, getLocale } from '../utils/dateUtils.js'
+import { findScrollContainer } from '../utils/scrollToDay.js'
 import { getAbsenceTypeLabel } from '../utils/formatters.js'
 import MonthPicker from '../components/MonthPicker.vue'
 import YearPicker from '../components/YearPicker.vue'
@@ -270,6 +277,8 @@ export default {
                 ? localStorage.getItem('worktime_tracking_layout')
                 : 'list'),
             selectedDate: null,
+            // Nur beim Öffnen und per „Heute"-Knopf springen, nicht nach Speichern oder Blättern
+            scrollToTodayPending: false,
             isNarrow: false,
             showDayModal: false,
             showRangeModal: false,
@@ -440,6 +449,7 @@ export default {
         // (ProjectSelect) suchen serverseitig, die Listen nutzen entry.projectName.
         this.updateIsNarrow()
         window.addEventListener('resize', this.updateIsNarrow)
+        this.scrollToTodayPending = this.isCurrentMonth()
     },
     beforeDestroy() {
         window.removeEventListener('resize', this.updateIsNarrow)
@@ -463,6 +473,7 @@ export default {
                 this.overviewYear = this.selectedMonth.year
                 this.loadOvertime()
             }
+            this.$nextTick(() => this.scrollToTodayIfPending(false))
         },
         onYearChange(year) {
             this.overviewYear = Math.min(this.maxYear, Math.max(this.minYear, year))
@@ -483,6 +494,35 @@ export default {
                 this.loadVacationStats(),
                 this.loadOvertime(),
             ])
+            this.$nextTick(() => this.scrollToTodayIfPending(false))
+        },
+        // Beim Nachladen ersetzt der Ladekreis kurz die Liste; ohne das stünde man danach wieder oben
+        async refreshKeepingScroll() {
+            const container = findScrollContainer(this.$el)
+            const scrollTop = container ? container.scrollTop : 0
+            await this.loadData()
+            this.$nextTick(() => {
+                if (container) container.scrollTop = scrollTop
+            })
+        },
+        isCurrentMonth() {
+            return this.selectedMonth.year === getCurrentYear()
+                && this.selectedMonth.month === getCurrentMonth()
+        },
+        goToToday() {
+            this.scrollToTodayPending = true
+            if (this.isCurrentMonth()) {
+                this.selectedDate = getToday()
+                this.$nextTick(() => this.scrollToTodayIfPending(true))
+            } else {
+                this.onMonthChange({ year: getCurrentYear(), month: getCurrentMonth() })
+            }
+        },
+        scrollToTodayIfPending(smooth) {
+            // Merker bleibt stehen, bis die Liste wirklich zu sehen ist (Kalender als Standard)
+            if (!this.scrollToTodayPending || this.loading || !this.$refs.dayList) return
+            this.scrollToTodayPending = false
+            this.$refs.dayList.scrollToDate(getToday(), smooth)
         },
         async loadOvertime() {
             if (!this.activeEmployeeId) return
@@ -569,7 +609,7 @@ export default {
             try {
                 const result = await TimeEntryService.submitMonth(this.activeEmployeeId, this.selectedMonth.year, this.selectedMonth.month)
                 showSuccess(this.t('worktime', '{count} Einträge wurden eingereicht.', { count: result.submitted }))
-                await this.loadData()
+                await this.refreshKeepingScroll()
             } catch (error) {
                 console.error('Failed to submit month:', error)
                 showError(this.t('worktime', 'Fehler beim Einreichen des Monats.'))

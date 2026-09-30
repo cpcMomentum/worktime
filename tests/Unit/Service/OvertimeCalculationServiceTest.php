@@ -16,7 +16,7 @@ use OCA\WorkTime\Service\OvertimeCalculationService;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCA\WorkTime\Service\WorkScheduleService;
 use OCA\WorkTime\Service\YearlyCarryoverService;
-use OCP\IDateTimeZone;
+use OCA\WorkTime\Service\UserTimeZone;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -64,7 +64,7 @@ class OvertimeCalculationServiceTest extends TestCase {
             $this->timeEntryService,
             $this->absenceService,
             $this->holidayService,
-            $this->createMock(IDateTimeZone::class),
+            $this->createMock(UserTimeZone::class),
             $perMonthOvertime,
             $today,
         ) extends OvertimeCalculationService {
@@ -76,7 +76,7 @@ class OvertimeCalculationServiceTest extends TestCase {
                 TimeEntryService $ts,
                 AbsenceService $as,
                 HolidayService $hs,
-                IDateTimeZone $dtz,
+                UserTimeZone $dtz,
                 private int $perMonthOvertime,
                 private string $pinnedToday,
             ) {
@@ -144,7 +144,7 @@ class OvertimeCalculationServiceTest extends TestCase {
             $this->createMock(TimeEntryService::class),
             $this->createMock(AbsenceService::class),
             $this->createMock(HolidayService::class),
-            $this->createConfiguredMock(IDateTimeZone::class, ['getTimeZone' => new \DateTimeZone('Europe/Berlin')]),
+            $this->createConfiguredMock(UserTimeZone::class, ['getTimeZone' => new \DateTimeZone('Europe/Berlin')]),
         );
     }
 
@@ -193,7 +193,7 @@ class OvertimeCalculationServiceTest extends TestCase {
             $this->createMock(TimeEntryService::class),
             $this->createMock(AbsenceService::class),
             $this->createMock(HolidayService::class),
-            $this->createMock(IDateTimeZone::class),
+            $this->createMock(UserTimeZone::class),
             $pinnedToday,
         ) extends OvertimeCalculationService {
             public function __construct(
@@ -204,7 +204,7 @@ class OvertimeCalculationServiceTest extends TestCase {
                 TimeEntryService $ts,
                 AbsenceService $as,
                 HolidayService $hs,
-                IDateTimeZone $dtz,
+                UserTimeZone $dtz,
                 private string $pinnedToday,
             ) {
                 parent::__construct($ws, $co, $pm, $es, $ts, $as, $hs, $dtz);

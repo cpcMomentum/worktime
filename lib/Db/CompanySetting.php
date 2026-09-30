@@ -46,6 +46,8 @@ class CompanySetting extends Entity implements JsonSerializable {
     public const KEY_HOURLY_SICK_ENABLED = 'hourly_sick_enabled';
     public const KEY_EMERGENCY_WORK_ENABLED = 'emergency_work_enabled';
     public const KEY_EMERGENCY_WORK_REQUIRES_APPROVAL = 'emergency_work_requires_approval';
+    // Leer = automatisch (default_timezone des Servers, sonst Europe/Berlin)
+    public const KEY_TIMEZONE = 'timezone';
 
     public const DEFAULTS = [
         self::KEY_COMPANY_NAME => '',
@@ -70,6 +72,7 @@ class CompanySetting extends Entity implements JsonSerializable {
         self::KEY_HOURLY_SICK_ENABLED => '0',
         self::KEY_EMERGENCY_WORK_ENABLED => '0',
         self::KEY_EMERGENCY_WORK_REQUIRES_APPROVAL => '0',
+        self::KEY_TIMEZONE => '',
     ];
 
     protected string $settingKey = '';

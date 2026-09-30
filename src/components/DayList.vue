@@ -63,6 +63,7 @@
 import { getDayName, getMonthNameShort } from '../utils/dateUtils.js'
 import { formatMinutes } from '../utils/timeUtils.js'
 import { getAbsenceColorClass } from '../utils/formatters.js'
+import { findScrollContainer, isFullyVisible, scrollTargetIndex } from '../utils/scrollToDay.js'
 
 export default {
     name: 'DayList',
@@ -125,6 +126,22 @@ export default {
             if (!day.entries.length) return ''
             const total = day.entries.reduce((sum, e) => sum + (e.breakMinutes || 0), 0)
             return this.t('worktime', '{min} Min', { min: total })
+        },
+        /**
+         * @param {string} date Tag im Format YYYY-MM-DD
+         * @param {boolean} [smooth] weich scrollen (Knopf) statt springen (Öffnen)
+         */
+        scrollToDate(date, smooth = false) {
+            const rows = this.$el.querySelectorAll('.dl-day')
+            const index = this.days.findIndex(d => d.date === date)
+            const target = rows[scrollTargetIndex(index)]
+            if (!target) return
+            const container = findScrollContainer(this.$el)
+            const view = container
+                ? container.getBoundingClientRect()
+                : { top: 0, bottom: window.innerHeight }
+            if (isFullyVisible(rows[index].getBoundingClientRect(), view)) return
+            target.scrollIntoView({ block: 'start', behavior: smooth ? 'smooth' : 'auto' })
         },
         hoursLabel(day) {
             if (!day.entries.length) return '–'

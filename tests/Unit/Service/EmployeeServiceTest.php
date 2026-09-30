@@ -14,8 +14,10 @@ use OCA\WorkTime\Service\EmployeeDeletionService;
 use OCA\WorkTime\Service\EmployeeService;
 use OCA\WorkTime\Service\ValidationException;
 use OCA\WorkTime\Service\WorkScheduleService;
-use OCP\IDateTimeZone;
+use OCA\WorkTime\Service\LocalDate;
+use OCA\WorkTime\Service\UserTimeZone;
 use OCP\IL10N;
+use OCP\IUser;
 use OCP\IUserManager;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -47,7 +49,7 @@ class EmployeeServiceTest extends TestCase {
         $l = $this->createMock(IL10N::class);
         $l->method('t')->willReturnCallback(fn (string $t, array $p = []): string => $p === [] ? $t : vsprintf($t, $p));
 
-        $dateTimeZone = $this->createMock(IDateTimeZone::class);
+        $dateTimeZone = $this->createMock(UserTimeZone::class);
         $dateTimeZone->method('getTimeZone')->willReturn(new \DateTimeZone('Europe/Berlin'));
 
         $this->service = new EmployeeService(
@@ -199,7 +201,7 @@ class EmployeeServiceTest extends TestCase {
 
         $result = $this->service->setResting(3, null, 'admin');
 
-        $this->assertSame((new DateTime('today'))->format('Y-m-d'), $result->getRestingFrom()->format('Y-m-d'));
+        $this->assertSame(LocalDate::today(new \DateTimeZone('Europe/Berlin'))->format('Y-m-d'), $result->getRestingFrom()->format('Y-m-d'));
     }
 
     public function testSetRestingRejectsMalformedRestingFrom(): void {
@@ -543,5 +545,39 @@ class EmployeeServiceTest extends TestCase {
         $result = $this->service->update(5, 'Nina', 'Vier', null, null, null, 'BY', null, null, 'admin', null);
 
         $this->assertSame(4, $result->getWorkingDaysPerWeek());
+    }
+
+    // ---------------------------------------------------------------------
+    // Available users: no guests, no disabled accounts
+    // ---------------------------------------------------------------------
+
+    private function makeUser(string $uid, bool $enabled = true, string $backend = 'Database'): IUser {
+        $user = $this->createMock(IUser::class);
+        $user->method('getUID')->willReturn($uid);
+        $user->method('getDisplayName')->willReturn(ucfirst($uid));
+        $user->method('getEMailAddress')->willReturn(null);
+        $user->method('isEnabled')->willReturn($enabled);
+        $user->method('getBackendClassName')->willReturn($backend);
+        return $user;
+    }
+
+    public function testGetAvailableUsersSkipsGuestsDisabledAndExistingEmployees(): void {
+        $this->employeeMapper->method('getAllUserIds')->willReturn(['employee']);
+        $users = [
+            $this->makeUser('regular'),
+            $this->makeUser('ldapuser', true, 'LDAP'),
+            $this->makeUser('guest', true, 'Guests'),
+            $this->makeUser('disabled', false),
+            $this->makeUser('employee'),
+        ];
+        $this->userManager->method('callForAllUsers')->willReturnCallback(function (\Closure $callback) use ($users) {
+            foreach ($users as $user) {
+                $callback($user);
+            }
+        });
+
+        $result = $this->service->getAvailableUsers();
+
+        $this->assertSame(['ldapuser', 'regular'], array_column($result, 'user'));
     }
 }

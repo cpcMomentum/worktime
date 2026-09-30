@@ -32,7 +32,7 @@ use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\IDateTimeZone;
+use OCA\WorkTime\Service\UserTimeZone;
 use OCP\IL10N;
 use OCP\IRequest;
 
@@ -58,7 +58,7 @@ class ReportController extends BaseController {
         private OvertimeCalculationService $overtimeCalc,
         private ProjectService $projectService,
         private IL10N $l,
-        private IDateTimeZone $dateTimeZone,
+        private UserTimeZone $dateTimeZone,
     ) {
         parent::__construct($request, $userId);
     }

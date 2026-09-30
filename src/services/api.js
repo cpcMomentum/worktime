@@ -3,11 +3,23 @@ import { generateUrl } from '@nextcloud/router'
 
 const baseUrl = generateUrl('/apps/worktime/api')
 
+// Server rechnet sonst ohne gespeicherte Nutzer-Zeitzone in UTC
+function browserTimeZone() {
+    try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone || ''
+    } catch (e) {
+        return ''
+    }
+}
+
+const timeZone = browserTimeZone()
+
 export const api = axios.create({
     baseURL: baseUrl,
     headers: {
         'Content-Type': 'application/json',
         'OCS-APIREQUEST': 'true',
+        ...(timeZone ? { 'X-WorkTime-Timezone': timeZone } : {}),
     },
 })
 

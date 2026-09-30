@@ -115,15 +115,16 @@
             </div>
         </div>
 
+        <div class="form-group">
+            <label for="federalState">{{ t('worktime', 'Bundesland') }} <InfoIcon>{{ t('worktime', 'Legt fest, welche gesetzlichen Feiertage für diesen Mitarbeiter gelten. Bayern hat z.B. mehr Feiertage als Hamburg.') }}</InfoIcon> *</label>
+            <NcSelect id="federalState"
+                v-model="selectedFederalState"
+                :options="federalStateOptions"
+                :clearable="false"
+                label="label" />
+        </div>
+
         <div class="form-row">
-            <div class="form-group">
-                <label for="federalState">{{ t('worktime', 'Bundesland') }} <InfoIcon>{{ t('worktime', 'Legt fest, welche gesetzlichen Feiertage für diesen Mitarbeiter gelten. Bayern hat z.B. mehr Feiertage als Hamburg.') }}</InfoIcon> *</label>
-                <NcSelect id="federalState"
-                    v-model="selectedFederalState"
-                    :options="federalStateOptions"
-                    :clearable="false"
-                    label="label" />
-            </div>
             <div class="form-group">
                 <label for="supervisor">{{ t('worktime', 'Vorgesetzter') }} <InfoIcon>{{ t('worktime', 'Diese Person kann die Zeiteinträge und Abwesenheitsanträge dieses Mitarbeiters einsehen und genehmigen.') }}</InfoIcon></label>
                 <NcSelect id="supervisor"

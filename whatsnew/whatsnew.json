@@ -1,4 +1,63 @@
 {
+	"0.24.1": [
+		{
+			"title": {
+				"de": "Mit einem Klick zu „Heute“",
+				"en": "Back to “Today” in one click",
+				"cs": "Jedním kliknutím na „Dnes“"
+			},
+			"text": {
+				"de": "Die Zeiterfassung öffnet jetzt beim heutigen Tag. Der neue Knopf „Heute“ bringt Sie aus jedem Monat zurück. Nach dem Speichern bleibt die Liste an ihrer Stelle, statt an den Monatsanfang zu springen.",
+				"en": "Time tracking now opens at today's date. The new “Today” button takes you back from any month. After saving, the list stays where it was instead of jumping to the start of the month.",
+				"cs": "Evidence času se nyní otevře u dnešního dne. Nové tlačítko „Dnes“ vás vrátí z libovolného měsíce. Po uložení zůstane seznam na svém místě a neskočí na začátek měsíce."
+			},
+			"icon": "star",
+			"where": {
+				"de": "Zeiterfassung › Heute",
+				"en": "Time tracking › Today",
+				"cs": "Evidence času › Dnes"
+			},
+			"plus": false
+		},
+		{
+			"title": {
+				"de": "Stempeluhr mit richtiger Uhrzeit",
+				"en": "Time clock with the correct time",
+				"cs": "Píchačky se správným časem"
+			},
+			"text": {
+				"de": "Ohne gespeicherte Zeitzone hat WorkTime bisher bis zu zwei Stunden zu früh gestempelt. Das ist behoben. Admins können die Zeitzone der Firma zusätzlich unter Einstellungen festlegen.",
+				"en": "Without a saved time zone, WorkTime used to clock times up to two hours too early. This is fixed. Admins can also set the company time zone in the settings.",
+				"cs": "Bez uloženého časového pásma WorkTime dosud zaznamenával čas až o dvě hodiny dříve. To je opraveno. Správci mohou navíc nastavit časové pásmo firmy v nastavení."
+			},
+			"icon": "cog",
+			"where": {
+				"de": "Einstellungen › Firmendaten › Zeitzone",
+				"en": "Settings › Company data › Time zone",
+				"cs": "Nastavení › Údaje o firmě › Časové pásmo"
+			},
+			"plus": false
+		},
+		{
+			"title": {
+				"de": "Abwesenheiten fürs nächste Jahr",
+				"en": "Absences for next year",
+				"cs": "Nepřítomnosti na příští rok"
+			},
+			"text": {
+				"de": "Unter „Abwesenheiten“ können Sie jetzt ins nächste Jahr blättern und dort eingetragenen Urlaub sehen. Wird eine Abwesenheit auf einen Tag gekürzt, zeigt WorkTime wieder die richtige Zahl an Tagen.",
+				"en": "In “Absences” you can now go to next year and see the leave you have already entered there. When an absence is shortened to a single day, WorkTime shows the correct number of days again.",
+				"cs": "V části „Nepřítomnosti“ nyní můžete přejít na příští rok a zobrazit tam zadanou dovolenou. Pokud nepřítomnost zkrátíte na jeden den, WorkTime opět zobrazí správný počet dní."
+			},
+			"icon": "star",
+			"where": {
+				"de": "Abwesenheiten › Jahreswähler",
+				"en": "Absences › Year picker",
+				"cs": "Nepřítomnosti › Výběr roku"
+			},
+			"plus": false
+		}
+	],
 	"0.24.0": [
 		{
 			"title": {

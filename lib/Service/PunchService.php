@@ -17,7 +17,6 @@ use OCA\WorkTime\Db\CompanySetting;
 use OCA\WorkTime\Db\CompanySettingMapper;
 use OCA\WorkTime\Db\TimeEntry;
 use OCP\DB\Exception as DbException;
-use OCP\IDateTimeZone;
 use OCP\IDBConnection;
 use OCP\IL10N;
 use Psr\Log\LoggerInterface;
@@ -34,7 +33,7 @@ class PunchService {
 		private ActivePunchMapper $mapper,
 		private TimeEntryService $timeEntryService,
 		private CompanySettingMapper $settingsMapper,
-		private IDateTimeZone $dateTimeZone,
+		private UserTimeZone $dateTimeZone,
 		private IDBConnection $db,
 		private LoggerInterface $logger,
 		private IL10N $l,

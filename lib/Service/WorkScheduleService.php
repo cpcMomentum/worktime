@@ -17,7 +17,6 @@ use OCA\WorkTime\Db\TimeEntryMapper;
 use OCA\WorkTime\Db\WorkSchedule;
 use OCA\WorkTime\Db\WorkScheduleMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\IDateTimeZone;
 use OCP\IL10N;
 use Psr\Log\LoggerInterface;
 
@@ -31,7 +30,7 @@ class WorkScheduleService {
         private AuditLogService $auditLogService,
         private LoggerInterface $logger,
         private IL10N $l,
-        private IDateTimeZone $dateTimeZone,
+        private UserTimeZone $dateTimeZone,
     ) {
     }
 

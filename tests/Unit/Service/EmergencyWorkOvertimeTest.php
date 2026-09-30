@@ -21,7 +21,7 @@ use OCA\WorkTime\Service\OvertimeCalculationService;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCA\WorkTime\Service\WorkScheduleService;
 use OCA\WorkTime\Service\YearlyCarryoverService;
-use OCP\IDateTimeZone;
+use OCA\WorkTime\Service\UserTimeZone;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -55,7 +55,7 @@ class EmergencyWorkOvertimeTest extends TestCase {
 			$this->createMock(TimeEntryService::class),
 			$this->createMock(AbsenceService::class),
 			$this->createMock(HolidayService::class),
-			$this->createConfiguredMock(IDateTimeZone::class, ['getTimeZone' => new \DateTimeZone('Europe/Berlin')]),
+			$this->createConfiguredMock(UserTimeZone::class, ['getTimeZone' => new \DateTimeZone('Europe/Berlin')]),
 		);
 	}
 

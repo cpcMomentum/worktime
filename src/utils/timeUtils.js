@@ -139,6 +139,19 @@ export function getCurrentTime() {
 }
 
 /**
+ * Suggested end for a follow-up entry today: the current time, but only if it
+ * lies after the suggested start. Otherwise '' so the end must be entered
+ * deliberately; an end before the start would be saved as overnight work.
+ * @param {string|null} startTime (HH:MM)
+ * @param {string} nowTime (HH:MM)
+ * @returns {string}
+ */
+export function followUpEndTime(startTime, nowTime) {
+    if (!startTime) return nowTime
+    return parseTime(nowTime) > parseTime(startTime) ? nowTime : ''
+}
+
+/**
  * Round time to nearest 5 minutes
  * @param {string} timeStr (HH:MM)
  * @returns {string}
