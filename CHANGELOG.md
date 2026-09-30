@@ -7,12 +7,19 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.24.1] - 2026-09-30
+
 ### Added
 - **Zeiterfassung springt zu „Heute" (#754)**: Beim Öffnen des aktuellen Monats scrollt die Listenansicht automatisch zum heutigen Tag, mit zwei Vortagen darüber. Ein neuer Knopf „Heute" neben der Monatsnavigation bringt aus jedem Monat zurück zum heutigen Tag.
 
 ### Fixed
 - **Stempeluhr bucht nicht mehr 1 bis 2 Stunden zu früh (#757)**: Ohne in Nextcloud gespeicherte Zeitzone (z. B. nach Anmeldung per SSO oder nur über die App) rechnete WorkTime Stempelzeiten und den Tag „heute“ in UTC. Die Zeitzone wird jetzt an einer zentralen Stelle bestimmt: Nutzer-Einstellung, sonst Zeitzone des Browsers (wird einmalig gespeichert), sonst die neue Einstellung **Zeitzone** unter Einstellungen › Firmendaten, sonst die Server-Standardzeitzone, sonst Europe/Berlin. Bereits falsch gebuchte Einträge werden nicht automatisch korrigiert.
 - **Liste bleibt nach dem Speichern an ihrer Position (#754)**: Nach dem Anlegen, Bearbeiten oder Löschen eines Eintrags, nach dem Stempeln und nach dem Einreichen sprang die Liste bisher an den Monatsanfang zurück. Die Scrollposition bleibt jetzt erhalten.
+- **Mitarbeiter-Dialog nicht mehr rechts abgeschnitten (#765)**: Bundesland, Vorgesetzter und Abteilung standen in einer Zeile und liefen über den rechten Rand des Dialogs. Bundesland steht jetzt allein, Vorgesetzter und Abteilung teilen sich eine Zeile.
+- **Gäste und deaktivierte Konten nicht mehr zur Auswahl (#766)**: Beim Anlegen eines Mitarbeiters bietet die Liste „Nextcloud-Benutzer“ keine Gastkonten (Gäste-App) und keine deaktivierten Konten mehr an. Bestehende Mitarbeiter sind nicht betroffen.
+- **Abwesenheiten im nächsten Jahr ansehen (#762)**: Der Jahreswähler unter „Abwesenheiten“ lässt sich jetzt bis ins Folgejahr blättern, wie in der Zeiterfassung. Bisher ließen sich Abwesenheiten für das nächste Jahr zwar anlegen, aber nicht ansehen.
+- **Abwesenheit auf einen Tag kürzen (#761)**: Wurde eine mehrtägige Abwesenheit beim Bearbeiten auf einen Tag gekürzt, zeigte die Vorschau „0 Tage“ und Speichern war gesperrt. Ursache: Das gespeicherte Datum wurde als UTC-Mitternacht gelesen, das neu gewählte Ende als lokale Mitternacht.
+- **Vorbelegung „Eintrag hinzufügen“ ohne Ende vor dem Beginn (#763)**: Reicht ein Eintrag von heute über die aktuelle Uhrzeit hinaus, bleibt das vorgeschlagene Ende jetzt leer. Bisher wurde die aktuelle Uhrzeit vorgeschlagen, die vor dem Beginn lag, und das Formular hätte daraus einen fast 24-stündigen Eintrag über Mitternacht gemacht.
 
 ## [0.24.0] - 2026-09-28
 
