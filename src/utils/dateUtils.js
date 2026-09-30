@@ -202,6 +202,18 @@ export function getMonthDays(year, month) {
 }
 
 /**
+ * Parse a "YYYY-MM-DD" string as local midnight. new Date('YYYY-MM-DD') means
+ * UTC midnight, which is 01:00 or 02:00 local time in Germany and breaks
+ * comparisons with dates picked in the UI (local midnight).
+ * @param {string} dateStr
+ * @returns {Date}
+ */
+export function parseISODate(dateStr) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr || '')
+    return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(dateStr)
+}
+
+/**
  * Parse a date string to Date object
  * @param {string} dateStr
  * @returns {Date|null}

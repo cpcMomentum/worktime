@@ -141,7 +141,7 @@ import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js
 import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import CloseIcon from 'vue-material-design-icons/Close.vue'
 import ContentSaveIcon from 'vue-material-design-icons/ContentSave.vue'
-import { formatDateISO, getLocale } from '../utils/dateUtils.js'
+import { formatDateISO, getLocale, parseISODate } from '../utils/dateUtils.js'
 import { formatDateWithWeekday, getAbsenceTypeLabel, getStatusLabel } from '../utils/formatters.js'
 
 export default {
@@ -354,8 +354,8 @@ export default {
         loadAbsence(absence) {
             this.form = {
                 type: absence.type,
-                startDate: new Date(absence.startDate),
-                endDate: new Date(absence.endDate),
+                startDate: parseISODate(absence.startDate),
+                endDate: parseISODate(absence.endDate),
                 note: absence.note || '',
                 scope: absence.scope ?? 1.0,
                 // #625: bestehende stundenweise Krank -> Stunden aus Minuten.
