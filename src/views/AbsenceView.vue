@@ -6,7 +6,7 @@
 
         <div class="view-toolbar">
             <div class="view-header__nav">
-                <YearPicker :year="currentYear" :max="thisYear" @update="onYearChange" />
+                <YearPicker :year="currentYear" :max="maxYear" @update="onYearChange" />
             </div>
         </div>
 
@@ -264,8 +264,9 @@ export default {
         isResting() {
             return this.currentEmployee !== null && this.currentEmployee.isActive === false
         },
-        thisYear() {
-            return getCurrentYear()
+        maxYear() {
+            // Absences can be planned ahead, so allow the following year (same as TimeTrackingView).
+            return getCurrentYear() + 1
         },
         vacationUsedPercent() {
             const total = this.vacationStats?.total
