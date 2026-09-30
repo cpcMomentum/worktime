@@ -101,7 +101,7 @@ import { mapActions, mapGetters } from 'vuex'
 import TimeEntryForm from './TimeEntryForm.vue'
 import CorrectionReasonModal from './CorrectionReasonModal.vue'
 import { formatDateWithWeekday, getToday } from '../utils/dateUtils.js'
-import { formatMinutes, getCurrentTime } from '../utils/timeUtils.js'
+import { followUpEndTime, formatMinutes, getCurrentTime } from '../utils/timeUtils.js'
 import { getAbsenceColorClass } from '../utils/formatters.js'
 import { confirmAction, showErrorMessage, showSuccessMessage } from '../utils/errorHandler.js'
 
@@ -196,11 +196,11 @@ export default {
             if (!entries.length) return null
             return entries.reduce((latest, e) => (e.endTime > latest ? e.endTime : latest), entries[0].endTime)
         },
-        // Ende = aktuelle Uhrzeit nur wenn der Tag heute ist; an vergangenen Tagen
-        // leer ('') lassen; beim ersten Eintrag kein Vorschlag (null → Standard).
+        // Ende = aktuelle Uhrzeit nur wenn der Tag heute ist und sie nach dem Start
+        // liegt; sonst leer (''); beim ersten Eintrag kein Vorschlag (null → Standard).
         prefillEnd() {
             if (!this.day.entries.length) return null
-            return this.day.date === getToday() ? getCurrentTime() : ''
+            return this.day.date === getToday() ? followUpEndTime(this.prefillStart, getCurrentTime()) : ''
         },
     },
     watch: {
