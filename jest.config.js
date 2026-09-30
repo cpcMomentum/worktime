@@ -5,6 +5,10 @@
 // — so this never influences the production build. Tests target plain ESM
 // modules (no .vue rendering), e.g. src/router/access.js.
 
+// Date tests must run in a zone east of UTC, where new Date('YYYY-MM-DD')
+// is not local midnight (#761). Workers inherit this from the parent.
+process.env.TZ = 'Europe/Berlin'
+
 module.exports = {
 	testEnvironment: 'node',
 	testMatch: ['<rootDir>/tests/frontend/**/*.spec.js'],
