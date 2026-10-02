@@ -15,6 +15,8 @@ use OCA\WorkTime\Db\EmployeeMapper;
 use OCA\WorkTime\Db\WorkSchedule;
 use OCA\WorkTime\Db\WorkScheduleMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\DB\Exception as DbException;
+use OCP\IDBConnection;
 use OCP\IL10N;
 use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
@@ -45,6 +47,7 @@ class EmployeeService {
         private LoggerInterface $logger,
         private IL10N $l,
         private UserTimeZone $dateTimeZone,
+        private IDBConnection $db,
     ) {
     }
 
@@ -170,6 +173,13 @@ class EmployeeService {
     }
 
     /**
+     * Without $dayHours the initial profile is derived from weeklyHours /
+     * workingDaysPerWeek (first N weekdays, legacy path). With $dayHours (#579)
+     * the profile is taken from the Mon-Sun pattern, weeklyHours and
+     * workingDaysPerWeek are derived from it, and employee + profile are created
+     * atomically: either both exist afterwards or neither.
+     *
+     * @param array<mixed>|null $dayHours Mon-Sun hours keyed 'mon'..'sun'
      * @throws ValidationException
      */
     public function create(
@@ -187,7 +197,8 @@ class EmployeeService {
         int $workingDaysPerWeek = 5,
         ?float $vacationDaysUsed = null,
         bool $vacationTransferred = false,
-        ?int $departmentId = null
+        ?int $departmentId = null,
+        ?array $dayHours = null
     ): Employee {
         // Validate
         $errors = $this->validate($userId, $firstName, $lastName, $federalState);
@@ -196,6 +207,16 @@ class EmployeeService {
         }
 
         $this->validateVacationDaysUsed($vacationDaysUsed, $entryDate);
+
+        // #579: build (but do not yet persist) the first profile from the day
+        // pattern, and take weekly hours / working days from it, so the values
+        // the client sent for them are ignored.
+        $schedule = null;
+        if ($dayHours !== null) {
+            $schedule = $this->buildInitialSchedule($dayHours, $vacationDays, $entryDate);
+            $weeklyHours = round($schedule->getWeeklyHours(), 2);
+            $workingDaysPerWeek = $schedule->getWorkingDaysPerWeek();
+        }
 
         // Weekly hours must be > 0: the initial work schedule is derived from them
         // (weeklyHours / 5). A value of 0 would produce a zero-hour profile, which
@@ -208,7 +229,7 @@ class EmployeeService {
 
         // Check if user already exists
         if ($this->employeeMapper->existsByUserId($userId)) {
-            throw ValidationException::fromSingleError('userId', 'Employee already exists for this user');
+            throw $this->employeeExistsError();
         }
 
         $employee = new Employee();
@@ -234,6 +255,10 @@ class EmployeeService {
         $employee->setIsActive(true);
         $employee->setCreatedAt(new DateTime());
         $employee->setUpdatedAt(new DateTime());
+
+        if ($schedule !== null) {
+            return $this->insertWithSchedule($employee, $schedule, $currentUserId);
+        }
 
         $employee = $this->employeeMapper->insert($employee);
 
@@ -633,6 +658,75 @@ class EmployeeService {
         }
 
         return number_format($vacationDaysUsed, 1, '.', '');
+    }
+
+    private function employeeExistsError(): ValidationException {
+        return ValidationException::fromSingleError('userId', $this->l->t('Für dieses Konto gibt es bereits einen Mitarbeiter'));
+    }
+
+    /**
+     * #579: first profile from a strictly validated Mon-Sun pattern, valid from
+     * the entry date (same fallback as the legacy path). Not persisted here.
+     *
+     * @param array<mixed> $dayHours
+     * @throws ValidationException
+     */
+    private function buildInitialSchedule(array $dayHours, int $vacationDays, ?string $entryDate): WorkSchedule {
+        $hours = WorkScheduleService::normalizeDayHours(
+            $dayHours,
+            $this->workScheduleService->getEffectiveMaxDailyHours(),
+            $this->l,
+        );
+
+        if ($vacationDays < 0 || $vacationDays > 365) {
+            throw ValidationException::fromSingleError('vacationDays', $this->l->t('Urlaubstage müssen zwischen 0 und 365 liegen'));
+        }
+
+        $schedule = new WorkSchedule();
+        $schedule->setValidFrom($entryDate ? new DateTime($entryDate) : new DateTime('2020-01-01'));
+        $schedule->setMonHours($hours['mon']);
+        $schedule->setTueHours($hours['tue']);
+        $schedule->setWedHours($hours['wed']);
+        $schedule->setThuHours($hours['thu']);
+        $schedule->setFriHours($hours['fri']);
+        $schedule->setSatHours($hours['sat']);
+        $schedule->setSunHours($hours['sun']);
+        $schedule->setVacationDays($vacationDays);
+        $schedule->setCreatedAt(new DateTime());
+        $schedule->setUpdatedAt(new DateTime());
+        return $schedule;
+    }
+
+    /**
+     * #579: insert employee and first profile in one transaction, including
+     * both audit entries. Any failure rolls everything back and reaches the
+     * caller, instead of leaving an employee on the synthetic 40h/30 default.
+     *
+     * @throws ValidationException when a parallel request created the same user
+     */
+    private function insertWithSchedule(Employee $employee, WorkSchedule $schedule, string $currentUserId): Employee {
+        $this->db->beginTransaction();
+        try {
+            $employee = $this->employeeMapper->insert($employee);
+            $schedule->setEmployeeId($employee->getId());
+            $schedule = $this->workScheduleMapper->insert($schedule);
+
+            if ($currentUserId) {
+                $this->auditLogService->logCreate($currentUserId, 'employee', $employee->getId(), $employee->jsonSerialize());
+                $this->auditLogService->logCreate($currentUserId, 'work_schedule', $schedule->getId(), $schedule->jsonSerialize());
+            }
+
+            $this->db->commit();
+        } catch (\Throwable $e) {
+            $this->db->rollBack();
+            // Unique index on user_id: a parallel create won the race.
+            if ($e instanceof DbException && $e->getReason() === DbException::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
+                throw $this->employeeExistsError();
+            }
+            throw $e;
+        }
+
+        return $employee;
     }
 
     /**

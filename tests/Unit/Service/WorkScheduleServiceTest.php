@@ -413,4 +413,101 @@ class WorkScheduleServiceTest extends TestCase {
 
         $this->assertSame(0, $service->getTodayTargetMinutes(1));
     }
+
+    // ---------------------------------------------------------------------
+    // #579: normalizeDayHours() - strict Mon-Sun pattern for a new profile
+    // ---------------------------------------------------------------------
+
+    private function l10n(): IL10N {
+        $l = $this->createMock(IL10N::class);
+        $l->method('t')->willReturnCallback(
+            fn (string $text, array $params = []): string => vsprintf($text, $params)
+        );
+        return $l;
+    }
+
+    /** @param array<mixed> $dayHours */
+    private function assertDayHoursRejected(array $dayHours, float $max = 10.0): void {
+        try {
+            WorkScheduleService::normalizeDayHours($dayHours, $max, $this->l10n());
+            $this->fail('ValidationException expected for ' . json_encode($dayHours));
+        } catch (ValidationException $e) {
+            $this->assertTrue($e->hasError('dayHours'));
+        }
+    }
+
+    public function testNormalizeDayHoursRoundsToStoredPrecision(): void {
+        $result = WorkScheduleService::normalizeDayHours(
+            ['mon' => 7.333, 'tue' => '7.5', 'wed' => 0, 'thu' => 0.004, 'fri' => '10.004', 'sat' => '0', 'sun' => 0],
+            10.0,
+            $this->l10n(),
+        );
+
+        $this->assertSame(
+            ['mon' => '7.33', 'tue' => '7.50', 'wed' => '0.00', 'thu' => '0.00', 'fri' => '10.00', 'sat' => '0.00', 'sun' => '0.00'],
+            $result,
+        );
+    }
+
+    public function testNormalizeDayHoursRejectsMissingDay(): void {
+        $hours = $this->validHours();
+        unset($hours['sun']);
+        $this->assertDayHoursRejected($hours);
+    }
+
+    /** @return array<string, array{mixed}> */
+    public static function nonNumericValues(): array {
+        return [
+            'empty string' => [''],
+            'text' => ['abc'],
+            'null' => [null],
+            'bool' => [true],
+            'array' => [[8]],
+        ];
+    }
+
+    /** @dataProvider nonNumericValues */
+    public function testNormalizeDayHoursRejectsNonNumericValue(mixed $value): void {
+        $hours = $this->validHours();
+        $hours['wed'] = $value;
+        $this->assertDayHoursRejected($hours);
+    }
+
+    public function testNormalizeDayHoursRejectsNegativeValue(): void {
+        $hours = $this->validHours();
+        $hours['sat'] = -0.001;
+        $this->assertDayHoursRejected($hours);
+    }
+
+    public function testNormalizeDayHoursRejectsValueAboveMax(): void {
+        $hours = $this->validHours();
+        $hours['mon'] = 10.01;
+        $this->assertDayHoursRejected($hours, 10.0);
+    }
+
+    public function testNormalizeDayHoursRejectsZeroSum(): void {
+        $this->assertDayHoursRejected(['mon' => 0, 'tue' => 0, 'wed' => 0, 'thu' => 0, 'fri' => 0, 'sat' => 0, 'sun' => 0]);
+    }
+
+    /** Values that round to 0 must not pass the sum check either. */
+    public function testNormalizeDayHoursRejectsSumThatRoundsToZero(): void {
+        $this->assertDayHoursRejected(['mon' => 0.004, 'tue' => 0.004, 'wed' => 0, 'thu' => 0, 'fri' => 0, 'sat' => 0, 'sun' => 0]);
+    }
+
+    public function testEffectiveMaxDailyHoursFallsBackToDefault(): void {
+        $settings = $this->createMock(CompanySettingsService::class);
+        $settings->method('getMaxDailyHours')->willReturn(0.0);
+        $service = new WorkScheduleService(
+            $this->mapper,
+            $this->employeeMapper,
+            $this->timeEntryMapper,
+            $settings,
+            $this->createMock(AuditLogService::class),
+            $this->createMock(LoggerInterface::class),
+            $this->l10n(),
+            $this->createMock(UserTimeZone::class),
+        );
+
+        $this->assertSame(10.0, $service->getEffectiveMaxDailyHours());
+    }
 }
