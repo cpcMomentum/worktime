@@ -778,6 +778,11 @@ OC.L10N.register(
     "Noch keine Neuerungen." : "Zatím žádné novinky.",
     "Zeitzone" : "Časové pásmo",
     "Gilt für alle, deren Zeitzone Nextcloud nicht kennt, etwa nach Anmeldung per SSO oder nur über die App. Sie bestimmt die Uhrzeit der Stempeluhr und welcher Tag „heute“ ist. Die Zeitzone aus den persönlichen Nextcloud-Einstellungen hat immer Vorrang." : "Platí pro všechny, jejichž časové pásmo Nextcloud nezná, například po přihlášení přes SSO nebo pouze přes aplikaci. Určuje čas docházkových hodin a který den je „dnes“. Časové pásmo z osobních nastavení Nextcloudu má vždy přednost.",
-    "Automatisch (Server-Standard, sonst Europe/Berlin)" : "Automaticky (výchozí nastavení serveru, jinak Europe/Berlin)"
+    "Automatisch (Server-Standard, sonst Europe/Berlin)" : "Automaticky (výchozí nastavení serveru, jinak Europe/Berlin)",
+    "Für dieses Konto gibt es bereits einen Mitarbeiter" : "Pro tento účet již zaměstnanec existuje",
+    "Urlaubstage müssen zwischen 0 und 365 liegen" : "Počet dnů dovolené musí být mezi 0 a 365",
+    "Für jeden Wochentag von Montag bis Sonntag muss ein Stundenwert angegeben werden" : "Pro každý den v týdnu od pondělí do neděle musí být zadán počet hodin",
+    "Die Tagesstunden müssen Zahlen sein" : "Denní hodiny musí být čísla",
+    "Mindestens ein Wochentag braucht Arbeitsstunden. Für Elternzeit oder Ähnliches eine Abwesenheit erfassen" : "Alespoň jeden den v týdnu musí mít pracovní hodiny. Pro rodičovskou dovolenou apod. zadejte nepřítomnost"
 },
 "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;");

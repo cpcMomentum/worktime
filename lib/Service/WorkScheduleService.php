@@ -22,6 +22,9 @@ use Psr\Log\LoggerInterface;
 
 class WorkScheduleService {
 
+    /** Day keys of a work schedule, Monday first (ISO order). */
+    public const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
     public function __construct(
         private WorkScheduleMapper $mapper,
         private EmployeeMapper $employeeMapper,
@@ -654,15 +657,71 @@ class WorkScheduleService {
     }
 
     /**
+     * Maximum hours per day from the company settings, falling back to the
+     * built-in default when the setting is missing or not positive.
+     */
+    public function getEffectiveMaxDailyHours(): float {
+        $maxDailyHours = $this->companySettingsService->getMaxDailyHours();
+        if ($maxDailyHours <= 0) {
+            $maxDailyHours = (float)(CompanySetting::DEFAULTS[CompanySetting::KEY_MAX_DAILY_HOURS]);
+        }
+        return $maxDailyHours;
+    }
+
+    /**
+     * #579: strict check of a Mon-Sun hour pattern for a new profile.
+     *
+     * Unlike validate(), every day must be present and numeric (no silent 0 or
+     * default 8), values are rounded to the stored precision BEFORE the range
+     * and sum checks, so the derived weekly hours and working days match what
+     * is persisted. Pure function, so the rules are testable without mocks.
+     *
+     * @param array<mixed> $dayHours
+     * @return array<string, string> day key => hours as stored ('7.50')
+     * @throws ValidationException field 'dayHours'
+     */
+    public static function normalizeDayHours(array $dayHours, float $maxDailyHours, IL10N $l): array {
+        $normalized = [];
+        $errors = [];
+        $total = 0.0;
+
+        foreach (self::DAY_KEYS as $day) {
+            if (!array_key_exists($day, $dayHours)) {
+                $errors['missing'] = $l->t('Für jeden Wochentag von Montag bis Sonntag muss ein Stundenwert angegeben werden');
+                continue;
+            }
+            $value = $dayHours[$day];
+            if (!is_numeric($value)) {
+                $errors['numeric'] = $l->t('Die Tagesstunden müssen Zahlen sein');
+                continue;
+            }
+            $hours = round((float)$value, 2);
+            if ((float)$value < 0 || $hours > $maxDailyHours) {
+                $errors['range'] = $l->t('Maximale tägliche Arbeitszeit ist %s Stunden (siehe Einstellungen)', [(string)$maxDailyHours]);
+                continue;
+            }
+            $normalized[$day] = number_format($hours, 2, '.', '');
+            $total += $hours;
+        }
+
+        if (empty($errors) && round($total, 2) <= 0) {
+            $errors['sum'] = $l->t('Mindestens ein Wochentag braucht Arbeitsstunden. Für Elternzeit oder Ähnliches eine Abwesenheit erfassen');
+        }
+
+        if (!empty($errors)) {
+            throw new ValidationException(['dayHours' => array_values($errors)]);
+        }
+
+        return $normalized;
+    }
+
+    /**
      * @return array<string, string[]>
      */
     private function validate(array $dayHours, int $vacationDays): array {
         $errors = [];
 
-        $maxDailyHours = $this->companySettingsService->getMaxDailyHours();
-        if ($maxDailyHours <= 0) {
-            $maxDailyHours = (float)(CompanySetting::DEFAULTS[CompanySetting::KEY_MAX_DAILY_HOURS]);
-        }
+        $maxDailyHours = $this->getEffectiveMaxDailyHours();
 
         $days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
         foreach ($days as $day) {

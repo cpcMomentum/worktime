@@ -780,7 +780,12 @@
 		"Noch keine Neuerungen.": "Noch keine Neuerungen.",
 		"Zeitzone": "Zeitzone",
 		"Gilt für alle, deren Zeitzone Nextcloud nicht kennt, etwa nach Anmeldung per SSO oder nur über die App. Sie bestimmt die Uhrzeit der Stempeluhr und welcher Tag „heute“ ist. Die Zeitzone aus den persönlichen Nextcloud-Einstellungen hat immer Vorrang.": "Gilt für alle, deren Zeitzone Nextcloud nicht kennt, etwa nach Anmeldung per SSO oder nur über die App. Sie bestimmt die Uhrzeit der Stempeluhr und welcher Tag „heute“ ist. Die Zeitzone aus den persönlichen Nextcloud-Einstellungen hat immer Vorrang.",
-		"Automatisch (Server-Standard, sonst Europe/Berlin)": "Automatisch (Server-Standard, sonst Europe/Berlin)"
+		"Automatisch (Server-Standard, sonst Europe/Berlin)": "Automatisch (Server-Standard, sonst Europe/Berlin)",
+		"Für dieses Konto gibt es bereits einen Mitarbeiter": "Für dieses Konto gibt es bereits einen Mitarbeiter",
+		"Urlaubstage müssen zwischen 0 und 365 liegen": "Urlaubstage müssen zwischen 0 und 365 liegen",
+		"Für jeden Wochentag von Montag bis Sonntag muss ein Stundenwert angegeben werden": "Für jeden Wochentag von Montag bis Sonntag muss ein Stundenwert angegeben werden",
+		"Die Tagesstunden müssen Zahlen sein": "Die Tagesstunden müssen Zahlen sein",
+		"Mindestens ein Wochentag braucht Arbeitsstunden. Für Elternzeit oder Ähnliches eine Abwesenheit erfassen": "Mindestens ein Wochentag braucht Arbeitsstunden. Für Elternzeit oder Ähnliches eine Abwesenheit erfassen"
 	},
 	"pluralForm": "nplurals=2; plural=(n != 1);"
 }
