@@ -1,6 +1,6 @@
 <template>
     <span class="info-icon-wrapper">
-        <NcPopover popup-role="tooltip">
+        <NcPopover popup-role="tooltip" no-focus-trap>
             <template #trigger>
                 <InformationOutline class="info-icon" :size="14" />
             </template>
