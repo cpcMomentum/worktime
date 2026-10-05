@@ -7,6 +7,9 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Added
+- **Ostersonntag und Pfingstsonntag in Brandenburg**: Für Brandenburg werden Ostersonntag und Pfingstsonntag jetzt automatisch als gesetzliche Feiertage erzeugt. Wer sonntags regulär arbeitet, bekommt an diesen Tagen kein Soll mehr. Für bereits erzeugte Jahre müssen die Feiertage unter Einstellungen einmal neu generiert werden; manuelle Feiertage bleiben erhalten.
+
 ## [0.24.1] - 2026-09-30
 
 ### Added
