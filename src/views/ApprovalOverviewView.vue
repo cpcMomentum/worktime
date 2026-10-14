@@ -336,6 +336,7 @@ export default {
     computed: {
         ...mapGetters('departments', ['departments']),
         ...mapGetters('employees', ['employees']),
+        ...mapGetters('permissions', ['canManageSettings']),
         departmentsById() {
             const map = {}
             for (const d of this.departments) {
@@ -550,7 +551,10 @@ export default {
                 AbsenceService.getPending(),
                 TimeEntryService.getPendingMonths(),
                 AbsenceService.getInformational(),
-                TimeEntryService.getArchiveStatus(),
+                // Admin-only endpoint: for everyone else a 403 would count as a load error.
+                this.canManageSettings
+                    ? TimeEntryService.getArchiveStatus()
+                    : Promise.resolve({ configured: false }),
                 TimeEntryService.getPendingEmergency(),
             ])
             this.pendingAbsences = results[0].status === 'fulfilled' ? (results[0].value || []) : []
