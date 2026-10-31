@@ -541,7 +541,6 @@ OC.L10N.register(
     "Ist / Soll · {year}" : "Actual / Target · {year}",
     "Ist / Soll · {month}" : "Actual / Target · {month}",
     "Freizeitausgleich reduziert die Überstunden automatisch." : "Compensatory leave automatically reduces overtime.",
-    "Hinweis: ca. {requested} Werktage im Zeitraum (Resturlaub: {available}). Abgezogen werden nur Arbeitstage laut Arbeitszeitmodell." : "Note: approx. {requested} working days in the period (remaining: {available}). Only working days according to the work schedule are deducted.",
     "Dieser Zeitraum ist abgeschlossen. Bitte wende dich an HR." : "This period is closed. Please contact HR.",
     "Begründung erforderlich (mindestens 10 Zeichen)." : "A reason is required (at least 10 characters).",
     "Korrigieren" : "Correct",
@@ -784,6 +783,8 @@ OC.L10N.register(
     "Stunden je Wochentag laut Vertrag. Daraus berechnet WorkTime das tägliche Soll, die Wochenstunden und die Arbeitstage. Spätere Änderungen im Arbeitszeitprofil des Mitarbeiters." : "Contractual hours per weekday. WorkTime derives the daily target, the weekly hours and the working days from them. Later changes go into the employee's work schedule.",
     "Mindestens ein Wochentag braucht Arbeitsstunden. Für eine vorübergehende Auszeit (z. B. Elternzeit) eine Abwesenheit erfassen statt 0 Stunden." : "At least one weekday needs working hours. For a temporary break (e.g. parental leave), record an absence instead of 0 hours.",
     "Voller Jahresanspruch bei diesem Arbeitsmuster. Nicht anteilig eintragen, WorkTime rechnet das Eintrittsjahr selbst anteilig." : "Full annual entitlement for this work pattern. Do not enter a pro-rated value; WorkTime pro-rates the year of entry itself.",
-    "Fehler beim Speichern des Mitarbeiters" : "Error saving the employee"
+    "Fehler beim Speichern des Mitarbeiters" : "Error saving the employee",
+    "Hinweis: Der Antrag umfasst {requested} Urlaubstage, der Resturlaub beträgt {available}." : "Note: this request covers {requested} vacation days, the remaining vacation is {available}.",
+    "Der Zeitraum ist für eine Vorschau zu lang" : "The period is too long for a preview"
 },
 "nplurals=2; plural=(n != 1);");

@@ -73,7 +73,6 @@
 		"Ist / Soll · {year}": "Skutečnost / plán · {year}",
 		"Ist / Soll · {month}": "Skutečnost / plán · {month}",
 		"Freizeitausgleich reduziert die Überstunden automatisch.": "Náhradní volno automaticky snižuje přesčasy.",
-		"Hinweis: ca. {requested} Werktage im Zeitraum (Resturlaub: {available}). Abgezogen werden nur Arbeitstage laut Arbeitszeitmodell.": "Upozornění: přibližně {requested} pracovních dnů v období (zbývající dovolená: {available}). Odečtou se pouze pracovní dny podle modelu pracovní doby.",
 		"Dieser Zeitraum ist abgeschlossen. Bitte wende dich an HR.": "Toto období je uzavřeno. Obrať se prosím na HR.",
 		"Begründung erforderlich (mindestens 10 Zeichen).": "Vyžadováno odůvodnění (alespoň 10 znaků).",
 		"Korrigieren": "Opravit",
@@ -786,7 +785,9 @@
 		"Stunden je Wochentag laut Vertrag. Daraus berechnet WorkTime das tägliche Soll, die Wochenstunden und die Arbeitstage. Spätere Änderungen im Arbeitszeitprofil des Mitarbeiters.": "Smluvní hodiny pro každý den v týdnu. WorkTime z nich vypočítá denní fond, týdenní hodiny a pracovní dny. Pozdější změny se provádějí v pracovním profilu zaměstnance.",
 		"Mindestens ein Wochentag braucht Arbeitsstunden. Für eine vorübergehende Auszeit (z. B. Elternzeit) eine Abwesenheit erfassen statt 0 Stunden.": "Alespoň jeden den v týdnu musí mít pracovní hodiny. Pro dočasné přerušení (např. rodičovskou dovolenou) zadejte nepřítomnost místo 0 hodin.",
 		"Voller Jahresanspruch bei diesem Arbeitsmuster. Nicht anteilig eintragen, WorkTime rechnet das Eintrittsjahr selbst anteilig.": "Plný roční nárok pro tento pracovní vzorec. Nezadávejte poměrnou hodnotu, WorkTime rok nástupu přepočítá poměrně sám.",
-		"Fehler beim Speichern des Mitarbeiters": "Chyba při ukládání zaměstnance"
+		"Fehler beim Speichern des Mitarbeiters": "Chyba při ukládání zaměstnance",
+		"Hinweis: Der Antrag umfasst {requested} Urlaubstage, der Resturlaub beträgt {available}.": "Upozornění: žádost zahrnuje {requested} dnů dovolené, zbývající dovolená je {available}.",
+		"Der Zeitraum ist für eine Vorschau zu lang": "Období je pro náhled příliš dlouhé"
 	},
 	"pluralForm": "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;"
 }

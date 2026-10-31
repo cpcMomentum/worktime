@@ -510,4 +510,47 @@ class WorkScheduleServiceTest extends TestCase {
 
         $this->assertSame(10.0, $service->getEffectiveMaxDailyHours());
     }
+
+    private function holiday(string $date, float $scope): \OCA\WorkTime\Db\Holiday {
+        $h = new \OCA\WorkTime\Db\Holiday();
+        $h->setDate(new DateTime($date));
+        $h->setScopeValue($scope);
+        return $h;
+    }
+
+    /** @return \OCA\WorkTime\Db\Holiday[] */
+    private function christmas2026(float $specialDayScope): array {
+        return [
+            $this->holiday('2026-12-24', $specialDayScope),
+            $this->holiday('2026-12-25', 1.0),
+            $this->holiday('2026-12-26', 1.0),
+            $this->holiday('2026-12-31', $specialDayScope),
+        ];
+    }
+
+    /** Der gemeldete Fall: Heiligabend und Silvester ganz frei, 22.–31.12. sind 5 Tage. */
+    public function testCountWorkingDaysSkipsHolidaysAndFullSpecialDays(): void {
+        $this->mapper->method('findByEmployeeAndDateRange')->willReturn([$this->scheduleAt('2020-01-01', 30, 5)]);
+
+        $days = $this->service->countWorkingDays(1, new DateTime('2026-12-22'), new DateTime('2026-12-31'), $this->christmas2026(1.0));
+
+        $this->assertEqualsWithDelta(5.0, $days, 0.0001);
+    }
+
+    public function testCountWorkingDaysCountsHalfSpecialDaysAsHalf(): void {
+        $this->mapper->method('findByEmployeeAndDateRange')->willReturn([$this->scheduleAt('2020-01-01', 30, 5)]);
+
+        $days = $this->service->countWorkingDays(1, new DateTime('2026-12-22'), new DateTime('2026-12-31'), $this->christmas2026(0.5));
+
+        $this->assertEqualsWithDelta(6.0, $days, 0.0001);
+    }
+
+    /** Teilzeit Mo–Do: der Freitag zählt nicht. */
+    public function testCountWorkingDaysFollowsPartTimeSchedule(): void {
+        $this->mapper->method('findByEmployeeAndDateRange')->willReturn([$this->scheduleAt('2020-01-01', 24, 4)]);
+
+        $days = $this->service->countWorkingDays(1, new DateTime('2026-11-02'), new DateTime('2026-11-06'), []);
+
+        $this->assertEqualsWithDelta(4.0, $days, 0.0001);
+    }
 }
