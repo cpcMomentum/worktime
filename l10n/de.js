@@ -11,7 +11,6 @@ OC.L10N.register(
     "Fehler beim Laden der Monatseinträge" : "Fehler beim Laden der Monatseinträge",
     "Filter" : "Filter",
     "Firma" : "Firma",
-    "Hinweis: ca. {requested} Werktage im Zeitraum (Resturlaub: {available}). Abgezogen werden nur Arbeitstage laut Arbeitszeitmodell." : "Hinweis: ca. {requested} Werktage im Zeitraum (Resturlaub: {available}). Abgezogen werden nur Arbeitstage laut Arbeitszeitmodell.",
     "ID" : "ID",
     "Kalender" : "Kalender",
     "Korrektur beenden" : "Korrektur beenden",
@@ -784,6 +783,8 @@ OC.L10N.register(
     "Stunden je Wochentag laut Vertrag. Daraus berechnet WorkTime das tägliche Soll, die Wochenstunden und die Arbeitstage. Spätere Änderungen im Arbeitszeitprofil des Mitarbeiters." : "Stunden je Wochentag laut Vertrag. Daraus berechnet WorkTime das tägliche Soll, die Wochenstunden und die Arbeitstage. Spätere Änderungen im Arbeitszeitprofil des Mitarbeiters.",
     "Mindestens ein Wochentag braucht Arbeitsstunden. Für eine vorübergehende Auszeit (z. B. Elternzeit) eine Abwesenheit erfassen statt 0 Stunden." : "Mindestens ein Wochentag braucht Arbeitsstunden. Für eine vorübergehende Auszeit (z. B. Elternzeit) eine Abwesenheit erfassen statt 0 Stunden.",
     "Voller Jahresanspruch bei diesem Arbeitsmuster. Nicht anteilig eintragen, WorkTime rechnet das Eintrittsjahr selbst anteilig." : "Voller Jahresanspruch bei diesem Arbeitsmuster. Nicht anteilig eintragen, WorkTime rechnet das Eintrittsjahr selbst anteilig.",
-    "Fehler beim Speichern des Mitarbeiters" : "Fehler beim Speichern des Mitarbeiters"
+    "Fehler beim Speichern des Mitarbeiters" : "Fehler beim Speichern des Mitarbeiters",
+    "Hinweis: Der Antrag umfasst {requested} Urlaubstage, der Resturlaub beträgt {available}." : "Hinweis: Der Antrag umfasst {requested} Urlaubstage, der Resturlaub beträgt {available}.",
+    "Der Zeitraum ist für eine Vorschau zu lang" : "Der Zeitraum ist für eine Vorschau zu lang"
 },
 "nplurals=2; plural=(n != 1);");
