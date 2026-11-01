@@ -190,6 +190,7 @@ export default {
 					compensatory: t('worktime', 'Freizeitausgleich'),
 					unpaid: t('worktime', 'Unbezahlter Urlaub'),
 					company_closure: t('worktime', 'Betriebsschließung'),
+					absent: t('worktime', 'Abwesend'),
 				}
 			const typeLabel = typeLabels[absence.type] || absence.typeName
 			return `${typeLabel}: ${start} - ${end}`
