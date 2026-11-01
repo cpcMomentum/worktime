@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Notification;
 
 use OCA\WorkTime\AppInfo\Application;
+use OCA\WorkTime\Db\Absence;
 use OCA\WorkTime\Db\ActivePunchMapper;
 use OCP\IURLGenerator;
 use OCP\L10N\IFactory;
@@ -64,6 +65,8 @@ class Notifier implements INotifier {
 	private function prepareWorkTimeNotification(INotification $notification, string $languageCode): INotification {
 		$l = $this->l10nFactory->get(Application::APP_ID, $languageCode);
 		$params = $notification->getSubjectParameters();
+		// Older notifications only stored the German name, newer ones the type.
+		$typeName = isset($params['absenceType']) ? Absence::typeLabel($l, (string)$params['absenceType']) : (string)($params['typeName'] ?? '');
 		$monthYear = $this->formatMonthYear($params, $languageCode);
 
 		switch ($notification->getSubject()) {
@@ -73,7 +76,7 @@ class Notifier implements INotifier {
 						'%1$s hat eine Abwesenheit (%2$s, %3$s - %4$s) zur Genehmigung eingereicht',
 						[
 							$params['employeeName'],
-							$params['typeName'],
+							$typeName,
 							$params['startDate'],
 							$params['endDate'],
 						]
@@ -86,7 +89,7 @@ class Notifier implements INotifier {
 					$l->t(
 						'Deine Abwesenheit (%1$s, %2$s - %3$s) wurde genehmigt',
 						[
-							$params['typeName'],
+							$typeName,
 							$params['startDate'],
 							$params['endDate'],
 						]
@@ -99,7 +102,7 @@ class Notifier implements INotifier {
 					$l->t(
 						'Deine Abwesenheit (%1$s, %2$s - %3$s) wurde abgelehnt',
 						[
-							$params['typeName'],
+							$typeName,
 							$params['startDate'],
 							$params['endDate'],
 						]
@@ -113,7 +116,7 @@ class Notifier implements INotifier {
 						'Information: %1$s ist abwesend (%2$s, %3$s - %4$s)',
 						[
 							$params['employeeName'],
-							$params['typeName'],
+							$typeName,
 							$params['startDate'],
 							$params['endDate'],
 						]
@@ -127,7 +130,7 @@ class Notifier implements INotifier {
 						'%1$s hat Abwesenheit (%2$s, %3$s - %4$s) storniert',
 						[
 							$params['employeeName'],
-							$params['typeName'],
+							$typeName,
 							$params['startDate'],
 							$params['endDate'],
 						]

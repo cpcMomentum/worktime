@@ -170,7 +170,7 @@ class ReportController extends BaseController {
             if ($halfDayAbsence !== null) {
                 $warnings[] = $this->l->t(
                     'Halbtägige Abwesenheit (%s) und Zeiteintrag am selben Tag.',
-                    [$halfDayAbsence->getTypeName()]
+                    [Absence::typeLabel($this->l, (string)$halfDayAbsence->getType())]
                 );
             }
 

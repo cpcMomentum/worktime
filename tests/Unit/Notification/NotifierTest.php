@@ -239,4 +239,47 @@ class NotifierTest extends TestCase {
 
         $this->assertSame('03/2026', $this->format(['month' => 3, 'year' => 2026], 'de'));
     }
+
+    /**
+     * @param array<string, mixed> $params
+     */
+    private function renderAbsenceSubject(array $params): string {
+        $l10n = $this->createMock(IL10N::class);
+        $l10n->method('t')->willReturnCallback(
+            static fn (string $text, $p = []): string => vsprintf($text === 'Urlaub' ? 'Vacation' : $text, (array)$p)
+        );
+        $l10nFactory = $this->createMock(IFactory::class);
+        $l10nFactory->method('get')->willReturn($l10n);
+        $notifier = new Notifier($this->createMock(IURLGenerator::class), $l10nFactory, $this->activePunchMapper);
+
+        $subject = null;
+        $notification = $this->createMock(INotification::class);
+        $notification->method('getApp')->willReturn(Application::APP_ID);
+        $notification->method('getSubject')->willReturn('absence_approved');
+        $notification->method('getSubjectParameters')->willReturn($params);
+        $notification->method('setParsedSubject')->willReturnCallback(
+            function (string $s) use (&$subject, $notification) {
+                $subject = $s;
+                return $notification;
+            }
+        );
+        $notification->method('setIcon')->willReturnSelf();
+        $notification->method('setLink')->willReturnSelf();
+        $notifier->prepare($notification, 'en');
+        return (string)$subject;
+    }
+
+    public function testAbsenceTypeIsTranslatedForRecipient(): void {
+        $this->assertSame(
+            'Deine Abwesenheit (Vacation, 01.08. - 05.08.) wurde genehmigt',
+            $this->renderAbsenceSubject(['absenceType' => 'vacation', 'typeName' => 'Urlaub', 'startDate' => '01.08.', 'endDate' => '05.08.'])
+        );
+    }
+
+    public function testOlderNotificationFallsBackToStoredTypeName(): void {
+        $this->assertSame(
+            'Deine Abwesenheit (Krank, 01.08. - 05.08.) wurde genehmigt',
+            $this->renderAbsenceSubject(['typeName' => 'Krank', 'startDate' => '01.08.', 'endDate' => '05.08.'])
+        );
+    }
 }

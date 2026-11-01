@@ -12,6 +12,7 @@ namespace OCA\WorkTime\Db;
 use DateTime;
 use JsonSerializable;
 use OCP\AppFramework\Db\Entity;
+use OCP\IL10N;
 
 /**
  * @method int getId()
@@ -58,6 +59,9 @@ class Absence extends Entity implements JsonSerializable {
     public const TYPE_COMPENSATORY = 'compensatory';
     /** #15 Stufe 2: bezahlte Freistellung bei Betriebsschließung — nur zentral setzbar. */
     public const TYPE_COMPANY_CLOSURE = 'company_closure';
+
+    /** Type shown instead of the real one when the viewer may not see absence details. */
+    public const TYPE_MASKED = 'absent';
 
     public const STATUS_PENDING = 'pending';
     public const STATUS_APPROVED = 'approved';
@@ -129,6 +133,31 @@ class Absence extends Entity implements JsonSerializable {
 
     public function getTypeName(): string {
         return self::TYPES[$this->type] ?? $this->type;
+    }
+
+    /** Translated display name; same source strings as ABSENCE_TYPE_LABELS in the frontend. */
+    public static function typeLabel(IL10N $l, string $type): string {
+        return match ($type) {
+            self::TYPE_VACATION => $l->t('Urlaub'),
+            self::TYPE_SICK => $l->t('Krankheit'),
+            self::TYPE_CHILD_SICK => $l->t('Kind krank'),
+            self::TYPE_UNPAID => $l->t('Unbezahlter Urlaub'),
+            self::TYPE_SPECIAL => $l->t('Sonderurlaub'),
+            self::TYPE_TRAINING => $l->t('Fortbildung'),
+            self::TYPE_COMPENSATORY => $l->t('Freizeitausgleich'),
+            self::TYPE_COMPANY_CLOSURE => $l->t('Betriebsschließung'),
+            self::TYPE_MASKED => $l->t('Abwesend'),
+            default => $type,
+        };
+    }
+
+    /** @return array<string, string> type => translated name */
+    public static function typeLabels(IL10N $l): array {
+        $labels = [];
+        foreach (array_keys(self::TYPES) as $type) {
+            $labels[$type] = self::typeLabel($l, $type);
+        }
+        return $labels;
     }
 
     public function isApproved(): bool {
