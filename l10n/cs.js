@@ -785,6 +785,7 @@ OC.L10N.register(
     "Voller Jahresanspruch bei diesem Arbeitsmuster. Nicht anteilig eintragen, WorkTime rechnet das Eintrittsjahr selbst anteilig." : "Plný roční nárok pro tento pracovní vzorec. Nezadávejte poměrnou hodnotu, WorkTime rok nástupu přepočítá poměrně sám.",
     "Fehler beim Speichern des Mitarbeiters" : "Chyba při ukládání zaměstnance",
     "Hinweis: Der Antrag umfasst {requested} Urlaubstage, der Resturlaub beträgt {available}." : "Upozornění: žádost zahrnuje {requested} dnů dovolené, zbývající dovolená je {available}.",
-    "Der Zeitraum ist für eine Vorschau zu lang" : "Období je pro náhled příliš dlouhé"
+    "Der Zeitraum ist für eine Vorschau zu lang" : "Období je pro náhled příliš dlouhé",
+    "{hours} Std. krank" : "{hours} h nemoc"
 },
 "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;");
