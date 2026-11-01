@@ -318,4 +318,9 @@ export default {
 .settings-section:not(:last-child) {
 	border-bottom-color: var(--color-border-dark, var(--color-border)) !important;
 }
+
+/* Uhr-Symbol ist in Chromium ein eigener Tab-Stopp; global, weil NcModal im body hängt */
+input[type="time"]::-webkit-calendar-picker-indicator {
+	display: none;
+}
 </style>

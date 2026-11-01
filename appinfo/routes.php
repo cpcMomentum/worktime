@@ -55,6 +55,7 @@ return [
         ['name' => 'absence#pending', 'url' => '/api/absences/pending', 'verb' => 'GET'],
         ['name' => 'absence#informational', 'url' => '/api/absences/informational', 'verb' => 'GET'],
         ['name' => 'absence#vacationStats', 'url' => '/api/absences/vacation-stats', 'verb' => 'GET'],
+        ['name' => 'absence#previewDays', 'url' => '/api/absences/preview-days', 'verb' => 'GET'],
         ['name' => 'absence#centralAbsences', 'url' => '/api/absences/central', 'verb' => 'GET'],
         ['name' => 'absence#companyVacation', 'url' => '/api/absences/company-vacation', 'verb' => 'POST'],
         ['name' => 'absence#deleteCompanyVacation', 'url' => '/api/absences/company-vacation/delete', 'verb' => 'POST'],

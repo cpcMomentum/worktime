@@ -371,6 +371,30 @@ class AbsenceController extends BaseController {
     }
 
     #[NoAdminRequired]
+    public function previewDays(?int $employeeId = null, string $startDate = '', string $endDate = '', float $scope = 1.0): JSONResponse {
+        if ($authError = $this->requireAuth()) {
+            return $authError;
+        }
+
+        if ($error = $this->requireEmployeeId($employeeId)) {
+            return $error;
+        }
+
+        if (!$this->permissionService->canViewEmployee($this->userId, $employeeId)) {
+            return $this->forbiddenResponse();
+        }
+
+        try {
+            $federalState = $this->employeeService->find($employeeId)->getFederalState();
+            $days = $this->absenceService->previewDays($employeeId, $startDate, $endDate, $scope, $federalState);
+
+            return $this->successResponse(['days' => $days]);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    #[NoAdminRequired]
     public function vacationStats(?int $employeeId = null, int $year = 0): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;

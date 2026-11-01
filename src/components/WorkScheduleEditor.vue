@@ -74,27 +74,9 @@
                         :disabled-date="disablePastDates" />
                 </div>
 
-                <div class="day-hours-row">
-                    <div v-for="day in weekdays" :key="day.key" class="day-input">
-                        <label>{{ day.label }}</label>
-                        <input v-model.number="form.dayHours[day.key]"
-                            type="number"
-                            min="0"
-                            :max="maxDailyHours"
-                            step="0.5"
-                            :class="['input-field', 'input-small', { 'input-error': form.dayHours[day.key] > maxDailyHours }]">
-                    </div>
-                </div>
-                <p class="hint">{{ t('worktime', 'Max. {hours} Std./Tag', { hours: maxDailyHours }) }}</p>
+                <DayHoursInput v-model="form.dayHours" :max-daily-hours="maxDailyHours" />
 
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>{{ t('worktime', 'Wochenstunden (berechnet)') }}</label>
-                        <input :value="calculatedWeeklyHours"
-                            type="text"
-                            class="input-field input-small"
-                            disabled>
-                    </div>
                     <div class="form-group">
                         <label>{{ t('worktime', 'Urlaubstage') }} <InfoIcon>{{ t('worktime', 'Voller Jahresanspruch bei diesem Arbeitsmuster. Bei unterjährigem Wechsel wird der tatsächliche Jahresanspruch zeitanteilig aus allen Profilen des Jahres berechnet.') }}</InfoIcon> *</label>
                         <input v-model.number="form.vacationDays"
@@ -145,9 +127,11 @@ import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Close from 'vue-material-design-icons/Close.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import InfoIcon from './InfoIcon.vue'
+import DayHoursInput from './DayHoursInput.vue'
 import { mapGetters, mapActions } from 'vuex'
 import { showError, showWarning } from '@nextcloud/dialogs'
 import { formatDateISO, getLocale } from '../utils/dateUtils.js'
+import { countWorkingDays, sum } from '../utils/dayHours.js'
 import SettingsService from '../services/SettingsService.js'
 
 export default {
@@ -161,6 +145,7 @@ export default {
         Close,
         Plus,
         InfoIcon,
+        DayHoursInput,
     },
     props: {
         employeeId: {
@@ -186,26 +171,13 @@ export default {
             // suggesting from the day pattern. Only ever suggests on a new profile.
             vacationTouched: false,
             form: this.getEmptyForm(),
-            weekdays: [
-                { key: 'mon', label: this.t('worktime', 'Mo') },
-                { key: 'tue', label: this.t('worktime', 'Di') },
-                { key: 'wed', label: this.t('worktime', 'Mi') },
-                { key: 'thu', label: this.t('worktime', 'Do') },
-                { key: 'fri', label: this.t('worktime', 'Fr') },
-                { key: 'sat', label: this.t('worktime', 'Sa') },
-                { key: 'sun', label: this.t('worktime', 'So') },
-            ],
         }
     },
     computed: {
         ...mapGetters('workSchedules', ['schedules', 'loading']),
-        calculatedWeeklyHours() {
-            const h = this.form.dayHours
-            return (h.mon + h.tue + h.wed + h.thu + h.fri + (h.sat || 0) + (h.sun || 0)).toFixed(1)
-        },
         // #571 (D5): number of days with >0 hours in the current form.
         workingDaysInForm() {
-            return Object.values(this.form.dayHours).filter(v => v > 0).length
+            return countWorkingDays(this.form.dayHours)
         },
         // #571 (D5): pro-rated full-year entitlement suggestion for this pattern,
         // relative to a 5-day full-time base of 30 days (§ 5-style rounding).
@@ -222,9 +194,8 @@ export default {
         },
         isFormValid() {
             const h = this.form.dayHours
-            const total = h.mon + h.tue + h.wed + h.thu + h.fri + h.sat + h.sun
             const allWithinLimit = Object.values(h).every(v => v >= 0 && v <= this.maxDailyHours)
-            return total >= 0
+            return sum(h) >= 0
                 && allWithinLimit
                 && this.form.vacationDays >= 0
                 && (this.editingSchedule || this.form.validFrom)
@@ -335,14 +306,9 @@ export default {
                 this.warnOnQuotaOverage(result?.quotaWarnings)
             } catch (error) {
                 console.error('Failed to save schedule:', error)
-                const data = error?.response?.data
-                let msg = t('worktime', 'Fehler beim Speichern des Profils')
-                if (data?.errors) {
-                    msg = Object.values(data.errors).flat().join(', ')
-                } else if (data?.message) {
-                    msg = data.message
-                }
-                showError(msg)
+                // handleApiError() puts the server text into error.message; raw axios errors have none worth showing.
+                const fromServer = error && !error.isAxiosError && error.message
+                showError(fromServer || t('worktime', 'Fehler beim Speichern des Profils'))
             }
         },
         confirmDelete(schedule) {
@@ -447,26 +413,6 @@ td.actions-col {
     margin: 0 0 12px 0;
 }
 
-.day-hours-row {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 16px;
-}
-
-.day-input {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.day-input label {
-    display: block;
-    margin-bottom: 4px;
-    font-weight: 500;
-    font-size: 0.9em;
-    text-align: center;
-}
-
 .form-group {
     margin-bottom: 16px;
 }
@@ -504,11 +450,6 @@ td.actions-col {
     margin: -8px 0 12px 0;
     font-size: 0.8em;
     color: var(--color-text-maxcontrast);
-}
-
-.input-error {
-    border-color: var(--color-error, #dc2626) !important;
-    background-color: var(--color-error-element-light, #fef2f2) !important;
 }
 
 .form-actions {

@@ -25,6 +25,9 @@ use Psr\Log\LoggerInterface;
 
 class AbsenceService {
 
+    /** Largest start-to-end year difference the day preview accepts. */
+    public const PREVIEW_MAX_YEAR_SPAN = 2;
+
     /** #15 Stufe 2: Überhang-Behandlung wenn der Resturlaub die Betriebsferien nicht deckt. */
     public const OVERAGE_SKIP = 'skip';
     public const OVERAGE_CLOSURE = 'closure';
@@ -961,6 +964,25 @@ class AbsenceService {
             'pending' => $pendingDays,
             'remaining' => $totalVacationDays - $usedDays,
         ];
+    }
+
+    /** Same calculation as create(), so the form preview matches the stored days. */
+    public function previewDays(int $employeeId, string $startDate, string $endDate, float $scope, string $federalState): float {
+        $startDateObj = $this->parseDateOrFail($startDate, 'startDate');
+        $endDateObj = $this->parseDateOrFail($endDate, 'endDate');
+
+        if ($startDateObj > $endDateObj) {
+            throw new ValidationException(['endDate' => [$this->l->t('Enddatum muss nach dem Startdatum liegen')]]);
+        }
+        if ($scope < 0 || $scope > 1) {
+            throw new ValidationException(['scope' => [$this->l->t('Scope muss zwischen 0 und 1 liegen')]]);
+        }
+        // Holidays are generated per year; a read must not trigger that for arbitrary spans.
+        if ((int)$endDateObj->format('Y') - (int)$startDateObj->format('Y') > self::PREVIEW_MAX_YEAR_SPAN) {
+            throw new ValidationException(['endDate' => [$this->l->t('Der Zeitraum ist für eine Vorschau zu lang')]]);
+        }
+
+        return $this->calculateWorkingDays($startDateObj, $endDateObj, $federalState, $employeeId) * $scope;
     }
 
     /**

@@ -1792,4 +1792,45 @@ class AbsenceServiceTest extends TestCase {
         $expected = (new \DateTime('now', new \DateTimeZone('Europe/Berlin')))->format('Y-m-d');
         $this->assertSame($expected, $captured);
     }
+
+    /** Vorschau rechnet wie create(): Arbeitstage laut Modell mal Umfang. */
+    public function testPreviewDaysUsesScheduleAwareCountTimesScope(): void {
+        $this->holidayService->expects($this->once())->method('ensureHolidaysForRange');
+        $this->holidayMapper->method('findHolidaysInRange')->willReturn([]);
+        $this->workScheduleService->expects($this->once())
+            ->method('countWorkingDays')
+            ->with(7, $this->anything(), $this->anything(), [])
+            ->willReturn(1.0);
+
+        $days = $this->service->previewDays(7, '2026-12-22', '2026-12-22', 0.5, 'NW');
+
+        $this->assertEqualsWithDelta(0.5, $days, 0.0001);
+    }
+
+    public function testPreviewDaysRejectsEndBeforeStart(): void {
+        $this->workScheduleService->expects($this->never())->method('countWorkingDays');
+        $this->expectException(ValidationException::class);
+
+        $this->service->previewDays(7, '2026-12-31', '2026-12-22', 1.0, 'NW');
+    }
+
+    public function testPreviewDaysRejectsInvalidDate(): void {
+        $this->expectException(ValidationException::class);
+
+        $this->service->previewDays(7, '22.12.2026', '2026-12-31', 1.0, 'NW');
+    }
+
+    public function testPreviewDaysRejectsScopeOutOfRange(): void {
+        $this->expectException(ValidationException::class);
+
+        $this->service->previewDays(7, '2026-12-22', '2026-12-22', 1.5, 'NW');
+    }
+
+    /** Ein Lesezugriff darf keine Feiertage für beliebig viele Jahre erzeugen. */
+    public function testPreviewDaysRejectsSpanBeyondLimitWithoutGeneratingHolidays(): void {
+        $this->holidayService->expects($this->never())->method('ensureHolidaysForRange');
+        $this->expectException(ValidationException::class);
+
+        $this->service->previewDays(7, '2026-01-01', '2029-01-01', 1.0, 'NW');
+    }
 }

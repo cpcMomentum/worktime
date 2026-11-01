@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Tests\Unit\Service;
 
 use DateTime;
+use OCA\WorkTime\Db\AuditLog;
 use OCA\WorkTime\Db\Employee;
 use OCA\WorkTime\Db\EmployeeMapper;
 use OCA\WorkTime\Db\WorkSchedule;
@@ -16,6 +17,8 @@ use OCA\WorkTime\Service\ValidationException;
 use OCA\WorkTime\Service\WorkScheduleService;
 use OCA\WorkTime\Service\LocalDate;
 use OCA\WorkTime\Service\UserTimeZone;
+use OCP\DB\Exception as DbException;
+use OCP\IDBConnection;
 use OCP\IL10N;
 use OCP\IUser;
 use OCP\IUserManager;
@@ -37,6 +40,7 @@ class EmployeeServiceTest extends TestCase {
     private AuditLogService $auditLogService;
     private IUserManager $userManager;
     private LoggerInterface $logger;
+    private IDBConnection $db;
 
     protected function setUp(): void {
         $this->employeeMapper = $this->createMock(EmployeeMapper::class);
@@ -46,6 +50,7 @@ class EmployeeServiceTest extends TestCase {
         $this->deletionService = $this->createMock(EmployeeDeletionService::class);
         $this->userManager = $this->createMock(IUserManager::class);
         $this->logger = $this->createMock(LoggerInterface::class);
+        $this->db = $this->createMock(IDBConnection::class);
         $l = $this->createMock(IL10N::class);
         $l->method('t')->willReturnCallback(fn (string $t, array $p = []): string => $p === [] ? $t : vsprintf($t, $p));
 
@@ -62,6 +67,7 @@ class EmployeeServiceTest extends TestCase {
             $this->logger,
             $l,
             $dateTimeZone,
+            $this->db,
         );
     }
 
@@ -579,5 +585,171 @@ class EmployeeServiceTest extends TestCase {
         $result = $this->service->getAvailableUsers();
 
         $this->assertSame(['ldapuser', 'regular'], array_column($result, 'user'));
+    }
+
+    // ---------------------------------------------------------------------
+    // #579: first profile from a Mon-Sun pattern, created atomically
+    // ---------------------------------------------------------------------
+
+    /** Arrange inserts that assign ids, capture the persisted schedule. */
+    private function expectInsertsForDayHours(?WorkSchedule &$captured): void {
+        $this->employeeMapper->method('existsByUserId')->willReturn(false);
+        $this->employeeMapper->method('insert')->willReturnCallback(
+            function (Employee $e): Employee {
+                $e->setId(21);
+                return $e;
+            }
+        );
+        $this->workScheduleMapper->method('insert')->willReturnCallback(
+            function (WorkSchedule $s) use (&$captured): WorkSchedule {
+                $s->setId(31);
+                $captured = $s;
+                return $s;
+            }
+        );
+        $this->workScheduleService->method('getEffectiveMaxDailyHours')->willReturn(10.0);
+    }
+
+    private function createWithDayHours(array $dayHours, int $vacationDays = 30, float $weeklyHours = 40.0, int $workingDays = 5): Employee {
+        return $this->service->create(
+            'user21', 'Mia', 'Drei', null, null, $weeklyHours, $vacationDays, null, 'BY', '2026-07-01', 'admin',
+            $workingDays, null, false, null, $dayHours,
+        );
+    }
+
+    /**
+     * Mo/Mi/Fr with uneven hours: the profile keeps the pattern, weekly hours
+     * and working days are derived from the ROUNDED stored values, and the
+     * client's weeklyHours/workingDaysPerWeek are ignored.
+     */
+    public function testCreateWithDayHoursPersistsPatternAndDerivesTotals(): void {
+        $captured = null;
+        $this->expectInsertsForDayHours($captured);
+
+        $employee = $this->createWithDayHours(
+            ['mon' => 7.333, 'tue' => 0, 'wed' => '7.333', 'thu' => 0.004, 'fri' => 7.333, 'sat' => 0, 'sun' => 0],
+        );
+
+        $this->assertNotNull($captured);
+        $this->assertSame('7.33', $captured->getMonHours());
+        $this->assertSame('0.00', $captured->getTueHours());
+        $this->assertSame('7.33', $captured->getWedHours());
+        $this->assertSame('0.00', $captured->getThuHours(), '0.004 rounds to 0 and is no working day');
+        $this->assertSame('7.33', $captured->getFriHours());
+        $this->assertSame(21, $captured->getEmployeeId());
+        $this->assertSame('2026-07-01', $captured->getValidFrom()->format('Y-m-d'));
+        $this->assertSame(30, $captured->getVacationDays());
+
+        $this->assertSame(21.99, (float)$employee->getWeeklyHours());
+        $this->assertSame(3, $employee->getWorkingDaysPerWeek());
+    }
+
+    public function testCreateWithDayHoursCommitsAndAuditsEmployeeAndSchedule(): void {
+        $captured = null;
+        $this->expectInsertsForDayHours($captured);
+
+        $this->db->expects($this->once())->method('beginTransaction');
+        $this->db->expects($this->once())->method('commit');
+        $this->db->expects($this->never())->method('rollBack');
+
+        $logged = [];
+        $this->auditLogService->method('logCreate')->willReturnCallback(
+            function (string $user, string $type, int $id) use (&$logged): AuditLog {
+                $logged[] = [$type, $id];
+                return new AuditLog();
+            }
+        );
+
+        $this->createWithDayHours(['mon' => 8, 'tue' => 8, 'wed' => 8, 'thu' => 8, 'fri' => 8, 'sat' => 0, 'sun' => 0]);
+
+        $this->assertSame([['employee', 21], ['work_schedule', 31]], $logged);
+    }
+
+    /**
+     * If the profile cannot be stored, the employee must not survive on the
+     * synthetic 40h/30 default: roll back and let the error reach the caller.
+     */
+    public function testCreateWithDayHoursRollsBackWhenScheduleInsertFails(): void {
+        $this->employeeMapper->method('existsByUserId')->willReturn(false);
+        $this->employeeMapper->method('insert')->willReturnCallback(
+            function (Employee $e): Employee {
+                $e->setId(21);
+                return $e;
+            }
+        );
+        $this->workScheduleMapper->method('insert')->willThrowException(new \RuntimeException('db down'));
+        $this->workScheduleService->method('getEffectiveMaxDailyHours')->willReturn(10.0);
+
+        $this->db->expects($this->once())->method('beginTransaction');
+        $this->db->expects($this->once())->method('rollBack');
+        $this->db->expects($this->never())->method('commit');
+        $this->auditLogService->expects($this->never())->method('logCreate');
+
+        $this->expectException(\RuntimeException::class);
+        $this->createWithDayHours(['mon' => 8, 'tue' => 8, 'wed' => 8, 'thu' => 8, 'fri' => 8, 'sat' => 0, 'sun' => 0]);
+    }
+
+    /**
+     * A parallel create for the same user hits the unique index on user_id:
+     * report it as a field error, not as a 500.
+     */
+    public function testCreateWithDayHoursTranslatesUniqueViolationToFieldError(): void {
+        $this->employeeMapper->method('existsByUserId')->willReturn(false);
+        $this->employeeMapper->method('insert')->willThrowException(
+            new class ('duplicate') extends DbException {
+                public function getReason(): ?int {
+                    return DbException::REASON_UNIQUE_CONSTRAINT_VIOLATION;
+                }
+            }
+        );
+        $this->workScheduleService->method('getEffectiveMaxDailyHours')->willReturn(10.0);
+        $this->db->expects($this->once())->method('rollBack');
+
+        try {
+            $this->createWithDayHours(['mon' => 8, 'tue' => 8, 'wed' => 8, 'thu' => 8, 'fri' => 8, 'sat' => 0, 'sun' => 0]);
+            $this->fail('ValidationException expected');
+        } catch (ValidationException $e) {
+            $this->assertTrue($e->hasError('userId'));
+        }
+    }
+
+    /** An invalid pattern is rejected before anything is written. */
+    public function testCreateWithInvalidDayHoursWritesNothing(): void {
+        $this->employeeMapper->method('existsByUserId')->willReturn(false);
+        $this->workScheduleService->method('getEffectiveMaxDailyHours')->willReturn(10.0);
+        $this->employeeMapper->expects($this->never())->method('insert');
+        $this->db->expects($this->never())->method('beginTransaction');
+
+        try {
+            $this->createWithDayHours(['mon' => 12, 'tue' => 8, 'wed' => 8, 'thu' => 8, 'fri' => 8, 'sat' => 0, 'sun' => 0]);
+            $this->fail('ValidationException expected');
+        } catch (ValidationException $e) {
+            $this->assertTrue($e->hasError('dayHours'));
+        }
+    }
+
+    public function testCreateWithDayHoursRejectsVacationDaysAbove365(): void {
+        $this->employeeMapper->method('existsByUserId')->willReturn(false);
+        $this->workScheduleService->method('getEffectiveMaxDailyHours')->willReturn(10.0);
+        $this->employeeMapper->expects($this->never())->method('insert');
+
+        try {
+            $this->createWithDayHours(['mon' => 8, 'tue' => 8, 'wed' => 8, 'thu' => 8, 'fri' => 8, 'sat' => 0, 'sun' => 0], 366);
+            $this->fail('ValidationException expected');
+        } catch (ValidationException $e) {
+            $this->assertTrue($e->hasError('vacationDays'));
+        }
+    }
+
+    /** Without dayHours the legacy path runs outside a transaction, as before. */
+    public function testCreateWithoutDayHoursKeepsLegacyPathWithoutTransaction(): void {
+        $captured = null;
+        $this->expectInsertsForDayHours($captured);
+        $this->db->expects($this->never())->method('beginTransaction');
+
+        $this->service->create('user22', 'Ole', 'Alt', null, null, 40.0, 30, null, 'BY', null, 'admin', 5);
+
+        $this->assertNotNull($captured);
+        $this->assertSame('8.00', $captured->getMonHours());
     }
 }

@@ -42,6 +42,11 @@ class HolidayService {
      */
     private const FRONLEICHNAM_STATES = ['BY', 'BW', 'HE', 'NW', 'RP', 'SL'];
 
+    /**
+     * States where Ostersonntag and Pfingstsonntag are public holidays
+     */
+    private const EASTER_WHIT_SUNDAY_STATES = ['BB'];
+
     /** @var array<string, true> memo of (year, state) combos already ensured this request */
     private array $ensuredYearStates = [];
 
@@ -148,6 +153,11 @@ class HolidayService {
         $karfreitag = (clone $easterSunday)->modify('-2 days');
         $holidays[] = $this->createHoliday($year, (int)$karfreitag->format('m'), (int)$karfreitag->format('d'), 'Karfreitag', $federalState);
 
+        // Ostersonntag (Easter Sunday), only in some states
+        if (in_array($federalState, self::EASTER_WHIT_SUNDAY_STATES)) {
+            $holidays[] = $this->createHoliday($year, (int)$easterSunday->format('m'), (int)$easterSunday->format('d'), 'Ostersonntag', $federalState);
+        }
+
         // Ostermontag (Easter Monday) - 1 day after Easter
         $ostermontag = (clone $easterSunday)->modify('+1 day');
         $holidays[] = $this->createHoliday($year, (int)$ostermontag->format('m'), (int)$ostermontag->format('d'), 'Ostermontag', $federalState);
@@ -155,6 +165,12 @@ class HolidayService {
         // Christi Himmelfahrt (Ascension Day) - 39 days after Easter
         $himmelfahrt = (clone $easterSunday)->modify('+39 days');
         $holidays[] = $this->createHoliday($year, (int)$himmelfahrt->format('m'), (int)$himmelfahrt->format('d'), 'Christi Himmelfahrt', $federalState);
+
+        // Pfingstsonntag (Whit Sunday) - 49 days after Easter, only in some states
+        if (in_array($federalState, self::EASTER_WHIT_SUNDAY_STATES)) {
+            $pfingstsonntag = (clone $easterSunday)->modify('+49 days');
+            $holidays[] = $this->createHoliday($year, (int)$pfingstsonntag->format('m'), (int)$pfingstsonntag->format('d'), 'Pfingstsonntag', $federalState);
+        }
 
         // Pfingstmontag (Whit Monday) - 50 days after Easter
         $pfingstmontag = (clone $easterSunday)->modify('+50 days');

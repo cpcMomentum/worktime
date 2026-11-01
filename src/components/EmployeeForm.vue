@@ -49,23 +49,17 @@
             </div>
         </div>
 
+        <div v-if="!isEdit" class="form-group">
+            <label>{{ t('worktime', 'Arbeitszeit pro Tag') }} <InfoIcon>{{ t('worktime', 'Stunden je Wochentag laut Vertrag. Daraus berechnet WorkTime das tägliche Soll, die Wochenstunden und die Arbeitstage. Spätere Änderungen im Arbeitszeitprofil des Mitarbeiters.') }}</InfoIcon> *</label>
+            <DayHoursInput v-model="form.dayHours" :max-daily-hours="maxDailyHours" />
+            <p v-if="!hasWorkingHours" class="field-hint field-hint--error">
+                {{ t('worktime', 'Mindestens ein Wochentag braucht Arbeitsstunden. Für eine vorübergehende Auszeit (z. B. Elternzeit) eine Abwesenheit erfassen statt 0 Stunden.') }}
+            </p>
+        </div>
+
         <div v-if="!isEdit" class="form-row">
             <div class="form-group">
-                <label for="weeklyHours">{{ t('worktime', 'Wochenstunden') }} <InfoIcon>{{ t('worktime', 'Vertraglich vereinbarte Arbeitszeit pro Woche. Daraus berechnet WorkTime das tägliche Soll (Wochenstunden ÷ Arbeitstage pro Woche).') }}</InfoIcon> *</label>
-                <input id="weeklyHours"
-                    v-model.number="form.weeklyHours"
-                    type="number"
-                    min="0.5"
-                    max="60"
-                    step="0.5"
-                    :class="['input-field', 'input-small', { 'input-error': !(form.weeklyHours > 0) }]"
-                    required>
-                <p v-if="!(form.weeklyHours > 0)" class="field-hint field-hint--error">
-                    {{ t('worktime', 'Wochenstunden müssen größer als 0 sein. Für eine vorübergehende Auszeit (z. B. Elternzeit) eine Abwesenheit erfassen statt 0 Stunden.') }}
-                </p>
-            </div>
-            <div class="form-group">
-                <label for="vacationDays">{{ t('worktime', 'Urlaubstage') }} <InfoIcon>{{ t('worktime', 'Jährlicher Urlaubsanspruch. Jeder genommene Urlaubstag wird davon abgezogen. Der Resturlaub wird in der Zeiterfassung angezeigt.') }}</InfoIcon> *</label>
+                <label for="vacationDays">{{ t('worktime', 'Urlaubstage') }} <InfoIcon>{{ t('worktime', 'Voller Jahresanspruch bei diesem Arbeitsmuster. Nicht anteilig eintragen, WorkTime rechnet das Eintrittsjahr selbst anteilig.') }}</InfoIcon> *</label>
                 <input id="vacationDays"
                     v-model.number="form.vacationDays"
                     type="number"
@@ -96,17 +90,8 @@
             {{ t('worktime', 'Wochenstunden und Urlaubstage ergeben sich aus dem Arbeitszeitprofil unten und werden dort gepflegt.') }}
         </p>
 
-        <div class="form-row">
-            <div v-if="!isEdit" class="form-group">
-                <label for="workingDaysPerWeek">{{ t('worktime', 'Arbeitstage pro Woche') }} <InfoIcon>{{ t('worktime', 'An wie vielen Tagen pro Woche wird gearbeitet? Daraus und aus den Wochenstunden ergibt sich das tägliche Soll. Beispiel: 40 Std. auf 5 Tage = 8 Std./Tag, 30 Std. auf 4 Tage = 7,5 Std./Tag.') }}</InfoIcon></label>
-                <input id="workingDaysPerWeek"
-                    v-model.number="form.workingDaysPerWeek"
-                    type="number"
-                    min="1"
-                    max="7"
-                    class="input-field input-small">
-            </div>
-            <div v-else class="form-group">
+        <div v-if="isEdit" class="form-row">
+            <div class="form-group">
                 <label>{{ t('worktime', 'Arbeitstage pro Woche') }} <InfoIcon>{{ t('worktime', 'Aktuell gültiger Wert aus dem Arbeitszeitprofil. Zum Ändern unten das Profil bearbeiten oder ein neues anlegen.') }}</InfoIcon></label>
                 <input :value="form.workingDaysPerWeek"
                     type="text"
@@ -192,7 +177,7 @@
             <NcButton type="tertiary" @click="cancel">
                 {{ t('worktime', 'Abbrechen') }}
             </NcButton>
-            <NcButton type="primary" :disabled="!isValid" @click="save">
+            <NcButton type="primary" :disabled="!isValid || saving" @click="save">
                 {{ t('worktime', 'Speichern') }}
             </NcButton>
         </div>
@@ -207,7 +192,11 @@ import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadi
 import WorkScheduleEditor from './WorkScheduleEditor.vue'
 import { mapGetters, mapActions } from 'vuex'
 import { formatDateISO } from '../utils/dateUtils.js'
+import { sum } from '../utils/dayHours.js'
+import { showErrorMessage } from '../utils/errorHandler.js'
+import SettingsService from '../services/SettingsService.js'
 import InfoIcon from '../components/InfoIcon.vue'
+import DayHoursInput from './DayHoursInput.vue'
 
 export default {
     name: 'EmployeeForm',
@@ -218,6 +207,7 @@ export default {
         NcDateTimePicker,
         NcCheckboxRadioSwitch,
         WorkScheduleEditor,
+        DayHoursInput,
     },
     props: {
         employee: {
@@ -234,23 +224,9 @@ export default {
     },
     data() {
         return {
-            form: {
-                userId: '',
-                firstName: '',
-                lastName: '',
-                email: '',
-                personnelNumber: '',
-                weeklyHours: 40,
-                vacationDays: 30,
-                workingDaysPerWeek: 5,
-                supervisorId: null,
-                departmentId: null,
-                federalState: this.defaultFederalState,
-                entryDate: null,
-                exitDate: null,
-                vacationDaysUsed: null,
-                vacationTransferred: false,
-            },
+            form: this.emptyForm(),
+            maxDailyHours: 10,
+            saving: false,
         }
     },
     computed: {
@@ -356,6 +332,9 @@ export default {
                 this.form.departmentId = value?.id || null
             },
         },
+        hasWorkingHours() {
+            return sum(this.form.dayHours) > 0
+        },
         isValid() {
             const baseValid = (this.isEdit || this.form.userId)
                 && this.form.firstName.trim()
@@ -364,9 +343,10 @@ export default {
             if (this.isEdit) {
                 return baseValid
             }
-            // New employee: weeklyHours must be > 0 (a 0-hour contract would create
-            // a zero-hour work schedule and break every day/absence calculation).
-            return baseValid && this.form.weeklyHours > 0 && this.form.vacationDays >= 0
+            // Same rules as the server: every day 0..max, at least one working hour.
+            const daysValid = Object.values(this.form.dayHours).every(h => h >= 0 && h <= this.maxDailyHours)
+            return baseValid && daysValid && this.hasWorkingHours
+                && this.form.vacationDays >= 0 && this.form.vacationDays <= 365
         },
     },
     watch: {
@@ -403,12 +383,13 @@ export default {
         this.$store.dispatch('departments/fetchDepartments', true)
         if (!this.isEdit) {
             this.$store.dispatch('employees/fetchAvailableUsers')
+            this.loadMaxDailyHours()
         }
     },
     methods: {
         ...mapActions('employees', ['createEmployee', 'updateEmployee']),
-        resetForm() {
-            this.form = {
+        emptyForm() {
+            return {
                 userId: '',
                 firstName: '',
                 lastName: '',
@@ -417,7 +398,9 @@ export default {
                 weeklyHours: 40,
                 vacationDays: 30,
                 workingDaysPerWeek: 5,
+                dayHours: { mon: 8, tue: 8, wed: 8, thu: 8, fri: 8, sat: 0, sun: 0 },
                 supervisorId: null,
+                departmentId: null,
                 federalState: this.defaultFederalState,
                 entryDate: null,
                 exitDate: null,
@@ -425,10 +408,27 @@ export default {
                 vacationTransferred: false,
             }
         },
+        resetForm() {
+            this.form = this.emptyForm()
+        },
+        async loadMaxDailyHours() {
+            try {
+                const value = parseFloat(await SettingsService.get('max_daily_hours'))
+                if (value > 0) {
+                    this.maxDailyHours = value
+                }
+            } catch (e) {
+                // keep the default of 10
+            }
+        },
         cancel() {
             this.$emit('cancel')
         },
         async save() {
+            if (this.saving) {
+                return
+            }
+            this.saving = true
             try {
                 const data = {
                     userId: this.form.userId,
@@ -451,12 +451,21 @@ export default {
                 if (this.isEdit) {
                     await this.updateEmployee({ id: this.employee.id, data })
                 } else {
+                    // The server derives weekly hours and working days from the day pattern.
+                    delete data.weeklyHours
+                    delete data.workingDaysPerWeek
+                    data.dayHours = this.form.dayHours
                     await this.createEmployee(data)
                 }
 
                 this.$emit('saved')
             } catch (error) {
                 console.error('Failed to save employee:', error)
+                // handleApiError() puts the server text into error.message; raw axios errors have none worth showing.
+                const fromServer = error && !error.isAxiosError && error.message
+                showErrorMessage(fromServer || this.t('worktime', 'Fehler beim Speichern des Mitarbeiters'))
+            } finally {
+                this.saving = false
             }
         },
     },

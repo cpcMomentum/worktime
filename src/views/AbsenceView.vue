@@ -117,6 +117,7 @@
                         mode="create"
                         :absence-types="absenceTypes"
                         :vacation-stats="vacationStats"
+                        :employee-id="activeEmployeeId"
                         :hourly-sick-enabled="hourlySickEnabled"
                         @save="onCreate"
                         @cancel="cancelCreate" />
@@ -127,6 +128,7 @@
                         :mode="editingId === absence.id ? 'edit' : 'view'"
                         :absence-types="absenceTypes"
                         :vacation-stats="vacationStats"
+                        :employee-id="activeEmployeeId"
                         :hourly-sick-enabled="hourlySickEnabled"
                         @edit="startEdit(absence.id)"
                         @save="onUpdate"

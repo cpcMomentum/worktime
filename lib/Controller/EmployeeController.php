@@ -100,7 +100,8 @@ class EmployeeController extends BaseController {
         int $workingDaysPerWeek = 5,
         ?float $vacationDaysUsed = null,
         bool $vacationTransferred = false,
-        ?int $departmentId = null
+        ?int $departmentId = null,
+        ?array $dayHours = null
     ): JSONResponse {
         if ($authError = $this->requireAuth()) {
             return $authError;
@@ -126,7 +127,8 @@ class EmployeeController extends BaseController {
                 $workingDaysPerWeek,
                 $vacationDaysUsed,
                 $vacationTransferred,
-                $departmentId
+                $departmentId,
+                $dayHours // #579: Mon-Sun pattern of the first profile
             );
 
             return $this->createdResponse($employee);

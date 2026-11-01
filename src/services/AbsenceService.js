@@ -86,6 +86,17 @@ export default {
         }
     },
 
+    async previewDays(employeeId, startDate, endDate, scope) {
+        try {
+            const response = await api.get('/absences/preview-days', {
+                params: { employeeId, startDate, endDate, scope },
+            })
+            return response.data
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+
     async getTypes() {
         try {
             const response = await api.get('/absences/types')

@@ -277,4 +277,56 @@ class HolidayServiceTest extends TestCase {
         $this->assertArrayNotHasKey('12-24', $scopes);
         $this->assertArrayNotHasKey('12-31', $scopes);
     }
+
+    // ---------------------------------------------------------------------
+    // Ostersonntag / Pfingstsonntag (nur Brandenburg)
+    // ---------------------------------------------------------------------
+
+    /**
+     * Generate holidays for a year/state and return the inserted holidays.
+     *
+     * @return array<string,string> 'Y-m-d' => name
+     */
+    private function generatedHolidayNames(int $year, string $federalState): array {
+        $this->holidayMapper->method('hasAutoForYearAndState')->willReturn(false);
+        $captured = [];
+        $this->holidayMapper->method('insert')->willReturnCallback(
+            function (Holiday $h) use (&$captured): Holiday {
+                $captured[$h->getDate()->format('Y-m-d')] = $h->getName();
+                return $h;
+            }
+        );
+        $this->service->ensureHolidaysForYear($year, $federalState);
+        return $captured;
+    }
+
+    public function testBrandenburgGetsEasterAndWhitSunday(): void {
+        $holidays = $this->generatedHolidayNames(2026, 'BB');
+
+        // Easter Sunday 2026 = 05.04., Whit Sunday = Easter + 49.
+        $this->assertSame('Ostersonntag', $holidays['2026-04-05'] ?? null);
+        $this->assertSame('Pfingstsonntag', $holidays['2026-05-24'] ?? null);
+        // The Mondays stay untouched.
+        $this->assertSame('Ostermontag', $holidays['2026-04-06'] ?? null);
+        $this->assertSame('Pfingstmontag', $holidays['2026-05-25'] ?? null);
+    }
+
+    /**
+     * @dataProvider statesWithoutEasterAndWhitSundayProvider
+     */
+    public function testOtherStatesGetNoEasterOrWhitSunday(string $federalState): void {
+        $holidays = $this->generatedHolidayNames(2026, $federalState);
+
+        $this->assertArrayNotHasKey('2026-04-05', $holidays);
+        $this->assertArrayNotHasKey('2026-05-24', $holidays);
+        $this->assertSame('Ostermontag', $holidays['2026-04-06'] ?? null);
+    }
+
+    public static function statesWithoutEasterAndWhitSundayProvider(): array {
+        return [
+            ['BE'],
+            ['BY'],
+            ['HE'],
+        ];
+    }
 }

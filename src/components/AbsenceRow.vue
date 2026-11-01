@@ -84,6 +84,9 @@
                                         :title="t('worktime', 'Krank-Stunden für diesen Tag (leer = ganzer Tag)')">
                                     <span class="days-value">{{ t('worktime', 'Std. krank') }}</span>
                                 </template>
+                                <span v-else-if="keepsStoredSickHours" class="days-value">
+                                    {{ t('worktime', '{hours} Std. krank', { hours: storedSickHours }) }}
+                                </span>
                                 <template v-else>
                                     <NcSelect
                                         v-model="selectedScope"
@@ -123,7 +126,7 @@
                         </div>
                     </div>
                     <p v-if="showQuotaHint" class="quota-hint">
-                        {{ t('worktime', 'Hinweis: ca. {requested} Werktage im Zeitraum (Resturlaub: {available}). Abgezogen werden nur Arbeitstage laut Arbeitszeitmodell.', { available: quotaAvailable.toFixed(1), requested: estimatedDays.toFixed(1) }) }}
+                        {{ t('worktime', 'Hinweis: Der Antrag umfasst {requested} Urlaubstage, der Resturlaub beträgt {available}.', { available: formatDays(quotaAvailable), requested: formatDays(previewDays) }) }}
                     </p>
                     <p v-else-if="absence && absence.status === 'approved' && absence.type !== 'sick' && absence.type !== 'child_sick'" class="edit-hint">
                         {{ t('worktime', 'Erneute Genehmigung erforderlich') }}
@@ -143,6 +146,9 @@ import CloseIcon from 'vue-material-design-icons/Close.vue'
 import ContentSaveIcon from 'vue-material-design-icons/ContentSave.vue'
 import { formatDateISO, getLocale, parseISODate } from '../utils/dateUtils.js'
 import { formatDateWithWeekday, getAbsenceTypeLabel, getStatusLabel } from '../utils/formatters.js'
+import AbsenceService from '../services/AbsenceService.js'
+
+const PREVIEW_DEBOUNCE_MS = 300
 
 export default {
     name: 'AbsenceRow',
@@ -180,6 +186,10 @@ export default {
             type: Boolean,
             default: false,
         },
+        employeeId: {
+            type: Number,
+            default: null,
+        },
     },
     emits: ['edit', 'save', 'cancel', 'remove'],
     data() {
@@ -196,6 +206,9 @@ export default {
             // Tracks whether the user deliberately picked an end date. While false,
             // the end date follows the start date (single day is the default outcome).
             endTouched: false,
+            previewDays: null,
+            previewTimer: null,
+            previewRequest: 0,
             scopeOptions: [
                 { id: 1.0, label: this.t('worktime', 'Ganzer Tag') },
                 { id: 0.5, label: this.t('worktime', 'Halber Tag') },
@@ -257,36 +270,23 @@ export default {
         showHourlySick() {
             return this.hourlySickEnabled && this.form.type === 'sick' && this.isSingleDay
         },
-        calculatedDays() {
-            if (!this.form.startDate || !this.form.endDate) return '-'
-
-            const start = new Date(this.form.startDate)
-            const end = new Date(this.form.endDate)
-            let workingDays = 0
-
-            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                const dayOfWeek = d.getDay()
-                if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-                    workingDays++
-                }
-            }
-
-            // Apply scope: e.g., 5 days * 0.5 = 2.5
-            const effectiveDays = workingDays * this.form.scope
-            return effectiveDays.toLocaleString(getLocale(), { maximumFractionDigits: 1 })
+        // Feature aus: das Backend behält beim Bearbeiten die gespeicherten Krank-Stunden
+        keepsStoredSickHours() {
+            return !this.hourlySickEnabled && this.mode === 'edit'
+                && this.absence?.absenceMinutes > 0
+                && this.form.type === 'sick' && this.isSingleDay
         },
-        estimatedDays() {
-            if (!this.form.startDate || !this.form.endDate) return 0
-            if (this.form.scope < 1.0) return 0.5
-            let days = 0
-            const cur = new Date(this.form.startDate)
-            const end = new Date(this.form.endDate)
-            while (cur <= end) {
-                const dow = cur.getDay()
-                if (dow !== 0 && dow !== 6) days++
-                cur.setDate(cur.getDate() + 1)
-            }
-            return days * this.form.scope
+        storedSickHours() {
+            return this.formatDays((this.absence?.absenceMinutes || 0) / 60)
+        },
+        // Der Server rechnet wie beim Speichern: Feiertage, Sondertage, Arbeitszeitmodell
+        previewKey() {
+            if (this.mode === 'view' || this.showHourlySick || this.keepsStoredSickHours || !this.employeeId || !this.form.startDate || !this.form.endDate) return null
+            return [this.employeeId, formatDateISO(this.form.startDate), formatDateISO(this.form.endDate), this.form.scope].join('|')
+        },
+        calculatedDays() {
+            if (this.previewDays === null) return '–'
+            return this.formatDays(this.previewDays)
         },
         quotaAvailable() {
             if (!this.vacationStats) return Infinity
@@ -299,15 +299,14 @@ export default {
         showQuotaHint() {
             if (this.form.type !== 'vacation') return false
             if (!this.vacationStats) return false
-            return this.estimatedDays > this.quotaAvailable
+            if (this.previewDays === null) return false
+            return this.previewDays > this.quotaAvailable
         },
         isValid() {
             if (!this.form.type || !this.form.startDate || !this.form.endDate) return false
             const start = new Date(this.form.startDate)
             const end = new Date(this.form.endDate)
-            // The frontend day estimate ignores the work schedule and holidays, so
-            // it must not block submission (a part-timer's whole-week request would
-            // be wrongly rejected). The backend validates schedule-aware.
+            // Der Resturlaub-Hinweis blockiert nicht; die Quote prüft das Backend
             return start <= end
         },
         canEdit() {
@@ -330,6 +329,17 @@ export default {
         },
     },
     watch: {
+        previewKey: {
+            immediate: true,
+            handler(key) {
+                clearTimeout(this.previewTimer)
+                this.previewRequest++
+                this.previewDays = null
+                if (key) {
+                    this.previewTimer = setTimeout(this.fetchPreviewDays, PREVIEW_DEBOUNCE_MS)
+                }
+            },
+        },
         absence: {
             immediate: true,
             handler(absence) {
@@ -349,8 +359,33 @@ export default {
             },
         },
     },
+    beforeDestroy() {
+        clearTimeout(this.previewTimer)
+        this.previewRequest++
+    },
     methods: {
         getStatusLabel,
+        formatDays(days) {
+            return days.toLocaleString(getLocale(), { maximumFractionDigits: 1 })
+        },
+        async fetchPreviewDays() {
+            const request = this.previewRequest
+            let days = null
+            try {
+                const data = await AbsenceService.previewDays(
+                    this.employeeId,
+                    formatDateISO(this.form.startDate),
+                    formatDateISO(this.form.endDate),
+                    this.form.scope,
+                )
+                days = typeof data?.days === 'number' ? data.days : null
+            } catch {
+                days = null
+            }
+            if (request === this.previewRequest) {
+                this.previewDays = days
+            }
+        },
         loadAbsence(absence) {
             this.form = {
                 type: absence.type,
