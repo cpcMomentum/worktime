@@ -84,6 +84,9 @@
                                         :title="t('worktime', 'Krank-Stunden für diesen Tag (leer = ganzer Tag)')">
                                     <span class="days-value">{{ t('worktime', 'Std. krank') }}</span>
                                 </template>
+                                <span v-else-if="keepsStoredSickHours" class="days-value">
+                                    {{ t('worktime', '{hours} Std. krank', { hours: storedSickHours }) }}
+                                </span>
                                 <template v-else>
                                     <NcSelect
                                         v-model="selectedScope"
@@ -267,9 +270,18 @@ export default {
         showHourlySick() {
             return this.hourlySickEnabled && this.form.type === 'sick' && this.isSingleDay
         },
+        // Feature aus: das Backend behält beim Bearbeiten die gespeicherten Krank-Stunden
+        keepsStoredSickHours() {
+            return !this.hourlySickEnabled && this.mode === 'edit'
+                && this.absence?.absenceMinutes > 0
+                && this.form.type === 'sick' && this.isSingleDay
+        },
+        storedSickHours() {
+            return this.formatDays((this.absence?.absenceMinutes || 0) / 60)
+        },
         // Der Server rechnet wie beim Speichern: Feiertage, Sondertage, Arbeitszeitmodell
         previewKey() {
-            if (this.mode === 'view' || this.showHourlySick || !this.employeeId || !this.form.startDate || !this.form.endDate) return null
+            if (this.mode === 'view' || this.showHourlySick || this.keepsStoredSickHours || !this.employeeId || !this.form.startDate || !this.form.endDate) return null
             return [this.employeeId, formatDateISO(this.form.startDate), formatDateISO(this.form.endDate), this.form.scope].join('|')
         },
         calculatedDays() {

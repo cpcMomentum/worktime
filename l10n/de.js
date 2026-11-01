@@ -785,6 +785,7 @@ OC.L10N.register(
     "Voller Jahresanspruch bei diesem Arbeitsmuster. Nicht anteilig eintragen, WorkTime rechnet das Eintrittsjahr selbst anteilig." : "Voller Jahresanspruch bei diesem Arbeitsmuster. Nicht anteilig eintragen, WorkTime rechnet das Eintrittsjahr selbst anteilig.",
     "Fehler beim Speichern des Mitarbeiters" : "Fehler beim Speichern des Mitarbeiters",
     "Hinweis: Der Antrag umfasst {requested} Urlaubstage, der Resturlaub beträgt {available}." : "Hinweis: Der Antrag umfasst {requested} Urlaubstage, der Resturlaub beträgt {available}.",
-    "Der Zeitraum ist für eine Vorschau zu lang" : "Der Zeitraum ist für eine Vorschau zu lang"
+    "Der Zeitraum ist für eine Vorschau zu lang" : "Der Zeitraum ist für eine Vorschau zu lang",
+    "{hours} Std. krank" : "{hours} Std. krank"
 },
 "nplurals=2; plural=(n != 1);");

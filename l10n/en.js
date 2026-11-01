@@ -785,6 +785,7 @@ OC.L10N.register(
     "Voller Jahresanspruch bei diesem Arbeitsmuster. Nicht anteilig eintragen, WorkTime rechnet das Eintrittsjahr selbst anteilig." : "Full annual entitlement for this work pattern. Do not enter a pro-rated value; WorkTime pro-rates the year of entry itself.",
     "Fehler beim Speichern des Mitarbeiters" : "Error saving the employee",
     "Hinweis: Der Antrag umfasst {requested} Urlaubstage, der Resturlaub beträgt {available}." : "Note: this request covers {requested} vacation days, the remaining vacation is {available}.",
-    "Der Zeitraum ist für eine Vorschau zu lang" : "The period is too long for a preview"
+    "Der Zeitraum ist für eine Vorschau zu lang" : "The period is too long for a preview",
+    "{hours} Std. krank" : "{hours} hrs sick"
 },
 "nplurals=2; plural=(n != 1);");
