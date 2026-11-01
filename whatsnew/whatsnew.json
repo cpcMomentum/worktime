@@ -1,4 +1,63 @@
 {
+	"0.24.2": [
+		{
+			"title": {
+				"de": "Urlaubsvorschau zeigt die richtigen Tage",
+				"en": "Vacation preview shows the correct days",
+				"cs": "Náhled dovolené ukazuje správné dny"
+			},
+			"text": {
+				"de": "Beim Beantragen zeigt WorkTime jetzt genau die Tage, die vom Urlaubskonto abgehen. Feiertage, Heiligabend, Silvester und Ihr Arbeitszeitmodell sind eingerechnet. Abgezogen wurde schon bisher richtig, nur die Vorschau war oft zu hoch.",
+				"en": "When you request leave, WorkTime now shows exactly the days that come off your vacation balance. Public holidays, Christmas Eve, New Year's Eve and your work schedule are taken into account. The deduction was always correct, only the preview was often too high.",
+				"cs": "Při žádosti o dovolenou WorkTime nyní ukazuje přesně ty dny, které se odečtou z konta dovolené. Započítány jsou svátky, Štědrý den, Silvestr a váš pracovní model. Odečítalo se správně už dříve, jen náhled byl často příliš vysoký."
+			},
+			"icon": "counter",
+			"where": {
+				"de": "Abwesenheiten › Neue Abwesenheit",
+				"en": "Absences › New Absence",
+				"cs": "Nepřítomnosti › Nová nepřítomnost"
+			},
+			"plus": false
+		},
+		{
+			"title": {
+				"de": "Arbeitszeit je Wochentag beim Anlegen",
+				"en": "Hours per weekday when creating an employee",
+				"cs": "Hodiny pro každý den při zakládání zaměstnance"
+			},
+			"text": {
+				"de": "Neue Mitarbeiter bekommen ihre Stunden jetzt direkt je Wochentag, z. B. nur Montag, Mittwoch und Freitag. Wochenstunden und Arbeitstage rechnet WorkTime daraus selbst aus.",
+				"en": "New employees now get their hours per weekday right away, e.g. Monday, Wednesday and Friday only. WorkTime calculates weekly hours and working days from them.",
+				"cs": "Noví zaměstnanci nyní dostanou hodiny rovnou pro každý den v týdnu, např. jen pondělí, středu a pátek. Týdenní hodiny a pracovní dny z nich WorkTime vypočítá sám."
+			},
+			"icon": "account-group",
+			"where": {
+				"de": "Einstellungen › Neuer Mitarbeiter",
+				"en": "Settings › New Employee",
+				"cs": "Nastavení › Nový zaměstnanec"
+			},
+			"plus": false
+		},
+		{
+			"title": {
+				"de": "Brandenburg: Ostersonntag und Pfingstsonntag",
+				"en": "Brandenburg: Easter Sunday and Whit Sunday",
+				"cs": "Braniborsko: Velikonoční a Svatodušní neděle"
+			},
+			"text": {
+				"de": "In Brandenburg sind Ostersonntag und Pfingstsonntag jetzt automatisch Feiertage. Admins: Sind 2027 oder spätere Jahre schon erzeugt, dort einmal „Auto-Generieren“ ausführen. 2026 bitte nicht neu erzeugen, das würde abgeschlossene Monate nachträglich ändern.",
+				"en": "In Brandenburg, Easter Sunday and Whit Sunday are now public holidays automatically. Admins: if 2027 or later years have already been generated, run “Auto-Generate” there once. Please do not regenerate 2026, as that would change closed months retroactively.",
+				"cs": "V Braniborsku jsou nyní Velikonoční a Svatodušní neděle automaticky svátky. Správci: pokud jsou roky 2027 a pozdější již vygenerovány, spusťte u nich jednou „Automatické generování“. Rok 2026 prosím negenerujte znovu, zpětně by to změnilo uzavřené měsíce."
+			},
+			"icon": "cog",
+			"where": {
+				"de": "Einstellungen › Feiertage verwalten",
+				"en": "Settings › Manage Public Holidays",
+				"cs": "Nastavení › Spravovat státní svátky"
+			},
+			"plus": false
+		}
+	],
 	"0.24.1": [
 		{
 			"title": {

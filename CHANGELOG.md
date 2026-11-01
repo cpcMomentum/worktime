@@ -7,8 +7,17 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.24.2] - 2026-11-01
+
 ### Added
-- **Ostersonntag und Pfingstsonntag in Brandenburg**: Für Brandenburg werden Ostersonntag und Pfingstsonntag jetzt automatisch als gesetzliche Feiertage erzeugt. Wer sonntags regulär arbeitet, bekommt an diesen Tagen kein Soll mehr. Für bereits erzeugte Jahre müssen die Feiertage unter Einstellungen einmal neu generiert werden; manuelle Feiertage bleiben erhalten.
+- **Arbeitszeit je Wochentag schon beim Anlegen (#579)**: Im Dialog „Neuer Mitarbeiter“ ersetzen sieben Tagesfelder (vorbelegt mit 8 Stunden Montag bis Freitag) die Felder Wochenstunden und Arbeitstage pro Woche. Muster wie Montag, Mittwoch und Freitag lassen sich damit direkt beim Anlegen erfassen; Wochenstunden und Arbeitstage berechnet WorkTime daraus. Mitarbeiter und erstes Arbeitszeitprofil werden gemeinsam angelegt, ein Fehler hinterlässt keinen halb angelegten Mitarbeiter. Fehler beim Speichern werden jetzt im Dialog angezeigt.
+- **Ostersonntag und Pfingstsonntag in Brandenburg (#784)**: Für Brandenburg werden Ostersonntag und Pfingstsonntag jetzt automatisch als gesetzliche Feiertage erzeugt. Wer sonntags regulär arbeitet, bekommt an diesen Tagen kein Soll mehr. Danke an @mamhoff für den Beitrag. Bereits erzeugte Jahre werden nicht automatisch ergänzt: Für **2027 und spätere Jahre**, die schon erzeugt sind, unter Einstellungen › Feiertage verwalten einmal „Auto-Generieren“ ausführen. **2026 nicht neu erzeugen**: Beide Tage liegen schon zurück, ein Neu-Erzeugen würde das Soll bereits abgeschlossener Monate nachträglich ändern. Manuelle Feiertage bleiben erhalten.
+
+### Fixed
+- **Urlaubsvorschau rechnet wie das Urlaubskonto (#807)**: Die Anzeige „N Tage“ im Abwesenheitsformular zählte nur Montag bis Freitag. Feiertage, Heiligabend und Silvester (halb oder ganz frei) sowie das Arbeitszeitmodell bei Teilzeit blieben unberücksichtigt, z. B. 8 statt 5 Tage für den 22. bis 31.12. Abgezogen wurde schon immer der richtige Wert. Die Vorschau und der Resturlaub-Hinweis zeigen jetzt dieselbe Zahl, die gespeichert wird. Beim Bearbeiten einer stundenweisen Krankmeldung, nachdem stundenweise Krank abgeschaltet wurde, zeigt das Formular die gespeicherten Stunden statt „1 Tage“.
+- **Keine Fehlermeldung mehr auf der Genehmigungsseite (#782)**: HR-Manager und Vorgesetzte sahen beim Öffnen der Genehmigungen „Genehmigungsdaten konnten nicht vollständig geladen werden“, obwohl alle Anträge geladen waren.
+- **Tab springt in Zeitfeldern direkt ins nächste Feld (#798)**: In Chrome und Edge brauchte jedes Uhrzeitfeld einen zusätzlichen Tab-Druck für das Uhr-Symbol. Das Symbol ist ausgeblendet, Eintippen und Pfeiltasten funktionieren wie bisher.
+- **Info-Symbole ohne Konsolenfehler (#781)**: Das Öffnen eines Info-Symbols schrieb jedes Mal einen Fehler in die Browser-Konsole. Sonst unverändert.
 
 ## [0.24.1] - 2026-09-30
 
