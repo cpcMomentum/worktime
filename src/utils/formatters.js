@@ -4,7 +4,7 @@
  * Consolidates formatting functions used across multiple components.
  */
 
-import { translate as t } from '@nextcloud/l10n'
+import { translate as t, translatePlural as n } from '@nextcloud/l10n'
 import { STATUS_LABELS, ABSENCE_TYPE_LABELS, ENTRY_STATUS, ABSENCE_STATUS } from '../constants.js'
 import { formatDate as formatDateFromDateUtils, getLocale } from './dateUtils.js'
 import { formatMinutes, formatMinutesWithUnit, formatHoursDecimal } from './timeUtils.js'
@@ -22,6 +22,17 @@ export function formatMinutesToHours(minutes) {
     const hours = minutes / 60
     const formatted = hours.toLocaleString(getLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 })
     return `${formatted} ${t('worktime', 'Std.')}`
+}
+
+/**
+ * Day count with the correct plural form and locale-aware separator
+ * @param {number|string} days
+ * @returns {string} e.g. "1 Tag", "2,5 Tage" or "1 day"
+ */
+export function formatDaysLabel(days) {
+    const value = Number(days) || 0
+    const formatted = value.toLocaleString(getLocale(), { maximumFractionDigits: 2 })
+    return n('worktime', '{days} Tag', '{days} Tage', value, { days: formatted })
 }
 
 /**
@@ -164,6 +175,7 @@ export default {
     formatMinutes,
     formatMinutesWithUnit,
     formatMinutesToHours,
+    formatDaysLabel,
     formatHoursDecimal,
     getStatusLabel,
     getAbsenceTypeLabel,

@@ -786,6 +786,7 @@ OC.L10N.register(
     "Fehler beim Speichern des Mitarbeiters" : "Error saving the employee",
     "Hinweis: Der Antrag umfasst {requested} Urlaubstage, der Resturlaub beträgt {available}." : "Note: this request covers {requested} vacation days, the remaining vacation is {available}.",
     "Der Zeitraum ist für eine Vorschau zu lang" : "The period is too long for a preview",
-    "{hours} Std. krank" : "{hours} hrs sick"
+    "{hours} Std. krank" : "{hours} hrs sick",
+    "_{days} Tag_::_{days} Tage_" : ["{days} day","{days} days"]
 },
 "nplurals=2; plural=(n != 1);");
