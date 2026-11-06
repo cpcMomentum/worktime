@@ -18,22 +18,34 @@ use OCA\WorkTime\Db\ProjectMapper;
 use OCA\WorkTime\Db\TimeEntry;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException as FilesNotFoundException;
+use OCP\IL10N;
 use TCPDF;
 
 class PdfService {
 
-    private const FONT_FAMILY = 'helvetica';
+    private const FONT_FAMILY = 'freesans';
     private const FONT_SIZE_NORMAL = 10;
     private const FONT_SIZE_SMALL = 8;
     private const FONT_SIZE_TITLE = 14;
     private const FONT_SIZE_HEADER = 12;
+
+    private IL10N $l;
+    private ReportFormatter $fmt;
 
     public function __construct(
         private CompanySettingsService $settingsService,
         private IRootFolder $rootFolder,
         private ProjectMapper $projectMapper,
         private WorkScheduleService $workScheduleService,
+        private IL10N $defaultL10n,
     ) {
+        $this->useLanguage(null);
+    }
+
+    /** Null means the language of the current request; the archive passes its own. */
+    private function useLanguage(?IL10N $l): void {
+        $this->l = $l ?? $this->defaultL10n;
+        $this->fmt = new ReportFormatter($this->l);
     }
 
     /**
@@ -57,13 +69,15 @@ class PdfService {
         array $absences,
         array $holidays,
         array $statistics,
-        ?array $approvalInfo = null
+        ?array $approvalInfo = null,
+        ?IL10N $l = null
     ): string {
+        $this->useLanguage($l);
         $startDate = new DateTime("$year-$month-01");
         $endDate = (clone $startDate)->modify('last day of this month');
-        $periodLabel = $this->getGermanMonthName($month) . ' ' . $year;
+        $periodLabel = $this->fmt->monthYear($year, $month);
 
-        return $this->renderReport($employee, $periodLabel, $startDate, $endDate, $timeEntries, $absences, $holidays, $statistics, $approvalInfo);
+        return $this->renderReport($employee, $periodLabel, $startDate, $endDate, $timeEntries, $absences, $holidays, $statistics, $approvalInfo, $this->l->t('Arbeitstage im Monat:'));
     }
 
     /**
@@ -78,10 +92,12 @@ class PdfService {
         array $absences,
         array $holidays,
         array $statistics,
-        ?array $approvalInfo = null
+        ?array $approvalInfo = null,
+        ?IL10N $l = null
     ): string {
-        $periodLabel = $startDate->format('d.m.Y') . ' – ' . $endDate->format('d.m.Y');
-        return $this->renderReport($employee, $periodLabel, $startDate, $endDate, $timeEntries, $absences, $holidays, $statistics, $approvalInfo, 'Arbeitstage im Zeitraum:');
+        $this->useLanguage($l);
+        $periodLabel = $this->fmt->date($startDate) . ' – ' . $this->fmt->date($endDate);
+        return $this->renderReport($employee, $periodLabel, $startDate, $endDate, $timeEntries, $absences, $holidays, $statistics, $approvalInfo, $this->l->t('Arbeitstage im Zeitraum:'));
     }
 
     /**
@@ -96,8 +112,8 @@ class PdfService {
         array $absences,
         array $holidays,
         array $statistics,
-        ?array $approvalInfo = null,
-        string $workingDaysLabel = 'Arbeitstage im Monat:'
+        ?array $approvalInfo,
+        string $workingDaysLabel
     ): string {
         $pdf = $this->createPdf();
 
@@ -135,12 +151,13 @@ class PdfService {
      * @param array{totalMinutes: int, billableMinutes: int} $totals
      * @return string PDF content
      */
-    public function generateProjectEvaluation(string $label, array $entries, array $totals, array $filter = []): string {
+    public function generateProjectEvaluation(string $label, array $entries, array $totals, array $filter = [], ?IL10N $l = null): string {
+        $this->useLanguage($l);
         $pdf = new TCPDF('L', 'mm', 'A4', true, 'UTF-8', false);
-        $companyName = $this->settingsService->getCompanyName() ?: 'Projektauswertung';
+        $companyName = $this->settingsService->getCompanyName() ?: $this->l->t('Projektauswertung');
         $pdf->SetCreator('WorkTime Nextcloud App');
         $pdf->SetAuthor($companyName);
-        $pdf->SetTitle('Projektauswertung');
+        $pdf->SetTitle($this->l->t('Projektauswertung'));
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(true);
         $pdf->setFooterFont([self::FONT_FAMILY, '', self::FONT_SIZE_SMALL]);
@@ -156,7 +173,7 @@ class PdfService {
             $pdf->Ln(1);
         }
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_HEADER);
-        $pdf->Cell(0, 8, 'Projektauswertung', 0, 1, 'C');
+        $pdf->Cell(0, 8, $this->l->t('Projektauswertung'), 0, 1, 'C');
         $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_NORMAL);
         $pdf->Cell(0, 6, $label, 0, 1, 'C');
         $this->addFilterContext($pdf, $filter);
@@ -164,13 +181,13 @@ class PdfService {
 
         // Column widths (landscape A4 content width ~267mm)
         $cols = [
-            ['Datum', 24, 'L'],
-            ['Zeit', 24, 'L'],
-            ['Projekt', 50, 'L'],
-            ['Kunde', 36, 'L'],
-            ['Mitarbeiter', 38, 'L'],
-            ['Stunden', 20, 'R'],
-            ['Tätigkeit', 75, 'L'],
+            [$this->l->t('Datum'), 24, 'L'],
+            [$this->l->t('Zeit'), 24, 'L'],
+            [$this->l->t('Projekt'), 50, 'L'],
+            [$this->l->t('Kunde'), 36, 'L'],
+            [$this->l->t('Mitarbeiter'), 38, 'L'],
+            [$this->l->t('Stunden'), 20, 'R'],
+            [$this->l->t('Tätigkeit'), 75, 'L'],
         ];
 
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_SMALL);
@@ -182,14 +199,14 @@ class PdfService {
 
         $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_SMALL);
         foreach ($entries as $entry) {
-            $date = (new DateTime($entry['date']))->format('d.m.Y');
+            $date = $this->fmt->date(new DateTime($entry['date']));
             $start = $entry['startTime'] ?? null;
             $end = $entry['endTime'] ?? null;
             $time = ($start !== null && $start !== '' && $end !== null && $end !== '') ? $start . '–' . $end : '–';
             $row = [
                 $date,
                 $time,
-                $entry['projectName'] ?? 'Kein Projekt',
+                $entry['projectName'] ?? $this->l->t('Kein Projekt'),
                 $entry['customer'] ?? '',
                 $entry['employeeName'] ?? '',
                 $this->minutesToHours($entry['minutes']),
@@ -203,7 +220,7 @@ class PdfService {
 
         // Totals
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_SMALL);
-        $pdf->Cell(172, 7, 'Gesamt', 1, 0, 'R');
+        $pdf->Cell(172, 7, $this->l->t('Gesamt'), 1, 0, 'R');
         $pdf->Cell(20, 7, $this->minutesToHours($totals['totalMinutes']), 1, 0, 'R');
         $pdf->Cell(75, 7, '', 1, 0, 'L');
         $pdf->Ln();
@@ -218,12 +235,13 @@ class PdfService {
      * @param array<array{name: string, minutes: int}> $rows
      * @return string PDF content
      */
-    public function generateProjectAggregate(string $label, array $rows, int $totalMinutes, array $filter = []): string {
+    public function generateProjectAggregate(string $label, array $rows, int $totalMinutes, array $filter = [], ?IL10N $l = null): string {
+        $this->useLanguage($l);
         $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
-        $companyName = $this->settingsService->getCompanyName() ?: 'Projektauswertung';
+        $companyName = $this->settingsService->getCompanyName() ?: $this->l->t('Projektauswertung');
         $pdf->SetCreator('WorkTime Nextcloud App');
         $pdf->SetAuthor($companyName);
-        $pdf->SetTitle('Projektauswertung');
+        $pdf->SetTitle($this->l->t('Projektauswertung'));
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(true);
         $pdf->setFooterFont([self::FONT_FAMILY, '', self::FONT_SIZE_SMALL]);
@@ -239,7 +257,7 @@ class PdfService {
             $pdf->Ln(1);
         }
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_HEADER);
-        $pdf->Cell(0, 8, 'Projektauswertung', 0, 1, 'C');
+        $pdf->Cell(0, 8, $this->l->t('Projektauswertung'), 0, 1, 'C');
         $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_NORMAL);
         $pdf->Cell(0, 6, $label, 0, 1, 'C');
         $this->addFilterContext($pdf, $filter);
@@ -249,9 +267,9 @@ class PdfService {
         $total = max(1, $totalMinutes);
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_SMALL);
         $pdf->SetFillColor(240, 240, 240);
-        $pdf->Cell(110, 7, 'Mitarbeiter', 1, 0, 'L', true);
-        $pdf->Cell(35, 7, 'Stunden', 1, 0, 'R', true);
-        $pdf->Cell(35, 7, 'Anteil', 1, 0, 'R', true);
+        $pdf->Cell(110, 7, $this->l->t('Mitarbeiter'), 1, 0, 'L', true);
+        $pdf->Cell(35, 7, $this->l->t('Stunden'), 1, 0, 'R', true);
+        $pdf->Cell(35, 7, $this->l->t('Anteil'), 1, 0, 'R', true);
         $pdf->Ln();
 
         $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_SMALL);
@@ -264,7 +282,7 @@ class PdfService {
         }
 
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_SMALL);
-        $pdf->Cell(110, 7, 'Gesamt', 1, 0, 'R');
+        $pdf->Cell(110, 7, $this->l->t('Gesamt'), 1, 0, 'R');
         $pdf->Cell(35, 7, $this->minutesToHours($totalMinutes), 1, 0, 'R');
         $pdf->Cell(35, 7, '100 %', 1, 0, 'R');
         $pdf->Ln();
@@ -290,8 +308,8 @@ class PdfService {
         }
         $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_SMALL);
         $pdf->SetTextColor(90, 90, 90);
-        $pdf->Cell(0, 5, 'Projekte: ' . ($filter['projects'] ?? 'Alle'), 0, 1, 'C');
-        $pdf->Cell(0, 5, 'Mitarbeitende: ' . ($filter['employees'] ?? 'Alle'), 0, 1, 'C');
+        $pdf->Cell(0, 5, $this->l->t('Projekte: %s', [$filter['projects'] ?? $this->l->t('Alle')]), 0, 1, 'C');
+        $pdf->Cell(0, 5, $this->l->t('Mitarbeitende: %s', [$filter['employees'] ?? $this->l->t('Alle')]), 0, 1, 'C');
         $pdf->SetTextColor(0, 0, 0);
     }
 
@@ -311,10 +329,10 @@ class PdfService {
         $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
 
         // Set document information
-        $companyName = $this->settingsService->getCompanyName() ?: 'Arbeitszeitnachweis';
+        $companyName = $this->settingsService->getCompanyName() ?: $this->l->t('Arbeitszeitnachweis');
         $pdf->SetCreator('WorkTime Nextcloud App');
         $pdf->SetAuthor($companyName);
-        $pdf->SetTitle('Arbeitszeitnachweis');
+        $pdf->SetTitle($this->l->t('Arbeitszeitnachweis'));
 
         // Remove default header/footer
         $pdf->setPrintHeader(false);
@@ -352,7 +370,7 @@ class PdfService {
 
         // Title
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_HEADER);
-        $pdf->Cell(0, 8, 'Arbeitszeitnachweis', 0, 1, 'C');
+        $pdf->Cell(0, 8, $this->l->t('Arbeitszeitnachweis'), 0, 1, 'C');
 
         $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_NORMAL);
         $pdf->Cell(0, 6, $periodLabel, 0, 1, 'C');
@@ -360,25 +378,25 @@ class PdfService {
 
         // Employee info
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_NORMAL);
-        $pdf->Cell(40, 6, 'Mitarbeiter:', 0, 0);
+        $pdf->Cell(40, 6, $this->l->t('Mitarbeiter:'), 0, 0);
         $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_NORMAL);
         $pdf->Cell(0, 6, $employee->getFullName(), 0, 1);
 
         if ($employee->getPersonnelNumber()) {
             $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_NORMAL);
-            $pdf->Cell(40, 6, 'Personalnummer:', 0, 0);
+            $pdf->Cell(40, 6, $this->l->t('Personalnummer:'), 0, 0);
             $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_NORMAL);
             $pdf->Cell(0, 6, $employee->getPersonnelNumber(), 0, 1);
         }
 
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_NORMAL);
-        $pdf->Cell(40, 6, 'Wochenstunden:', 0, 0);
+        $pdf->Cell(40, 6, $this->l->t('Wochenstunden:'), 0, 0);
         $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_NORMAL);
         // Wochenstunden des im Berichtszeitraum gültigen Arbeitszeitprofils anzeigen,
         // nicht das aktuelle Mitarbeiter-Feld – sonst weicht der Kopf bei mehreren
         // Profilen von der zeitraumgültigen Soll-Berechnung ab (#356).
         $weeklyHours = $this->workScheduleService->getScheduleForDate($employee->getId(), $periodStart)->getWeeklyHours();
-        $pdf->Cell(0, 6, number_format($weeklyHours, 1, ',', '.') . ' Std.', 0, 1);
+        $pdf->Cell(0, 6, $this->l->t('%s Std.', [$this->fmt->number((float)$weeklyHours, 1)]), 0, 1);
 
         $pdf->Ln(5);
     }
@@ -399,14 +417,14 @@ class PdfService {
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_SMALL);
         $pdf->SetFillColor(230, 230, 230);
 
-        $pdf->Cell(22, 7, 'Datum', 1, 0, 'C', true);
-        $pdf->Cell(12, 7, 'Tag', 1, 0, 'C', true);
-        $pdf->Cell(17, 7, 'Beginn', 1, 0, 'C', true);
-        $pdf->Cell(17, 7, 'Ende', 1, 0, 'C', true);
-        $pdf->Cell(17, 7, 'Pause', 1, 0, 'C', true);
-        $pdf->Cell(20, 7, 'Arbeitszeit', 1, 0, 'C', true);
-        $pdf->Cell(28, 7, 'Projekt', 1, 0, 'C', true);
-        $pdf->Cell(0, 7, 'Bemerkung', 1, 1, 'C', true);
+        $pdf->Cell(22, 7, $this->l->t('Datum'), 1, 0, 'C', true);
+        $pdf->Cell(12, 7, $this->l->t('Tag'), 1, 0, 'C', true);
+        $pdf->Cell(17, 7, $this->l->t('Beginn'), 1, 0, 'C', true);
+        $pdf->Cell(17, 7, $this->l->t('Ende'), 1, 0, 'C', true);
+        $pdf->Cell(17, 7, $this->l->t('Pause'), 1, 0, 'C', true);
+        $pdf->Cell(20, 7, $this->l->t('Arbeitszeit'), 1, 0, 'C', true);
+        $pdf->Cell(28, 7, $this->l->t('Projekt'), 1, 0, 'C', true);
+        $pdf->Cell(0, 7, $this->l->t('Bemerkung'), 1, 1, 'C', true);
 
         // Table body
         $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_SMALL);
@@ -498,18 +516,18 @@ class PdfService {
             $isHoliday = isset($holidayDates[$dateStr]);
             $fill = $isWeekend || $isHoliday;
 
-            $date = $current->format('d.m.Y');
-            $day = $this->getGermanDayName($dayOfWeek);
+            $date = $this->fmt->date($current);
+            $day = $this->fmt->weekday($current);
 
             $absence = $absencesByDate[$dateStr] ?? null;
             $absenceLabel = '';
             if ($absence !== null) {
+                $typeLabel = Absence::typeLabel($this->l, (string)$absence->getType());
                 if ($absence->getAbsenceMinutes() !== null) {
                     // #625: stundenweise Krank -> Stundenzahl statt "halber Tag".
-                    $absenceLabel = $absence->getTypeName()
-                        . ' (' . number_format($absence->getAbsenceMinutes() / 60, 2, ',', '') . ' h)';
+                    $absenceLabel = $typeLabel . ' (' . $this->fmt->number($absence->getAbsenceMinutes() / 60, 2) . ' h)';
                 } else {
-                    $absenceLabel = $absence->getTypeName() . ($absence->isHalfDay() ? ' (halber Tag)' : '');
+                    $absenceLabel = $absence->isHalfDay() ? $this->l->t('%s (halber Tag)', [$typeLabel]) : $typeLabel;
                 }
             }
 
@@ -520,7 +538,7 @@ class PdfService {
                     if ($entry->isEmergency()) {
                         // #626: Notarbeit klar kennzeichnen; ausstehende Freigabe markieren.
                         $hasEmergency = true;
-                        $marker = 'Notarbeit' . ($entry->isEmergencyApproved() ? '' : ' (wartet auf Freigabe)');
+                        $marker = $entry->isEmergencyApproved() ? $this->l->t('Notarbeit') : $this->l->t('Notarbeit (wartet auf Freigabe)');
                         $note = $note !== '' ? $marker . ': ' . $note : $marker;
                     }
                     $rows[] = [
@@ -552,7 +570,7 @@ class PdfService {
                 // Absence day (#318): show the type directly in the day row.
                 $rows[] = $this->markerRow($date, $day, $absenceLabel, $fill);
             } elseif ($isHoliday) {
-                $rows[] = $this->markerRow($date, $day, 'Feiertag: ' . $holidayDates[$dateStr], $fill);
+                $rows[] = $this->markerRow($date, $day, $this->l->t('Feiertag: %s', [$holidayDates[$dateStr]]), $fill);
             } elseif (!$isWeekend) {
                 // Regular workday without entry: blank cells signal a gap
                 // (a missing booking that may need attention).
@@ -604,31 +622,31 @@ class PdfService {
         $this->ensureSpace($pdf, 14 + min(count($absences), 3) * 6 + 5);
 
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_NORMAL);
-        $pdf->Cell(0, 8, 'Abwesenheiten', 0, 1);
+        $pdf->Cell(0, 8, $this->l->t('Abwesenheiten'), 0, 1);
 
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_SMALL);
         $pdf->SetFillColor(230, 230, 230);
-        $pdf->Cell(30, 6, 'Zeitraum', 1, 0, 'C', true);
-        $pdf->Cell(20, 6, 'Tage', 1, 0, 'C', true);
-        $pdf->Cell(30, 6, 'Art', 1, 0, 'C', true);
-        $pdf->Cell(25, 6, 'Status', 1, 0, 'C', true);
-        $pdf->Cell(0, 6, 'Bemerkung', 1, 1, 'C', true);
+        $pdf->Cell(30, 6, $this->l->t('Zeitraum'), 1, 0, 'C', true);
+        $pdf->Cell(20, 6, $this->l->t('Tage'), 1, 0, 'C', true);
+        $pdf->Cell(30, 6, $this->l->t('Art'), 1, 0, 'C', true);
+        $pdf->Cell(25, 6, $this->l->t('Status'), 1, 0, 'C', true);
+        $pdf->Cell(0, 6, $this->l->t('Bemerkung'), 1, 1, 'C', true);
 
         $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_SMALL);
 
         foreach ($absences as $absence) {
-            $period = $absence->getStartDate()->format('d.m.') . ' - ' . $absence->getEndDate()->format('d.m.');
-            $days = number_format((float)$absence->getDays(), 1, ',', '.');
+            $period = $this->fmt->dayMonth($absence->getStartDate()) . ' - ' . $this->fmt->dayMonth($absence->getEndDate());
+            $days = $this->fmt->number((float)$absence->getDays(), 1);
 
             $statusTranslation = [
-                Absence::STATUS_PENDING => 'Ausstehend',
-                Absence::STATUS_APPROVED => 'Genehmigt',
-                Absence::STATUS_REJECTED => 'Abgelehnt',
-                Absence::STATUS_CANCELLED => 'Storniert',
+                Absence::STATUS_PENDING => $this->l->t('Ausstehend'),
+                Absence::STATUS_APPROVED => $this->l->t('Genehmigt'),
+                Absence::STATUS_REJECTED => $this->l->t('Abgelehnt'),
+                Absence::STATUS_CANCELLED => $this->l->t('Storniert'),
             ];
             $status = $statusTranslation[$absence->getStatus()] ?? $absence->getStatus();
 
-            $this->renderAbsenceRow($pdf, $period, $days, $absence->getTypeName(), $status, $absence->getNote() ?? '');
+            $this->renderAbsenceRow($pdf, $period, $days, Absence::typeLabel($this->l, (string)$absence->getType()), $status, $absence->getNote() ?? '');
         }
 
         $pdf->Ln(5);
@@ -705,36 +723,36 @@ class PdfService {
     /**
      * Add summary section
      */
-    private function addSummary(TCPDF $pdf, Employee $employee, array $statistics, string $workingDaysLabel = 'Arbeitstage im Monat:'): void {
+    private function addSummary(TCPDF $pdf, Employee $employee, array $statistics, string $workingDaysLabel): void {
         // Keep the whole summary block on one page.
         $this->ensureSpace($pdf, 48);
 
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_NORMAL);
-        $pdf->Cell(0, 8, 'Zusammenfassung', 0, 1);
+        $pdf->Cell(0, 8, $this->l->t('Zusammenfassung'), 0, 1);
 
         $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_NORMAL);
 
         // Left column
         $pdf->Cell(50, 6, $workingDaysLabel, 0, 0);
-        $pdf->Cell(30, 6, $statistics['workingDays'] . ' Tage', 0, 0);
-        $pdf->Cell(50, 6, 'Feiertage:', 0, 0);
-        $pdf->Cell(0, 6, $statistics['holidayCount'] . ' Tage', 0, 1);
+        $pdf->Cell(30, 6, (string)$statistics['workingDays'], 0, 0);
+        $pdf->Cell(50, 6, $this->l->t('Feiertage:'), 0, 0);
+        $pdf->Cell(0, 6, (string)$statistics['holidayCount'], 0, 1);
 
-        $pdf->Cell(50, 6, 'Abwesenheitstage:', 0, 0);
-        $pdf->Cell(30, 6, number_format($statistics['absenceDays'], 1, ',', '.') . ' Tage', 0, 0);
-        $pdf->Cell(50, 6, 'Einträge:', 0, 0);
+        $pdf->Cell(50, 6, $this->l->t('Abwesenheitstage:'), 0, 0);
+        $pdf->Cell(30, 6, $this->fmt->number((float)$statistics['absenceDays'], 1), 0, 0);
+        $pdf->Cell(50, 6, $this->l->t('Einträge:'), 0, 0);
         $pdf->Cell(0, 6, $statistics['entryCount'], 0, 1);
 
         $pdf->Ln(3);
 
         // Time calculations
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_NORMAL);
-        $pdf->Cell(50, 6, 'Soll-Arbeitszeit:', 0, 0);
+        $pdf->Cell(50, 6, $this->l->t('Soll-Arbeitszeit:'), 0, 0);
         $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_NORMAL);
         $pdf->Cell(30, 6, $this->formatMinutes($statistics['adjustedTargetMinutes']), 0, 0);
 
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_NORMAL);
-        $pdf->Cell(50, 6, 'Ist-Arbeitszeit:', 0, 0);
+        $pdf->Cell(50, 6, $this->l->t('Ist-Arbeitszeit:'), 0, 0);
         $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_NORMAL);
         $pdf->Cell(0, 6, $this->formatMinutes($statistics['actualMinutes']), 0, 1);
 
@@ -744,14 +762,15 @@ class PdfService {
         $overtimeMinutes = $statistics['overtimeMinutes'];
         // Qualify with "(Monat)" so this month-only value is not confused with
         // the cumulative year balance shown in the app tile (#430).
-        $overtimeLabel = $overtimeMinutes >= 0 ? 'Überstunden (Monat):' : 'Minusstunden (Monat):';
+        $overtimeLabel = $overtimeMinutes >= 0 ? $this->l->t('Überstunden (Monat):') : $this->l->t('Minusstunden (Monat):');
         $overtimeFormatted = $this->formatMinutes(abs($overtimeMinutes));
 
         if ($overtimeMinutes < 0) {
             $overtimeFormatted = '-' . $overtimeFormatted;
         }
 
-        $pdf->Cell(50, 8, $overtimeLabel, 0, 0);
+        // Translated labels can be longer than the German one.
+        $pdf->Cell(max(50, $pdf->GetStringWidth($overtimeLabel) + 3), 8, $overtimeLabel, 0, 0);
         $pdf->Cell(0, 8, $overtimeFormatted, 0, 1);
 
         // Defensive hint: a zero-hour work schedule makes every working-day and
@@ -761,9 +780,7 @@ class PdfService {
             $pdf->Ln(2);
             $pdf->SetTextColor(180, 0, 0);
             $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_SMALL);
-            $pdf->MultiCell(0, 5, 'Hinweis: Für diesen Monat sind 0 Arbeitstage hinterlegt. '
-                . 'Vermutlich fehlt ein gültiges Arbeitszeitprofil mit Wochenstunden größer als 0. '
-                . 'Bitte das Arbeitszeitprofil des Mitarbeiters prüfen.', 0, 'L');
+            $pdf->MultiCell(0, 5, $this->l->t('Hinweis: Für diesen Monat sind 0 Arbeitstage hinterlegt. Vermutlich fehlt ein gültiges Arbeitszeitprofil mit Wochenstunden größer als 0. Bitte das Arbeitszeitprofil des Mitarbeiters prüfen.'), 0, 'L');
             $pdf->SetTextColor(0, 0, 0);
             $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_NORMAL);
         }
@@ -781,7 +798,7 @@ class PdfService {
         $pdf->Ln(10);
 
         $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_SMALL);
-        $pdf->Cell(0, 5, 'Ich bestätige die Richtigkeit der oben aufgeführten Arbeitszeiten.', 0, 1);
+        $pdf->Cell(0, 5, $this->l->t('Ich bestätige die Richtigkeit der oben aufgeführten Arbeitszeiten.'), 0, 1);
 
         $pdf->Ln(10);
 
@@ -789,9 +806,9 @@ class PdfService {
         $gap = 40;
 
         // "Ort, Datum" labels above signature lines
-        $pdf->Cell($lineWidth, 5, 'Ort, Datum', 0, 0, 'L');
+        $pdf->Cell($lineWidth, 5, $this->l->t('Ort, Datum'), 0, 0, 'L');
         $pdf->Cell($gap, 5, '', 0, 0);
-        $pdf->Cell($lineWidth, 5, 'Ort, Datum', 0, 1, 'L');
+        $pdf->Cell($lineWidth, 5, $this->l->t('Ort, Datum'), 0, 1, 'L');
 
         $pdf->Ln(10);
 
@@ -802,41 +819,13 @@ class PdfService {
 
         // Labels below signature lines
         $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_SMALL);
-        $pdf->Cell($lineWidth, 5, 'Mitarbeiter', 0, 0, 'C');
+        $pdf->Cell($lineWidth, 5, $this->l->t('Mitarbeiter'), 0, 0, 'C');
         $pdf->Cell($gap, 5, '', 0, 0);
-        $pdf->Cell($lineWidth, 5, 'Vorgesetzter', 0, 1, 'C');
+        $pdf->Cell($lineWidth, 5, $this->l->t('Vorgesetzter'), 0, 1, 'C');
     }
 
-    /**
-     * Format minutes as hours:minutes string
-     */
     private function formatMinutes(int $minutes): string {
-        $hours = intdiv(abs($minutes), 60);
-        $mins = abs($minutes) % 60;
-        return sprintf('%d:%02d Std.', $hours, $mins);
-    }
-
-    /**
-     * Get German month name
-     */
-    private function getGermanMonthName(int $month): string {
-        $months = [
-            1 => 'Januar', 2 => 'Februar', 3 => 'März', 4 => 'April',
-            5 => 'Mai', 6 => 'Juni', 7 => 'Juli', 8 => 'August',
-            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Dezember',
-        ];
-        return $months[$month] ?? '';
-    }
-
-    /**
-     * Get German day name abbreviation
-     */
-    private function getGermanDayName(int $dayOfWeek): string {
-        $days = [
-            1 => 'Mo', 2 => 'Di', 3 => 'Mi', 4 => 'Do',
-            5 => 'Fr', 6 => 'Sa', 7 => 'So',
-        ];
-        return $days[$dayOfWeek] ?? '';
+        return $this->fmt->hours($minutes);
     }
 
     /**
@@ -854,31 +843,32 @@ class PdfService {
         $approvedBy = $approvalInfo['approvedBy'] ?? null;
         $approvedAt = $approvalInfo['approvedAt'] ?? null;
 
-        $submitterName = $submittedBy instanceof Employee ? $submittedBy->getFullName() : 'Unbekannt';
-        $submissionDate = $submittedAt instanceof DateTime ? $submittedAt->format('d.m.Y H:i') : 'Unbekannt';
-        $approverName = $approvedBy instanceof Employee ? $approvedBy->getFullName() : 'Unbekannt';
-        $approvalDate = $approvedAt instanceof DateTime ? $approvedAt->format('d.m.Y H:i') : 'Unbekannt';
+        $unknown = $this->l->t('Unbekannt');
+        $submitterName = $submittedBy instanceof Employee ? $submittedBy->getFullName() : $unknown;
+        $submissionDate = $submittedAt instanceof DateTime ? $this->fmt->dateTime($submittedAt) : $unknown;
+        $approverName = $approvedBy instanceof Employee ? $approvedBy->getFullName() : $unknown;
+        $approvalDate = $approvedAt instanceof DateTime ? $this->fmt->dateTime($approvedAt) : $unknown;
 
         // Header
         $pdf->SetFillColor(240, 248, 255);
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_NORMAL);
-        $pdf->Cell(0, 8, 'Genehmigungsvermerk', 1, 1, 'L', true);
+        $pdf->Cell(0, 8, $this->l->t('Genehmigungsvermerk'), 1, 1, 'L', true);
 
         $pdf->SetFont(self::FONT_FAMILY, '', self::FONT_SIZE_SMALL);
 
         $colWidth = 90;
 
         // Row 1: Von labels and values
-        $pdf->Cell(30, 6, 'Eingereicht von:', 1, 0, 'L');
+        $pdf->Cell(30, 6, $this->l->t('Eingereicht von:'), 1, 0, 'L');
         $pdf->Cell($colWidth - 30, 6, $submitterName, 1, 0, 'L');
-        $pdf->Cell(30, 6, 'Genehmigt von:', 1, 0, 'L');
+        $pdf->Cell(30, 6, $this->l->t('Genehmigt von:'), 1, 0, 'L');
         $pdf->Cell(0, 6, $approverName, 1, 1, 'L');
 
         // Row 2: Am labels and values
-        $pdf->Cell(30, 6, 'Eingereicht am:', 1, 0, 'L');
-        $pdf->Cell($colWidth - 30, 6, $submissionDate . ' Uhr', 1, 0, 'L');
-        $pdf->Cell(30, 6, 'Genehmigt am:', 1, 0, 'L');
-        $pdf->Cell(0, 6, $approvalDate . ' Uhr', 1, 1, 'L');
+        $pdf->Cell(30, 6, $this->l->t('Eingereicht am:'), 1, 0, 'L');
+        $pdf->Cell($colWidth - 30, 6, $submissionDate, 1, 0, 'L');
+        $pdf->Cell(30, 6, $this->l->t('Genehmigt am:'), 1, 0, 'L');
+        $pdf->Cell(0, 6, $approvalDate, 1, 1, 'L');
     }
 
     /**

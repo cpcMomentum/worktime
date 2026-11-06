@@ -10,9 +10,13 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Service;
 
 use DateTime;
+use OCA\WorkTime\AppInfo\Application;
 use OCA\WorkTime\Db\Absence;
 use OCA\WorkTime\Db\CompanySetting;
 use OCA\WorkTime\Db\Employee;
+use OCP\IConfig;
+use OCP\IL10N;
+use OCP\L10N\IFactory;
 
 /**
  * Generates and stores the monthly report PDF in the configured archive folder.
@@ -33,7 +37,31 @@ class ArchiveService {
         private HolidayService $holidayService,
         private WorkScheduleService $workScheduleService,
         private PdfService $pdfService,
+        private IFactory $l10nFactory,
+        private IConfig $config,
     ) {
+    }
+
+    /** Company record: instance language rather than the triggering user's, German if unset. */
+    private function archiveL10n(): IL10N {
+        foreach (['force_language', 'default_language'] as $key) {
+            $configured = $this->config->getSystemValue($key, false);
+            if (!is_string($configured) || $configured === '') {
+                continue;
+            }
+            // A regional variant without its own catalog (en_GB) uses the base language.
+            foreach ([$configured, explode('_', $configured)[0]] as $lang) {
+                if ($this->l10nFactory->languageExists(Application::APP_ID, $lang)) {
+                    return $this->l10nFactory->get(Application::APP_ID, $lang, $this->archiveLocale($lang));
+                }
+            }
+        }
+        return $this->l10nFactory->get(Application::APP_ID, 'de', $this->archiveLocale('de'));
+    }
+
+    private function archiveLocale(string $lang): string {
+        $locale = $this->config->getSystemValue('default_locale', false);
+        return is_string($locale) && $this->l10nFactory->localeExists($locale) ? $locale : $lang;
     }
 
     /**
@@ -97,7 +125,8 @@ class ArchiveService {
             $absences,
             $holidays,
             $stats,
-            $approvalInfo
+            $approvalInfo,
+            $this->archiveL10n()
         );
 
         $this->pdfService->archiveMonthlyReport($archiveUserId, $employee, $year, $month, $pdfContent);

@@ -15,6 +15,8 @@ use OCA\WorkTime\Service\HolidayService;
 use OCA\WorkTime\Service\PdfService;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCA\WorkTime\Service\WorkScheduleService;
+use OCP\IConfig;
+use OCP\L10N\IFactory;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
@@ -35,6 +37,8 @@ class CompensatoryOvertimeArchiveTest extends TestCase {
 			$this->createMock(HolidayService::class),
 			$schedule,
 			$this->createMock(PdfService::class),
+			$this->createMock(IFactory::class),
+			$this->createMock(IConfig::class),
 		);
 	}
 
