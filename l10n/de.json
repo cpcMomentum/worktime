@@ -788,7 +788,11 @@
 		"Fehler beim Speichern des Mitarbeiters": "Fehler beim Speichern des Mitarbeiters",
 		"Hinweis: Der Antrag umfasst {requested} Urlaubstage, der Resturlaub beträgt {available}.": "Hinweis: Der Antrag umfasst {requested} Urlaubstage, der Resturlaub beträgt {available}.",
 		"Der Zeitraum ist für eine Vorschau zu lang": "Der Zeitraum ist für eine Vorschau zu lang",
-		"{hours} Std. krank": "{hours} Std. krank"
+		"{hours} Std. krank": "{hours} Std. krank",
+		"_{days} Tag_::_{days} Tage_": [
+			"{days} Tag",
+			"{days} Tage"
+		]
 	},
 	"pluralForm": "nplurals=2; plural=(n != 1);"
 }

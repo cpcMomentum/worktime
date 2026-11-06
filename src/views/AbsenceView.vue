@@ -60,7 +60,7 @@
                 <div class="konto-substats">
                     <div class="substat">
                         <span class="substat__l">{{ t('worktime', 'Freizeitausgleich') }}</span>
-                        <span class="substat__v">{{ compensatoryDays }} {{ t('worktime', 'Tage') }}<small v-if="compensatoryDays > 0"> (≈{{ compensatoryHoursLabel }})</small></span>
+                        <span class="substat__v">{{ formatDaysLabel(compensatoryDays) }}<small v-if="compensatoryDays > 0"> (≈{{ compensatoryHoursLabel }})</small></span>
                     </div>
                     <div v-if="overtimePaidOutMin > 0" class="substat">
                         <span class="substat__l">{{ t('worktime', 'Ausgezahlt {year}', { year: currentYear }) }}</span>
@@ -229,6 +229,7 @@ import YearPicker from '../components/YearPicker.vue'
 import InfoIcon from '../components/InfoIcon.vue'
 import { getCurrentYear } from '../utils/dateUtils.js'
 import { formatMinutes } from '../utils/timeUtils.js'
+import { formatDaysLabel } from '../utils/formatters.js'
 import { confirmAction, showErrorMessage, showSuccessMessage } from '../utils/errorHandler.js'
 import ReportService from '../services/ReportService.js'
 
@@ -340,6 +341,7 @@ export default {
         },
     },
     methods: {
+        formatDaysLabel,
         ...mapActions('absences', [
             'fetchAbsences',
             'fetchVacationStats',

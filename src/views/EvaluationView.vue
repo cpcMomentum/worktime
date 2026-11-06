@@ -54,7 +54,7 @@
                 </div>
                 <div class="kpi-card">
                     <div class="kpi-lab">{{ t('worktime', 'Urlaub genommen') }}</div>
-                    <div class="kpi-num">{{ teamKpis.vacationUsed }} <span class="kpi-sub">/ {{ teamKpis.vacationTotal }} {{ t('worktime', 'Tage') }}</span></div>
+                    <div class="kpi-num">{{ teamKpis.vacationUsed }} <span class="kpi-sub">/ {{ formatDaysLabel(teamKpis.vacationTotal) }}</span></div>
                 </div>
             </div>
             <NcLoadingIcon v-if="teamLoading" :size="44" />
@@ -346,6 +346,7 @@ import YearPicker from '../components/YearPicker.vue'
 import TeamYearTable from '../components/TeamYearTable.vue'
 import ReportService from '../services/ReportService.js'
 import { formatMinutes } from '../utils/timeUtils.js'
+import { formatDaysLabel } from '../utils/formatters.js'
 import { formatDate as formatDateUtil, getMonthName } from '../utils/dateUtils.js'
 import { textColorOn } from '../utils/colorUtils.js'
 import { showErrorMessage } from '../utils/errorHandler.js'
@@ -640,6 +641,7 @@ export default {
         this.$store.dispatch('employees/fetchEmployees')
     },
     methods: {
+        formatDaysLabel,
         textColorOn,
         /**
          * Der aktive Filter-Chip nimmt die Projektfarbe als Hintergrund. Die
