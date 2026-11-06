@@ -734,9 +734,9 @@ class PdfService {
 
         // Left column
         $pdf->Cell(50, 6, $workingDaysLabel, 0, 0);
-        $pdf->Cell(30, 6, (string)$statistics['workingDays'], 0, 0);
+        $pdf->Cell(30, 6, $this->formatDayCount((float)$statistics['workingDays']), 0, 0);
         $pdf->Cell(50, 6, $this->l->t('Feiertage:'), 0, 0);
-        $pdf->Cell(0, 6, (string)$statistics['holidayCount'], 0, 1);
+        $pdf->Cell(0, 6, $this->formatDayCount((float)$statistics['holidayCount']), 0, 1);
 
         $pdf->Cell(50, 6, $this->l->t('Abwesenheitstage:'), 0, 0);
         $pdf->Cell(30, 6, $this->fmt->number((float)$statistics['absenceDays'], 1), 0, 0);
@@ -822,6 +822,11 @@ class PdfService {
         $pdf->Cell($lineWidth, 5, $this->l->t('Mitarbeiter'), 0, 0, 'C');
         $pdf->Cell($gap, 5, '', 0, 0);
         $pdf->Cell($lineWidth, 5, $this->l->t('Vorgesetzter'), 0, 1, 'C');
+    }
+
+    /** Half holidays make day counts fractional; whole days stay without decimals. */
+    private function formatDayCount(float $days): string {
+        return $this->fmt->number($days, floor($days) === $days ? 0 : 1);
     }
 
     private function formatMinutes(int $minutes): string {

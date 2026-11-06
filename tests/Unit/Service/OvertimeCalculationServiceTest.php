@@ -184,6 +184,10 @@ class OvertimeCalculationServiceTest extends TestCase {
         // Single-day ranges → 1 working day; whole-month call is irrelevant here.
         $ws->method('countWorkingDays')->willReturn(1.0);
         $ws->method('calculateTargetMinutes')->willReturn(480);
+        // One holiday on a working day, 2026-06-04; the count follows the range it is asked for.
+        $ws->method('countHolidayDays')->willReturnCallback(
+            static fn (int $id, DateTime $start, DateTime $end) => ($start <= new DateTime('2026-06-04') && $end >= new DateTime('2026-06-04')) ? 1.0 : 0.0
+        );
 
         return new class(
             $ws,
@@ -265,5 +269,52 @@ class OvertimeCalculationServiceTest extends TestCase {
         $stats = $service->getMonthlyStats($employee, 2026, 6, [], [], []);
 
         $this->assertSame(480, $stats['monthlyTargetMinutes']);
+    }
+
+    // ---------------------------------------------------------------------
+    // #797: the holiday count matches the holidays that lower the target
+    // ---------------------------------------------------------------------
+
+    public function testHolidayCountUsesTheScheduleAwareCount(): void {
+        $service = $this->futureMonthService('2026-07-15');
+        $employee = new Employee();
+        $employee->setId(1);
+
+        // Two holiday records, but only one falls on a working day.
+        $stats = $service->getMonthlyStats($employee, 2026, 6, [], [], [$this->holiday('2026-06-04', 1.0), $this->holiday('2026-06-07', 1.0)]);
+
+        $this->assertSame(1.0, $stats['holidayCount']);
+    }
+
+    public function testHolidayBeforeEntryDateIsNotCounted(): void {
+        $service = $this->futureMonthService('2026-07-15');
+        $employee = new Employee();
+        $employee->setId(1);
+        $employee->setEntryDate(new DateTime('2026-06-15'));
+
+        $stats = $service->getMonthlyStats($employee, 2026, 6, [], [], [$this->holiday('2026-06-04', 1.0)]);
+
+        $this->assertSame(0.0, $stats['holidayCount']);
+    }
+
+    public function testHolidayDuringRestingSpellIsNotCounted(): void {
+        $service = $this->futureMonthService('2026-07-15');
+        $employee = new Employee();
+        $employee->setId(1);
+        $employee->setRestingFrom(new DateTime('2026-05-01'));
+
+        $stats = $service->getMonthlyStats($employee, 2026, 6, [], [], [$this->holiday('2026-06-04', 1.0)]);
+
+        $this->assertSame(0.0, $stats['holidayCount']);
+    }
+
+    public function testRangeHolidayCountUsesTheScheduleAwareCount(): void {
+        $service = $this->futureMonthService('2026-07-15');
+        $employee = new Employee();
+        $employee->setId(1);
+
+        $stats = $service->getRangeStats($employee, new DateTime('2026-06-01'), new DateTime('2026-06-30'), [], [], [$this->holiday('2026-06-04', 1.0), $this->holiday('2026-06-07', 1.0)]);
+
+        $this->assertSame(1.0, $stats['holidayCount']);
     }
 }
