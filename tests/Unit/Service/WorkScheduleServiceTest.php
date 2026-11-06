@@ -553,4 +553,32 @@ class WorkScheduleServiceTest extends TestCase {
 
         $this->assertEqualsWithDelta(4.0, $days, 0.0001);
     }
+
+    /** 24.12. und 31.12. halb, 25.12. Freitag ganz, 26.12. Samstag gar nicht. */
+    public function testCountHolidayDaysOnlyCountsScheduledDays(): void {
+        $this->mapper->method('findByEmployeeAndDateRange')->willReturn([$this->scheduleAt('2020-01-01', 30, 5)]);
+
+        $days = $this->service->countHolidayDays(1, new DateTime('2026-12-01'), new DateTime('2026-12-31'), $this->christmas2026(0.5));
+
+        $this->assertEqualsWithDelta(2.0, $days, 0.0001);
+    }
+
+    /** Der gemeldete Fall: Ostersonntag senkt das Soll nicht und zählt deshalb nicht mit. */
+    public function testCountHolidayDaysIgnoresSunday(): void {
+        $this->mapper->method('findByEmployeeAndDateRange')->willReturn([$this->scheduleAt('2020-01-01', 30, 5)]);
+        $easter = [$this->holiday('2026-04-03', 1.0), $this->holiday('2026-04-05', 1.0), $this->holiday('2026-04-06', 1.0)];
+
+        $days = $this->service->countHolidayDays(1, new DateTime('2026-04-01'), new DateTime('2026-04-30'), $easter);
+
+        $this->assertEqualsWithDelta(2.0, $days, 0.0001);
+    }
+
+    /** Teilzeit Mo–Do: ein Feiertag am Freitag senkt das Soll nicht. */
+    public function testCountHolidayDaysFollowsPartTimeSchedule(): void {
+        $this->mapper->method('findByEmployeeAndDateRange')->willReturn([$this->scheduleAt('2020-01-01', 24, 4)]);
+
+        $days = $this->service->countHolidayDays(1, new DateTime('2026-11-02'), new DateTime('2026-11-06'), [$this->holiday('2026-11-06', 1.0)]);
+
+        $this->assertEqualsWithDelta(0.0, $days, 0.0001);
+    }
 }

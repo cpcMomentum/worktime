@@ -111,4 +111,17 @@ class CompensatoryOvertimeArchiveTest extends TestCase {
 		// Worked 4320 against a 4800 target that stays intact for FZA: 4320 - 4800 = -480.
 		$this->assertSame(-480, $overtime);
 	}
+
+	public function testArchivedHolidayCountOnlyIncludesScheduledHolidays(): void {
+		$schedule = $this->schedule(targetMinutes: 4800, dailyMinutes: 480, workingDays: 10);
+		$schedule->method('countHolidayDays')->willReturn(2.0);
+		$method = new ReflectionMethod(ArchiveService::class, 'calculateMonthlyStats');
+		$method->setAccessible(true);
+
+		// Three holiday records (Easter), of which Easter Sunday does not lower the target.
+		$holidays = [new \OCA\WorkTime\Db\Holiday(), new \OCA\WorkTime\Db\Holiday(), new \OCA\WorkTime\Db\Holiday()];
+		$stats = $method->invoke($this->makeService($schedule), $this->employee(), 2026, 4, [], [], $holidays);
+
+		$this->assertSame(2.0, $stats['holidayCount']);
+	}
 }

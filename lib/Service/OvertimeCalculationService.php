@@ -142,7 +142,7 @@ class OvertimeCalculationService {
         $entryCount = count($timeEntries);
         if ($startDate > $endDate) {
             return [
-                'workingDays' => 0, 'holidayCount' => count($holidays),
+                'workingDays' => 0, 'holidayCount' => 0,
                 'paidAbsenceDays' => 0, 'targetReductionDays' => 0, 'compensatoryDays' => 0,
                 'absenceDays' => 0, 'adjustedTargetMinutes' => 0, 'actualMinutes' => 0,
                 'overtimeMinutes' => 0, 'entryCount' => $entryCount,
@@ -151,6 +151,7 @@ class OvertimeCalculationService {
 
         $workingDays = $this->workScheduleService->countWorkingDays($employeeId, $startDate, $endDate, $holidays);
         $targetMinutes = $this->workScheduleService->calculateTargetMinutes($employeeId, $startDate, $endDate, $holidays);
+        $holidayDays = $this->workScheduleService->countHolidayDays($employeeId, $startDate, $endDate, $holidays);
 
         // #497: no target accrues while the employee is on a resting spell
         // (Elternzeit, Langzeiterkrankung, …). Subtract the resting window's share
@@ -160,6 +161,7 @@ class OvertimeCalculationService {
         if ($restStart !== null) {
             $workingDays = max(0.0, $workingDays - $this->workScheduleService->countWorkingDays($employeeId, $restStart, $restEnd, $holidays));
             $targetMinutes = max(0, $targetMinutes - $this->workScheduleService->calculateTargetMinutes($employeeId, $restStart, $restEnd, $holidays));
+            $holidayDays = max(0.0, $holidayDays - $this->workScheduleService->countHolidayDays($employeeId, $restStart, $restEnd, $holidays));
         }
 
         $targetReductionTypes = [Absence::TYPE_UNPAID];
@@ -222,7 +224,7 @@ class OvertimeCalculationService {
 
         return [
             'workingDays' => $workingDays,
-            'holidayCount' => count($holidays),
+            'holidayCount' => $holidayDays,
             'paidAbsenceDays' => $paidAbsenceDays,
             'targetReductionDays' => $targetReductionDays,
             'compensatoryDays' => $compensatoryDays,
@@ -302,7 +304,7 @@ class OvertimeCalculationService {
                 'workingDays' => $workingDaysMonth,
                 'workingDaysMonth' => $workingDaysMonth,
                 'workingDaysUntilToday' => 0,
-                'holidayCount' => count($holidays),
+                'holidayCount' => $this->workScheduleService->countHolidayDays($employeeId, $startDate, $monthEndDate, $holidays),
                 'paidAbsenceDays' => $absenceDaysMonth,
                 'targetReductionDays' => 0,
                 'compensatoryDays' => 0,
@@ -358,7 +360,9 @@ class OvertimeCalculationService {
         // #497: no target accrues during a resting spell — subtract its share from
         // both the full-month and the proportional-until-today figures.
         [$restStart, $restEnd] = $this->restingOverlap($employee, $startDate, $monthEndDate);
+        $holidayDaysMonth = $this->workScheduleService->countHolidayDays($employeeId, $startDate, $monthEndDate, $holidays);
         if ($restStart !== null) {
+            $holidayDaysMonth = max(0.0, $holidayDaysMonth - $this->workScheduleService->countHolidayDays($employeeId, $restStart, $restEnd, $holidays));
             $workingDaysMonth = max(0.0, $workingDaysMonth - $this->workScheduleService->countWorkingDays($employeeId, $restStart, $restEnd, $holidays));
             $monthlyTargetMinutes = max(0, $monthlyTargetMinutes - $this->workScheduleService->calculateTargetMinutes($employeeId, $restStart, $restEnd, $holidays));
         }
@@ -494,7 +498,7 @@ class OvertimeCalculationService {
             'workingDays' => $workingDaysMonth,
             'workingDaysMonth' => $workingDaysMonth,
             'workingDaysUntilToday' => $workingDaysUntilToday,
-            'holidayCount' => count($holidays),
+            'holidayCount' => $holidayDaysMonth,
             'paidAbsenceDays' => $paidAbsenceDaysMonth,
             'targetReductionDays' => $targetReductionDaysMonth,  // Unpaid leave
             'compensatoryDays' => $compensatoryDaysMonth,

@@ -50,11 +50,11 @@
             <div class="overtime-details__section">
                 <h4>{{ t('worktime', 'Soll-Berechnung') }}</h4>
                 <div class="detail-row">
-                    <span>{{ t('worktime', 'Arbeitstage ({count})', { count: statistics.workingDays }) }}</span>
+                    <span>{{ t('worktime', 'Arbeitstage ({count})', { count: dayCount(statistics.workingDays) }) }}</span>
                     <span class="detail-value">{{ formatMinutes(statistics.monthlyTargetMinutes) }}</span>
                 </div>
                 <div v-if="statistics.holidayCount > 0" class="detail-row info">
-                    <span>{{ t('worktime', 'davon Feiertage ({count})', { count: statistics.holidayCount }) }}</span>
+                    <span>{{ t('worktime', 'davon Feiertage ({count})', { count: dayCount(statistics.holidayCount) }) }}</span>
                     <span class="detail-value"></span>
                 </div>
                 <div v-if="statistics.targetReductionDays > 0" class="detail-row subtract">
@@ -96,6 +96,7 @@ import ChevronDown from 'vue-material-design-icons/ChevronDown.vue'
 import ChevronUp from 'vue-material-design-icons/ChevronUp.vue'
 import { formatMinutesWithUnit, formatMinutes as formatHM } from '../utils/timeUtils.js'
 import { getMonthName } from '../utils/dateUtils.js'
+import { formatNumber } from '../utils/formatters.js'
 import InfoIcon from '../components/InfoIcon.vue'
 
 export default {
@@ -234,6 +235,11 @@ export default {
         },
         absHoursLabel(minutes) {
             return formatHM(Math.abs(minutes))
+        },
+        // Half holidays (24.12., 31.12.) make day counts fractional.
+        dayCount(value) {
+            const days = Number(value) || 0
+            return formatNumber(days, Number.isInteger(days) ? 0 : 1)
         },
     },
 }

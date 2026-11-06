@@ -215,7 +215,7 @@ class ArchiveService {
 
         return [
             'workingDays' => $workingDays,
-            'holidayCount' => count($holidays),
+            'holidayCount' => $this->workScheduleService->countHolidayDays($employeeId, $startDate, $endDate, $holidays),
             'absenceDays' => $absenceDays,
             'dailyMinutes' => $dailyMinutes,
             'targetMinutes' => $targetMinutes,
