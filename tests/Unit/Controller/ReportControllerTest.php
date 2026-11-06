@@ -55,7 +55,11 @@ class ReportControllerTest extends TestCase {
         $this->permissionService = $this->createMock(PermissionService::class);
         $this->permissionService->method('canManageEmployees')->willReturn(true);
 
-        $this->controller = new ReportController(
+        $this->controller = $this->controllerWith($this->l10n('de', 'de_DE'));
+    }
+
+    private function controllerWith(IL10N $l): ReportController {
+        return new ReportController(
             $this->createMock(IRequest::class),
             'admin',
             $this->createMock(TimeEntryService::class),
@@ -71,9 +75,23 @@ class ReportControllerTest extends TestCase {
             $this->createMock(OvertimePayoutService::class),
             $this->createMock(OvertimeCalculationService::class),
             $this->projectService,
-            $this->createMock(IL10N::class),
+            $l,
             $this->dtzMock(),
         );
+    }
+
+    /** IL10N double backed by the shipped catalog; German returns the source strings. */
+    private function l10n(string $lang, string $locale): IL10N {
+        $catalog = $lang === 'de'
+            ? []
+            : json_decode((string)file_get_contents(__DIR__ . "/../../../l10n/$lang.json"), true)['translations'];
+        $l = $this->createMock(IL10N::class);
+        $l->method('t')->willReturnCallback(
+            static fn (string $text, $params = []) => vsprintf($catalog[$text] ?? $text, (array)$params)
+        );
+        $l->method('getLanguageCode')->willReturn($lang);
+        $l->method('getLocaleCode')->willReturn($locale);
+        return $l;
     }
 
     private function project(int $id, string $name, bool $billable): Project {
@@ -238,6 +256,24 @@ class ReportControllerTest extends TestCase {
         $this->assertStringContainsString('Acme', $csv);
         $this->assertStringContainsString('15.06.2026', $csv);
         $this->assertStringContainsString('2,00', $csv);     // 120 min as decimal hours
+    }
+
+    public function testProjectsCsvUsesTheUserLanguage(): void {
+        $this->projectService->method('findAll')->willReturn([$this->project(2, 'Acme', true)]);
+        $this->employeeService->method('findAll')->willReturn([$this->employee(5, 'Test', 'User')]);
+        $this->timeEntryMapper->method('findByDateRange')->willReturn([
+            $this->timeEntry(10, '2026-06-15', 0, 5, 90, 'Work'),
+        ]);
+
+        $response = $this->controllerWith($this->l10n('en', 'en_US'))->projectsCsv(2026, 6, 'month', false, '', '', 'detail');
+        $csv = $response->render();
+
+        $this->assertStringContainsString('"Date";"Time";"Project";"Project Code";"Customer";"Employee";"Hours";"Activity"', $csv);
+        $this->assertStringContainsString('"Jun 15, 2026";"";"No Project"', $csv);
+        $this->assertStringContainsString('"1.50"', $csv);
+        // getHeaders() needs a running server; the disposition header is set in the constructor.
+        $headers = (new \ReflectionProperty(\OCP\AppFramework\Http\Response::class, 'headers'))->getValue($response);
+        $this->assertStringContainsString('Project_report_June-2026.csv', $headers['Content-Disposition']);
     }
 
     public function testProjectsCsvAggModeSumsMinutesPerEmployee(): void {

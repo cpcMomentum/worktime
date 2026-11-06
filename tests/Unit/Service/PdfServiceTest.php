@@ -14,6 +14,7 @@ use OCA\WorkTime\Service\CompanySettingsService;
 use OCA\WorkTime\Service\PdfService;
 use OCA\WorkTime\Service\WorkScheduleService;
 use OCP\Files\IRootFolder;
+use OCP\IL10N;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
@@ -33,11 +34,26 @@ class PdfServiceTest extends TestCase {
             $this->createMock(IRootFolder::class),
             $this->createMock(ProjectMapper::class),
             $this->createMock(WorkScheduleService::class),
+            $this->l10n('de', 'de_DE'),
         );
         $this->buildDayRows = new ReflectionMethod(PdfService::class, 'buildDayRows');
         $this->buildDayRows->setAccessible(true);
         $this->buildDayRowsBetween = new ReflectionMethod(PdfService::class, 'buildDayRowsBetween');
         $this->buildDayRowsBetween->setAccessible(true);
+    }
+
+    /** IL10N double backed by the shipped catalog; German returns the source strings. */
+    private function l10n(string $lang, string $locale): IL10N {
+        $catalog = $lang === 'de'
+            ? []
+            : json_decode((string)file_get_contents(__DIR__ . "/../../../l10n/$lang.json"), true)['translations'];
+        $l = $this->createMock(IL10N::class);
+        $l->method('t')->willReturnCallback(
+            static fn (string $text, $params = []) => vsprintf($catalog[$text] ?? $text, (array)$params)
+        );
+        $l->method('getLanguageCode')->willReturn($lang);
+        $l->method('getLocaleCode')->willReturn($locale);
+        return $l;
     }
 
     /**
@@ -244,6 +260,76 @@ class PdfServiceTest extends TestCase {
         $this->assertSame('-', $row['start']);
         $this->assertSame('', $row['note']);
         $this->assertTrue($row['fill']);
+    }
+
+    public function testEnglishDayRowsAreTranslated(): void {
+        $english = $this->l10n('en', 'en_US');
+        $absences = [$this->absence(Absence::TYPE_COMPENSATORY, '2026-06-15', '2026-06-15', Absence::STATUS_APPROVED, 0.5)];
+        $entries = [$this->entry('2026-06-15', '08:00', '12:00', 0, 240, null, 'Morning')];
+        $holidays = [$this->holiday('2026-06-18', 'Test holiday')];
+
+        // The language is chosen per report; generating once switches the service to English.
+        $this->service->generateMonthlyReport($this->employee(), 2026, 6, [], [], [], $this->stats(), null, $english);
+        $byDay = $this->rowsByDay($entries, $absences, $holidays, 2026, 6);
+
+        $this->assertArrayHasKey('Jun 18, 2026', $byDay);
+        $this->assertSame('Thu', $byDay['Jun 18, 2026'][0]['day']);
+        $this->assertSame('Public holiday: Test holiday', $byDay['Jun 18, 2026'][0]['note']);
+        $this->assertStringEndsWith('(half day)', $byDay['Jun 15, 2026'][1]['note']);
+        $this->assertStringNotContainsString('Freizeitausgleich', $byDay['Jun 15, 2026'][1]['note']);
+    }
+
+    public function testEnglishMonthlyPdfContainsNoGermanFixedText(): void {
+        $employee = $this->employee();
+        $employee->setFirstName('Lea');
+        $employee->setLastName('Test');
+        $absences = [$this->absence(Absence::TYPE_VACATION, '2026-06-08', '2026-06-09', Absence::STATUS_APPROVED)];
+        $absences[0]->setDays('2.00');
+        $approval = ['submittedBy' => $employee, 'submittedAt' => new DateTime('2026-07-01 09:00'), 'approvedBy' => $employee, 'approvedAt' => new DateTime('2026-07-02 10:30')];
+
+        $text = $this->pdfText($this->service->generateMonthlyReport(
+            $employee, 2026, 6, [], $absences, [], $this->stats(), $approval, $this->l10n('en', 'en_US')
+        ));
+
+        foreach (['Timesheet', 'June 2026', 'Summary', 'Working days in month:', 'Approval record', 'Vacation', 'Place, date'] as $english) {
+            $this->assertStringContainsString($english, $text);
+        }
+        foreach (['Arbeitszeitnachweis', 'Zusammenfassung', 'Arbeitstage', 'Mitarbeiter', 'Bemerkung', 'Urlaub', 'Genehmigt', 'Std.', 'Tage', 'Uhr'] as $german) {
+            $this->assertStringNotContainsString($german, $text);
+        }
+    }
+
+    public function testGermanStaysTheDefaultLanguage(): void {
+        $this->service->generateMonthlyReport($this->employee(), 2026, 6, [], [], [], $this->stats(), null, $this->l10n('en', 'en_US'));
+
+        // A report without an explicit language falls back to the request language again.
+        $text = $this->pdfText($this->service->generateMonthlyReport($this->employee(), 2026, 6, [], [], [], $this->stats()));
+
+        $this->assertStringContainsString('Arbeitszeitnachweis', $text);
+        $this->assertStringNotContainsString('Timesheet', $text);
+    }
+
+    private function employee(): Employee {
+        $employee = new Employee();
+        $employee->setId(1);
+        return $employee;
+    }
+
+    private function stats(): array {
+        return [
+            'workingDays' => 22, 'holidayCount' => 0, 'absenceDays' => 2.0, 'entryCount' => 0,
+            'adjustedTargetMinutes' => 9600, 'actualMinutes' => 0, 'overtimeMinutes' => -9600,
+        ];
+    }
+
+    /** Uncompressed content streams; dropping the UTF-16 high bytes leaves ASCII labels readable. */
+    private function pdfText(string $pdf): string {
+        preg_match_all('/stream\r?\n(.*?)\r?\nendstream/s', $pdf, $matches);
+        $text = '';
+        foreach ($matches[1] as $stream) {
+            $text .= @gzuncompress($stream) ?: $stream;
+        }
+        return str_replace("\0", '', $text);
     }
 
     // --- Archive path sanitising (#537) -----------------------------------
