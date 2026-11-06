@@ -93,7 +93,7 @@
                                         :options="scopeOptions"
                                         :clearable="false"
                                         class="scope-select" />
-                                    <span class="days-value">{{ calculatedDays }} {{ t('worktime', 'Tage') }}</span>
+                                    <span class="days-value">{{ calculatedDays }}</span>
                                 </template>
                             </div>
                         </div>
@@ -145,7 +145,7 @@ import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import CloseIcon from 'vue-material-design-icons/Close.vue'
 import ContentSaveIcon from 'vue-material-design-icons/ContentSave.vue'
 import { formatDateISO, getLocale, parseISODate } from '../utils/dateUtils.js'
-import { formatDateWithWeekday, getAbsenceTypeLabel, getStatusLabel } from '../utils/formatters.js'
+import { formatDateWithWeekday, formatDaysLabel, getAbsenceTypeLabel, getStatusLabel } from '../utils/formatters.js'
 import AbsenceService from '../services/AbsenceService.js'
 
 const PREVIEW_DEBOUNCE_MS = 300
@@ -236,9 +236,9 @@ export default {
             // Betriebsschließung ist nicht beantragbar — entsteht nur zentral (#15 Stufe 2).
             return Object.entries(this.absenceTypes)
                 .filter(([value]) => value !== 'company_closure')
-                .map(([value, label]) => ({
+                .map(([value]) => ({
                     id: value,
-                    label,
+                    label: getAbsenceTypeLabel(value),
                 }))
         },
         selectedType: {
@@ -286,7 +286,7 @@ export default {
         },
         calculatedDays() {
             if (this.previewDays === null) return '–'
-            return this.formatDays(this.previewDays)
+            return formatDaysLabel(this.previewDays)
         },
         quotaAvailable() {
             if (!this.vacationStats) return Infinity

@@ -655,6 +655,9 @@ class AbsenceServiceTest extends TestCase {
         $statuses = array_column($result[0]['absences'], 'status');
         $this->assertSame([Absence::STATUS_APPROVED], $statuses);
         $this->assertNotContains(Absence::STATUS_PENDING, $statuses);
+        // Detail 'hidden': masked type with a translated name.
+        $this->assertSame(Absence::TYPE_MASKED, $result[0]['absences'][0]['type']);
+        $this->assertSame('Abwesend', $result[0]['absences'][0]['typeName']);
     }
 
     // ---------------------------------------------------------------------

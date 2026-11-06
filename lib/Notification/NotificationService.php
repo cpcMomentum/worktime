@@ -69,6 +69,7 @@ class NotificationService {
 
 			$params = [
 				'employeeName' => $employee->getFullName(),
+				'absenceType' => $absence->getType(),
 				'typeName' => $absence->getTypeName(),
 				'startDate' => $absence->getStartDate()->format('d.m.'),
 				'endDate' => $absence->getEndDate()->format('d.m.'),
@@ -209,6 +210,7 @@ class NotificationService {
 
 			$notification = $this->createNotification($subject, $supervisorUserId, [
 				'employeeName' => $employee->getFullName(),
+				'absenceType' => $absence->getType(),
 				'typeName' => $absence->getTypeName(),
 				'startDate' => $absence->getStartDate()->format('d.m.'),
 				'endDate' => $absence->getEndDate()->format('d.m.'),
@@ -229,6 +231,7 @@ class NotificationService {
 			$employee = $this->employeeMapper->find($absence->getEmployeeId());
 
 			$params = [
+				'absenceType' => $absence->getType(),
 				'typeName' => $absence->getTypeName(),
 				'startDate' => $absence->getStartDate()->format('d.m.'),
 				'endDate' => $absence->getEndDate()->format('d.m.'),

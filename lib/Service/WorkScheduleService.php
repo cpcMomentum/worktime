@@ -410,6 +410,33 @@ class WorkScheduleService {
         return $workingDays;
     }
 
+    /** Holidays that lower the target: scheduled working days only, half holidays count 0.5. */
+    public function countHolidayDays(int $employeeId, DateTime $start, DateTime $end, array $holidays): float {
+        $holidayMap = [];
+        foreach ($holidays as $holiday) {
+            $holidayMap[$holiday->getDate()->format('Y-m-d')] = $holiday;
+        }
+        if ($holidayMap === []) {
+            return 0.0;
+        }
+
+        $holidayDays = 0.0;
+        foreach ($this->buildSegments($employeeId, $start, $end) as $segment) {
+            /** @var WorkSchedule $schedule */
+            $schedule = $segment['schedule'];
+            $current = clone $segment['start'];
+            while ($current <= $segment['end']) {
+                $dateStr = $current->format('Y-m-d');
+                if (isset($holidayMap[$dateStr]) && $schedule->isWorkingDay((int)$current->format('N'))) {
+                    $holidayDays += $holidayMap[$dateStr]->getScopeValue();
+                }
+                $current->modify('+1 day');
+            }
+        }
+
+        return $holidayDays;
+    }
+
     /**
      * Get the daily target minutes for a specific date.
      */

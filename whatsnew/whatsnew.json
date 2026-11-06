@@ -1,4 +1,44 @@
 {
+	"0.24.3": [
+		{
+			"title": {
+				"de": "Berichte in Ihrer Sprache",
+				"en": "Reports in your language",
+				"cs": "Výkazy ve vašem jazyce"
+			},
+			"text": {
+				"de": "Arbeitszeitnachweis und Projektauswertung erscheinen jetzt als PDF und CSV in der Sprache, die Sie in Nextcloud eingestellt haben. Auch Abwesenheitstypen werden überall übersetzt.",
+				"en": "Timesheets and project reports are now created as PDF and CSV in the language you have set in Nextcloud. Absence types are translated everywhere as well.",
+				"cs": "Výkaz pracovní doby a vyhodnocení projektů se nyní vytvářejí jako PDF a CSV v jazyce, který máte nastavený v Nextcloudu. Typy nepřítomnosti jsou také všude přeložené."
+			},
+			"icon": "file-document",
+			"where": {
+				"de": "Zeiterfassung › PDF Monatsbericht",
+				"en": "Time Tracking › PDF monthly report",
+				"cs": "Evidence pracovní doby › PDF měsíční zpráva"
+			},
+			"plus": false
+		},
+		{
+			"title": {
+				"de": "Feiertage richtig gezählt",
+				"en": "Public holidays counted correctly",
+				"cs": "Svátky se počítají správně"
+			},
+			"text": {
+				"de": "Die Monatsübersicht zählt nur noch Feiertage, die Ihr Soll wirklich senken. Feiertage am Wochenende oder an Ihren freien Tagen zählen nicht mehr mit, Heiligabend und Silvester als halber Tag.",
+				"en": "The monthly overview now only counts public holidays that actually lower your target hours. Holidays on weekends or your days off no longer count, Christmas Eve and New Year's Eve count as half a day.",
+				"cs": "Měsíční přehled nyní počítá jen svátky, které skutečně snižují váš plán. Svátky o víkendu nebo ve vaše volné dny se už nepočítají, Štědrý den a Silvestr se počítají jako půl dne."
+			},
+			"icon": "counter",
+			"where": {
+				"de": "Zeiterfassung › Berechnung anzeigen",
+				"en": "Time Tracking › Show calculation",
+				"cs": "Evidence pracovní doby › Zobrazit výpočet"
+			},
+			"plus": false
+		}
+	],
 	"0.24.2": [
 		{
 			"title": {

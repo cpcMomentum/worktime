@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace OCA\WorkTime\Controller;
 
-use OCA\WorkTime\Db\Absence;
 use OCA\WorkTime\Service\AbsenceService;
 use OCA\WorkTime\Service\EmployeeService;
 use OCA\WorkTime\Service\LocalDate;
@@ -481,7 +480,7 @@ class AbsenceController extends BaseController {
 
     #[NoAdminRequired]
     public function types(): JSONResponse {
-        return $this->successResponse(Absence::TYPES);
+        return $this->successResponse($this->absenceService->getTypeLabels());
     }
 
     #[NoAdminRequired]

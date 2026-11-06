@@ -148,7 +148,7 @@
                                 </div>
                             </td>
                             <td><span class="kind sick"><span class="kind-dot"></span>{{ getAbsenceTypeLabel(absence.type) }}</span></td>
-                            <td class="detail">{{ formatDate(absence.startDate) }} – {{ formatDate(absence.endDate) }} · {{ absence.days }} {{ t('worktime', 'Tage') }}</td>
+                            <td class="detail">{{ formatDate(absence.startDate) }} – {{ formatDate(absence.endDate) }} · {{ formatDaysLabel(absence.days) }}</td>
                             <td class="actions-col"></td>
                         </tr>
                     </tbody>
@@ -277,7 +277,7 @@ import { mapGetters } from 'vuex'
 import TimeEntryService from '../services/TimeEntryService.js'
 import AbsenceService from '../services/AbsenceService.js'
 import { formatDate } from '../utils/dateUtils.js'
-import { getAbsenceTypeLabel } from '../utils/formatters.js'
+import { formatDaysLabel, getAbsenceTypeLabel } from '../utils/formatters.js'
 import { formatMinutes } from '../utils/timeUtils.js'
 import { showSuccess, showError } from '@nextcloud/dialogs'
 import InfoIcon from '../components/InfoIcon.vue'
@@ -402,7 +402,7 @@ export default {
                 employeeName: a.employeeName,
                 employeeUserId: a.employeeUserId,
                 typeLabel: getAbsenceTypeLabel(a.type),
-                detail: `${formatDate(a.startDate)} – ${formatDate(a.endDate)} · ${a.days} ${t('worktime', 'Tage')}`,
+                detail: `${formatDate(a.startDate)} – ${formatDate(a.endDate)} · ${formatDaysLabel(a.days)}`,
                 note: a.note || '',
                 waitingSince: (a.createdAt || a.startDate || '').slice(0, 10),
             }))
@@ -466,6 +466,7 @@ export default {
         }
     },
     methods: {
+        formatDaysLabel,
         getAbsenceTypeLabel,
         formatDate,
         getMonthName(month) {

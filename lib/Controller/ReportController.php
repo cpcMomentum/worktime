@@ -24,6 +24,7 @@ use OCA\WorkTime\Service\OvertimePayoutService;
 use OCA\WorkTime\Service\PdfService;
 use OCA\WorkTime\Service\PermissionService;
 use OCA\WorkTime\Service\ProjectService;
+use OCA\WorkTime\Service\ReportFormatter;
 use OCA\WorkTime\Service\TimeEntryService;
 use OCA\WorkTime\Service\WorkScheduleService;
 use OCA\WorkTime\Service\YearlyCarryoverService;
@@ -170,7 +171,7 @@ class ReportController extends BaseController {
             if ($halfDayAbsence !== null) {
                 $warnings[] = $this->l->t(
                     'Halbtägige Abwesenheit (%s) und Zeiteintrag am selben Tag.',
-                    [$halfDayAbsence->getTypeName()]
+                    [Absence::typeLabel($this->l, (string)$halfDayAbsence->getType())]
                 );
             }
 
@@ -333,7 +334,7 @@ class ReportController extends BaseController {
 
             if ($mode === 'agg') {
                 $total = max(1, $totals['totalMinutes']);
-                $lines = [implode(';', array_map([$this, 'csvCell'], ['Mitarbeiter', 'Stunden', 'Anteil']))];
+                $lines = [implode(';', array_map([$this, 'csvCell'], [$this->l->t('Mitarbeiter'), $this->l->t('Stunden'), $this->l->t('Anteil')]))];
                 foreach ($this->aggregateByEmployee($entries) as $row) {
                     $lines[] = implode(';', array_map([$this, 'csvCell'], [
                         $row['name'],
@@ -342,13 +343,17 @@ class ReportController extends BaseController {
                     ]));
                 }
             } else {
-                $headers = ['Datum', 'Zeit', 'Projekt', 'Projektcode', 'Kunde', 'Mitarbeiter', 'Stunden', 'Tätigkeit'];
+                $headers = [
+                    $this->l->t('Datum'), $this->l->t('Zeit'), $this->l->t('Projekt'), $this->l->t('Projektcode'),
+                    $this->l->t('Kunde'), $this->l->t('Mitarbeiter'), $this->l->t('Stunden'), $this->l->t('Tätigkeit'),
+                ];
                 $lines = [implode(';', array_map([$this, 'csvCell'], $headers))];
+                $fmt = new ReportFormatter($this->l);
                 foreach ($entries as $entry) {
                     $lines[] = implode(';', array_map([$this, 'csvCell'], [
-                        (new DateTime($entry['date']))->format('d.m.Y'),
+                        $fmt->date(new DateTime($entry['date'])),
                         $this->formatTimeRange($entry['startTime'] ?? null, $entry['endTime'] ?? null, ''),
-                        $entry['projectName'] ?? 'Kein Projekt',
+                        $entry['projectName'] ?? $this->l->t('Kein Projekt'),
                         $entry['projectCode'] ?? '',
                         $entry['customer'] ?? '',
                         $entry['employeeName'] ?? '',
@@ -489,7 +494,7 @@ class ReportController extends BaseController {
         foreach ($entries as $e) {
             $id = $e['employeeId'];
             if (!isset($byEmp[$id])) {
-                $byEmp[$id] = ['name' => $e['employeeName'] ?? 'Unbekannt', 'minutes' => 0];
+                $byEmp[$id] = ['name' => $e['employeeName'] ?? $this->l->t('Unbekannt'), 'minutes' => 0];
             }
             $byEmp[$id]['minutes'] += $e['minutes'];
         }
@@ -510,7 +515,7 @@ class ReportController extends BaseController {
      * @return array{projects: string, employees: string}
      */
     private function selectionLabels(array $projectIds, array $employeeIds, array $projects, array $employees): array {
-        $projectsLabel = 'Alle';
+        $projectsLabel = $this->l->t('Alle');
         if (!empty($projectIds)) {
             $names = [];
             foreach ($projectIds as $id) {
@@ -521,7 +526,7 @@ class ReportController extends BaseController {
             $projectsLabel = implode(', ', $names);
         }
 
-        $employeesLabel = 'Alle';
+        $employeesLabel = $this->l->t('Alle');
         if (!empty($employeeIds)) {
             $names = [];
             foreach ($employeeIds as $id) {
@@ -540,11 +545,16 @@ class ReportController extends BaseController {
     }
 
     private function minutesToDecimal(int $minutes): string {
-        return number_format($minutes / 60, 2, ',', '');
+        return (new ReportFormatter($this->l))->number($minutes / 60, 2, false);
     }
 
     private function exportFilename(string $label): string {
-        return 'Projektauswertung_' . preg_replace('/[^A-Za-z0-9_-]+/', '-', $label);
+        return $this->filePrefix($this->l->t('Projektauswertung')) . '_' . preg_replace('/[^\p{L}\p{N}_-]+/u', '-', $label);
+    }
+
+    /** Spaces in a translated file name prefix would break shell use of the download. */
+    private function filePrefix(string $translated): string {
+        return str_replace(' ', '_', $translated);
     }
 
     /**
@@ -569,10 +579,9 @@ class ReportController extends BaseController {
 
         // default: month
         $m = max(1, min(12, $month));
-        $months = ['', 'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
         $start = new DateTime(sprintf('%d-%02d-01', $year, $m));
         $end = (clone $start)->modify('last day of this month');
-        return [$start, $end, $months[$m] . ' ' . $year];
+        return [$start, $end, (new ReportFormatter($this->l))->monthYear($year, $m)];
     }
 
     #[NoAdminRequired]
@@ -613,7 +622,8 @@ class ReportController extends BaseController {
             );
 
             $filename = sprintf(
-                'Arbeitszeitnachweis_%s_%s_%d-%02d.pdf',
+                '%s_%s_%s_%d-%02d.pdf',
+                $this->filePrefix($this->l->t('Arbeitszeitnachweis')),
                 $employee->getLastName(),
                 $employee->getFirstName(),
                 $year,
@@ -686,10 +696,12 @@ class ReportController extends BaseController {
             );
 
             $filename = sprintf(
-                'Arbeitszeitnachweis_%s_%s_%s_bis_%s.pdf',
+                '%s_%s_%s_%s_%s_%s.pdf',
+                $this->filePrefix($this->l->t('Arbeitszeitnachweis')),
                 $employee->getLastName(),
                 $employee->getFirstName(),
                 $start->format('Y-m-d'),
+                $this->l->t('bis'),
                 $end->format('Y-m-d')
             );
 

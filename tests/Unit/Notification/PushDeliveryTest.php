@@ -36,7 +36,7 @@ class PushDeliveryTest extends TestCase {
 		// t() applies the parameters, so the assertions see the real rendered text.
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnCallback(
-			static fn (string $text, $params = []): string => vsprintf($text, (array)$params)
+			static fn (string $text, $params = []): string => vsprintf($text === 'Urlaub' ? 'Vacation' : $text, (array)$params)
 		);
 		$l10nFactory = $this->createMock(IFactory::class);
 		$l10nFactory->method('getUserLanguage')->willReturn('de');
@@ -183,5 +183,27 @@ class PushDeliveryTest extends TestCase {
 		]);
 
 		$this->addToAssertionCount(1);
+	}
+
+	public function testAbsenceTypeIsTranslatedForRecipient(): void {
+		$captured = null;
+		$this->apnsClient->method('sendToUser')
+			->with('erika', $this->callback(function (array $payload) use (&$captured): bool {
+				$captured = $payload;
+				return true;
+			}))
+			->willReturn([]);
+
+		$this->delivery->send('erika', 'absence_approved', [
+			'absenceType' => 'vacation',
+			'typeName' => 'Urlaub',
+			'startDate' => '01.08.',
+			'endDate' => '05.08.',
+		]);
+
+		$this->assertSame(
+			'Deine Abwesenheit (Vacation, 01.08. - 05.08.) wurde genehmigt',
+			$captured['aps']['alert']['body']
+		);
 	}
 }

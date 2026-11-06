@@ -966,6 +966,11 @@ class AbsenceService {
         ];
     }
 
+    /** @return array<string, string> absence type => name in the user's language */
+    public function getTypeLabels(): array {
+        return Absence::typeLabels($this->l);
+    }
+
     /** Same calculation as create(), so the form preview matches the stored days. */
     public function previewDays(int $employeeId, string $startDate, string $endDate, float $scope, string $federalState): float {
         $startDateObj = $this->parseDateOrFail($startDate, 'startDate');
@@ -1472,9 +1477,9 @@ class AbsenceService {
                 $data = $absence->jsonSerialize();
 
                 if (!$unmasked && $detail !== 'detailed') {
-                    $data['type'] = 'absent';
-                    $data['typeName'] = 'Abwesend';
+                    $data['type'] = Absence::TYPE_MASKED;
                 }
+                $data['typeName'] = Absence::typeLabel($this->l, $data['type']);
 
                 $absenceData[] = $data;
             }
