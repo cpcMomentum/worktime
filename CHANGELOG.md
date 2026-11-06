@@ -7,6 +7,17 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.24.3] - 2026-11-06
+
+### Changed
+- **Auswertungen in der Sprache des Nutzers (#822)**: Arbeitszeitnachweis (Monat und Zeitraum) und Projektauswertung (PDF und CSV) erscheinen jetzt in der eingestellten Sprache (Deutsch, Englisch, Tschechisch), einschließlich der Dateinamen. Monats- und Wochentagsnamen folgen der Sprache, Datum und Zahlen der Locale-Einstellung. Das automatisch archivierte PDF ist ein Firmennachweis und nutzt die Standardsprache der Instanz (`default_language`). Ist keine gesetzt, bleibt es wie bisher deutsch. Der Dateiname im Archiv bleibt unverändert.
+- **PDF-Schrift FreeSans statt Helvetica (#822)**: Zeichen wie č, ř, ě oder ł erschienen im PDF als „?“, auch in Mitarbeiternamen. FreeSans sieht aus wie Helvetica und enthält diese Zeichen. Ein Monatsbericht ist dadurch etwa 90 KB groß.
+
+### Fixed
+- **Abwesenheitstypen übersetzt (#814)**: Mit englischer oder tschechischer Oberfläche zeigte das Auswahlfeld „Typ“ beim Anlegen einer Abwesenheit deutsche Namen. Auch Benachrichtigungen, Push-Nachrichten und Fehlermeldungen nennen den Typ jetzt in der Sprache des Empfängers. Bestehende Benachrichtigungen behalten ihren Text.
+- **„1 Tag“ statt „1 Tage“ (#772)**: Tagesangaben in Abwesenheitsformular, Urlaubskonto, Genehmigungen und Auswertung stehen jetzt in Einzahl oder Mehrzahl.
+- **Feiertagszahl passt zum Soll (#797)**: „davon Feiertage“ in der Monatsübersicht und „Feiertage“ im PDF zählten auch Feiertage am Wochenende, an freien Tagen von Teilzeitkräften und vor dem Eintritt. Halbe Feiertage zählten als ganzer Tag. Gezählt werden jetzt nur Feiertage, die das Soll senken, halbe mit 0,5. Soll und Saldo waren schon vorher richtig.
+
 ## [0.24.2] - 2026-11-01
 
 ### Added
