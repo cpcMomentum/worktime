@@ -597,7 +597,7 @@ export default {
                 .toLocaleDateString(getLocale(), { month: 'long', year: 'numeric' })
 
             const confirmed = await confirmAction(
-                this.t('worktime', 'Möchten Sie die Zeiteinträge für {month} einreichen? Die eingereichten Einträge werden zur Genehmigung übermittelt.', { month: monthName }),
+                this.t('worktime', 'Möchtest du die Zeiteinträge für {month} einreichen? Die eingereichten Einträge werden zur Genehmigung übermittelt.', { month: monthName }),
                 this.t('worktime', 'Monat einreichen'),
                 this.t('worktime', 'Einreichen'),
                 false

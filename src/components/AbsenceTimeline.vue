@@ -111,7 +111,7 @@ export default {
 				vacation: { label: t('worktime', 'Urlaub'), description: t('worktime', 'Bezahlter Erholungsurlaub. Wird vom Urlaubskonto abgezogen.') },
 				absent: { label: t('worktime', 'Abwesend'), description: t('worktime', 'Mitarbeiter ist abwesend. Grund ist nur für Vorgesetzte sichtbar.') },
 				sick: { label: t('worktime', 'Krankheit'), description: t('worktime', 'Krankmeldung. Arbeitszeit gilt als geleistet, keine Urlaubstage.') },
-				child_sick: { label: t('worktime', 'Kind krank'), description: t('worktime', 'Ihr Kind ist krank. Wie Krankheit, keine Urlaubstage.') },
+				child_sick: { label: t('worktime', 'Kind krank'), description: t('worktime', 'Dein Kind ist krank. Wie Krankheit, keine Urlaubstage.') },
 				training: { label: t('worktime', 'Fortbildung'), description: t('worktime', 'Schulung, Seminar oder Konferenz. Zählt als Arbeitszeit.') },
 				special: { label: t('worktime', 'Sonderurlaub'), description: t('worktime', 'Bezahlte Freistellung, z.B. Hochzeit, Umzug oder Trauerfall.') },
 				compensatory: { label: t('worktime', 'Freizeitausgleich'), description: t('worktime', 'Überstunden als Freizeit nehmen. Reduziert die Überstunden.') },

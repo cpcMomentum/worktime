@@ -141,7 +141,7 @@
                     <CalendarIcon />
                 </template>
                 <template #description>
-                    {{ t('worktime', 'Sie haben noch keine Abwesenheiten eingetragen.') }}
+                    {{ t('worktime', 'Du hast noch keine Abwesenheiten eingetragen.') }}
                 </template>
             </NcEmptyContent>
             </div>
@@ -167,7 +167,7 @@
                         <span class="legend-color type-child_sick" />
                         <div class="legend-text">
                             <strong>{{ t('worktime', 'Kind krank') }}</strong>
-                            <span>{{ t('worktime', 'Ihr Kind ist krank. Wie Krankheit, keine Urlaubstage.') }}</span>
+                            <span>{{ t('worktime', 'Dein Kind ist krank. Wie Krankheit, keine Urlaubstage.') }}</span>
                         </div>
                     </div>
                     <div class="legend-item">

@@ -85,7 +85,7 @@
 
         <NcEmptyContent v-if="employees.length === 0"
             :name="t('worktime', 'Keine Mitarbeiter')"
-            :description="t('worktime', 'Legen Sie Mitarbeiter an, um die Zeiterfassung zu nutzen.')">
+            :description="t('worktime', 'Lege Mitarbeiter an, um die Zeiterfassung zu nutzen.')">
             <template #icon>
                 <AccountGroup :size="64" />
             </template>
@@ -124,7 +124,7 @@
                 <ul>
                     <li v-for="person in impact.supervisorOf" :key="'s' + person.id">{{ person.fullName }}</li>
                 </ul>
-                <p>{{ t('worktime', 'Ihre Genehmigungen laufen dann nur noch über Admin oder Personalverwaltung.') }}</p>
+                <p>{{ t('worktime', 'Deine Genehmigungen laufen dann nur noch über Admin oder Personalverwaltung.') }}</p>
             </div>
 
             <template #actions>
@@ -140,7 +140,7 @@
         <NcDialog v-if="showDeleteDialog"
             :name="t('worktime', 'Mitarbeiter löschen?')"
             @close="closeDeleteDialog">
-            <p>{{ t('worktime', 'Möchten Sie den Mitarbeiter "{name}" wirklich löschen?', { name: employeeToDelete?.fullName }) }}</p>
+            <p>{{ t('worktime', 'Möchtest du den Mitarbeiter "{name}" wirklich löschen?', { name: employeeToDelete?.fullName }) }}</p>
 
             <p v-if="deleteImpactLoading" class="impact-loading">{{ t('worktime', 'Umfang wird ermittelt …') }}</p>
 
@@ -163,7 +163,7 @@
                 <ul>
                     <li v-for="person in deleteImpact.supervisorOf" :key="'ds' + person.id">{{ person.fullName }}</li>
                 </ul>
-                <p>{{ t('worktime', 'Ihre Genehmigungen laufen dann nur noch über Admin oder Personalverwaltung.') }}</p>
+                <p>{{ t('worktime', 'Deine Genehmigungen laufen dann nur noch über Admin oder Personalverwaltung.') }}</p>
             </div>
 
             <div v-if="deleteImpact && deleteImpact.deputyFor.length > 0" class="impact-block">
@@ -174,7 +174,7 @@
             </div>
 
             <NcNoteCard type="warning">
-                {{ t('worktime', 'Diese Aktion kann nicht rückgängig gemacht werden. Für Arbeitszeitnachweise können Aufbewahrungspflichten gelten — prüfen Sie das, bevor Sie löschen.') }}
+                {{ t('worktime', 'Diese Aktion kann nicht rückgängig gemacht werden. Für Arbeitszeitnachweise können Aufbewahrungspflichten gelten — prüfe das, bevor du löschst.') }}
             </NcNoteCard>
 
             <NcNoteCard type="info">

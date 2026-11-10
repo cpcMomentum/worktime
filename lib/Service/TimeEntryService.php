@@ -1401,7 +1401,7 @@ class TimeEntryService {
                 continue;
             } else {
                 // Full-day absence: block entry completely
-                return $this->l->t('An diesem Tag haben Sie %s. Bitte stornieren Sie zuerst die Abwesenheit.', [Absence::typeLabel($this->l, (string)$absence->getType())]);
+                return $this->l->t('An diesem Tag hast du %s. Bitte storniere zuerst die Abwesenheit.', [Absence::typeLabel($this->l, (string)$absence->getType())]);
             }
         }
 

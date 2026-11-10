@@ -49,7 +49,7 @@
 
         <NcEmptyContent v-else
             :name="t('worktime', 'Keine Projekte')"
-            :description="t('worktime', 'Legen Sie Projekte an, um projektbezogene Zeiterfassung zu nutzen.')">
+            :description="t('worktime', 'Lege Projekte an, um projektbezogene Zeiterfassung zu nutzen.')">
             <template #icon>
                 <FolderOutline :size="64" />
             </template>
@@ -58,7 +58,7 @@
         <NcDialog v-if="showDeleteDialog"
             :name="t('worktime', 'Projekt löschen?')"
             @close="showDeleteDialog = false">
-            <p>{{ t('worktime', 'Möchten Sie das Projekt "{name}" wirklich löschen?', { name: projectToDelete?.name }) }}</p>
+            <p>{{ t('worktime', 'Möchtest du das Projekt "{name}" wirklich löschen?', { name: projectToDelete?.name }) }}</p>
             <p class="delete-warning">{{ t('worktime', 'Diese Aktion kann nicht rückgängig gemacht werden.') }}</p>
             <template #actions>
                 <NcButton type="tertiary" @click="showDeleteDialog = false">

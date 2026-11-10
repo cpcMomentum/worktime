@@ -52,13 +52,13 @@
                     {{ t('worktime', 'Leer lassen für Standardwerte (08:00 - 17:00).') }}
                 </p>
                 <p class="hint">
-                    {{ t('worktime', 'Ihre gewohnte Pause wird bei neuen Einträgen vorausgefüllt. Sie kann die gesetzliche Mindestpause (§4 ArbZG) nie unterschreiten — bei Bedarf wird automatisch der gesetzliche Wert verwendet. Leer lassen für die gesetzliche Mindestpause.') }}
+                    {{ t('worktime', 'Deine gewohnte Pause wird bei neuen Einträgen vorausgefüllt. Sie kann die gesetzliche Mindestpause (§4 ArbZG) nie unterschreiten — bei Bedarf wird automatisch der gesetzliche Wert verwendet. Leer lassen für die gesetzliche Mindestpause.') }}
                 </p>
             </div>
         </NcSettingsSection>
 
         <NcSettingsSection :name="t('worktime', 'Datenschutz')"
-            :description="t('worktime', 'Legen Sie fest, wer Ihre Abwesenheiten in der Abwesenheitsübersicht sehen kann. Vorgesetzte und HR sehen Ihre Abwesenheiten immer.')">
+            :description="t('worktime', 'Lege fest, wer deine Abwesenheiten in der Abwesenheitsübersicht sehen kann. Vorgesetzte und HR sehen deine Abwesenheiten immer.')">
 
             <div class="settings-form">
                 <div class="form-group">
@@ -77,7 +77,7 @@
                 </div>
 
                 <div v-if="form.absenceVisibility !== 'none'" class="form-group">
-                    <label for="absenceDetail">{{ t('worktime', 'Detailgrad') }} <InfoIcon>{{ t('worktime', 'Legt fest, ob Kollegen in der Abwesenheitsübersicht Ihren Abwesenheitsgrund sehen (z.B. Urlaub) oder nur Abwesend. Vorgesetzte und HR sehen immer den Grund.') }}</InfoIcon></label>
+                    <label for="absenceDetail">{{ t('worktime', 'Detailgrad') }} <InfoIcon>{{ t('worktime', 'Legt fest, ob Kollegen in der Abwesenheitsübersicht deinen Abwesenheitsgrund sehen (z.B. Urlaub) oder nur Abwesend. Vorgesetzte und HR sehen immer den Grund.') }}</InfoIcon></label>
                     <div class="visibility-row">
                         <NcSelect id="absenceDetail"
                             v-model="selectedDetail"
@@ -95,7 +95,7 @@
 
         <NcSettingsSection v-if="isSupervisor"
             :name="t('worktime', 'Vertretung')"
-            :description="t('worktime', 'Wählen Sie eine Person, die Ihre Genehmigungen für Ihr Team übernimmt, während Sie abwesend sind. Die Vertretung wird automatisch aktiv, sobald für Sie eine Abwesenheit genehmigt ist (z. B. Urlaub oder Krankheit) — ohne genehmigte Abwesenheit greift sie nicht. Einmal festgelegt, gilt sie für alle Ihre Abwesenheiten, bis Sie sie ändern.')">
+            :description="t('worktime', 'Wähle eine Person, die deine Genehmigungen für dein Team übernimmt, während du abwesend bist. Die Vertretung wird automatisch aktiv, sobald für dich eine Abwesenheit genehmigt ist (z. B. Urlaub oder Krankheit) — ohne genehmigte Abwesenheit greift sie nicht. Einmal festgelegt, gilt sie für alle deine Abwesenheiten, bis du sie änderst.')">
 
             <div class="settings-form">
                 <div class="form-group">

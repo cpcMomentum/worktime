@@ -160,7 +160,7 @@
                 :name="t('worktime', 'Keine offenen Genehmigungen')">
                 <template #icon><CheckIcon /></template>
                 <template #description>
-                    {{ t('worktime', 'Aktuell wartet nichts auf Ihre Genehmigung.') }}
+                    {{ t('worktime', 'Aktuell wartet nichts auf deine Genehmigung.') }}
                 </template>
             </NcEmptyContent>
             </template>

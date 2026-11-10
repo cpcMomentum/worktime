@@ -246,7 +246,7 @@ export default {
                 return
             }
             const confirmed = await confirmAction(
-                this.t('worktime', 'Möchten Sie diesen Eintrag wirklich löschen?'),
+                this.t('worktime', 'Möchtest du diesen Eintrag wirklich löschen?'),
                 this.t('worktime', 'Eintrag löschen'),
                 this.t('worktime', 'Löschen'),
                 true,
