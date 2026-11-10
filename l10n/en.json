@@ -664,9 +664,7 @@
 		"Voller Jahresanspruch bei diesem Arbeitsmuster. Bei unterjährigem Wechsel wird der tatsächliche Jahresanspruch zeitanteilig aus allen Profilen des Jahres berechnet.": "Full annual entitlement for this work pattern. On a mid-year change the actual annual entitlement is calculated pro rata from all of the year's profiles.",
 		"Vorschlag {days} bei {count} Arbeitstagen (30 × Tage ÷ 5) — anpassbar": "Suggestion {days} for {count} working days (30 × days ÷ 5) — adjustable",
 		"Resturlaub aus vorheriger Beschäftigung übernehmen": "Carry over remaining leave from previous employment",
-		"An: der volle Jahresanspruch gilt, abzüglich der bereits genommenen Tage (interner Wechsel, Umstieg auf diese App). Aus: echte Neueinstellung — nur anteilig für die Monate ab Eintritt (Teilurlaub).": "On: the full annual entitlement applies, minus the days already taken (internal transfer, switch to this app). Off: genuine new hire — prorated only for the months from the entry date (partial leave).",
 		"Davon {year} anderswo bereits gewährt/genommen": "Of which already granted/taken elsewhere in {year}",
-		"Urlaubstage, die im Eintrittsjahr bereits genommen oder ausbezahlt wurden — beim vorherigen Arbeitgeber oder vor der Umstellung auf diese App. Bei Übernahme werden sie vom vollen Anspruch abgezogen, bei Neueinstellung begrenzen sie den anteiligen Anspruch (§ 6). Ab dem Folgejahr gilt wieder der volle Jahresanspruch. Halbe Tage sind möglich.": "Leave days already taken or paid out in the entry year — at the previous employer or before switching to this app. For a takeover they are deducted from the full entitlement; for a new hire they cap the prorated entitlement (§ 6). From the following year the full annual entitlement applies again. Half days are possible.",
 		"Es läuft bereits eine Stempelung.": "A punch is already running.",
 		"Die Stempelung ist bereits pausiert.": "The punch is already paused.",
 		"Es läuft gerade keine Pause.": "No break is currently running.",
@@ -784,7 +782,6 @@
 		"Arbeitszeit pro Tag": "Working hours per day",
 		"Stunden je Wochentag laut Vertrag. Daraus berechnet WorkTime das tägliche Soll, die Wochenstunden und die Arbeitstage. Spätere Änderungen im Arbeitszeitprofil des Mitarbeiters.": "Contractual hours per weekday. WorkTime derives the daily target, the weekly hours and the working days from them. Later changes go into the employee's work schedule.",
 		"Mindestens ein Wochentag braucht Arbeitsstunden. Für eine vorübergehende Auszeit (z. B. Elternzeit) eine Abwesenheit erfassen statt 0 Stunden.": "At least one weekday needs working hours. For a temporary break (e.g. parental leave), record an absence instead of 0 hours.",
-		"Voller Jahresanspruch bei diesem Arbeitsmuster. Nicht anteilig eintragen, WorkTime rechnet das Eintrittsjahr selbst anteilig.": "Full annual entitlement for this work pattern. Do not enter a pro-rated value; WorkTime pro-rates the year of entry itself.",
 		"Fehler beim Speichern des Mitarbeiters": "Error saving the employee",
 		"Hinweis: Der Antrag umfasst {requested} Urlaubstage, der Resturlaub beträgt {available}.": "Note: this request covers {requested} vacation days, the remaining vacation is {available}.",
 		"Der Zeitraum ist für eine Vorschau zu lang": "The period is too long for a preview",
@@ -825,7 +822,10 @@
 		"Genehmigt von:": "Approved by:",
 		"Eingereicht am:": "Submitted on:",
 		"Genehmigt am:": "Approved on:",
-		"%1$s %2$s Uhr": "%1$s %2$s"
+		"%1$s %2$s Uhr": "%1$s %2$s",
+		"Voller Jahresanspruch bei diesem Arbeitsmuster. Nicht anteilig eintragen, WorkTime rechnet das Eintrittsjahr bei Eintritt nach dem 1. Juli selbst anteilig (§ 5 BUrlG).": "Full annual entitlement for this work pattern. Do not enter a pro-rated value; for an entry after July 1, WorkTime pro-rates the year of entry itself (§ 5 BUrlG).",
+		"An: der volle Jahresanspruch gilt, abzüglich der bereits genommenen Tage (interner Wechsel, Umstieg auf diese App). Aus: echte Neueinstellung. Bei Eintritt bis zum 1. Juli gilt der volle Jahresanspruch, bei späterem Eintritt nur anteilig für die Monate ab Eintritt (Teilurlaub). Anderswo gewährte Tage werden angerechnet.": "On: the full annual entitlement applies, minus the days already taken (internal transfer, switch to this app). Off: genuine new hire. For an entry by July 1, the full annual entitlement applies; for a later entry, it is prorated for the months from the entry date (partial leave). Days granted elsewhere are deducted.",
+		"Urlaubstage, die im Eintrittsjahr bereits genommen oder ausbezahlt wurden, beim vorherigen Arbeitgeber oder vor der Umstellung auf diese App. Sie werden vom Anspruch abgezogen, bei Teilurlaub begrenzen sie den anteiligen Anspruch (§ 6 BUrlG). Ab dem Folgejahr gilt wieder der volle Jahresanspruch. Halbe Tage sind möglich.": "Leave days already taken or paid out in the entry year, at the previous employer or before switching to this app. They are deducted from the entitlement; with partial leave they cap the prorated entitlement (§ 6 BUrlG). From the following year, the full annual entitlement applies again. Half days are possible."
 	},
 	"pluralForm": "nplurals=2; plural=(n != 1);"
 }

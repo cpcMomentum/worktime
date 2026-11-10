@@ -917,13 +917,13 @@ class AbsenceServiceTest extends TestCase {
     // #590: echter Neuzugang im Eintrittsjahr -> Teilurlaub (kein Übernahme)
     // ---------------------------------------------------------------------
 
-    private function newHireEmployee(?string $used): Employee {
+    private function newHireEmployee(?string $used, string $entryDate = '2026-08-01'): Employee {
         $employee = new Employee();
         $employee->setId(1);
         $employee->setFederalState('BW');
         $employee->setVacationDays(30);
         $employee->setIsActive(true);
-        $employee->setEntryDate(new DateTime('2026-08-01'));
+        $employee->setEntryDate(new DateTime($entryDate));
         $employee->setVacationDaysUsed($used);
         $employee->setVacationTransferred(false); // genuine new hire
         $this->employeeMapper->method('find')->willReturn($employee);
@@ -959,6 +959,43 @@ class AbsenceServiceTest extends TestCase {
         $this->newHireEmployee('35');
 
         $this->assertSame(0.0, $this->service->effectiveVacationDays(1, 2026));
+    }
+
+    // Wartezeit § 4 BUrlG: Teilurlaub (§ 5 Abs. 1 a) nur bei Eintritt nach dem 1. Juli.
+
+    /** Eintritt 1. April, Berufseinsteiger -> voller Anspruch 30, nicht Teilurlaub. */
+    public function testNewHireInFirstHalfGetsFullEntitlement(): void {
+        $this->newHireEmployee(null, '2026-04-01');
+
+        $this->assertSame(30.0, $this->service->effectiveVacationDays(1, 2026));
+    }
+
+    /** Eintritt 1. April, anderswo 5 gewährt -> § 6: 30 − 5 = 25. */
+    public function testNewHireInFirstHalfIsReducedByPriorGrant(): void {
+        $this->newHireEmployee('5', '2026-04-01');
+
+        $this->assertSame(25.0, $this->service->effectiveVacationDays(1, 2026));
+    }
+
+    /** Eintritt 1. April, anderswo mehr als voll gewährt -> nie negativ. */
+    public function testNewHireInFirstHalfNeverGoesNegative(): void {
+        $this->newHireEmployee('35', '2026-04-01');
+
+        $this->assertSame(0.0, $this->service->effectiveVacationDays(1, 2026));
+    }
+
+    /** Grenzfall: Eintritt 1. Juli -> Wartezeit endet am 31.12. -> voller Anspruch. */
+    public function testNewHireOnFirstOfJulyGetsFullEntitlement(): void {
+        $this->newHireEmployee(null, '2026-07-01');
+
+        $this->assertSame(30.0, $this->service->effectiveVacationDays(1, 2026));
+    }
+
+    /** Grenzfall: Eintritt 2. Juli -> Wartezeit nicht mehr erfüllbar -> Teilurlaub. */
+    public function testNewHireOnSecondOfJulyGetsProratedEntitlement(): void {
+        $this->newHireEmployee(null, '2026-07-02');
+
+        $this->assertSame(13.0, $this->service->effectiveVacationDays(1, 2026));
     }
 
     /** Folgejahr: kein Eintrittsjahr mehr -> voller Anspruch, unabhängig vom Kennzeichen. */

@@ -665,9 +665,7 @@ OC.L10N.register(
     "Voller Jahresanspruch bei diesem Arbeitsmuster. Bei unterjährigem Wechsel wird der tatsächliche Jahresanspruch zeitanteilig aus allen Profilen des Jahres berechnet." : "Voller Jahresanspruch bei diesem Arbeitsmuster. Bei unterjährigem Wechsel wird der tatsächliche Jahresanspruch zeitanteilig aus allen Profilen des Jahres berechnet.",
     "Vorschlag {days} bei {count} Arbeitstagen (30 × Tage ÷ 5) — anpassbar" : "Vorschlag {days} bei {count} Arbeitstagen (30 × Tage ÷ 5) — anpassbar",
     "Resturlaub aus vorheriger Beschäftigung übernehmen" : "Resturlaub aus vorheriger Beschäftigung übernehmen",
-    "An: der volle Jahresanspruch gilt, abzüglich der bereits genommenen Tage (interner Wechsel, Umstieg auf diese App). Aus: echte Neueinstellung — nur anteilig für die Monate ab Eintritt (Teilurlaub)." : "An: der volle Jahresanspruch gilt, abzüglich der bereits genommenen Tage (interner Wechsel, Umstieg auf diese App). Aus: echte Neueinstellung — nur anteilig für die Monate ab Eintritt (Teilurlaub).",
     "Davon {year} anderswo bereits gewährt/genommen" : "Davon {year} anderswo bereits gewährt/genommen",
-    "Urlaubstage, die im Eintrittsjahr bereits genommen oder ausbezahlt wurden — beim vorherigen Arbeitgeber oder vor der Umstellung auf diese App. Bei Übernahme werden sie vom vollen Anspruch abgezogen, bei Neueinstellung begrenzen sie den anteiligen Anspruch (§ 6). Ab dem Folgejahr gilt wieder der volle Jahresanspruch. Halbe Tage sind möglich." : "Urlaubstage, die im Eintrittsjahr bereits genommen oder ausbezahlt wurden — beim vorherigen Arbeitgeber oder vor der Umstellung auf diese App. Bei Übernahme werden sie vom vollen Anspruch abgezogen, bei Neueinstellung begrenzen sie den anteiligen Anspruch (§ 6). Ab dem Folgejahr gilt wieder der volle Jahresanspruch. Halbe Tage sind möglich.",
     "Es läuft bereits eine Stempelung." : "Es läuft bereits eine Stempelung.",
     "Die Stempelung ist bereits pausiert." : "Die Stempelung ist bereits pausiert.",
     "Es läuft gerade keine Pause." : "Es läuft gerade keine Pause.",
@@ -782,7 +780,6 @@ OC.L10N.register(
     "Arbeitszeit pro Tag" : "Pracovní doba za den",
     "Stunden je Wochentag laut Vertrag. Daraus berechnet WorkTime das tägliche Soll, die Wochenstunden und die Arbeitstage. Spätere Änderungen im Arbeitszeitprofil des Mitarbeiters." : "Smluvní hodiny pro každý den v týdnu. WorkTime z nich vypočítá denní fond, týdenní hodiny a pracovní dny. Pozdější změny se provádějí v pracovním profilu zaměstnance.",
     "Mindestens ein Wochentag braucht Arbeitsstunden. Für eine vorübergehende Auszeit (z. B. Elternzeit) eine Abwesenheit erfassen statt 0 Stunden." : "Alespoň jeden den v týdnu musí mít pracovní hodiny. Pro dočasné přerušení (např. rodičovskou dovolenou) zadejte nepřítomnost místo 0 hodin.",
-    "Voller Jahresanspruch bei diesem Arbeitsmuster. Nicht anteilig eintragen, WorkTime rechnet das Eintrittsjahr selbst anteilig." : "Plný roční nárok pro tento pracovní vzorec. Nezadávejte poměrnou hodnotu, WorkTime rok nástupu přepočítá poměrně sám.",
     "Fehler beim Speichern des Mitarbeiters" : "Chyba při ukládání zaměstnance",
     "Hinweis: Der Antrag umfasst {requested} Urlaubstage, der Resturlaub beträgt {available}." : "Upozornění: žádost zahrnuje {requested} dnů dovolené, zbývající dovolená je {available}.",
     "Der Zeitraum ist für eine Vorschau zu lang" : "Období je pro náhled příliš dlouhé",
@@ -820,6 +817,9 @@ OC.L10N.register(
     "Genehmigt von:" : "Schválil(a):",
     "Eingereicht am:" : "Odesláno dne:",
     "Genehmigt am:" : "Schváleno dne:",
-    "%1$s %2$s Uhr" : "%1$s %2$s"
+    "%1$s %2$s Uhr" : "%1$s %2$s",
+    "Voller Jahresanspruch bei diesem Arbeitsmuster. Nicht anteilig eintragen, WorkTime rechnet das Eintrittsjahr bei Eintritt nach dem 1. Juli selbst anteilig (§ 5 BUrlG)." : "Plný roční nárok pro tento pracovní vzorec. Nezadávejte poměrnou hodnotu, při nástupu po 1. červenci WorkTime rok nástupu přepočítá poměrně sám (§ 5 BUrlG).",
+    "An: der volle Jahresanspruch gilt, abzüglich der bereits genommenen Tage (interner Wechsel, Umstieg auf diese App). Aus: echte Neueinstellung. Bei Eintritt bis zum 1. Juli gilt der volle Jahresanspruch, bei späterem Eintritt nur anteilig für die Monate ab Eintritt (Teilurlaub). Anderswo gewährte Tage werden angerechnet." : "Zapnuto: platí plný roční nárok snížený o již čerpané dny (interní převod, přechod na tuto aplikaci). Vypnuto: skutečně nový zaměstnanec. Při nástupu do 1. července platí plný roční nárok, při pozdějším nástupu jen poměrná část za měsíce od nástupu (částečná dovolená). Dny poskytnuté jinde se započítávají.",
+    "Urlaubstage, die im Eintrittsjahr bereits genommen oder ausbezahlt wurden, beim vorherigen Arbeitgeber oder vor der Umstellung auf diese App. Sie werden vom Anspruch abgezogen, bei Teilurlaub begrenzen sie den anteiligen Anspruch (§ 6 BUrlG). Ab dem Folgejahr gilt wieder der volle Jahresanspruch. Halbe Tage sind möglich." : "Dny dovolené, které již byly v roce nástupu vyčerpány nebo proplaceny, u předchozího zaměstnavatele nebo před přechodem na tuto aplikaci. Odečítají se od nároku, u částečné dovolené omezují poměrný nárok (§ 6 BUrlG). Od následujícího roku platí opět plný roční nárok. Lze zadat i půl dne."
 },
 "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;");

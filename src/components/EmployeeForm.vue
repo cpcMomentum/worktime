@@ -59,7 +59,7 @@
 
         <div v-if="!isEdit" class="form-row">
             <div class="form-group">
-                <label for="vacationDays">{{ t('worktime', 'Urlaubstage') }} <InfoIcon>{{ t('worktime', 'Voller Jahresanspruch bei diesem Arbeitsmuster. Nicht anteilig eintragen, WorkTime rechnet das Eintrittsjahr selbst anteilig.') }}</InfoIcon> *</label>
+                <label for="vacationDays">{{ t('worktime', 'Urlaubstage') }} <InfoIcon>{{ t('worktime', 'Voller Jahresanspruch bei diesem Arbeitsmuster. Nicht anteilig eintragen, WorkTime rechnet das Eintrittsjahr bei Eintritt nach dem 1. Juli selbst anteilig (§ 5 BUrlG).') }}</InfoIcon> *</label>
                 <input id="vacationDays"
                     v-model.number="form.vacationDays"
                     type="number"
@@ -151,14 +151,14 @@
                     {{ t('worktime', 'Resturlaub aus vorheriger Beschäftigung übernehmen') }}
                 </NcCheckboxRadioSwitch>
                 <p class="field-hint">
-                    {{ t('worktime', 'An: der volle Jahresanspruch gilt, abzüglich der bereits genommenen Tage (interner Wechsel, Umstieg auf diese App). Aus: echte Neueinstellung — nur anteilig für die Monate ab Eintritt (Teilurlaub).') }}
+                    {{ t('worktime', 'An: der volle Jahresanspruch gilt, abzüglich der bereits genommenen Tage (interner Wechsel, Umstieg auf diese App). Aus: echte Neueinstellung. Bei Eintritt bis zum 1. Juli gilt der volle Jahresanspruch, bei späterem Eintritt nur anteilig für die Monate ab Eintritt (Teilurlaub). Anderswo gewährte Tage werden angerechnet.') }}
                 </p>
             </div>
         </div>
 
         <div v-if="entryYear" class="form-row">
             <div class="form-group">
-                <label for="vacationDaysUsed">{{ t('worktime', 'Davon {year} anderswo bereits gewährt/genommen', { year: entryYear }) }} <InfoIcon>{{ t('worktime', 'Urlaubstage, die im Eintrittsjahr bereits genommen oder ausbezahlt wurden — beim vorherigen Arbeitgeber oder vor der Umstellung auf diese App. Bei Übernahme werden sie vom vollen Anspruch abgezogen, bei Neueinstellung begrenzen sie den anteiligen Anspruch (§ 6). Ab dem Folgejahr gilt wieder der volle Jahresanspruch. Halbe Tage sind möglich.') }}</InfoIcon></label>
+                <label for="vacationDaysUsed">{{ t('worktime', 'Davon {year} anderswo bereits gewährt/genommen', { year: entryYear }) }} <InfoIcon>{{ t('worktime', 'Urlaubstage, die im Eintrittsjahr bereits genommen oder ausbezahlt wurden, beim vorherigen Arbeitgeber oder vor der Umstellung auf diese App. Sie werden vom Anspruch abgezogen, bei Teilurlaub begrenzen sie den anteiligen Anspruch (§ 6 BUrlG). Ab dem Folgejahr gilt wieder der volle Jahresanspruch. Halbe Tage sind möglich.') }}</InfoIcon></label>
                 <input id="vacationDaysUsed"
                     v-model="form.vacationDaysUsed"
                     type="number"
