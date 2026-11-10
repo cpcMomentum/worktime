@@ -664,9 +664,7 @@
 		"Voller Jahresanspruch bei diesem Arbeitsmuster. Bei unterjährigem Wechsel wird der tatsächliche Jahresanspruch zeitanteilig aus allen Profilen des Jahres berechnet.": "Voller Jahresanspruch bei diesem Arbeitsmuster. Bei unterjährigem Wechsel wird der tatsächliche Jahresanspruch zeitanteilig aus allen Profilen des Jahres berechnet.",
 		"Vorschlag {days} bei {count} Arbeitstagen (30 × Tage ÷ 5) — anpassbar": "Vorschlag {days} bei {count} Arbeitstagen (30 × Tage ÷ 5) — anpassbar",
 		"Resturlaub aus vorheriger Beschäftigung übernehmen": "Resturlaub aus vorheriger Beschäftigung übernehmen",
-		"An: der volle Jahresanspruch gilt, abzüglich der bereits genommenen Tage (interner Wechsel, Umstieg auf diese App). Aus: echte Neueinstellung — nur anteilig für die Monate ab Eintritt (Teilurlaub).": "An: der volle Jahresanspruch gilt, abzüglich der bereits genommenen Tage (interner Wechsel, Umstieg auf diese App). Aus: echte Neueinstellung — nur anteilig für die Monate ab Eintritt (Teilurlaub).",
 		"Davon {year} anderswo bereits gewährt/genommen": "Davon {year} anderswo bereits gewährt/genommen",
-		"Urlaubstage, die im Eintrittsjahr bereits genommen oder ausbezahlt wurden — beim vorherigen Arbeitgeber oder vor der Umstellung auf diese App. Bei Übernahme werden sie vom vollen Anspruch abgezogen, bei Neueinstellung begrenzen sie den anteiligen Anspruch (§ 6). Ab dem Folgejahr gilt wieder der volle Jahresanspruch. Halbe Tage sind möglich.": "Urlaubstage, die im Eintrittsjahr bereits genommen oder ausbezahlt wurden — beim vorherigen Arbeitgeber oder vor der Umstellung auf diese App. Bei Übernahme werden sie vom vollen Anspruch abgezogen, bei Neueinstellung begrenzen sie den anteiligen Anspruch (§ 6). Ab dem Folgejahr gilt wieder der volle Jahresanspruch. Halbe Tage sind möglich.",
 		"Es läuft bereits eine Stempelung.": "Es läuft bereits eine Stempelung.",
 		"Die Stempelung ist bereits pausiert.": "Die Stempelung ist bereits pausiert.",
 		"Es läuft gerade keine Pause.": "Es läuft gerade keine Pause.",
@@ -784,7 +782,6 @@
 		"Arbeitszeit pro Tag": "Arbeitszeit pro Tag",
 		"Stunden je Wochentag laut Vertrag. Daraus berechnet WorkTime das tägliche Soll, die Wochenstunden und die Arbeitstage. Spätere Änderungen im Arbeitszeitprofil des Mitarbeiters.": "Stunden je Wochentag laut Vertrag. Daraus berechnet WorkTime das tägliche Soll, die Wochenstunden und die Arbeitstage. Spätere Änderungen im Arbeitszeitprofil des Mitarbeiters.",
 		"Mindestens ein Wochentag braucht Arbeitsstunden. Für eine vorübergehende Auszeit (z. B. Elternzeit) eine Abwesenheit erfassen statt 0 Stunden.": "Mindestens ein Wochentag braucht Arbeitsstunden. Für eine vorübergehende Auszeit (z. B. Elternzeit) eine Abwesenheit erfassen statt 0 Stunden.",
-		"Voller Jahresanspruch bei diesem Arbeitsmuster. Nicht anteilig eintragen, WorkTime rechnet das Eintrittsjahr selbst anteilig.": "Voller Jahresanspruch bei diesem Arbeitsmuster. Nicht anteilig eintragen, WorkTime rechnet das Eintrittsjahr selbst anteilig.",
 		"Fehler beim Speichern des Mitarbeiters": "Fehler beim Speichern des Mitarbeiters",
 		"Hinweis: Der Antrag umfasst {requested} Urlaubstage, der Resturlaub beträgt {available}.": "Hinweis: Der Antrag umfasst {requested} Urlaubstage, der Resturlaub beträgt {available}.",
 		"Der Zeitraum ist für eine Vorschau zu lang": "Der Zeitraum ist für eine Vorschau zu lang",
@@ -825,7 +822,10 @@
 		"Genehmigt von:": "Genehmigt von:",
 		"Eingereicht am:": "Eingereicht am:",
 		"Genehmigt am:": "Genehmigt am:",
-		"%1$s %2$s Uhr": "%1$s %2$s Uhr"
+		"%1$s %2$s Uhr": "%1$s %2$s Uhr",
+		"Voller Jahresanspruch bei diesem Arbeitsmuster. Nicht anteilig eintragen, WorkTime rechnet das Eintrittsjahr bei Eintritt nach dem 1. Juli selbst anteilig (§ 5 BUrlG).": "Voller Jahresanspruch bei diesem Arbeitsmuster. Nicht anteilig eintragen, WorkTime rechnet das Eintrittsjahr bei Eintritt nach dem 1. Juli selbst anteilig (§ 5 BUrlG).",
+		"An: der volle Jahresanspruch gilt, abzüglich der bereits genommenen Tage (interner Wechsel, Umstieg auf diese App). Aus: echte Neueinstellung. Bei Eintritt bis zum 1. Juli gilt der volle Jahresanspruch, bei späterem Eintritt nur anteilig für die Monate ab Eintritt (Teilurlaub). Anderswo gewährte Tage werden angerechnet.": "An: der volle Jahresanspruch gilt, abzüglich der bereits genommenen Tage (interner Wechsel, Umstieg auf diese App). Aus: echte Neueinstellung. Bei Eintritt bis zum 1. Juli gilt der volle Jahresanspruch, bei späterem Eintritt nur anteilig für die Monate ab Eintritt (Teilurlaub). Anderswo gewährte Tage werden angerechnet.",
+		"Urlaubstage, die im Eintrittsjahr bereits genommen oder ausbezahlt wurden, beim vorherigen Arbeitgeber oder vor der Umstellung auf diese App. Sie werden vom Anspruch abgezogen, bei Teilurlaub begrenzen sie den anteiligen Anspruch (§ 6 BUrlG). Ab dem Folgejahr gilt wieder der volle Jahresanspruch. Halbe Tage sind möglich.": "Urlaubstage, die im Eintrittsjahr bereits genommen oder ausbezahlt wurden, beim vorherigen Arbeitgeber oder vor der Umstellung auf diese App. Sie werden vom Anspruch abgezogen, bei Teilurlaub begrenzen sie den anteiligen Anspruch (§ 6 BUrlG). Ab dem Folgejahr gilt wieder der volle Jahresanspruch. Halbe Tage sind möglich."
 	},
 	"pluralForm": "nplurals=2; plural=(n != 1);"
 }

@@ -1336,13 +1336,17 @@ class AbsenceService {
         $entryDate = $employee->getEntryDate();
         $isEntryYear = $entryDate !== null && (int)$entryDate->format('Y') === $year;
 
-        // #590: a genuine new hire in the entry year (not a takeover) only accrues
-        // Teilurlaub (§ 5), capped by the still-open annual entitlement (§ 6,
+        // #590: a genuine new hire entering after July 1st (not a takeover) only
+        // accrues Teilurlaub (§ 5), capped by the still-open annual entitlement (§ 6,
         // "already granted elsewhere" = $used) and never negative. A takeover /
         // continuation (vacation_transferred) keeps the full annual entitlement
         // minus already-used, exactly as before. Every existing employee with an
         // entry date is migrated to takeover, so no current/historical value moves.
         if ($isEntryYear && !$employee->getVacationTransferred()) {
+            // § 4/5 BUrlG: entry by July 1st completes the waiting period in-year -> full entitlement.
+            if ($entryDate->format('m-d') <= '07-01') {
+                return max(0.0, $fullYear - $used) + $carryover;
+            }
             $teilurlaub = (float)$this->workScheduleService->getVacationDaysForEntryYear($employeeId, $year);
             return max(0.0, min($teilurlaub, $fullYear - $used)) + $carryover;
         }
