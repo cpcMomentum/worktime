@@ -797,7 +797,6 @@ OC.L10N.register(
     "Lege Abteilungen an, um Mitarbeitende Organisationseinheiten zuzuordnen." : "Lege Abteilungen an, um Mitarbeitende Organisationseinheiten zuzuordnen.",
     "Möchtest du die Abteilung \"{name}\" wirklich löschen?" : "Möchtest du die Abteilung \"{name}\" wirklich löschen?",
     "Lege Mitarbeiter an, um die Zeiterfassung zu nutzen." : "Lege Mitarbeiter an, um die Zeiterfassung zu nutzen.",
-    "Deine Genehmigungen laufen dann nur noch über Admin oder Personalverwaltung." : "Deine Genehmigungen laufen dann nur noch über Admin oder Personalverwaltung.",
     "Möchtest du den Mitarbeiter \"{name}\" wirklich löschen?" : "Möchtest du den Mitarbeiter \"{name}\" wirklich löschen?",
     "Diese Aktion kann nicht rückgängig gemacht werden. Für Arbeitszeitnachweise können Aufbewahrungspflichten gelten — prüfe das, bevor du löschst." : "Diese Aktion kann nicht rückgängig gemacht werden. Für Arbeitszeitnachweise können Aufbewahrungspflichten gelten — prüfe das, bevor du löschst.",
     "Lege Projekte an, um projektbezogene Zeiterfassung zu nutzen." : "Lege Projekte an, um projektbezogene Zeiterfassung zu nutzen.",
@@ -820,6 +819,7 @@ OC.L10N.register(
     "Möchtest du den Feiertag \"{name}\" ({count} Bundesländer) wirklich löschen?" : "Möchtest du den Feiertag \"{name}\" ({count} Bundesländer) wirklich löschen?",
     "Möchtest du die Zeiteinträge für {month} einreichen? Die eingereichten Einträge werden zur Genehmigung übermittelt." : "Möchtest du die Zeiteinträge für {month} einreichen? Die eingereichten Einträge werden zur Genehmigung übermittelt.",
     "Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte verwirf die Stempelung und erfasse die Zeit manuell." : "Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte verwirf die Stempelung und erfasse die Zeit manuell.",
-    "An diesem Tag hast du %s. Bitte storniere zuerst die Abwesenheit." : "An diesem Tag hast du %s. Bitte storniere zuerst die Abwesenheit."
+    "An diesem Tag hast du %s. Bitte storniere zuerst die Abwesenheit." : "An diesem Tag hast du %s. Bitte storniere zuerst die Abwesenheit.",
+    "Genehmigungen für diese Mitarbeiter laufen dann nur noch über Admin oder Personalverwaltung." : "Genehmigungen für diese Mitarbeiter laufen dann nur noch über Admin oder Personalverwaltung."
 },
 "nplurals=2; plural=(n != 1);");

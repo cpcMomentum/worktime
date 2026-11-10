@@ -124,7 +124,7 @@
                 <ul>
                     <li v-for="person in impact.supervisorOf" :key="'s' + person.id">{{ person.fullName }}</li>
                 </ul>
-                <p>{{ t('worktime', 'Deine Genehmigungen laufen dann nur noch über Admin oder Personalverwaltung.') }}</p>
+                <p>{{ t('worktime', 'Genehmigungen für diese Mitarbeiter laufen dann nur noch über Admin oder Personalverwaltung.') }}</p>
             </div>
 
             <template #actions>
@@ -163,7 +163,7 @@
                 <ul>
                     <li v-for="person in deleteImpact.supervisorOf" :key="'ds' + person.id">{{ person.fullName }}</li>
                 </ul>
-                <p>{{ t('worktime', 'Deine Genehmigungen laufen dann nur noch über Admin oder Personalverwaltung.') }}</p>
+                <p>{{ t('worktime', 'Genehmigungen für diese Mitarbeiter laufen dann nur noch über Admin oder Personalverwaltung.') }}</p>
             </div>
 
             <div v-if="deleteImpact && deleteImpact.deputyFor.length > 0" class="impact-block">
