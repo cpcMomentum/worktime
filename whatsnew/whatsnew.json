@@ -1,4 +1,25 @@
 {
+	"0.24.4": [
+		{
+			"title": {
+				"de": "Voller Urlaub bei Eintritt bis 1. Juli",
+				"en": "Full vacation when joining by July 1",
+				"cs": "Plná dovolená při nástupu do 1. července"
+			},
+			"text": {
+				"de": "Wer bis zum 1. Juli eintritt, bekommt im Eintrittsjahr jetzt den vollen Jahresurlaub, abzüglich bereits anderswo genommener Tage. Bisher rechnete WorkTime hier anteilig und zeigte zu wenig Urlaub an. Bei Eintritt ab 2. Juli bleibt es beim anteiligen Urlaub.",
+				"en": "Anyone joining by July 1 now gets the full annual vacation in their first year, minus days already taken elsewhere. Until now WorkTime prorated this and showed too little vacation. For an entry from July 2, vacation remains prorated.",
+				"cs": "Kdo nastoupí do 1. července, dostane nyní v roce nástupu plnou roční dovolenou, sníženou o dny již vyčerpané jinde. Dosud WorkTime počítal poměrně a ukazoval příliš málo dovolené. Při nástupu od 2. července zůstává dovolená poměrná."
+			},
+			"icon": "counter",
+			"where": {
+				"de": "Abwesenheiten › Urlaubskonto",
+				"en": "Absences › Vacation account",
+				"cs": "Nepřítomnosti › Konto dovolené"
+			},
+			"plus": false
+		}
+	],
 	"0.24.3": [
 		{
 			"title": {
