@@ -7,6 +7,14 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.24.4] - 2026-11-10
+
+### Fixed
+- **Voller Urlaub bei Eintritt in der ersten Jahreshälfte (#840)**: Seit 0.16.0 bekam jeder Neuzugang ohne „Resturlaub übernehmen“ im Eintrittsjahr nur anteiligen Urlaub, auch bei Eintritt im Frühjahr (z. B. 23 statt 30 Tage bei Eintritt am 1. April). Nach § 4 BUrlG entsteht nach sechs Monaten Wartezeit der volle Anspruch. Teilurlaub gibt es nur, wenn die Wartezeit im Eintrittsjahr nicht mehr erfüllt werden kann. Bei Eintritt bis einschließlich 1. Juli gilt jetzt der volle Jahresanspruch, abzüglich des Urlaubs, den ein früherer Arbeitgeber schon gewährt hat (§ 6). Bei späterem Eintritt bleibt es beim Teilurlaub. Danke an @matt-ek und @bentuna für die Hinweise.
+
+### Changed
+- Abhängigkeiten aktualisiert (u. a. @nextcloud/vue 8.42, axios 1.20, webpack 5.112).
+
 ## [0.24.3] - 2026-11-06
 
 ### Changed
