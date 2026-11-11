@@ -26,6 +26,23 @@ jobs:
       id-token: write
       actions: read
     steps:
+      # Kein Lauf auf Pull Requests aus Forks. Der Job hat Schreibrechte und ein
+      # Secret, und Claude fuehrt Skripte aus dem Arbeitsverzeichnis aus
+      # (npm run, npx). Auf einem Fork-PR waere das fremder Code mit unseren
+      # Rechten - auch dann, wenn ein Maintainer @claude gerufen hat.
+      - name: Pull Requests aus Forks ablehnen
+        if: github.event.issue.pull_request || github.event.pull_request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          head_repo=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}" --jq '.head.repo.full_name // ""')
+          if [ "$head_repo" != "$REPO" ]; then
+            echo "::error::@claude laeuft nicht auf Pull Requests aus Forks (Quelle: ${head_repo:-unbekannt})."
+            exit 1
+          fi
+
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
@@ -82,7 +99,8 @@ jobs:
           # Auth: OAuth Token bevorzugt (claude_code_oauth_token).
           # Alternative: anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          show_full_output: true
+          # Aus: Das Repo ist oeffentlich, die Logs der Laeufe sind es auch.
+          show_full_output: false
           additional_permissions: |
             actions: read
           # WICHTIG: allowedTools als separate quoted Argumente, NICHT als ein String.
@@ -90,4 +108,4 @@ jobs:
           # Richtig: --allowedTools "Edit,MultiEdit,..." "Bash(git add:*)" "Bash(git commit:*)"
           claude_args: |
             --max-turns 200
-            --allowedTools "Edit,MultiEdit,Glob,Grep,LS,Read,Write,mcp__github_comment__update_claude_comment" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git push:*)" "Bash(git status:*)" "Bash(git diff:*)" "Bash(git log:*)" "Bash(git rm:*)" "Bash(git checkout:*)" "Bash(git branch:*)" "Bash(gh pr create:*)" "Bash(gh pr ready:*)" "Bash(gh pr edit:*)" "Bash(gh pr view:*)" "Bash(gh issue view:*)" "Bash(npm run:*)" "Bash(npx:*)" "Bash(cd:*)" "Bash(ls:*)" "Bash(cat:*)" "Bash(ruff:*)" "Bash(pip:*)" "Bash(python:*)"
+            --allowedTools "Edit,MultiEdit,Glob,Grep,LS,Read,Write,mcp__github_comment__update_claude_comment" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git push:*)" "Bash(git status:*)" "Bash(git diff:*)" "Bash(git log:*)" "Bash(git rm:*)" "Bash(git checkout:*)" "Bash(git branch:*)" "Bash(gh pr create:*)" "Bash(gh pr ready:*)" "Bash(gh pr edit:*)" "Bash(gh pr view:*)" "Bash(gh issue view:*)" "Bash(npm run:*)" "Bash(npx:*)" "Bash(cd:*)" "Bash(ls:*)" "Bash(cat:*)"
