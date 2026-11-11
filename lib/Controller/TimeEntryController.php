@@ -753,6 +753,7 @@ class TimeEntryController extends BaseController {
 
         try {
             $approver = $this->permissionService->getEmployeeForUser($this->userId);
+            // tz-ok: Zeitstempel der Genehmigung (approvedAt)
             $result = $this->archiveService->archiveMonth($employeeId, $year, $month, $approver?->getId(), new DateTime());
             // A queued background archive for this month would now be redundant.
             $this->archiveQueueMapper->deletePendingFor($employeeId, $year, $month);

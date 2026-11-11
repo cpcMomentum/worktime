@@ -468,6 +468,7 @@ class TimeEntryService {
         $submitted = 0;
         $skipped = 0;
         $submittedByEmployeeId = $currentUserId ? $this->getEmployeeIdForUser($currentUserId) : null;
+        // tz-ok: Zeitstempel fuer updatedAt und die Statusfelder
         $now = new DateTime();
 
         foreach ($entries as $entry) {
@@ -691,6 +692,7 @@ class TimeEntryService {
         $approved = 0;
         $skipped = 0;
         $approvedByEmployeeId = $currentUserId ? $this->getEmployeeIdForUser($currentUserId) : null;
+        // tz-ok: Zeitstempel fuer updatedAt und die Statusfelder
         $now = new DateTime();
 
         foreach ($entries as $entry) {
@@ -743,6 +745,7 @@ class TimeEntryService {
         $entries = $this->findByEmployeeAndMonth($employeeId, $year, $month);
         $reopened = 0;
         $skipped = 0;
+        // tz-ok: Zeitstempel fuer updatedAt und die Statusfelder
         $now = new DateTime();
 
         foreach ($entries as $entry) {
@@ -792,6 +795,7 @@ class TimeEntryService {
         $rejected = 0;
         $skipped = 0;
         $rejectedByEmployeeId = $currentUserId ? $this->getEmployeeIdForUser($currentUserId) : null;
+        // tz-ok: Zeitstempel fuer updatedAt und die Statusfelder
         $now = new DateTime();
 
         foreach ($entries as $entry) {
