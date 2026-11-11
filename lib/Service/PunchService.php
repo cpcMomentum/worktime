@@ -202,7 +202,7 @@ class PunchService {
 		// below; the punch-out dialog additionally blocks this case client-side
 		// from the known start timestamp before it ever sends an endTime.
 		if ($endTimeOverride === null && $realElapsedMinutes > 24 * 60) {
-			throw new PunchTooLongException($this->l->t('Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte verwerfen Sie die Stempelung und erfassen Sie die Zeit manuell.'));
+			throw new PunchTooLongException($this->l->t('Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte verwirf die Stempelung und erfasse die Zeit manuell.'));
 		}
 
 		// Break: explicit override wins; otherwise the accumulated live break;

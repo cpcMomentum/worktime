@@ -134,7 +134,7 @@
             </template>
             <NcEmptyContent v-else :name="t('worktime', 'Kein Team')">
                 <template #icon><AccountGroupIcon /></template>
-                <template #description>{{ t('worktime', 'Sie haben keine Teammitglieder.') }}</template>
+                <template #description>{{ t('worktime', 'Du hast keine Teammitglieder.') }}</template>
             </NcEmptyContent>
         </div>
 

@@ -105,7 +105,7 @@
         <NcDialog v-if="showDeleteDialog"
             :name="t('worktime', 'Profil löschen?')"
             @close="showDeleteDialog = false">
-            <p>{{ t('worktime', 'Möchten Sie dieses Arbeitszeitprofil wirklich löschen?') }}</p>
+            <p>{{ t('worktime', 'Möchtest du dieses Arbeitszeitprofil wirklich löschen?') }}</p>
             <template #actions>
                 <NcButton type="tertiary" @click="showDeleteDialog = false">
                     {{ t('worktime', 'Abbrechen') }}

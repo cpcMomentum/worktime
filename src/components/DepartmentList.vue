@@ -40,7 +40,7 @@
 
         <NcEmptyContent v-else
             :name="t('worktime', 'Keine Abteilungen')"
-            :description="t('worktime', 'Legen Sie Abteilungen an, um Mitarbeitende Organisationseinheiten zuzuordnen.')">
+            :description="t('worktime', 'Lege Abteilungen an, um Mitarbeitende Organisationseinheiten zuzuordnen.')">
             <template #icon>
                 <OfficeBuilding :size="64" />
             </template>
@@ -49,7 +49,7 @@
         <NcDialog v-if="showDeleteDialog"
             :name="t('worktime', 'Abteilung löschen?')"
             @close="showDeleteDialog = false">
-            <p>{{ t('worktime', 'Möchten Sie die Abteilung "{name}" wirklich löschen?', { name: departmentToDelete?.name }) }}</p>
+            <p>{{ t('worktime', 'Möchtest du die Abteilung "{name}" wirklich löschen?', { name: departmentToDelete?.name }) }}</p>
             <p v-if="memberCount > 0" class="delete-warning">
                 {{ n('worktime',
                     '%n Mitarbeitende/r wird dieser Abteilung entzogen. Die Zeiterfassung bleibt unberührt.',

@@ -102,7 +102,7 @@
 			<div v-if="isResting" class="resting-banner">
 				<SleepIcon :size="20" />
 				<span class="resting-banner__text">
-					{{ t('worktime', 'Ihr Profil ist ruhend gestellt. Sie können Ihre bisherigen Daten weiterhin einsehen und exportieren, aber keine neuen Zeiten oder Abwesenheiten erfassen.') }}
+					{{ t('worktime', 'Dein Profil ist ruhend gestellt. Du kannst deine bisherigen Daten weiterhin einsehen und exportieren, aber keine neuen Zeiten oder Abwesenheiten erfassen.') }}
 					<small v-if="restingReason">{{ t('worktime', 'Grund: {reason}', { reason: restingReason }) }}</small>
 				</span>
 			</div>
@@ -113,7 +113,7 @@
 						<AccountGroupIcon />
 					</template>
 					<template #description>
-						<p>{{ t('worktime', 'Es sind noch keine Mitarbeiter eingerichtet. Legen Sie unter Einstellungen Mitarbeiter an, um zu starten.') }}</p>
+						<p>{{ t('worktime', 'Es sind noch keine Mitarbeiter eingerichtet. Lege unter Einstellungen Mitarbeiter an, um zu starten.') }}</p>
 						<NcButton type="primary"
 							@click="$router.push('/settings')">
 							{{ t('worktime', 'Zu den Einstellungen') }}
@@ -129,7 +129,7 @@
 						<AlertIcon />
 					</template>
 					<template #description>
-						{{ t('worktime', 'Sie haben noch kein Mitarbeiterprofil. Bitte wenden Sie sich an Ihren Administrator oder HR-Manager, um freigeschaltet zu werden.') }}
+						{{ t('worktime', 'Du hast noch kein Mitarbeiterprofil. Bitte wende dich an deinen Administrator oder HR-Manager, um freigeschaltet zu werden.') }}
 					</template>
 				</NcEmptyContent>
 			</div>
