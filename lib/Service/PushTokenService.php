@@ -101,6 +101,7 @@ class PushTokenService {
 	}
 
 	private function nowUtc(): DateTime {
+		// tz-ok: Zeitpunkt in UTC, kein Kalendertag
 		return new DateTime('now', new DateTimeZone('UTC'));
 	}
 }
