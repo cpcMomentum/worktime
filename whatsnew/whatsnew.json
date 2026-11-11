@@ -23,12 +23,12 @@
 	"0.24.3": [
 		{
 			"title": {
-				"de": "Berichte in Ihrer Sprache",
+				"de": "Berichte in der eigenen Sprache",
 				"en": "Reports in your language",
 				"cs": "Výkazy ve vašem jazyce"
 			},
 			"text": {
-				"de": "Arbeitszeitnachweis und Projektauswertung erscheinen jetzt als PDF und CSV in der Sprache, die Sie in Nextcloud eingestellt haben. Auch Abwesenheitstypen werden überall übersetzt.",
+				"de": "Arbeitszeitnachweis und Projektauswertung erscheinen jetzt als PDF und CSV in der Sprache, die in Nextcloud eingestellt ist. Auch Abwesenheitstypen werden überall übersetzt.",
 				"en": "Timesheets and project reports are now created as PDF and CSV in the language you have set in Nextcloud. Absence types are translated everywhere as well.",
 				"cs": "Výkaz pracovní doby a vyhodnocení projektů se nyní vytvářejí jako PDF a CSV v jazyce, který máte nastavený v Nextcloudu. Typy nepřítomnosti jsou také všude přeložené."
 			},
@@ -47,7 +47,7 @@
 				"cs": "Svátky se počítají správně"
 			},
 			"text": {
-				"de": "Die Monatsübersicht zählt nur noch Feiertage, die Ihr Soll wirklich senken. Feiertage am Wochenende oder an Ihren freien Tagen zählen nicht mehr mit, Heiligabend und Silvester als halber Tag.",
+				"de": "Die Monatsübersicht zählt nur noch Feiertage, die das Soll wirklich senken. Feiertage am Wochenende oder an freien Tagen zählen nicht mehr mit, Heiligabend und Silvester als halber Tag.",
 				"en": "The monthly overview now only counts public holidays that actually lower your target hours. Holidays on weekends or your days off no longer count, Christmas Eve and New Year's Eve count as half a day.",
 				"cs": "Měsíční přehled nyní počítá jen svátky, které skutečně snižují váš plán. Svátky o víkendu nebo ve vaše volné dny se už nepočítají, Štědrý den a Silvestr se počítají jako půl dne."
 			},
@@ -68,7 +68,7 @@
 				"cs": "Náhled dovolené ukazuje správné dny"
 			},
 			"text": {
-				"de": "Beim Beantragen zeigt WorkTime jetzt genau die Tage, die vom Urlaubskonto abgehen. Feiertage, Heiligabend, Silvester und Ihr Arbeitszeitmodell sind eingerechnet. Abgezogen wurde schon bisher richtig, nur die Vorschau war oft zu hoch.",
+				"de": "Beim Beantragen zeigt WorkTime jetzt genau die Tage, die vom Urlaubskonto abgehen. Feiertage, Heiligabend, Silvester und das eigene Arbeitszeitmodell sind eingerechnet. Abgezogen wurde schon bisher richtig, nur die Vorschau war oft zu hoch.",
 				"en": "When you request leave, WorkTime now shows exactly the days that come off your vacation balance. Public holidays, Christmas Eve, New Year's Eve and your work schedule are taken into account. The deduction was always correct, only the preview was often too high.",
 				"cs": "Při žádosti o dovolenou WorkTime nyní ukazuje přesně ty dny, které se odečtou z konta dovolené. Započítány jsou svátky, Štědrý den, Silvestr a váš pracovní model. Odečítalo se správně už dříve, jen náhled byl často příliš vysoký."
 			},
@@ -127,7 +127,7 @@
 				"cs": "Jedním kliknutím na „Dnes“"
 			},
 			"text": {
-				"de": "Die Zeiterfassung öffnet jetzt beim heutigen Tag. Der neue Knopf „Heute“ bringt Sie aus jedem Monat zurück. Nach dem Speichern bleibt die Liste an ihrer Stelle, statt an den Monatsanfang zu springen.",
+				"de": "Die Zeiterfassung öffnet jetzt beim heutigen Tag. Der neue Knopf „Heute“ führt aus jedem Monat zurück. Nach dem Speichern bleibt die Liste an ihrer Stelle, statt an den Monatsanfang zu springen.",
 				"en": "Time tracking now opens at today's date. The new “Today” button takes you back from any month. After saving, the list stays where it was instead of jumping to the start of the month.",
 				"cs": "Evidence času se nyní otevře u dnešního dne. Nové tlačítko „Dnes“ vás vrátí z libovolného měsíce. Po uložení zůstane seznam na svém místě a neskočí na začátek měsíce."
 			},
@@ -165,7 +165,7 @@
 				"cs": "Nepřítomnosti na příští rok"
 			},
 			"text": {
-				"de": "Unter „Abwesenheiten“ können Sie jetzt ins nächste Jahr blättern und dort eingetragenen Urlaub sehen. Wird eine Abwesenheit auf einen Tag gekürzt, zeigt WorkTime wieder die richtige Zahl an Tagen.",
+				"de": "Unter „Abwesenheiten“ lässt sich jetzt ins nächste Jahr blättern und dort eingetragener Urlaub ansehen. Wird eine Abwesenheit auf einen Tag gekürzt, zeigt WorkTime wieder die richtige Zahl an Tagen.",
 				"en": "In “Absences” you can now go to next year and see the leave you have already entered there. When an absence is shortened to a single day, WorkTime shows the correct number of days again.",
 				"cs": "V části „Nepřítomnosti“ nyní můžete přejít na příští rok a zobrazit tam zadanou dovolenou. Pokud nepřítomnost zkrátíte na jeden den, WorkTime opět zobrazí správný počet dní."
 			},
@@ -186,7 +186,7 @@
 				"cs": "Nová položka nabídky „Novinky“"
 			},
 			"text": {
-				"de": "Dieses Fenster lässt sich jetzt jederzeit wieder öffnen. Dort stehen alle bisherigen Neuerungen, nach Version sortiert, die neueste oben. Praktisch, wenn Sie das Fenster nach einem Update weggeklickt haben.",
+				"de": "Dieses Fenster lässt sich jetzt jederzeit wieder öffnen. Dort stehen alle bisherigen Neuerungen, nach Version sortiert, die neueste oben. Praktisch, wenn das Fenster nach einem Update weggeklickt wurde.",
 				"en": "You can now reopen this window at any time. It lists all previous updates by version, newest first. Handy if you dismissed the window after an update.",
 				"cs": "Toto okno lze nyní kdykoli znovu otevřít. Obsahuje všechny dosavadní novinky seřazené podle verze, nejnovější nahoře. Hodí se, pokud jste okno po aktualizaci zavřeli."
 			},
@@ -205,7 +205,7 @@
 				"cs": "Přestávka se při úpravě zachová"
 			},
 			"text": {
-				"de": "Wer einen bestehenden Eintrag bearbeitet, sieht jetzt die gespeicherte Pause. Bisher wurde sie beim Öffnen durch den automatischen Vorschlag ersetzt. Ändern Sie Beginn oder Ende, schlägt WorkTime die Pause weiterhin neu vor.",
+				"de": "Wer einen bestehenden Eintrag bearbeitet, sieht jetzt die gespeicherte Pause. Bisher wurde sie beim Öffnen durch den automatischen Vorschlag ersetzt. Ändern sich Beginn oder Ende, schlägt WorkTime die Pause weiterhin neu vor.",
 				"en": "When you edit an existing entry, you now see the break you saved. Previously it was replaced by the automatic suggestion as soon as the form opened. If you change the start or end time, WorkTime still suggests a new break.",
 				"cs": "Při úpravě existujícího záznamu nyní uvidíte uloženou přestávku. Dříve ji při otevření nahradil automatický návrh. Pokud změníte začátek nebo konec, WorkTime přestávku nadále navrhne znovu."
 			},
