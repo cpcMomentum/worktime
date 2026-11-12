@@ -20,8 +20,10 @@
                         <div class="mi" :class="absMiClass(cell.day.absence.type)">
                             {{ cell.day.absence.typeName }}
                         </div>
-                        <!-- #625: an stundenweise-Krank-Tagen zusaetzlich die gearbeitete Zeit. -->
-                        <div v-if="cell.day.absence.absenceMinutes && cell.day.entries.length" class="hh">
+                        <!-- #833: Gutschrift plus gearbeitete Zeit, wie in der Tagesliste. -->
+                        <div v-if="cell.day.entries.length || cell.day.creditMinutes"
+                            class="hh"
+                            :class="{ mut: !cell.day.entries.length }">
                             {{ hoursLabel(cell.day) }}
                         </div>
                     </template>
@@ -106,7 +108,7 @@ export default {
     },
     methods: {
         hoursLabel(day) {
-            return formatMinutes(day.totalMinutes)
+            return formatMinutes(day.totalMinutes + (day.creditMinutes || 0))
         },
         shortName(name) {
             return name.length > 11 ? name.slice(0, 9) + '.' : name
@@ -214,6 +216,14 @@ export default {
     font-weight: 600;
     font-size: 13px;
     font-variant-numeric: tabular-nums;
+}
+
+.cell .hh.mut {
+    color: var(--color-text-maxcontrast);
+}
+
+.cell .mi + .hh {
+    margin-top: 0;
 }
 
 .cell .mi {

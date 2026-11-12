@@ -820,6 +820,7 @@ OC.L10N.register(
     "Lege Abteilungen an, um Mitarbeitende Organisationseinheiten zuzuordnen." : "Lege Abteilungen an, um Mitarbeitende Organisationseinheiten zuzuordnen.",
     "Möchtest du die Abteilung \"{name}\" wirklich löschen?" : "Möchtest du die Abteilung \"{name}\" wirklich löschen?",
     "Deine gewohnte Pause wird bei neuen Einträgen vorausgefüllt. Sie kann die gesetzliche Mindestpause (§4 ArbZG) nie unterschreiten — bei Bedarf wird automatisch der gesetzliche Wert verwendet. Leer lassen für die gesetzliche Mindestpause." : "Deine gewohnte Pause wird bei neuen Einträgen vorausgefüllt. Sie kann die gesetzliche Mindestpause (§4 ArbZG) nie unterschreiten — bei Bedarf wird automatisch der gesetzliche Wert verwendet. Leer lassen für die gesetzliche Mindestpause.",
-    "Genehmigungen für diese Mitarbeiter laufen dann nur noch über Admin oder Personalverwaltung." : "Genehmigungen für diese Mitarbeiter laufen dann nur noch über Admin oder Personalverwaltung."
+    "Genehmigungen für diese Mitarbeiter laufen dann nur noch über Admin oder Personalverwaltung." : "Genehmigungen für diese Mitarbeiter laufen dann nur noch über Admin oder Personalverwaltung.",
+    "davon {hours} h {type}" : "z toho {hours} h {type}"
 },
 "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;");

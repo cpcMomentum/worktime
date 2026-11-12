@@ -820,6 +820,7 @@ OC.L10N.register(
     "Lege Abteilungen an, um Mitarbeitende Organisationseinheiten zuzuordnen." : "Create departments to assign employees to organisational units.",
     "Möchtest du die Abteilung \"{name}\" wirklich löschen?" : "Do you really want to delete the department \"{name}\"?",
     "Deine gewohnte Pause wird bei neuen Einträgen vorausgefüllt. Sie kann die gesetzliche Mindestpause (§4 ArbZG) nie unterschreiten — bei Bedarf wird automatisch der gesetzliche Wert verwendet. Leer lassen für die gesetzliche Mindestpause." : "Your usual break is prefilled for new entries. It can never fall below the statutory minimum break (§4 ArbZG) — the statutory value is used automatically when needed. Leave empty for the statutory minimum break.",
-    "Genehmigungen für diese Mitarbeiter laufen dann nur noch über Admin oder Personalverwaltung." : "Their approvals will then only go through admin or HR."
+    "Genehmigungen für diese Mitarbeiter laufen dann nur noch über Admin oder Personalverwaltung." : "Their approvals will then only go through admin or HR.",
+    "davon {hours} h {type}" : "thereof {hours} h {type}"
 },
 "nplurals=2; plural=(n != 1);");

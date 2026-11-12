@@ -121,7 +121,7 @@ class PdfService {
         $this->addHeader($pdf, $employee, $periodLabel, $startDate);
 
         // Time entries table
-        $this->addTimeEntriesTable($pdf, $timeEntries, $absences, $holidays, $startDate, $endDate);
+        $this->addTimeEntriesTable($pdf, $timeEntries, $absences, $holidays, $startDate, $endDate, $statistics['paidAbsenceByDay'] ?? []);
 
         // Absences section
         if (!empty($absences)) {
@@ -404,14 +404,14 @@ class PdfService {
     /**
      * Add time entries table
      */
-    private function addTimeEntriesTable(TCPDF $pdf, array $timeEntries, array $absences, array $holidays, DateTime $startDate, DateTime $endDate): void {
+    private function addTimeEntriesTable(TCPDF $pdf, array $timeEntries, array $absences, array $holidays, DateTime $startDate, DateTime $endDate, array $dayCredits = []): void {
         // Project id -> name lookup (including inactive projects for historical entries).
         $projectNames = [];
         foreach ($this->projectMapper->findAll() as $project) {
             $projectNames[$project->getId()] = $project->getName();
         }
 
-        $rows = $this->buildDayRowsBetween($timeEntries, $absences, $holidays, $startDate, $endDate, $projectNames);
+        $rows = $this->buildDayRowsBetween($timeEntries, $absences, $holidays, $startDate, $endDate, $projectNames, $dayCredits);
 
         // Table header
         $pdf->SetFont(self::FONT_FAMILY, 'B', self::FONT_SIZE_SMALL);
@@ -475,9 +475,10 @@ class PdfService {
      * @param Absence[] $absences
      * @param Holiday[] $holidays
      * @param array<int, string> $projectNames id => name
+     * @param array<string, int> $dayCredits Y-m-d => dem Ist gutgeschriebene Minuten (#833)
      * @return list<array{date: string, day: string, start: string, end: string, break: string, work: string, project: string, note: string, fill: bool}>
      */
-    private function buildDayRowsBetween(array $timeEntries, array $absences, array $holidays, DateTime $startDate, DateTime $endDate, array $projectNames): array {
+    private function buildDayRowsBetween(array $timeEntries, array $absences, array $holidays, DateTime $startDate, DateTime $endDate, array $projectNames, array $dayCredits = []): array {
         // Holiday lookup
         $holidayDates = [];
         foreach ($holidays as $holiday) {
@@ -520,6 +521,7 @@ class PdfService {
             $day = $this->fmt->weekday($current);
 
             $absence = $absencesByDate[$dateStr] ?? null;
+            $credit = $dayCredits[$dateStr] ?? 0;
             $absenceLabel = '';
             if ($absence !== null) {
                 $typeLabel = Absence::typeLabel($this->l, (string)$absence->getType());
@@ -564,11 +566,11 @@ class PdfService {
                 // #626: an einem Notarbeit-Tag ergaenzt die (volle) Urlaubszeile die
                 // Arbeitszeilen, damit "Urlaub + Notarbeit" im Report sichtbar bleibt.
                 if ($absence !== null && ($absence->isHalfDay() || $absence->getAbsenceMinutes() !== null || $hasEmergency)) {
-                    $rows[] = $this->markerRow($date, $day, $absenceLabel, $fill);
+                    $rows[] = $this->markerRow($date, $day, $absenceLabel, $fill, $credit);
                 }
             } elseif ($absence !== null) {
                 // Absence day (#318): show the type directly in the day row.
-                $rows[] = $this->markerRow($date, $day, $absenceLabel, $fill);
+                $rows[] = $this->markerRow($date, $day, $absenceLabel, $fill, $credit);
             } elseif ($isHoliday) {
                 $rows[] = $this->markerRow($date, $day, $this->l->t('Feiertag: %s', [$holidayDates[$dateStr]]), $fill);
             } elseif (!$isWeekend) {
@@ -596,10 +598,11 @@ class PdfService {
      *
      * @return array{date: string, day: string, start: string, end: string, break: string, work: string, project: string, note: string, fill: bool}
      */
-    private function markerRow(string $date, string $day, string $note, bool $fill): array {
+    private function markerRow(string $date, string $day, string $note, bool $fill, int $creditMinutes = 0): array {
         return [
             'date' => $date, 'day' => $day, 'start' => '-', 'end' => '-',
-            'break' => '-', 'work' => '-', 'project' => '', 'note' => $note, 'fill' => $fill,
+            'break' => '-', 'work' => $creditMinutes > 0 ? $this->formatMinutes($creditMinutes) : '-',
+            'project' => '', 'note' => $note, 'fill' => $fill,
         ];
     }
 
