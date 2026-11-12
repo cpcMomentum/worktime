@@ -173,6 +173,29 @@ class PdfServiceTest extends TestCase {
         }
     }
 
+    public function testPaidAbsenceDayShowsTheCreditedHours(): void {
+        $vacation = $this->absence('vacation', '2026-06-01', '2026-06-02', 'approved', 1.0);
+
+        $rows = $this->buildDayRowsBetween->invoke(
+            $this->service, [], [$vacation], [], new DateTime('2026-06-01'), new DateTime('2026-06-02'), [], ['2026-06-01' => 252]
+        );
+
+        $this->assertSame('4:12 Std.', $rows[0]['work']);
+        $this->assertSame('-', $rows[0]['start']);
+        $this->assertSame('-', $rows[1]['work'], 'Tag ohne Gutschrift behält den Strich');
+    }
+
+    public function testHalfDayAbsenceMarkerRowCarriesTheCredit(): void {
+        $entries = [$this->entry('2026-06-01', '08:00', '12:00', 0, 240, null, '')];
+        $vacation = $this->absence('vacation', '2026-06-01', '2026-06-01', 'approved', 0.5);
+
+        $rows = $this->buildDayRowsBetween->invoke(
+            $this->service, $entries, [$vacation], [], new DateTime('2026-06-01'), new DateTime('2026-06-01'), [], ['2026-06-01' => 240]
+        );
+
+        $this->assertSame(['4:00 Std.', '4:00 Std.'], array_column($rows, 'work'));
+    }
+
     public function testBookingShowsTimesAndProject(): void {
         $entries = [$this->entry('2026-06-01', '08:00', '16:00', 30, 450, 2, 'Arbeit')];
 

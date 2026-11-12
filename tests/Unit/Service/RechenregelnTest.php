@@ -106,13 +106,83 @@ class RechenregelnTest extends TestCase {
 
         $this->assertSame(22 * 252, $r['soll']);
         $this->assertSame(420 + 420 + 3 * 252, $r['ist']);
+        $this->assertSame(['2026-06-10' => 252, '2026-06-11' => 252, '2026-06-12' => 252], $r['tage']);
+    }
+
+    // Die Tagesliste zeigt je Tag, was die Monatssumme gutschreibt: Wochenende und Feiertag bekommen nichts.
+    public function testDayCreditsSkipWeekendsAndHolidays(): void {
+        $r = $this->june(
+            self::fullTime(),
+            [],
+            [$this->absence(Absence::TYPE_VACATION, '2026-06-03', '2026-06-08')],
+            [$this->holiday('2026-06-04')],
+        );
+
+        $this->assertSame(['2026-06-03' => 480, '2026-06-05' => 480, '2026-06-08' => 480], $r['tage']);
+    }
+
+    public function testHalfDayVacationCreditsHalfTheDayValue(): void {
+        $r = $this->june(
+            self::fullTime(),
+            [$this->worked('2026-06-08', 240)],
+            [$this->absence(Absence::TYPE_VACATION, '2026-06-08', '2026-06-08', 0.5)],
+        );
+
+        $this->assertSame(['2026-06-08' => 240], $r['tage']);
+        $this->assertSame(480, $r['ist']);
+    }
+
+    // Stundenweise Krankheit füllt höchstens bis zum Tagessoll auf: 5 h gearbeitet, 4 h krank gemeldet, 3 h Gutschrift.
+    public function testHourlySickLeaveIsCappedAtTheRemainingDayTarget(): void {
+        $sick = $this->absence(Absence::TYPE_SICK, '2026-06-08', '2026-06-08');
+        $sick->setAbsenceMinutes(240);
+
+        $r = $this->june(self::fullTime(), [$this->worked('2026-06-08', 300)], [$sick]);
+
+        $this->assertSame(['2026-06-08' => 180], $r['tage']);
+        $this->assertSame(480, $r['ist']);
+    }
+
+    public function testUnpaidCompensatoryAndPendingAbsencesHaveNoDayCredit(): void {
+        $pending = $this->absence(Absence::TYPE_VACATION, '2026-06-10', '2026-06-10');
+        $pending->setStatus(Absence::STATUS_PENDING);
+
+        $r = $this->june(
+            self::fullTime(),
+            [],
+            [
+                $this->absence(Absence::TYPE_UNPAID, '2026-06-08', '2026-06-08'),
+                $this->absence(Absence::TYPE_COMPENSATORY, '2026-06-09', '2026-06-09'),
+                $pending,
+            ],
+        );
+
+        $this->assertSame([], $r['tage']);
+        $this->assertSame(0, $r['ist']);
+    }
+
+    // Im laufenden Monat zählt das Ist nur bis heute, also zeigt auch die Tagesliste künftigen Urlaub noch nicht.
+    public function testDayCreditsOfTheRunningMonthStopToday(): void {
+        $service = $this->service(self::fullTime(), new DateTime('2026-06-10'));
+
+        $stats = $service->getMonthlyStats(
+            $this->employee(),
+            2026,
+            6,
+            [],
+            [$this->absence(Absence::TYPE_VACATION, '2026-06-09', '2026-06-12')],
+            [],
+        );
+
+        $this->assertSame(['2026-06-09' => 480, '2026-06-10' => 480], $stats['paidAbsenceByDay']);
+        $this->assertSame(960, $stats['paidAbsenceMinutes']);
     }
 
     /**
      * @param TimeEntry[] $entries
      * @param Absence[] $absences
      * @param Holiday[] $holidays
-     * @return array{soll:int, ist:int}
+     * @return array{soll:int, ist:int, tage:array<string,int>}
      */
     private function june(WorkSchedule $schedule, array $entries, array $absences, array $holidays = []): array {
         $service = $this->service($schedule);
@@ -136,7 +206,18 @@ class RechenregelnTest extends TestCase {
             'Saldo ist nicht Ist minus Soll',
         );
 
-        return ['soll' => $monthly['targetMinutes'], 'ist' => $monthly['actualMinutes']];
+        $this->assertSame(
+            $monthly['paidAbsenceMinutes'],
+            array_sum($monthly['paidAbsenceByDay']),
+            'Tageswerte ergeben nicht die Monatssumme der bezahlten Abwesenheiten',
+        );
+        $this->assertSame($monthly['paidAbsenceByDay'], $range['paidAbsenceByDay'], 'Tageswerte: Monat und Zeitraum weichen ab');
+
+        return [
+            'soll' => $monthly['targetMinutes'],
+            'ist' => $monthly['actualMinutes'],
+            'tage' => $monthly['paidAbsenceByDay'],
+        ];
     }
 
     private static function fullTime(): WorkSchedule {
@@ -155,7 +236,7 @@ class RechenregelnTest extends TestCase {
         return $s;
     }
 
-    private function service(WorkSchedule $schedule): OvertimeCalculationService {
+    private function service(WorkSchedule $schedule, ?DateTime $today = null): OvertimeCalculationService {
         $mapper = $this->createMock(WorkScheduleMapper::class);
         $mapper->method('findForDate')->willReturn($schedule);
         $mapper->method('findByEmployeeAndDateRange')->willReturn([$schedule]);
@@ -174,7 +255,7 @@ class RechenregelnTest extends TestCase {
             $timeZone,
         );
 
-        return new OvertimeCalculationService(
+        $deps = [
             $scheduleService,
             $this->createMock(YearlyCarryoverService::class),
             $this->createMock(OvertimePayoutMapper::class),
@@ -183,7 +264,20 @@ class RechenregelnTest extends TestCase {
             $this->createMock(AbsenceService::class),
             $this->createMock(HolidayService::class),
             $timeZone,
-        );
+        ];
+
+        if ($today === null) {
+            return new OvertimeCalculationService(...$deps);
+        }
+
+        return new class($today, ...$deps) extends OvertimeCalculationService {
+            public function __construct(private DateTime $pinnedToday, mixed ...$deps) {
+                parent::__construct(...$deps);
+            }
+            protected function currentDate(): DateTime {
+                return clone $this->pinnedToday;
+            }
+        };
     }
 
     private function employee(): Employee {
@@ -207,13 +301,13 @@ class RechenregelnTest extends TestCase {
         return $entry;
     }
 
-    private function absence(string $type, string $from, string $until): Absence {
+    private function absence(string $type, string $from, string $until, float $scope = 1.0): Absence {
         $absence = new Absence();
         $absence->setStatus(Absence::STATUS_APPROVED);
         $absence->setType($type);
         $absence->setStartDate(new DateTime($from));
         $absence->setEndDate(new DateTime($until));
-        $absence->setScopeValue(1.0);
+        $absence->setScopeValue($scope);
         return $absence;
     }
 

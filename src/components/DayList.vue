@@ -53,7 +53,10 @@
                 </div>
 
                 <div class="dl-r dl-pause">{{ pauseLabel(day) }}</div>
-                <div class="dl-r dl-hh" :class="{ 'dl-mut': !day.entries.length }">{{ hoursLabel(day) }}</div>
+                <div class="dl-r dl-hh" :class="{ 'dl-mut': !day.entries.length }">
+                    {{ hoursLabel(day) }}
+                    <div v-if="creditNote(day)" class="dl-credit">{{ creditNote(day) }}</div>
+                </div>
             </div>
         </div>
     </div>
@@ -144,8 +147,17 @@ export default {
             target.scrollIntoView({ block: 'start', behavior: smooth ? 'smooth' : 'auto' })
         },
         hoursLabel(day) {
-            if (!day.entries.length) return '–'
-            return `${formatMinutes(day.totalMinutes)} h`
+            const credit = day.creditMinutes || 0
+            if (!day.entries.length && !credit) return '–'
+            return `${formatMinutes(day.totalMinutes + credit)} h`
+        },
+        // Nur am Mischtag nötig: dort steht rechts die Summe aus Arbeit und Gutschrift.
+        creditNote(day) {
+            if (!day.entries.length || !day.creditMinutes || !day.absence) return ''
+            return this.t('worktime', 'davon {hours} h {type}', {
+                hours: formatMinutes(day.creditMinutes),
+                type: day.absence.typeName,
+            })
         },
     },
 }
@@ -329,6 +341,17 @@ export default {
 .dl-hh {
     font-weight: 600;
     font-variant-numeric: tabular-nums;
+}
+
+/* Rechtsbündig per Flex, damit ein langer Hinweis nach links übersteht statt abgeschnitten zu werden */
+.dl-credit {
+    display: flex;
+    justify-content: flex-end;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.45;
+    color: var(--color-text-maxcontrast);
+    white-space: nowrap;
 }
 
 .dot {

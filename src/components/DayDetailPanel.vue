@@ -10,7 +10,7 @@
         </div>
         <template v-else-if="day.absence">
             <div class="dp-note" :class="absenceColorClass(day.absence.type)">
-                {{ day.absence.typeName }}<span v-if="day.absence.absenceMinutes"> ({{ hoursLabel(day.absence.absenceMinutes) }})</span><span v-else-if="day.absence.scope < 1"> ({{ scopeLabel }})</span>
+                {{ day.absence.typeName }}<span v-if="absenceDetail"> ({{ absenceDetail }})</span>
             </div>
             <NcButton type="tertiary" class="dp-open-abs" @click="goToAbsence">
                 {{ t('worktime', 'In „Abwesenheit" öffnen') }}
@@ -157,6 +157,13 @@ export default {
                 return this.t('worktime', 'Erfasst: {hours}', { hours: this.hoursLabel(this.day.totalMinutes) })
             }
             return this.t('worktime', 'Tag ausgewählt')
+        },
+        absenceDetail() {
+            const a = this.day.absence
+            if (a.absenceMinutes) return this.hoursLabel(a.absenceMinutes)
+            const credit = this.day.creditMinutes ? this.hoursLabel(this.day.creditMinutes) : ''
+            if (a.scope < 1) return [this.scopeLabel, credit].filter(Boolean).join(', ')
+            return credit
         },
         scopeLabel() {
             const scope = this.day.absence?.scope ?? 1

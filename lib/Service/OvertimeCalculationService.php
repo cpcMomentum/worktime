@@ -146,6 +146,7 @@ class OvertimeCalculationService {
                 'paidAbsenceDays' => 0, 'targetReductionDays' => 0, 'compensatoryDays' => 0,
                 'absenceDays' => 0, 'adjustedTargetMinutes' => 0, 'actualMinutes' => 0,
                 'overtimeMinutes' => 0, 'entryCount' => $entryCount,
+                'paidAbsenceByDay' => [],
             ];
         }
 
@@ -169,6 +170,7 @@ class OvertimeCalculationService {
 
         $paidAbsenceMinutes = 0;
         $paidAbsenceDays = 0;
+        $paidAbsenceByDay = [];
         $targetReductionMinutes = 0;
         $targetReductionDays = 0;
         $compensatoryDays = 0;
@@ -186,7 +188,8 @@ class OvertimeCalculationService {
             }
             $scope = $absence->getScopeValue();
             $days = $this->workScheduleService->countWorkingDays($employeeId, $aStart, $aEnd, $holidays) * $scope;
-            $minutes = $this->calculateAbsenceMinutes($employeeId, $aStart, $aEnd, $scope, $holidays);
+            $minutesByDay = $this->absenceMinutesByDay($employeeId, $aStart, $aEnd, $scope, $holidays);
+            $minutes = array_sum($minutesByDay);
 
             // #625: single-day hourly sick is capped to the remaining daily target
             // instead of the scope-based full/half credit.
@@ -194,6 +197,7 @@ class OvertimeCalculationService {
                 $dayTarget = $this->workScheduleService->getDailyMinutesForDate($employeeId, $aStart);
                 $worked = $workedByDate[$aStart->format('Y-m-d')] ?? 0;
                 $minutes = $this->capSubDayCredit($absence->getAbsenceMinutes(), $dayTarget, $worked);
+                $minutesByDay = [$aStart->format('Y-m-d') => $minutes];
                 $days = $dayTarget > 0 ? $minutes / $dayTarget : 0.0;
             }
 
@@ -205,6 +209,7 @@ class OvertimeCalculationService {
             } else {
                 $paidAbsenceDays += $days;
                 $paidAbsenceMinutes += $minutes;
+                $paidAbsenceByDay = $this->addDayCredits($paidAbsenceByDay, $minutesByDay);
             }
         }
 
@@ -233,6 +238,7 @@ class OvertimeCalculationService {
             'actualMinutes' => $actualMinutes,
             'overtimeMinutes' => $overtimeMinutes,
             'entryCount' => $entryCount,
+            'paidAbsenceByDay' => $paidAbsenceByDay,
         ];
     }
 
@@ -324,6 +330,7 @@ class OvertimeCalculationService {
                 'overtimeHours' => 0,
                 'entryCount' => 0,
                 'isFutureMonth' => true,
+                'paidAbsenceByDay' => [],
             ];
         }
 
@@ -386,6 +393,7 @@ class OvertimeCalculationService {
 
         $paidAbsenceMinutesUntilToday = 0;
         $paidAbsenceDaysUntilToday = 0;
+        $paidAbsenceByDay = [];
         $targetReductionMinutesUntilToday = 0;
         $targetReductionDaysUntilToday = 0;
         $compensatoryDaysUntilToday = 0;
@@ -447,13 +455,15 @@ class OvertimeCalculationService {
                     $daysUntilToday = $this->workScheduleService->countWorkingDays($employeeId, $actualAbsenceStart, $actualAbsenceEnd, $holidays);
                     $effectiveDaysUntilToday = $daysUntilToday * $absenceScope;
 
-                    $absenceMinutesUntilToday = $this->calculateAbsenceMinutes($employeeId, $actualAbsenceStart, $actualAbsenceEnd, $absenceScope, $holidays);
+                    $creditByDay = $this->absenceMinutesByDay($employeeId, $actualAbsenceStart, $actualAbsenceEnd, $absenceScope, $holidays);
+                    $absenceMinutesUntilToday = array_sum($creditByDay);
 
                     // #625: single-day hourly sick caps to the remaining daily target.
                     if ($absence instanceof Absence && $absence->getAbsenceMinutes() !== null) {
                         $dayTarget = $this->workScheduleService->getDailyMinutesForDate($employeeId, $absenceStart);
                         $worked = $workedByDate[$absenceStart->format('Y-m-d')] ?? 0;
                         $absenceMinutesUntilToday = $this->capSubDayCredit($absence->getAbsenceMinutes(), $dayTarget, $worked);
+                        $creditByDay = [$absenceStart->format('Y-m-d') => $absenceMinutesUntilToday];
                         $effectiveDaysUntilToday = $dayTarget > 0 ? $absenceMinutesUntilToday / $dayTarget : 0.0;
                     }
 
@@ -466,6 +476,7 @@ class OvertimeCalculationService {
                     } else {
                         $paidAbsenceDaysUntilToday += $effectiveDaysUntilToday;
                         $paidAbsenceMinutesUntilToday += $absenceMinutesUntilToday;
+                        $paidAbsenceByDay = $this->addDayCredits($paidAbsenceByDay, $creditByDay);
                     }
                 }
             }
@@ -524,6 +535,8 @@ class OvertimeCalculationService {
             'overtimeHours' => round($overtimeMinutes / 60, 2),
             'entryCount' => count($timeEntries),
             'isFutureMonth' => false,
+            // Gutschrift je Tag (Y-m-d => Minuten); die Summe ist paidAbsenceMinutes (#833).
+            'paidAbsenceByDay' => $paidAbsenceByDay,
         ];
     }
 
@@ -555,6 +568,7 @@ class OvertimeCalculationService {
             'overtimeHours' => 0,
             'entryCount' => 0,
             'isFutureMonth' => false,
+            'paidAbsenceByDay' => [],
         ];
     }
 
@@ -564,36 +578,48 @@ class OvertimeCalculationService {
      * @param Holiday[] $holidays
      */
     private function calculateAbsenceMinutes(int $employeeId, DateTime $start, DateTime $end, float $scope, array $holidays): int {
+        return array_sum($this->absenceMinutesByDay($employeeId, $start, $end, $scope, $holidays));
+    }
+
+    /**
+     * @param Holiday[] $holidays
+     * @return array<string, int> Y-m-d => Minuten, nur Tage mit Tagessoll
+     */
+    private function absenceMinutesByDay(int $employeeId, DateTime $start, DateTime $end, float $scope, array $holidays): array {
         $holidayMap = [];
         foreach ($holidays as $holiday) {
             $holidayMap[$holiday->getDate()->format('Y-m-d')] = $holiday;
         }
 
-        $totalMinutes = 0;
+        $byDay = [];
         $current = clone $start;
         while ($current <= $end) {
             $dateStr = $current->format('Y-m-d');
             $dayMinutes = $this->workScheduleService->getDailyMinutesForDate($employeeId, $current);
 
             if ($dayMinutes > 0) {
-                if (isset($holidayMap[$dateStr])) {
-                    // #443: honour fractional (half-day) holidays, mirroring
-                    // calculateTargetMinutes(). A full holiday (scope 1.0)
-                    // credits 0; a half holiday (scope 0.5) credits the
-                    // remaining half. Previously ANY holiday was skipped, so a
-                    // paid absence over a half-holiday credited 0 while the
-                    // target kept the reduced (half) obligation → a spurious
-                    // ~4h deficit and a days-vs-minutes mismatch.
-                    $holidayScope = $holidayMap[$dateStr]->getScopeValue();
-                    $totalMinutes += (int)round($dayMinutes * (1.0 - $holidayScope) * $scope);
-                } else {
-                    $totalMinutes += (int)round($dayMinutes * $scope);
-                }
+                // #443: ein halber Feiertag laesst die andere Tageshaelfte als Gutschrift stehen, ein ganzer nichts.
+                $holidayScope = isset($holidayMap[$dateStr]) ? $holidayMap[$dateStr]->getScopeValue() : 0.0;
+                $byDay[$dateStr] = (int)round($dayMinutes * (1.0 - $holidayScope) * $scope);
             }
             $current->modify('+1 day');
         }
 
-        return $totalMinutes;
+        return $byDay;
+    }
+
+    /**
+     * @param array<string, int> $total
+     * @param array<string, int> $credits
+     * @return array<string, int>
+     */
+    private function addDayCredits(array $total, array $credits): array {
+        foreach ($credits as $date => $minutes) {
+            if ($minutes > 0) {
+                $total[$date] = ($total[$date] ?? 0) + $minutes;
+            }
+        }
+        return $total;
     }
 
     /**
