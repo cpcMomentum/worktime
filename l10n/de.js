@@ -821,6 +821,8 @@ OC.L10N.register(
     "Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte verwirf die Stempelung und erfasse die Zeit manuell." : "Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte verwirf die Stempelung und erfasse die Zeit manuell.",
     "An diesem Tag hast du %s. Bitte storniere zuerst die Abwesenheit." : "An diesem Tag hast du %s. Bitte storniere zuerst die Abwesenheit.",
     "Genehmigungen für diese Mitarbeiter laufen dann nur noch über Admin oder Personalverwaltung." : "Genehmigungen für diese Mitarbeiter laufen dann nur noch über Admin oder Personalverwaltung.",
-    "davon {hours} h {type}" : "davon {hours} h {type}"
+    "davon {hours} h {type}" : "davon {hours} h {type}",
+    "{reported} gemeldet" : "{reported} gemeldet",
+    "{credit} angerechnet, {reported} gemeldet" : "{credit} angerechnet, {reported} gemeldet"
 },
 "nplurals=2; plural=(n != 1);");

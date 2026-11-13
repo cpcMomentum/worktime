@@ -821,6 +821,8 @@ OC.L10N.register(
     "Möchtest du die Abteilung \"{name}\" wirklich löschen?" : "Möchten Sie die Abteilung \"{name}\" wirklich löschen?",
     "Deine gewohnte Pause wird bei neuen Einträgen vorausgefüllt. Sie kann die gesetzliche Mindestpause (§4 ArbZG) nie unterschreiten — bei Bedarf wird automatisch der gesetzliche Wert verwendet. Leer lassen für die gesetzliche Mindestpause." : "Ihre gewohnte Pause wird bei neuen Einträgen vorausgefüllt. Sie kann die gesetzliche Mindestpause (§4 ArbZG) nie unterschreiten — bei Bedarf wird automatisch der gesetzliche Wert verwendet. Leer lassen für die gesetzliche Mindestpause.",
     "Genehmigungen für diese Mitarbeiter laufen dann nur noch über Admin oder Personalverwaltung." : "Genehmigungen für diese Mitarbeiter laufen dann nur noch über Admin oder Personalverwaltung.",
-    "davon {hours} h {type}" : "davon {hours} h {type}"
+    "davon {hours} h {type}" : "davon {hours} h {type}",
+    "{reported} gemeldet" : "{reported} gemeldet",
+    "{credit} angerechnet, {reported} gemeldet" : "{credit} angerechnet, {reported} gemeldet"
 },
 "nplurals=2; plural=(n != 1);");
