@@ -1,4 +1,44 @@
 {
+	"0.25.0": [
+		{
+			"title": {
+				"de": "Stunden an Urlaubs- und Krankheitstagen",
+				"en": "Hours on vacation and sick days",
+				"cs": "Hodiny ve dnech dovolené a nemoci"
+			},
+			"text": {
+				"de": "Die Tagesliste zeigt an Urlaubs- und Krankheitstagen jetzt die angerechneten Stunden statt eines Strichs. Die Spalte „Stunden“ ergibt damit das Ist des Monats. An Tagen mit Arbeit und Abwesenheit steht die Summe mit dem Hinweis, wie viel davon auf die Abwesenheit entfällt.",
+				"en": "On vacation and sick days the day list now shows the credited hours instead of a dash. The “Hours” column therefore adds up to the month's actual time. On days with both work and an absence, the total is shown with a note on how much of it comes from the absence.",
+				"cs": "Seznam dnů nyní ve dnech dovolené a nemoci místo pomlčky ukazuje započtené hodiny. Sloupec „Hodiny“ tak dává skutečný čas měsíce. Ve dnech s prací i nepřítomností je uveden součet s poznámkou, kolik z toho připadá na nepřítomnost."
+			},
+			"icon": "counter",
+			"where": {
+				"de": "Zeiterfassung › Tagesliste",
+				"en": "Time tracking › Day list",
+				"cs": "Evidence času › Seznam dnů"
+			},
+			"plus": false
+		},
+		{
+			"title": {
+				"de": "Förmliche Anrede wählbar",
+				"en": "Formal German and UK English",
+				"cs": "Formální němčina a britská angličtina"
+			},
+			"text": {
+				"de": "Mit der Sprache „Deutsch (Förmlich)“ verwendet WorkTime die förmliche Anrede, mit „Deutsch“ die vertraute. Auch „English (UK)“ wird jetzt erkannt.",
+				"en": "With the language “Deutsch (Förmlich)” WorkTime uses the formal German address, with “Deutsch” the informal one. “English (UK)” is now recognised as well.",
+				"cs": "S jazykem „Deutsch (Förmlich)“ používá WorkTime formální německé oslovení, s „Deutsch“ neformální. Nově je rozpoznána i „English (UK)“."
+			},
+			"icon": "cog",
+			"where": {
+				"de": "Persönliche Einstellungen › Sprache",
+				"en": "Personal settings › Language",
+				"cs": "Osobní nastavení › Jazyk"
+			},
+			"plus": false
+		}
+	],
 	"0.24.4": [
 		{
 			"title": {
