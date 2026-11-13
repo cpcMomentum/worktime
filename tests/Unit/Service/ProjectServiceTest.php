@@ -14,6 +14,7 @@ use OCA\WorkTime\Service\NotFoundException;
 use OCA\WorkTime\Service\ValidationException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCP\IL10N;
 
 /**
  * Covers the project-to-employee assignment logic (#58).
@@ -35,6 +36,7 @@ class ProjectServiceTest extends TestCase {
             $this->favoriteMapper,
             $this->createMock(AuditLogService::class),
             $this->createMock(LoggerInterface::class),
+            $this->l10nStub(),
         );
     }
 
@@ -227,5 +229,11 @@ class ProjectServiceTest extends TestCase {
     public function testRemoveFavoriteDelegatesToMapper(): void {
         $this->favoriteMapper->expects($this->once())->method('remove')->with(7, 4);
         $this->service->removeFavorite(7, 4);
+    }
+
+    private function l10nStub(): IL10N {
+        $l = $this->createMock(IL10N::class);
+        $l->method('t')->willReturnCallback(static fn(string $text, array $params = []): string => $text);
+        return $l;
     }
 }

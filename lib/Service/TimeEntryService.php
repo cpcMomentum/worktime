@@ -146,7 +146,7 @@ class TimeEntryService {
         try {
             return $this->timeEntryMapper->find($id);
         } catch (DoesNotExistException $e) {
-            throw new NotFoundException('Time entry not found');
+            throw new NotFoundException($this->l->t('Zeiteintrag nicht gefunden.'));
         }
     }
 
@@ -399,10 +399,10 @@ class TimeEntryService {
         // months the rule applies to everyone (use reopen/reject instead).
         if (!($allowLockedOverride && !empty($lockedMonths))) {
             if ($entry->getStatus() === TimeEntry::STATUS_APPROVED) {
-                throw new ForbiddenException('Cannot delete approved time entries');
+                throw new ForbiddenException($this->l->t('Genehmigte Zeiteinträge können nicht gelöscht werden.'));
             }
             if ($entry->getStatus() === TimeEntry::STATUS_SUBMITTED) {
-                throw new ForbiddenException('Cannot delete submitted time entries');
+                throw new ForbiddenException($this->l->t('Eingereichte Zeiteinträge können nicht gelöscht werden.'));
             }
         }
 
@@ -433,7 +433,7 @@ class TimeEntryService {
         $oldValues = $entry->jsonSerialize();
 
         if ($entry->getStatus() !== TimeEntry::STATUS_DRAFT && $entry->getStatus() !== TimeEntry::STATUS_REJECTED) {
-            throw new ForbiddenException('Can only submit draft or rejected entries');
+            throw new ForbiddenException($this->l->t('Nur Entwürfe oder abgelehnte Einträge können eingereicht werden.'));
         }
 
         $entry->setStatus(TimeEntry::STATUS_SUBMITTED);
@@ -610,7 +610,7 @@ class TimeEntryService {
         $oldValues = $entry->jsonSerialize();
 
         if ($entry->getStatus() !== TimeEntry::STATUS_SUBMITTED) {
-            throw new ForbiddenException('Can only approve submitted entries');
+            throw new ForbiddenException($this->l->t('Nur eingereichte Einträge können genehmigt werden.'));
         }
 
         $entry->setStatus(TimeEntry::STATUS_APPROVED);
@@ -649,7 +649,7 @@ class TimeEntryService {
         $oldValues = $entry->jsonSerialize();
 
         if ($entry->getStatus() !== TimeEntry::STATUS_SUBMITTED) {
-            throw new ForbiddenException('Can only reject submitted entries');
+            throw new ForbiddenException($this->l->t('Nur eingereichte Einträge können abgelehnt werden.'));
         }
 
         $entry->setStatus(TimeEntry::STATUS_REJECTED);

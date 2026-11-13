@@ -167,7 +167,7 @@ class AbsenceService {
         try {
             return $this->absenceMapper->find($id);
         } catch (DoesNotExistException $e) {
-            throw new NotFoundException('Absence not found');
+            throw new NotFoundException($this->l->t('Abwesenheit nicht gefunden.'));
         }
     }
 
@@ -669,7 +669,7 @@ class AbsenceService {
 
         // Cannot edit cancelled absences
         if ($absence->getStatus() === Absence::STATUS_CANCELLED) {
-            throw new ForbiddenException('Cannot edit cancelled absences');
+            throw new ForbiddenException($this->l->t('Stornierte Abwesenheiten können nicht bearbeitet werden.'));
         }
 
         // #15 Stufe 2: Betriebsschließung entsteht nur über den zentralen Weg —
@@ -802,7 +802,7 @@ class AbsenceService {
         if (!($allowLockedOverride && !empty($lockedMonths))
             && $absence->getStatus() === Absence::STATUS_APPROVED
             && !in_array($absence->getType(), [Absence::TYPE_SICK, Absence::TYPE_CHILD_SICK], true)) {
-            throw new ForbiddenException('Cannot delete approved absences');
+            throw new ForbiddenException($this->l->t('Genehmigte Abwesenheiten können nicht gelöscht werden.'));
         }
 
         // Audit log (record the HR correction reason when present)
@@ -833,7 +833,7 @@ class AbsenceService {
         $oldValues = $absence->jsonSerialize();
 
         if ($absence->getStatus() !== Absence::STATUS_PENDING) {
-            throw new ForbiddenException('Can only approve pending absences');
+            throw new ForbiddenException($this->l->t('Nur offene Abwesenheiten können genehmigt werden.'));
         }
 
         // #443: re-check the time-entry conflict at approval time. The create-time
@@ -884,7 +884,7 @@ class AbsenceService {
         $oldValues = $absence->jsonSerialize();
 
         if ($absence->getStatus() !== Absence::STATUS_PENDING) {
-            throw new ForbiddenException('Can only reject pending absences');
+            throw new ForbiddenException($this->l->t('Nur offene Abwesenheiten können abgelehnt werden.'));
         }
 
         $absence->setStatus(Absence::STATUS_REJECTED);

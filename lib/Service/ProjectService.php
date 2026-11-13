@@ -16,6 +16,7 @@ use OCA\WorkTime\Db\ProjectEmployeeMapper;
 use OCA\WorkTime\Db\EmployeeFavoriteProjectMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
+use OCP\IL10N;
 
 class ProjectService {
 
@@ -25,6 +26,7 @@ class ProjectService {
         private EmployeeFavoriteProjectMapper $favoriteMapper,
         private AuditLogService $auditLogService,
         private LoggerInterface $logger,
+        private IL10N $l,
     ) {
     }
 
@@ -49,7 +51,7 @@ class ProjectService {
         try {
             return $this->projectMapper->find($id);
         } catch (DoesNotExistException $e) {
-            throw new NotFoundException('Project not found');
+            throw new NotFoundException($this->l->t('Projekt nicht gefunden.'));
         }
     }
 
@@ -268,7 +270,7 @@ class ProjectService {
      */
     public function addFavorite(int $employeeId, int $projectId): void {
         if (!$this->isProjectAllowedForEmployee($projectId, $employeeId)) {
-            throw new NotFoundException('Project not found');
+            throw new NotFoundException($this->l->t('Projekt nicht gefunden.'));
         }
         $this->favoriteMapper->add($employeeId, $projectId);
     }

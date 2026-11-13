@@ -150,7 +150,7 @@ class EmployeeService {
         try {
             return $this->withActiveSchedule($this->employeeMapper->find($id));
         } catch (DoesNotExistException $e) {
-            throw new NotFoundException('Employee not found');
+            throw new NotFoundException($this->l->t('Mitarbeitende Person nicht gefunden.'));
         }
     }
 
@@ -161,7 +161,7 @@ class EmployeeService {
         try {
             return $this->withActiveSchedule($this->employeeMapper->findByUserId($userId));
         } catch (DoesNotExistException $e) {
-            throw new NotFoundException('Employee not found for user');
+            throw new NotFoundException($this->l->t('Für diesen Benutzer existiert kein Mitarbeiterprofil.'));
         }
     }
 
