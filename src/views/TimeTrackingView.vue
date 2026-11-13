@@ -406,6 +406,8 @@ export default {
                 holidayByDate[holiday.date] = { name: holiday.name }
             }
             const todayStr = getToday()
+            // #833: die Gutschrift je Tag rechnet der Server, damit die Spalte zum Ist passt.
+            const creditByDate = this.statistics?.paidAbsenceByDay || {}
             return skeleton.map(s => {
                 const entries = (entriesByDate[s.date] || [])
                     .slice()
@@ -415,6 +417,7 @@ export default {
                     ...s,
                     entries,
                     totalMinutes,
+                    creditMinutes: creditByDate[s.date] || 0,
                     firstStart: entries.length ? entries[0].startTime : null,
                     lastEnd: entries.length ? entries[entries.length - 1].endTime : null,
                     absence: this.absenceByDate[s.date] || null,
@@ -597,7 +600,7 @@ export default {
                 .toLocaleDateString(getLocale(), { month: 'long', year: 'numeric' })
 
             const confirmed = await confirmAction(
-                this.t('worktime', 'Möchten Sie die Zeiteinträge für {month} einreichen? Die eingereichten Einträge werden zur Genehmigung übermittelt.', { month: monthName }),
+                this.t('worktime', 'Möchtest du die Zeiteinträge für {month} einreichen? Die eingereichten Einträge werden zur Genehmigung übermittelt.', { month: monthName }),
                 this.t('worktime', 'Monat einreichen'),
                 this.t('worktime', 'Einreichen'),
                 false

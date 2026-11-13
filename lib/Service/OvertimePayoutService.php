@@ -16,6 +16,7 @@ use OCA\WorkTime\Db\OvertimePayoutMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
+use OCP\IL10N;
 
 class OvertimePayoutService {
 
@@ -24,6 +25,7 @@ class OvertimePayoutService {
         private AuditLogService $auditLogService,
         private OvertimeCalculationService $overtimeCalc,
         private IDBConnection $db,
+        private IL10N $l,
     ) {
     }
 
@@ -147,7 +149,7 @@ class OvertimePayoutService {
         try {
             $payout = $this->mapper->find($id);
         } catch (DoesNotExistException) {
-            throw new NotFoundException('Overtime payout not found');
+            throw new NotFoundException($this->l->t('Überstunden-Auszahlung nicht gefunden.'));
         }
         $oldValues = $payout->jsonSerialize();
 

@@ -16,7 +16,7 @@
                     </NcButton>
                 </div>
                 <div class="kpi-pm">
-                    <span class="kpi-num">{{ hoursLabel(actualMinutes) }} h <small>/ {{ hoursLabel(periodSoll) }} h Soll</small></span>
+                    <span class="kpi-num">{{ hoursLabel(actualMinutes) }} h <small>/ {{ t('worktime', '{hours} h Soll', { hours: hoursLabel(periodSoll) }) }}</small></span>
                     <span class="kpi-pct">{{ percent }} %</span>
                 </div>
                 <div class="kpi-bar"><span :style="{ width: barWidth + '%' }" /></div>
@@ -258,6 +258,14 @@ export default {
 
 .kpi-cards--two {
     grid-template-columns: 2fr 1fr;
+}
+
+/* Handybreite: Karten untereinander, damit nichts abgeschnitten wird */
+@media (max-width: 600px) {
+    .kpi-cards,
+    .kpi-cards--two {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 
 .kpi-card {

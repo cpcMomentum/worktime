@@ -11,6 +11,7 @@ use OCA\WorkTime\Service\AuditLogService;
 use OCA\WorkTime\Service\OvertimeCalculationService;
 use OCA\WorkTime\Service\OvertimePayoutService;
 use OCP\IDBConnection;
+use OCP\IL10N;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -46,7 +47,7 @@ class OvertimePayoutServiceTest extends TestCase {
      * instance exposes $lockCalls / $lockedIds for assertions.
      */
     private function makeService(OvertimeCalculationService $calc, IDBConnection $db): OvertimePayoutService {
-        return new class($this->mapper, $this->auditLogService, $calc, $db) extends OvertimePayoutService {
+        return new class($this->mapper, $this->auditLogService, $calc, $db, $this->l10nStub()) extends OvertimePayoutService {
             public int $lockCalls = 0;
             /** @var int[] */
             public array $lockedIds = [];
@@ -180,5 +181,11 @@ class OvertimePayoutServiceTest extends TestCase {
             ->with('admin', 'overtime_payout', 5, $this->anything());
 
         $this->service->delete(5, 'admin');
+    }
+
+    private function l10nStub(): IL10N {
+        $l = $this->createMock(IL10N::class);
+        $l->method('t')->willReturnCallback(static fn(string $text, array $params = []): string => $text);
+        return $l;
     }
 }

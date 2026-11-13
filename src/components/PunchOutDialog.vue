@@ -15,7 +15,7 @@
 			</NcNoteCard>
 
 			<NcNoteCard v-if="emergencyReasonRequired" type="warning">
-				{{ t('worktime', 'An diesem Tag haben Sie genehmigten Urlaub. Diese Zeit wird als Notarbeit im Urlaub gebucht (zusätzlich zum Urlaub). Bitte geben Sie eine Begründung an.') }}
+				{{ t('worktime', 'An diesem Tag hast du genehmigten Urlaub. Diese Zeit wird als Notarbeit im Urlaub gebucht (zusätzlich zum Urlaub). Bitte gib eine Begründung an.') }}
 			</NcNoteCard>
 
 			<div class="punch-out__grid">

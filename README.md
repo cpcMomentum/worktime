@@ -124,3 +124,8 @@ npm run watch
 ## Lizenz
 
 AGPL-3.0-or-later
+
+WorkTime ist kostenlos und Open Source. Wer die Weiterentwicklung
+unterstützen möchte, findet mit WerkPlus optionale Zusatzfunktionen für alle
+Werk-Apps. Welche es für WorkTime gibt, steht auf
+https://werkwolke.de/funktionen#worktime

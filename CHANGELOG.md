@@ -7,6 +7,21 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-11-13
+
+### Added
+- **Angerechnete Stunden an Urlaubs- und Krankheitstagen (#833)**: Bezahlte Abwesenheiten zählten schon immer ins Ist, die Tagesliste zeigte an diesen Tagen aber einen Strich. Die Spalte „Stunden“ ergab deshalb nicht das Ist. Jetzt steht dort die Gutschrift des Tages, an Tagen mit Arbeit und Abwesenheit die Summe mit dem Hinweis „davon … h Urlaub“. Kalender, Tagesdetail und Arbeitszeitnachweis (PDF) zeigen dieselben Werte. Unbezahlter Urlaub, Freizeitausgleich, Feiertage und nicht genehmigte Abwesenheiten behalten den Strich. An der Rechnung von Soll, Ist und Saldo ändert sich nichts.
+- **Anrede nach eingestellter Sprache (#839, #814)**: Mit „Deutsch“ duzt WorkTime, mit „Deutsch (Förmlich)“ siezt es. „English (UK)“ wird jetzt ebenfalls erkannt. Bisher fiel WorkTime bei diesen beiden Sprachen auf die Sprache des Browsers zurück.
+
+### Fixed
+- **Zeiterfassung auf dem Handy (#861)**: Auf schmalen Bildschirmen überlappten sich in der Tagesliste Zeiten und Pause, die Spalte „Stunden“ und die dritte Kennzahl-Karte wurden abgeschnitten. Die Karten stehen jetzt untereinander, die Tagesliste zeigt Tag, Zeiten mit Pause darunter und Stunden rechts.
+- **Tagesdetail bei stundenweiser Krankheit (#862)**: Das Tagesdetail nannte die gemeldeten Stunden, angerechnet wird aber höchstens das restliche Tagessoll. Es zeigt jetzt den angerechneten Wert und nennt den gemeldeten zusätzlich, wenn beide abweichen.
+- **Fehlende Übersetzungen (#863)**: „Soll“ in der Kennzahl-Karte und mehrere Fehlermeldungen vom Server (z. B. beim Löschen genehmigter Abwesenheiten oder Zeiteinträge) erschienen nicht in der eingestellten Sprache.
+- **Abwesenheitsübersicht startet im richtigen Monat**: Die Vorgabe für Jahr und Monat richtete sich nach UTC statt nach der Zeitzone des Nutzers und konnte am Monatswechsel den falschen Monat zeigen.
+
+### Changed
+- Abhängigkeiten aktualisiert, darunter Sicherheitsupdates für qs, follow-redirects und fast-xml-parser (#860).
+
 ## [0.24.4] - 2026-11-10
 
 ### Fixed

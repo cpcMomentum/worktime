@@ -10,7 +10,7 @@
         </div>
         <template v-else-if="day.absence">
             <div class="dp-note" :class="absenceColorClass(day.absence.type)">
-                {{ day.absence.typeName }}<span v-if="day.absence.absenceMinutes"> ({{ hoursLabel(day.absence.absenceMinutes) }})</span><span v-else-if="day.absence.scope < 1"> ({{ scopeLabel }})</span>
+                {{ day.absence.typeName }}<span v-if="absenceDetail"> ({{ absenceDetail }})</span>
             </div>
             <NcButton type="tertiary" class="dp-open-abs" @click="goToAbsence">
                 {{ t('worktime', 'In „Abwesenheit" öffnen') }}
@@ -158,6 +158,19 @@ export default {
             }
             return this.t('worktime', 'Tag ausgewählt')
         },
+        absenceDetail() {
+            const a = this.day.absence
+            const credit = this.day.creditMinutes ? this.hoursLabel(this.day.creditMinutes) : ''
+            if (a.absenceMinutes) {
+                // Angerechnet ist der gedeckelte Wert; ohne Anrechnung steht er als gemeldet.
+                const reported = this.hoursLabel(a.absenceMinutes)
+                if (!this.day.creditMinutes) return this.t('worktime', '{reported} gemeldet', { reported })
+                if (this.day.creditMinutes === a.absenceMinutes) return credit
+                return this.t('worktime', '{credit} angerechnet, {reported} gemeldet', { credit, reported })
+            }
+            if (a.scope < 1) return [this.scopeLabel, credit].filter(Boolean).join(', ')
+            return credit
+        },
         scopeLabel() {
             const scope = this.day.absence?.scope ?? 1
             return scope === 0.5
@@ -246,7 +259,7 @@ export default {
                 return
             }
             const confirmed = await confirmAction(
-                this.t('worktime', 'Möchten Sie diesen Eintrag wirklich löschen?'),
+                this.t('worktime', 'Möchtest du diesen Eintrag wirklich löschen?'),
                 this.t('worktime', 'Eintrag löschen'),
                 this.t('worktime', 'Löschen'),
                 true,

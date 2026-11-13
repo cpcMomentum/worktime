@@ -441,11 +441,12 @@ class AbsenceController extends BaseController {
             return $authError;
         }
 
+        $today = LocalDate::today($this->dateTimeZone->getTimeZone());
         if ($year === 0) {
-            $year = (int)date('Y');
+            $year = (int)$today->format('Y');
         }
         if ($month === 0) {
-            $month = (int)date('n');
+            $month = (int)$today->format('n');
         }
 
         // Admin/HR see everything unmasked across all employees.

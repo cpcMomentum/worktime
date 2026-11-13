@@ -303,7 +303,7 @@
                 id="sec-pdf" :name="t('worktime', 'PDF-Archiv')"
                 :description="t('worktime', 'Genehmigte Monatsberichte werden automatisch als PDF archiviert.')">
                 <div class="form-group">
-                    <label>{{ t('worktime', 'Archiv-Ordner') }} <InfoIcon>{{ t('worktime', 'Wenn ein Monat genehmigt wird, speichert WorkTime automatisch einen PDF-Bericht in diesem Ordner. Der Ordner liegt in Ihrem persönlichen Speicher — nur Sie als Admin haben Zugriff. Die automatische Archivierung greift nur bei aktivierter Genehmigung; ist sie deaktiviert, nutzen Sie den PDF-Export in der Monatsübersicht.') }}</InfoIcon></label>
+                    <label>{{ t('worktime', 'Archiv-Ordner') }} <InfoIcon>{{ t('worktime', 'Wenn ein Monat genehmigt wird, speichert WorkTime automatisch einen PDF-Bericht in diesem Ordner. Der Ordner liegt in deinem persönlichen Speicher — nur du als Admin hast Zugriff. Die automatische Archivierung greift nur bei aktivierter Genehmigung; ist sie deaktiviert, nutze den PDF-Export in der Monatsübersicht.') }}</InfoIcon></label>
                     <div class="folder-picker">
                         <NcButton type="secondary" @click="openFolderPicker">
                             <template #icon>
@@ -316,7 +316,7 @@
                         </span>
                     </div>
                     <p class="help-text">
-                        {{ t('worktime', 'PDFs werden in Ihrem persönlichen Ordner gespeichert. Nur Sie haben Zugriff.') }}
+                        {{ t('worktime', 'PDFs werden in deinem persönlichen Ordner gespeichert. Nur du hast Zugriff.') }}
                     </p>
                     <p class="help-text">
                         {{ t('worktime', 'Struktur: {path}/{Jahr}/{Nachname_Vorname}/Arbeitszeitnachweis_YYYY-MM.pdf', { path: settings.pdf_archive_path || '...' }) }}
@@ -324,7 +324,7 @@
                 </div>
 
                 <div v-if="settings.pdf_archive_path" class="form-group archive-status">
-                    <label>{{ t('worktime', 'Archivierungs-Status') }} <InfoIcon>{{ t('worktime', 'Die PDF-Archivierung läuft über einen Hintergrund-Job (ca. alle 5 Minuten). Hier sehen Sie ausstehende und fehlgeschlagene Archivierungen.') }}</InfoIcon></label>
+                    <label>{{ t('worktime', 'Archivierungs-Status') }} <InfoIcon>{{ t('worktime', 'Die PDF-Archivierung läuft über einen Hintergrund-Job (ca. alle 5 Minuten). Hier siehst du ausstehende und fehlgeschlagene Archivierungen.') }}</InfoIcon></label>
                     <NcLoadingIcon v-if="archiveLoading" :size="20" />
                     <template v-else>
                         <p class="help-text">
@@ -362,14 +362,14 @@
             <NcSettingsSection v-if="canManageEmployees"
                 v-show="activeSection === 'sec-betriebsferien'"
                 id="sec-betriebsferien" :name="t('worktime', 'Betriebsferien')"
-                :description="t('worktime', 'Tragen Sie Betriebsferien zentral für alle oder ausgewählte Mitarbeiter als Urlaub ein.')">
+                :description="t('worktime', 'Trage Betriebsferien zentral für alle oder ausgewählte Mitarbeiter als Urlaub ein.')">
                 <BetriebsferienSettings :employees="employees" />
             </NcSettingsSection>
 
             <NcSettingsSection v-if="canManageSettings"
                 v-show="activeSection === 'sec-sondertage'"
                 id="sec-sondertage" :name="t('worktime', 'Sondertage')"
-                :description="t('worktime', 'Legen Sie fest, wie Heiligabend und Silvester behandelt werden.')">
+                :description="t('worktime', 'Lege fest, wie Heiligabend und Silvester behandelt werden.')">
                 <div class="form-group">
                     <label class="special-day-label">
                         {{ t('worktime', 'Heiligabend (24.12.)') }} <InfoIcon>{{ t('worktime', 'Halber freier Tag halbiert das Tagessoll, ganzer freier Tag setzt es auf null. Beispiel: Bei 8 Std./Tag werden 4 Std. bzw. 0 Std. als Soll angerechnet.') }}</InfoIcon>
@@ -415,7 +415,7 @@
                     </div>
                 </div>
                 <p class="help-text">
-                    {{ t('worktime', 'Hinweis: Änderungen wirken sich auf neu generierte Feiertage aus. Generieren Sie die Feiertage erneut, um die Änderungen anzuwenden.') }}
+                    {{ t('worktime', 'Hinweis: Änderungen wirken sich auf neu generierte Feiertage aus. Generiere die Feiertage erneut, um die Änderungen anzuwenden.') }}
                 </p>
             </NcSettingsSection>
 
@@ -1700,7 +1700,7 @@ export default {
             this.showHolidayForm = true
         },
         async confirmDeleteHolidayGroup(group) {
-            const message = this.t('worktime', 'Möchten Sie den Feiertag "{name}" ({count} Bundesländer) wirklich löschen?', {
+            const message = this.t('worktime', 'Möchtest du den Feiertag "{name}" ({count} Bundesländer) wirklich löschen?', {
                 name: group.name,
                 count: group.states.length,
             })

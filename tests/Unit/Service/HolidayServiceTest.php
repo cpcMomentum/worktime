@@ -13,6 +13,7 @@ use OCA\WorkTime\Service\HolidayService;
 use OCP\DB\Exception as DbException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCP\IL10N;
 
 class HolidayServiceTest extends TestCase {
 
@@ -33,6 +34,7 @@ class HolidayServiceTest extends TestCase {
             $this->settingsMapper,
             $this->auditLogService,
             $this->logger,
+            $this->l10nStub(),
         );
     }
 
@@ -328,5 +330,11 @@ class HolidayServiceTest extends TestCase {
             ['BY'],
             ['HE'],
         ];
+    }
+
+    private function l10nStub(): IL10N {
+        $l = $this->createMock(IL10N::class);
+        $l->method('t')->willReturnCallback(static fn(string $text, array $params = []): string => $text);
+        return $l;
     }
 }

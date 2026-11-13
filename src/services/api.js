@@ -1,5 +1,6 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { translate as t } from '@nextcloud/l10n'
 
 const baseUrl = generateUrl('/apps/worktime/api')
 
@@ -42,7 +43,7 @@ export function handleApiError(error) {
             }
         }
         const data = error.response.data
-        const message = data?.error || data?.message || 'Ein Fehler ist aufgetreten'
+        const message = data?.error || data?.message || t('worktime', 'Ein Fehler ist aufgetreten')
         const err = new Error(message)
         // Preserve the server's machine-readable hints (e.g. #664 reason_required,
         // #584 confirmation_required) so callers can react beyond the message.

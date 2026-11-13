@@ -13,6 +13,7 @@ use OCA\WorkTime\Service\DepartmentService;
 use OCA\WorkTime\Service\ValidationException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCP\IL10N;
 
 /**
  * Covers department master data and, above all, the delete = unassign rule
@@ -33,6 +34,7 @@ class DepartmentServiceTest extends TestCase {
             $this->employeeMapper,
             $this->createMock(AuditLogService::class),
             $this->createMock(LoggerInterface::class),
+            $this->l10nStub(),
         );
     }
 
@@ -135,5 +137,11 @@ class DepartmentServiceTest extends TestCase {
         ]);
 
         $this->assertSame(['memberCount' => 3], $this->service->deletionImpact(7));
+    }
+
+    private function l10nStub(): IL10N {
+        $l = $this->createMock(IL10N::class);
+        $l->method('t')->willReturnCallback(static fn(string $text, array $params = []): string => $text);
+        return $l;
     }
 }

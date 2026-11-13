@@ -54,7 +54,7 @@
             </div>
 
             <p class="help-text">
-                {{ t('worktime', 'Mitarbeiter mit bereits erfassten Zeiten im Zeitraum werden nicht gebucht, sondern Ihnen aufgelistet.') }}
+                {{ t('worktime', 'Mitarbeiter mit bereits erfassten Zeiten im Zeitraum werden nicht gebucht, sondern dir aufgelistet.') }}
             </p>
 
             <NcButton type="primary" :disabled="!canSubmit || saving" @click="submit">
