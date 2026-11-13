@@ -260,6 +260,14 @@ export default {
     grid-template-columns: 2fr 1fr;
 }
 
+/* Handybreite: Karten untereinander, damit nichts abgeschnitten wird */
+@media (max-width: 600px) {
+    .kpi-cards,
+    .kpi-cards--two {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
 .kpi-card {
     background: var(--color-main-background);
     border: 1px solid var(--color-border-dark, var(--color-border));

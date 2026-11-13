@@ -377,4 +377,46 @@ export default {
 .dot.other {
     background: var(--color-primary-element);
 }
+
+/* Handybreite: Tag links, Zeiten mit Pause darunter, Stunden rechts */
+@media (max-width: 600px) {
+    .dl-head {
+        display: none;
+    }
+
+    .dl-day {
+        grid-template-columns: 76px minmax(0, 1fr) auto;
+        gap: 2px 10px;
+    }
+
+    .dl-day > .dl-d {
+        grid-row: 1 / span 2;
+    }
+
+    .dl-day > .dl-mid {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .dl-day > .dl-pause {
+        grid-column: 2;
+        grid-row: 2;
+        text-align: left;
+        font-size: 12px;
+        color: var(--color-text-maxcontrast);
+    }
+
+    .dl-day > .dl-hh {
+        grid-column: 3;
+        grid-row: 1 / span 2;
+    }
+
+    .dl-mid-top {
+        flex-wrap: wrap;
+    }
+
+    .dl-credit {
+        white-space: normal;
+    }
+}
 </style>

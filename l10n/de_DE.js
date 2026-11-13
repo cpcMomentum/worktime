@@ -846,6 +846,8 @@ OC.L10N.register(
     "Ein stornierter Übertrag kann nicht gesperrt werden." : "Ein stornierter Übertrag kann nicht gesperrt werden.",
     "Der Übertrag ist bereits storniert." : "Der Übertrag ist bereits storniert.",
     "Nur gesperrte Übertragungen müssen storniert werden. Ungesperrte können direkt bearbeitet werden." : "Nur gesperrte Übertragungen müssen storniert werden. Ungesperrte können direkt bearbeitet werden.",
-    "Der Übertrag ist gesperrt und kann nicht geändert werden. Zum Ändern muss er storniert und durch einen neuen ersetzt werden." : "Der Übertrag ist gesperrt und kann nicht geändert werden. Zum Ändern muss er storniert und durch einen neuen ersetzt werden."
+    "Der Übertrag ist gesperrt und kann nicht geändert werden. Zum Ändern muss er storniert und durch einen neuen ersetzt werden." : "Der Übertrag ist gesperrt und kann nicht geändert werden. Zum Ändern muss er storniert und durch einen neuen ersetzt werden.",
+    "{reported} gemeldet" : "{reported} gemeldet",
+    "{credit} angerechnet, {reported} gemeldet" : "{credit} angerechnet, {reported} gemeldet"
 },
 "nplurals=2; plural=(n != 1);");

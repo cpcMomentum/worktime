@@ -852,7 +852,9 @@
 		"Ein stornierter Übertrag kann nicht gesperrt werden.": "Zrušený převod nelze uzamknout.",
 		"Der Übertrag ist bereits storniert.": "Převod je již zrušen.",
 		"Nur gesperrte Übertragungen müssen storniert werden. Ungesperrte können direkt bearbeitet werden.": "Zrušit je třeba pouze uzamčené převody. Neuzamčené lze upravit přímo.",
-		"Der Übertrag ist gesperrt und kann nicht geändert werden. Zum Ändern muss er storniert und durch einen neuen ersetzt werden.": "Převod je uzamčen a nelze jej změnit. Ke změně je nutné jej zrušit a nahradit novým."
+		"Der Übertrag ist gesperrt und kann nicht geändert werden. Zum Ändern muss er storniert und durch einen neuen ersetzt werden.": "Převod je uzamčen a nelze jej změnit. Ke změně je nutné jej zrušit a nahradit novým.",
+		"{reported} gemeldet": "{reported} nahlášeno",
+		"{credit} angerechnet, {reported} gemeldet": "{credit} započteno, {reported} nahlášeno"
 	},
 	"pluralForm": "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;"
 }

@@ -846,6 +846,8 @@ OC.L10N.register(
     "Ein stornierter Übertrag kann nicht gesperrt werden." : "A cancelled carryover cannot be locked.",
     "Der Übertrag ist bereits storniert." : "The carryover is already cancelled.",
     "Nur gesperrte Übertragungen müssen storniert werden. Ungesperrte können direkt bearbeitet werden." : "Only locked carryovers need to be cancelled. Unlocked ones can be edited directly.",
-    "Der Übertrag ist gesperrt und kann nicht geändert werden. Zum Ändern muss er storniert und durch einen neuen ersetzt werden." : "The carryover is locked and cannot be changed. To change it, it must be cancelled and replaced with a new one."
+    "Der Übertrag ist gesperrt und kann nicht geändert werden. Zum Ändern muss er storniert und durch einen neuen ersetzt werden." : "The carryover is locked and cannot be changed. To change it, it must be cancelled and replaced with a new one.",
+    "{reported} gemeldet" : "{reported} reported",
+    "{credit} angerechnet, {reported} gemeldet" : "{credit} credited, {reported} reported"
 },
 "nplurals=2; plural=(n != 1);");
