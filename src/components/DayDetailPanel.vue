@@ -160,8 +160,14 @@ export default {
         },
         absenceDetail() {
             const a = this.day.absence
-            if (a.absenceMinutes) return this.hoursLabel(a.absenceMinutes)
             const credit = this.day.creditMinutes ? this.hoursLabel(this.day.creditMinutes) : ''
+            if (a.absenceMinutes) {
+                // Angerechnet ist der gedeckelte Wert; ohne Anrechnung steht er als gemeldet.
+                const reported = this.hoursLabel(a.absenceMinutes)
+                if (!this.day.creditMinutes) return this.t('worktime', '{reported} gemeldet', { reported })
+                if (this.day.creditMinutes === a.absenceMinutes) return credit
+                return this.t('worktime', '{credit} angerechnet, {reported} gemeldet', { credit, reported })
+            }
             if (a.scope < 1) return [this.scopeLabel, credit].filter(Boolean).join(', ')
             return credit
         },
