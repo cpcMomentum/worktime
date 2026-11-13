@@ -18,6 +18,7 @@ use OCA\WorkTime\Db\HolidayMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\Exception as DbException;
 use Psr\Log\LoggerInterface;
+use OCP\IL10N;
 
 class HolidayService {
 
@@ -55,6 +56,7 @@ class HolidayService {
         private CompanySettingMapper $settingsMapper,
         private AuditLogService $auditLogService,
         private LoggerInterface $logger,
+        private IL10N $l,
     ) {
     }
 
@@ -117,7 +119,7 @@ class HolidayService {
         try {
             return $this->holidayMapper->find($id);
         } catch (DoesNotExistException $e) {
-            throw new NotFoundException('Holiday not found');
+            throw new NotFoundException($this->l->t('Feiertag nicht gefunden.'));
         }
     }
 

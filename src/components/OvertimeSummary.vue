@@ -16,7 +16,7 @@
                     </NcButton>
                 </div>
                 <div class="kpi-pm">
-                    <span class="kpi-num">{{ hoursLabel(actualMinutes) }} h <small>/ {{ hoursLabel(periodSoll) }} h Soll</small></span>
+                    <span class="kpi-num">{{ hoursLabel(actualMinutes) }} h <small>/ {{ t('worktime', '{hours} h Soll', { hours: hoursLabel(periodSoll) }) }}</small></span>
                     <span class="kpi-pct">{{ percent }} %</span>
                 </div>
                 <div class="kpi-bar"><span :style="{ width: barWidth + '%' }" /></div>

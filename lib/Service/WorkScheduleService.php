@@ -59,7 +59,7 @@ class WorkScheduleService {
         try {
             return $this->mapper->find($id);
         } catch (DoesNotExistException) {
-            throw new NotFoundException('Work schedule not found');
+            throw new NotFoundException($this->l->t('Arbeitszeitprofil nicht gefunden.'));
         }
     }
 
@@ -254,7 +254,7 @@ class WorkScheduleService {
         $schedule = $this->find($id);
 
         if ($schedule->getEmployeeId() !== $employeeId) {
-            throw new NotFoundException('Work schedule not found');
+            throw new NotFoundException($this->l->t('Arbeitszeitprofil nicht gefunden.'));
         }
         $oldValues = $schedule->jsonSerialize();
 
@@ -292,13 +292,13 @@ class WorkScheduleService {
         $schedule = $this->find($id);
 
         if ($schedule->getEmployeeId() !== $employeeId) {
-            throw new NotFoundException('Work schedule not found');
+            throw new NotFoundException($this->l->t('Arbeitszeitprofil nicht gefunden.'));
         }
 
         // Cannot delete the last schedule
         $allSchedules = $this->mapper->findByEmployeeId($schedule->getEmployeeId());
         if (count($allSchedules) <= 1) {
-            throw new ForbiddenException('Cannot delete the last work schedule');
+            throw new ForbiddenException($this->l->t('Das letzte Arbeitszeitprofil kann nicht gelöscht werden.'));
         }
 
         if ($currentUserId) {

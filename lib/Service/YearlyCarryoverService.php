@@ -13,12 +13,14 @@ use DateTime;
 use OCA\WorkTime\Db\YearlyCarryover;
 use OCA\WorkTime\Db\YearlyCarryoverMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\IL10N;
 
 class YearlyCarryoverService {
 
     public function __construct(
         private YearlyCarryoverMapper $mapper,
         private AuditLogService $auditLogService,
+        private IL10N $l,
     ) {
     }
 
@@ -83,7 +85,7 @@ class YearlyCarryoverService {
         $existing = $this->findActiveByEmployeeAndYear($employeeId, $year);
 
         if ($existing && $existing->isLocked()) {
-            throw new \RuntimeException('Carryover is locked and cannot be modified. Use cancel and replace.');
+            throw new \RuntimeException($this->l->t('Der Übertrag ist gesperrt und kann nicht geändert werden. Zum Ändern muss er storniert und durch einen neuen ersetzt werden.'));
         }
 
         if ($existing) {
@@ -130,7 +132,7 @@ class YearlyCarryoverService {
         $carryover = $this->mapper->find($id);
 
         if ($carryover->isCancelled()) {
-            throw new \RuntimeException('Cannot lock a cancelled carryover.');
+            throw new \RuntimeException($this->l->t('Ein stornierter Übertrag kann nicht gesperrt werden.'));
         }
 
         if ($carryover->isLocked()) {
@@ -164,11 +166,11 @@ class YearlyCarryoverService {
         $existing = $this->mapper->find($id);
 
         if ($existing->isCancelled()) {
-            throw new \RuntimeException('Carryover is already cancelled.');
+            throw new \RuntimeException($this->l->t('Der Übertrag ist bereits storniert.'));
         }
 
         if (!$existing->isLocked()) {
-            throw new \RuntimeException('Only locked carryovers need cancellation. Unlocked ones can be edited directly.');
+            throw new \RuntimeException($this->l->t('Nur gesperrte Übertragungen müssen storniert werden. Ungesperrte können direkt bearbeitet werden.'));
         }
 
         $oldValues = $existing->jsonSerialize();

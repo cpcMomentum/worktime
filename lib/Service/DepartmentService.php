@@ -15,6 +15,7 @@ use OCA\WorkTime\Db\DepartmentMapper;
 use OCA\WorkTime\Db\EmployeeMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
+use OCP\IL10N;
 
 class DepartmentService {
 
@@ -23,6 +24,7 @@ class DepartmentService {
         private EmployeeMapper $employeeMapper,
         private AuditLogService $auditLogService,
         private LoggerInterface $logger,
+        private IL10N $l,
     ) {
     }
 
@@ -47,7 +49,7 @@ class DepartmentService {
         try {
             return $this->departmentMapper->find($id);
         } catch (DoesNotExistException $e) {
-            throw new NotFoundException('Department not found');
+            throw new NotFoundException($this->l->t('Abteilung nicht gefunden.'));
         }
     }
 
