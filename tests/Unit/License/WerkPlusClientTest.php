@@ -155,7 +155,8 @@ class WerkPlusClientTest extends TestCase {
             for ($t = $e; $t !== null; $t = $t->getPrevious()) {
                 $messages .= $t->getMessage();
                 foreach ($t->getTrace() as $frame) {
-                    array_walk_recursive($frame['args'], function ($value) use (&$args): void {
+                    $frameArgs = $frame['args'] ?? [];
+                    array_walk_recursive($frameArgs, function ($value) use (&$args): void {
                         $args[] = is_string($value) ? $value : get_debug_type($value);
                     });
                 }
