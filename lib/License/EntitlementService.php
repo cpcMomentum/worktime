@@ -22,7 +22,7 @@ use Psr\Log\LoggerInterface;
 class EntitlementService {
 
     /** WorkTime-Flags aus der Registry `flags.md` des Backends. */
-    public const FLAGS = ['wt_mobile', 'api_keys', 'kontingent', 'pw_ticket_time'];
+    public const FLAGS = ['wt_mobile', 'wt_punch_only', 'api_keys', 'kontingent', 'pw_ticket_time'];
 
     /** Nextcloud-App-IDs der Werk-Apps, gemeldet in `appVersions`. */
     public const WERK_APPS = ['rechnungswerk', 'projektwerk', 'worktime', 'contractmanager'];

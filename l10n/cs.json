@@ -904,7 +904,15 @@
 		"WerkPlus ist gerade nicht erreichbar. Bitte versuche es später erneut.": "WerkPlus teď není dostupný. Zkuste to prosím později.",
 		"Die Antwort von WerkPlus ließ sich nicht prüfen. Die Lizenz wurde nicht übernommen.": "Odpověď z WerkPlus se nepodařilo ověřit. Licence nebyla převzata.",
 		"Die WerkPlus-Lizenz gilt für alle Werk-Apps dieser Nextcloud und kann nur von Nextcloud-Admins geändert werden.": "Licence WerkPlus platí pro všechny aplikace Werk v tomto Nextcloudu a mohou ji měnit jen správci Nextcloudu.",
-		"Mit einem WerkPlus-Schlüssel schaltet WorkTime zusätzliche Funktionen frei. Ohne Schlüssel bleibt alles, wie es ist.": "S klíčem WerkPlus odemkne WorkTime další funkce. Bez klíče zůstane vše, jak je."
+		"Arbeitszeiten werden nur über die Stempeluhr erfasst. Korrekturen übernimmt HR.": "Pracovní doba se zaznamenává jen přes píchačky. Opravy provádí HR.",
+		"Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte schließe diesen Dialog, verwirf die Stempelung und gib HR Bescheid, damit die Zeit nachgetragen wird.": "Toto píchnutí je otevřené déle než 24 hodin a nelze ho zaúčtovat jako jeden časový záznam. Zavřete prosím tento dialog, píchnutí zahoďte a dejte vědět HR, aby čas doplnilo.",
+		"seit {time}": "od {time}",
+		"Ohne Schlüssel ist WorkTime vollständig nutzbar. Mit WerkPlus lässt sich die Zeiterfassung auf die Stempeluhr beschränken.": "Bez klíče lze WorkTime plně používat. S WerkPlus lze evidenci času omezit na píchačky.",
+		"Zeiterfassung nur über die Stempeluhr": "Evidence času jen přes píchačky",
+		"Wenn aktiv, können Mitarbeitende nur ein- und ausstempeln und Pausen setzen. Einträge anlegen, ändern oder löschen können nur HR und Admins.": "Je-li zapnuto, zaměstnanci mohou jen píchat příchod a odchod a dělat přestávky. Záznamy vytvářet, měnit nebo mazat mohou jen HR a správci.",
+		"Nur mit WerkPlus verfügbar. Den Schlüssel trägst du unter Lizenz › WerkPlus ein.": "Dostupné jen s WerkPlus. Klíč zadáte v části Licence › WerkPlus.",
+		"Diese Einstellung ist nur mit WerkPlus verfügbar.": "Toto nastavení je dostupné jen s WerkPlus.",
+		"Die Endzeit setzt die Stempeluhr. Korrekturen übernimmt HR.": "Čas konce nastavují píchačky. Opravy provádí HR."
 	},
 	"pluralForm": "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;"
 }

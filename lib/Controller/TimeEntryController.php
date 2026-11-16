@@ -21,6 +21,8 @@ use OCA\WorkTime\Service\PdfService;
 use OCA\WorkTime\Service\PermissionService;
 use OCA\WorkTime\Service\ProjectService;
 use OCA\WorkTime\Service\PunchConfirmationRequiredException;
+use OCA\WorkTime\Service\PunchEndCorrectionNotAllowedException;
+use OCA\WorkTime\Service\PunchOnlyService;
 use OCA\WorkTime\Service\PunchConflictException;
 use OCA\WorkTime\Service\PunchReasonRequiredException;
 use OCA\WorkTime\Service\PunchService;
@@ -29,6 +31,7 @@ use OCA\WorkTime\Service\TimeEntryService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Log\LoggerInterface;
 
@@ -47,6 +50,8 @@ class TimeEntryController extends BaseController {
         private PunchService $punchService,
         private ProjectService $projectService,
         private LoggerInterface $logger,
+        private PunchOnlyService $punchOnlyService,
+        private IL10N $l10n,
     ) {
         parent::__construct($request, $userId);
     }
@@ -190,6 +195,9 @@ class TimeEntryController extends BaseController {
 
         if (!$this->permissionService->canEditTimeEntry($this->userId, $employeeId)) {
             return $this->forbiddenResponse();
+        }
+        if ($this->punchOnlyService->restricts($this->userId)) {
+            return $this->punchOnlyResponse();
         }
 
         // Only HR/Admin may correct closed months (with a mandatory reason).
@@ -354,7 +362,6 @@ class TimeEntryController extends BaseController {
         if (!$this->permissionService->canEditTimeEntry($this->userId, $employeeId)) {
             return $this->forbiddenResponse();
         }
-
         try {
             $entry = $this->punchService->punchOut(
                 $employeeId,
@@ -363,9 +370,12 @@ class TimeEntryController extends BaseController {
                 $projectId,
                 $description,
                 $endTime,
-                $confirm
+                $confirm,
+                !$this->punchOnlyService->restricts($this->userId)
             );
             return $this->createdResponse($entry);
+        } catch (PunchEndCorrectionNotAllowedException) {
+            return $this->punchOnlyResponse();
         } catch (PunchConfirmationRequiredException $e) {
             return new JSONResponse(
                 ['error' => $e->getMessage(), 'code' => 'confirmation_required', 'suggested' => $e->getSuggested()],
@@ -388,6 +398,13 @@ class TimeEntryController extends BaseController {
         } catch (\Exception $e) {
             return $this->handleException($e);
         }
+    }
+
+    private function punchOnlyResponse(): JSONResponse {
+        return new JSONResponse([
+            'error' => $this->l10n->t('Arbeitszeiten werden nur über die Stempeluhr erfasst. Korrekturen übernimmt HR.'),
+            'code' => 'punch_only',
+        ], Http::STATUS_FORBIDDEN);
     }
 
     private function conflictResponse(string $message): JSONResponse {
@@ -430,6 +447,9 @@ class TimeEntryController extends BaseController {
             if (!$this->permissionService->canEditTimeEntry($this->userId, $entry->getEmployeeId())) {
                 return $this->forbiddenResponse();
             }
+            if ($this->punchOnlyService->restricts($this->userId)) {
+                return $this->punchOnlyResponse();
+            }
 
             $entry = $this->timeEntryService->update(
                 $id,
@@ -464,6 +484,9 @@ class TimeEntryController extends BaseController {
 
             if (!$this->permissionService->canEditTimeEntry($this->userId, $entry->getEmployeeId())) {
                 return $this->forbiddenResponse();
+            }
+            if ($this->punchOnlyService->restricts($this->userId)) {
+                return $this->punchOnlyResponse();
             }
 
             $this->timeEntryService->delete($id, $this->userId, $reason, $allowLockedOverride);

@@ -903,7 +903,15 @@
 		"WerkPlus ist gerade nicht erreichbar. Bitte versuche es später erneut.": "WerkPlus is currently unreachable. Please try again later.",
 		"Die Antwort von WerkPlus ließ sich nicht prüfen. Die Lizenz wurde nicht übernommen.": "The response from WerkPlus could not be verified. The licence was not applied.",
 		"Die WerkPlus-Lizenz gilt für alle Werk-Apps dieser Nextcloud und kann nur von Nextcloud-Admins geändert werden.": "The WerkPlus licence applies to all Werk apps on this Nextcloud and can only be changed by Nextcloud admins.",
-		"Mit einem WerkPlus-Schlüssel schaltet WorkTime zusätzliche Funktionen frei. Ohne Schlüssel bleibt alles, wie es ist.": "A WerkPlus key unlocks additional features in WorkTime. Without a key, everything stays as it is."
+		"Arbeitszeiten werden nur über die Stempeluhr erfasst. Korrekturen übernimmt HR.": "Working hours are recorded with the time clock only. HR takes care of corrections.",
+		"Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte schließe diesen Dialog, verwirf die Stempelung und gib HR Bescheid, damit die Zeit nachgetragen wird.": "This punch has been open for more than 24 hours and cannot be booked as a single time entry. Please close this dialog, discard the punch and let HR know so the time can be added.",
+		"seit {time}": "since {time}",
+		"Ohne Schlüssel ist WorkTime vollständig nutzbar. Mit WerkPlus lässt sich die Zeiterfassung auf die Stempeluhr beschränken.": "WorkTime is fully usable without a key. With WerkPlus, time tracking can be limited to the time clock.",
+		"Zeiterfassung nur über die Stempeluhr": "Time tracking via the time clock only",
+		"Wenn aktiv, können Mitarbeitende nur ein- und ausstempeln und Pausen setzen. Einträge anlegen, ändern oder löschen können nur HR und Admins.": "When enabled, employees can only clock in and out and take breaks. Only HR and admins can create, change or delete entries.",
+		"Nur mit WerkPlus verfügbar. Den Schlüssel trägst du unter Lizenz › WerkPlus ein.": "Only available with WerkPlus. Enter the key under Licence › WerkPlus.",
+		"Diese Einstellung ist nur mit WerkPlus verfügbar.": "This setting is only available with WerkPlus.",
+		"Die Endzeit setzt die Stempeluhr. Korrekturen übernimmt HR.": "The end time is set by the time clock. HR takes care of corrections."
 	},
 	"pluralForm": "nplurals=2; plural=(n != 1);"
 }

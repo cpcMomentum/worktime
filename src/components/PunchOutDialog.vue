@@ -7,7 +7,9 @@
 			</p>
 
 			<NcNoteCard v-if="isPunchTooLong" type="error">
-				{{ t('worktime', 'Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte schließe diesen Dialog, verwirf die Stempelung und erfasse die Zeit manuell.') }}
+				{{ punchOnly
+					? t('worktime', 'Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte schließe diesen Dialog, verwirf die Stempelung und gib HR Bescheid, damit die Zeit nachgetragen wird.')
+					: t('worktime', 'Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte schließe diesen Dialog, verwirf die Stempelung und erfasse die Zeit manuell.') }}
 			</NcNoteCard>
 
 			<NcNoteCard v-else-if="isOverlong" type="warning">
@@ -29,7 +31,11 @@
 				</div>
 				<div class="form-group">
 					<label for="punch-end">{{ t('worktime', 'Ende') }}</label>
-					<input id="punch-end" v-model="form.endTime" type="time" class="input-field">
+					<input id="punch-end"
+						v-model="form.endTime"
+						type="time"
+						class="input-field"
+						:disabled="punchOnly">
 				</div>
 				<div class="form-group">
 					<label for="punch-break">{{ t('worktime', 'Pause (Minuten)') }}</label>
@@ -53,6 +59,10 @@
 					class="input-field"
 					:placeholder="emergencyReasonRequired ? t('worktime', 'Grund für die Notarbeit im Urlaub') : t('worktime', 'Optionale Notiz')" />
 			</div>
+
+			<p v-if="punchOnly" class="punch-out__hint">
+				{{ t('worktime', 'Die Endzeit setzt die Stempeluhr. Korrekturen übernimmt HR.') }}
+			</p>
 
 			<p class="punch-out__net">
 				{{ t('worktime', 'Nettozeit: {duration}', { duration: netLabel }) }}
@@ -85,6 +95,7 @@ import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import ProjectSelect from './ProjectSelect.vue'
 import TimeEntryService from '../services/TimeEntryService.js'
 import SettingsService from '../services/SettingsService.js'
+import { mapGetters } from 'vuex'
 
 export default {
 	name: 'PunchOutDialog',
@@ -123,6 +134,7 @@ export default {
 		}
 	},
 	computed: {
+		...mapGetters('permissions', ['punchOnly']),
 		grossMinutes() {
 			return this.spanMinutes(this.form.startTime, this.form.endTime)
 		},

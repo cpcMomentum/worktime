@@ -5,7 +5,7 @@
 <template>
     <div class="wt-werkplus">
         <p class="wt-werkplus__hint">
-            {{ t('worktime', 'Mit einem WerkPlus-Schlüssel schaltet WorkTime zusätzliche Funktionen frei. Ohne Schlüssel bleibt alles, wie es ist.') }}
+            {{ t('worktime', 'Ohne Schlüssel ist WorkTime vollständig nutzbar. Mit WerkPlus lässt sich die Zeiterfassung auf die Stempeluhr beschränken.') }}
             {{ t('worktime', 'Der Schlüssel gilt für alle Werk-Apps dieser Nextcloud und muss nur in einer davon eingetragen werden.') }}
         </p>
 
@@ -184,6 +184,8 @@ export default {
             try {
                 this.status = await action()
                 this.keyInput = ''
+                // Freigeschaltete Funktionen wie die Stempeluhr-Einstellung sofort nachziehen.
+                this.$store.dispatch('permissions/fetchPermissions')
             } catch (e) {
                 const text = e.message || t('worktime', 'WerkPlus hat einen Fehler gemeldet. Bitte versuche es später erneut.')
                 if (e.code && CALM_CODES.includes(e.code)) {

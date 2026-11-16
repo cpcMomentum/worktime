@@ -43,7 +43,7 @@ Gesetzeskonforme Arbeitszeiterfassung für kleine Unternehmen in Deutschland.
 
 ## WerkPlus (optional)
 
-Alle Funktionen von WorkTime sind ohne Lizenz nutzbar. WerkPlus ergänzt Zusatzfunktionen für alle Werk-Apps einer Nextcloud, siehe https://werkwolke.de/funktionen#worktime.
+Alle Funktionen von WorkTime sind ohne Lizenz nutzbar. WerkPlus ergänzt Zusatzfunktionen für alle Werk-Apps einer Nextcloud, in WorkTime die Beschränkung der Zeiterfassung auf die Stempeluhr. Mehr dazu auf https://werkwolke.de/funktionen#worktime.
 
 Ohne Lizenzschlüssel nimmt WorkTime keinen Kontakt zum Lizenzserver auf. Mit Schlüssel oder Testzeitraum werden nur eine aus der Nextcloud abgeleitete Kennung, die Versionen der aktivierten Werk-Apps und der Schlüssel übertragen. Keine Arbeitszeiten, keine Abwesenheiten, keine Personendaten. Ist der Server nicht erreichbar, arbeitet WorkTime normal weiter.
 

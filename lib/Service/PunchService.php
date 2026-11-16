@@ -161,6 +161,7 @@ class PunchService {
 		?string $description,
 		?string $endTimeOverride,
 		bool $confirmOverlong,
+		bool $allowEndCorrection = true,
 	): TimeEntry {
 		$punch = $this->requireOpen($employeeId);
 
@@ -169,6 +170,15 @@ class PunchService {
 		$startLocal = (clone $startedUtc)->setTimezone($tz);
 		$date = $startLocal->format('Y-m-d');
 		$startTime = $startLocal->format('H:i');
+
+		// Clients schicken die vorbelegte Endzeit immer mit; nur eine echte Abweichung ist eine Korrektur.
+		if (!$allowEndCorrection && $endTimeOverride !== null && $endTimeOverride !== '') {
+			$automaticUtc = $punch->isPaused() ? $this->reinterpretAsUtc($punch->getPausedAt()) : $this->nowUtc();
+			if (!$this->isSameMinuteRoughly($endTimeOverride, (clone $automaticUtc)->setTimezone($tz)->format('H:i'))) {
+				throw new PunchEndCorrectionNotAllowedException();
+			}
+			$endTimeOverride = null;
+		}
 
 		// Resolve the end. An explicit override (HR correction) always wins.
 		// Otherwise, punching out while still paused means the employee stopped
@@ -327,5 +337,14 @@ class PunchService {
 	private function reinterpretAsUtc(DateTime $stored): DateTime {
 		return DateTime::createFromFormat('Y-m-d H:i:s', $stored->format('Y-m-d H:i:s'), new DateTimeZone('UTC'))
 			?: (clone $stored);
+	}
+
+	// Zwei Minuten Spielraum fuer die Zeit zwischen Dialog und Absenden, auch ueber Mitternacht.
+	private function isSameMinuteRoughly(string $a, string $b): bool {
+		if (preg_match('/^(\d{1,2}):(\d{2})$/', $a, $ma) !== 1 || preg_match('/^(\d{1,2}):(\d{2})$/', $b, $mb) !== 1) {
+			return false;
+		}
+		$diff = abs(((int)$ma[1] * 60 + (int)$ma[2]) - ((int)$mb[1] * 60 + (int)$mb[2]));
+		return min($diff, 24 * 60 - $diff) <= 2;
 	}
 }

@@ -221,6 +221,16 @@
                         {{ t('worktime', 'Zukünftige Einträge erlauben') }} <InfoIcon>{{ t('worktime', 'Wenn deaktiviert, können Mitarbeiter nur für heute oder vergangene Tage Zeiten eintragen — nicht im Voraus.') }}</InfoIcon>
                     </NcCheckboxRadioSwitch>
                 </div>
+                <div class="form-group">
+                    <NcCheckboxRadioSwitch :checked.sync="settings.punch_only"
+                        :disabled="!punchOnlyLicensed"
+                        @update:checked="saveSettingBool('punch_only')">
+                        {{ t('worktime', 'Zeiterfassung nur über die Stempeluhr') }} <InfoIcon>{{ t('worktime', 'Wenn aktiv, können Mitarbeitende nur ein- und ausstempeln und Pausen setzen. Einträge anlegen, ändern oder löschen können nur HR und Admins.') }}</InfoIcon>
+                    </NcCheckboxRadioSwitch>
+                    <p v-if="!punchOnlyLicensed" class="help-text">
+                        {{ t('worktime', 'Nur mit WerkPlus verfügbar. Den Schlüssel trägst du unter Lizenz › WerkPlus ein.') }}
+                    </p>
+                </div>
             </NcSettingsSection>
 
             <NcSettingsSection v-if="canManageSettings"
@@ -1026,7 +1036,7 @@ export default {
         }
     },
     computed: {
-        ...mapGetters('permissions', ['canManageSettings', 'canManageHolidays', 'canManageEmployees', 'canManageProjects']),
+        ...mapGetters('permissions', ['canManageSettings', 'canManageHolidays', 'canManageEmployees', 'canManageProjects', 'punchOnlyLicensed']),
         archiveFailedJobs() {
             return (this.archiveStatus.jobs || []).filter(j => j.status === 'failed')
         },
@@ -1302,6 +1312,7 @@ export default {
                     require_description: settings.require_description === '1',
                     allow_future_entries: settings.allow_future_entries === '1',
                     approval_required: settings.approval_required === '1',
+                    punch_only: settings.punch_only === '1',
                     // #625/#626: Teiltages-Absenzen- und Notarbeit-Schalter.
                     hourly_sick_enabled: settings.hourly_sick_enabled === '1',
                     emergency_work_enabled: settings.emergency_work_enabled === '1',

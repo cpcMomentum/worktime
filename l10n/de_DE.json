@@ -903,7 +903,15 @@
 		"WerkPlus ist gerade nicht erreichbar. Bitte versuche es später erneut.": "WerkPlus ist gerade nicht erreichbar. Bitte versuchen Sie es später erneut.",
 		"Die Antwort von WerkPlus ließ sich nicht prüfen. Die Lizenz wurde nicht übernommen.": "Die Antwort von WerkPlus ließ sich nicht prüfen. Die Lizenz wurde nicht übernommen.",
 		"Die WerkPlus-Lizenz gilt für alle Werk-Apps dieser Nextcloud und kann nur von Nextcloud-Admins geändert werden.": "Die WerkPlus-Lizenz gilt für alle Werk-Apps dieser Nextcloud und kann nur von Nextcloud-Admins geändert werden.",
-		"Mit einem WerkPlus-Schlüssel schaltet WorkTime zusätzliche Funktionen frei. Ohne Schlüssel bleibt alles, wie es ist.": "Mit einem WerkPlus-Schlüssel schaltet WorkTime zusätzliche Funktionen frei. Ohne Schlüssel bleibt alles, wie es ist."
+		"Arbeitszeiten werden nur über die Stempeluhr erfasst. Korrekturen übernimmt HR.": "Arbeitszeiten werden nur über die Stempeluhr erfasst. Korrekturen übernimmt HR.",
+		"Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte schließe diesen Dialog, verwirf die Stempelung und gib HR Bescheid, damit die Zeit nachgetragen wird.": "Diese Stempelung ist seit über 24 Stunden offen und lässt sich nicht als einzelner Zeiteintrag buchen. Bitte schließen Sie diesen Dialog, verwerfen Sie die Stempelung und geben Sie HR Bescheid, damit die Zeit nachgetragen wird.",
+		"seit {time}": "seit {time}",
+		"Ohne Schlüssel ist WorkTime vollständig nutzbar. Mit WerkPlus lässt sich die Zeiterfassung auf die Stempeluhr beschränken.": "Ohne Schlüssel ist WorkTime vollständig nutzbar. Mit WerkPlus lässt sich die Zeiterfassung auf die Stempeluhr beschränken.",
+		"Zeiterfassung nur über die Stempeluhr": "Zeiterfassung nur über die Stempeluhr",
+		"Wenn aktiv, können Mitarbeitende nur ein- und ausstempeln und Pausen setzen. Einträge anlegen, ändern oder löschen können nur HR und Admins.": "Wenn aktiv, können Mitarbeitende nur ein- und ausstempeln und Pausen setzen. Einträge anlegen, ändern oder löschen können nur HR und Admins.",
+		"Nur mit WerkPlus verfügbar. Den Schlüssel trägst du unter Lizenz › WerkPlus ein.": "Nur mit WerkPlus verfügbar. Den Schlüssel tragen Sie unter Lizenz › WerkPlus ein.",
+		"Diese Einstellung ist nur mit WerkPlus verfügbar.": "Diese Einstellung ist nur mit WerkPlus verfügbar.",
+		"Die Endzeit setzt die Stempeluhr. Korrekturen übernimmt HR.": "Die Endzeit setzt die Stempeluhr. Korrekturen übernimmt HR."
 	},
 	"pluralForm": "nplurals=2; plural=(n != 1);"
 }

@@ -28,6 +28,9 @@
 				<div class="punch-panel__clock">
 					<ClockIcon :size="22" />
 					<span class="punch-panel__time">{{ elapsedLabel }}</span>
+					<span v-if="startedLabel" class="punch-panel__since">
+						{{ t('worktime', 'seit {time}', { time: startedLabel }) }}
+					</span>
 					<span v-if="isPunchPaused" class="punch-panel__paused-badge">
 						{{ t('worktime', 'In Pause') }}
 					</span>
@@ -87,6 +90,7 @@ import DeleteIcon from 'vue-material-design-icons/Delete.vue'
 import PunchOutDialog from './PunchOutDialog.vue'
 import ProjectSelect from './ProjectSelect.vue'
 import { confirmAction } from '../utils/errorHandler.js'
+import { getLocale } from '../utils/dateUtils.js'
 
 export default {
 	name: 'PunchPanel',
@@ -122,6 +126,10 @@ export default {
 	},
 	computed: {
 		...mapGetters('punch', ['activePunch', 'isPunchedIn', 'isPunchPaused']),
+		startedLabel() {
+			if (!this.activePunch?.startedAt) return ''
+			return new Date(this.activePunch.startedAt).toLocaleTimeString(getLocale(), { hour: '2-digit', minute: '2-digit' })
+		},
 		elapsedLabel() {
 			if (!this.activePunch?.startedAt) return '00:00:00'
 			const started = new Date(this.activePunch.startedAt).getTime()
@@ -277,6 +285,11 @@ export default {
 	display: flex;
 	align-items: center;
 	gap: 10px;
+}
+
+.punch-panel__since {
+	color: var(--color-text-maxcontrast);
+	font-variant-numeric: tabular-nums;
 }
 
 .punch-panel__time {
