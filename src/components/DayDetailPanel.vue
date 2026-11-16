@@ -141,7 +141,7 @@ export default {
         }
     },
     computed: {
-        ...mapGetters('permissions', ['isCorrectionMode', 'emergencyWorkEnabled']),
+        ...mapGetters('permissions', ['isCorrectionMode', 'emergencyWorkEnabled', 'punchOnly']),
         ...mapGetters('employees', ['currentEmployee']),
         // #626: an einem genehmigten vollen Urlaubstag darf Notarbeit erfasst werden.
         emergencyEligibleDay() {
@@ -185,7 +185,7 @@ export default {
                 return false
             }
             // Outside correction mode a resting employee cannot record anything.
-            if (this.isResting) {
+            if (this.isResting || this.punchOnly) {
                 return true
             }
             return this.monthStatus === 'submitted' || this.monthStatus === 'approved'
@@ -196,6 +196,9 @@ export default {
         lockedMessage() {
             if (this.isResting) {
                 return this.t('worktime', 'Profil ruhend – keine Erfassung möglich.')
+            }
+            if (this.punchOnly) {
+                return this.t('worktime', 'Arbeitszeiten werden nur über die Stempeluhr erfasst. Korrekturen übernimmt HR.')
             }
             if (this.monthStatus === 'approved') {
                 return this.t('worktime', 'Monat genehmigt – gesperrt. Korrektur nur durch HR.')

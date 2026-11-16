@@ -12,10 +12,12 @@ namespace OCA\WorkTime\Controller;
 use OCA\WorkTime\Db\CompanySetting;
 use OCA\WorkTime\Service\CompanySettingsService;
 use OCA\WorkTime\Service\PermissionService;
+use OCA\WorkTime\Service\PunchOnlyService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IGroupManager;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserManager;
 
@@ -39,6 +41,8 @@ class SettingsController extends BaseController {
         private PermissionService $permissionService,
         private IUserManager $userManager,
         private IGroupManager $groupManager,
+        private PunchOnlyService $punchOnlyService,
+        private IL10N $l10n,
     ) {
         parent::__construct($request, $userId);
     }
@@ -85,6 +89,10 @@ class SettingsController extends BaseController {
             return $this->forbiddenResponse();
         }
 
+        if ($resp = $this->refusePunchOnlyWithoutLicense([$key => $value])) {
+            return $resp;
+        }
+
         // When setting the archive path, also save the user who configured it
         // This user's folder will be used for storing archived PDFs
         if ($key === CompanySetting::KEY_PDF_ARCHIVE_PATH) {
@@ -108,6 +116,10 @@ class SettingsController extends BaseController {
 
         if (!$this->permissionService->canManageSettings($this->userId)) {
             return $this->forbiddenResponse();
+        }
+
+        if ($resp = $this->refusePunchOnlyWithoutLicense($settings)) {
+            return $resp;
         }
 
         $this->settingsService->setMultiple($settings, $this->userId);
@@ -155,7 +167,8 @@ class SettingsController extends BaseController {
             return $authError;
         }
 
-        $permissions = $this->permissionService->getPermissionInfo($this->userId);
+        $permissions = $this->permissionService->getPermissionInfo($this->userId)
+            + $this->punchOnlyService->permissionFields($this->userId);
 
         return $this->successResponse($permissions);
     }
@@ -227,5 +240,18 @@ class SettingsController extends BaseController {
         usort($principals, fn($a, $b) => strcasecmp($a['label'], $b['label']));
 
         return $this->successResponse($principals);
+    }
+
+    // Ausschalten geht immer, Einschalten nur mit WerkPlus.
+    /** @param array<string, mixed> $settings */
+    private function refusePunchOnlyWithoutLicense(array $settings): ?JSONResponse {
+        $value = $settings[CompanySetting::KEY_PUNCH_ONLY] ?? null;
+        if ($value === null || (string)$value === '0' || $this->punchOnlyService->isLicensed()) {
+            return null;
+        }
+        return new JSONResponse(
+            ['error' => $this->l10n->t('Diese Einstellung ist nur mit WerkPlus verfügbar.'), 'code' => 'werkplus_required'],
+            Http::STATUS_FORBIDDEN,
+        );
     }
 }
