@@ -41,6 +41,12 @@ Gesetzeskonforme Arbeitszeiterfassung für kleine Unternehmen in Deutschland.
 
 - **Mehrsprachig**: Deutsch und Englisch
 
+## WerkPlus (optional)
+
+Alle Funktionen von WorkTime sind ohne Lizenz nutzbar. WerkPlus ergänzt Zusatzfunktionen für alle Werk-Apps einer Nextcloud, siehe https://werkwolke.de/funktionen#worktime.
+
+Ohne Lizenzschlüssel nimmt WorkTime keinen Kontakt zum Lizenzserver auf. Mit Schlüssel oder Testzeitraum werden nur eine aus der Nextcloud abgeleitete Kennung, die Versionen der aktivierten Werk-Apps und der Schlüssel übertragen. Keine Arbeitszeiten, keine Abwesenheiten, keine Personendaten. Ist der Server nicht erreichbar, arbeitet WorkTime normal weiter.
+
 Behalten Sie den Überblick über Arbeitszeiten, Überstunden und Urlaub.
     ]]></description>
 
@@ -75,6 +81,7 @@ Behalten Sie den Überblick über Arbeitszeiten, Überstunden und Urlaub.
     <background-jobs>
         <job>OCA\WorkTime\BackgroundJob\ArchivePdfJob</job>
         <job>OCA\WorkTime\BackgroundJob\PunchReminderJob</job>
+        <job>OCA\WorkTime\BackgroundJob\EntitlementRefreshJob</job>
     </background-jobs>
 
     <repair-steps>

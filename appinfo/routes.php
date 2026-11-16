@@ -15,6 +15,14 @@ return [
         ['name' => 'whats_new#all', 'url' => '/api/whatsnew/all', 'verb' => 'GET'],
         ['name' => 'whats_new#seen', 'url' => '/api/whatsnew/seen', 'verb' => 'POST'],
 
+        // WerkPlus-Lizenz (entitlement-v1)
+        ['name' => 'license#show', 'url' => '/api/license', 'verb' => 'GET'],
+        ['name' => 'license#publicStatus', 'url' => '/api/license/status', 'verb' => 'GET'],
+        ['name' => 'license#activate', 'url' => '/api/license', 'verb' => 'PUT'],
+        ['name' => 'license#trial', 'url' => '/api/license/trial', 'verb' => 'POST'],
+        ['name' => 'license#refresh', 'url' => '/api/license/refresh', 'verb' => 'POST'],
+        ['name' => 'license#destroy', 'url' => '/api/license', 'verb' => 'DELETE'],
+
         // Push (#593): device-token registration for APNs.
         ['name' => 'push#register', 'url' => '/api/push/register', 'verb' => 'POST'],
         ['name' => 'push#unregister', 'url' => '/api/push/token', 'verb' => 'DELETE'],

@@ -129,3 +129,10 @@ WorkTime ist kostenlos und Open Source. Wer die Weiterentwicklung
 unterstützen möchte, findet mit WerkPlus optionale Zusatzfunktionen für alle
 Werk-Apps. Welche es für WorkTime gibt, steht auf
 https://werkwolke.de/funktionen#worktime
+
+Den WerkPlus-Schlüssel tragen Nextcloud-Admins unter Einstellungen › WerkPlus ein. Er gilt
+für alle Werk-Apps dieser Nextcloud. Ohne Schlüssel nimmt WorkTime keinen Kontakt zum
+Lizenzserver auf. Mit Schlüssel oder Testzeitraum werden nur eine aus der Nextcloud
+abgeleitete Kennung, die Versionen der aktivierten Werk-Apps und der Schlüssel übertragen,
+keine Arbeitszeiten, Abwesenheiten oder Personendaten. Die Lizenz wird auf dem eigenen
+Server geprüft; ist der Lizenzserver nicht erreichbar, arbeitet WorkTime normal weiter.

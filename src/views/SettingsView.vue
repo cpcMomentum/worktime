@@ -852,6 +852,12 @@
                 </NcModal>
             </NcSettingsSection>
 
+            <NcSettingsSection v-if="canManageEmployees"
+                v-show="activeSection === 'sec-werkplus'"
+                id="sec-werkplus" :name="t('worktime', 'WerkPlus')">
+                <WerkPlusSettings />
+            </NcSettingsSection>
+
             </div>
         </div>
     </div>
@@ -876,6 +882,7 @@ import CalendarBlank from 'vue-material-design-icons/CalendarBlank.vue'
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue'
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue'
 import KeyVariant from 'vue-material-design-icons/KeyVariant.vue'
+import KeyOutline from 'vue-material-design-icons/KeyOutline.vue'
 import OfficeBuilding from 'vue-material-design-icons/OfficeBuilding.vue'
 import ClockCheckOutline from 'vue-material-design-icons/ClockCheckOutline.vue'
 import CheckDecagram from 'vue-material-design-icons/CheckDecagram.vue'
@@ -899,6 +906,7 @@ import ProjectForm from '../components/ProjectForm.vue'
 import ProjectList from '../components/ProjectList.vue'
 import DepartmentForm from '../components/DepartmentForm.vue'
 import DepartmentList from '../components/DepartmentList.vue'
+import WerkPlusSettings from '../components/WerkPlusSettings.vue'
 import { showSuccessMessage, showErrorMessage, confirmAction } from '../utils/errorHandler.js'
 import { getCurrentYear, getLocale, formatDateISO, getMonthName } from '../utils/dateUtils.js'
 import YearlyCarryoverService from '../services/YearlyCarryoverService.js'
@@ -934,6 +942,8 @@ export default {
         ChevronRight,
         ChevronDown,
         KeyVariant,
+        KeyOutline,
+        WerkPlusSettings,
         OfficeBuilding,
         ClockCheckOutline,
         CheckDecagram,
@@ -1166,6 +1176,9 @@ export default {
                 group(this.t('worktime', 'Konten'), [
                     { id: 'sec-jahresuebertrag', label: this.t('worktime', 'Jahresübertrag'), icon: 'SwapHorizontalBold', visible: this.canManageEmployees },
                     { id: 'sec-ueberstunden-auszahlung', label: this.t('worktime', 'Überstunden-Auszahlung'), icon: 'CashMultiple', visible: this.canManageEmployees },
+                ]),
+                group(this.t('worktime', 'Lizenz'), [
+                    { id: 'sec-werkplus', label: this.t('worktime', 'WerkPlus'), icon: 'KeyOutline', visible: this.canManageEmployees },
                 ]),
             ]
         },

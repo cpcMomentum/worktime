@@ -29,4 +29,15 @@ spl_autoload_register(static function (string $class) use ($ocpRoot): void {
 	}
 });
 
+// Gemeinsame Test-Helfer (Traits) liegen neben den Tests und sind keine Testklassen.
+spl_autoload_register(static function (string $class): void {
+	$prefix = 'OCA\\WorkTime\\Tests\\';
+	if (str_starts_with($class, $prefix)) {
+		$file = __DIR__ . '/' . str_replace('\\', '/', substr($class, strlen($prefix))) . '.php';
+		if (is_file($file)) {
+			require $file;
+		}
+	}
+});
+
 require __DIR__ . '/../vendor/autoload.php';

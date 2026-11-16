@@ -34,6 +34,7 @@ class CapabilitiesController extends BaseController {
         'personal_break',    // #696: per-employee default break
         'project_favorites', // #710: starred projects
         'stopwatch',         // #584: server-authoritative punch in/out
+        'werkplus_status',   // GET /api/license/status
     ];
 
     public function __construct(
