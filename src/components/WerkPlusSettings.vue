@@ -72,7 +72,7 @@
             </div>
 
             <div v-if="canEdit" class="wt-werkplus__actions">
-                <NcButton type="primary" :disabled="busy || (!keyInput.trim() && !status.keySet)" @click="onActivate">
+                <NcButton variant="primary" :disabled="busy || (!keyInput.trim() && !status.keySet)" @click="onActivate">
                     {{ status.keySet ? t('worktime', 'Speichern und prüfen') : t('worktime', 'Schlüssel prüfen und speichern') }}
                 </NcButton>
                 <NcButton v-if="!status.keySet" :disabled="busy" @click="onTrial">
@@ -81,7 +81,7 @@
                 <NcButton v-if="status.keySet" :disabled="busy" @click="onRefresh">
                     {{ t('worktime', 'Jetzt prüfen') }}
                 </NcButton>
-                <NcButton v-if="status.keySet" type="tertiary" :disabled="busy" @click="onRemove">
+                <NcButton v-if="status.keySet" variant="tertiary" :disabled="busy" @click="onRemove">
                     {{ t('worktime', 'Schlüssel entfernen') }}
                 </NcButton>
             </div>
@@ -105,9 +105,10 @@
 </template>
 
 <script>
+import { usePermissionsStore } from '../stores/permissions.ts'
 import { translate as t } from '@nextcloud/l10n'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcNoteCard from '@nextcloud/vue/dist/Components/NcNoteCard.js'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import LicenseService from '../services/LicenseService.js'
 import { confirmAction } from '../utils/errorHandler.js'
 import { getLocale } from '../utils/dateUtils.js'
@@ -185,7 +186,7 @@ export default {
                 this.status = await action()
                 this.keyInput = ''
                 // Freigeschaltete Funktionen wie die Stempeluhr-Einstellung sofort nachziehen.
-                this.$store.dispatch('permissions/fetchPermissions')
+                usePermissionsStore().fetchPermissions()
             } catch (e) {
                 const text = e.message || t('worktime', 'WerkPlus hat einen Fehler gemeldet. Bitte versuche es später erneut.')
                 if (e.code && CALM_CODES.includes(e.code)) {

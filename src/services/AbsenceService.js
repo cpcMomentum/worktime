@@ -1,6 +1,11 @@
 import api, { handleApiError } from './api.js'
 
 export default {
+    /**
+     * @param {number} employeeId
+     * @param {number|null} [year]
+     * @param {number|null} [month]
+     */
     async getByEmployee(employeeId, year = null, month = null) {
         try {
             const params = { employeeId }
@@ -40,6 +45,10 @@ export default {
         }
     },
 
+    /**
+     * @param {number} id
+     * @param {string|null} [reason]
+     */
     async delete(id, reason = null) {
         try {
             await api.delete(`/absences/${id}`, reason ? { params: { reason } } : undefined)

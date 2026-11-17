@@ -42,7 +42,7 @@
                     </div>
                     <div v-if="departmentOptions.length > 1 || filterDepartmentId !== null" class="dept-filter">
                         <label for="approvalDeptFilter">{{ t('worktime', 'Abteilung') }}</label>
-                        <NcSelect id="approvalDeptFilter"
+                        <NcSelect label-outside id="approvalDeptFilter"
                             v-model="selectedDepartment"
                             :options="departmentOptions"
                             :placeholder="t('worktime', 'Alle Abteilungen')"
@@ -87,13 +87,13 @@
                             <td class="actions-col">
                                 <div class="actions" @click.stop>
                                     <template v-if="item.kind === 'absence'">
-                                        <NcButton type="primary"
+                                        <NcButton variant="primary"
                                             :disabled="processingAbsence === item.id"
                                             @click="approveAbsence(item.id)">
                                             <template #icon><CheckIcon :size="18" /></template>
                                             {{ t('worktime', 'Genehmigen') }}
                                         </NcButton>
-                                        <NcButton type="tertiary"
+                                        <NcButton variant="tertiary"
                                             :disabled="processingAbsence === item.id"
                                             @click="rejectAbsence(item.id)">
                                             <template #icon><CloseIcon :size="18" /></template>
@@ -101,7 +101,7 @@
                                         </NcButton>
                                     </template>
                                     <template v-else-if="item.kind === 'emergency'">
-                                        <NcButton type="primary"
+                                        <NcButton variant="primary"
                                             :disabled="processingEmergency === item.id"
                                             @click="approveEmergencyItem(item)">
                                             <template #icon><CheckIcon :size="18" /></template>
@@ -109,13 +109,13 @@
                                         </NcButton>
                                     </template>
                                     <template v-else>
-                                        <NcButton type="primary"
+                                        <NcButton variant="primary"
                                             :disabled="processingMonth === item.key"
                                             @click="approveMonthItem(item)">
                                             <template #icon><CheckIcon :size="18" /></template>
                                             {{ t('worktime', 'Genehmigen') }}
                                         </NcButton>
-                                        <NcButton type="tertiary"
+                                        <NcButton variant="tertiary"
                                             :disabled="processingMonth === item.key"
                                             @click="openRejectModal(item)">
                                             <template #icon><CloseIcon :size="18" /></template>
@@ -190,7 +190,7 @@
                             <td class="detail">{{ m.approvedAt ? formatDate(m.approvedAt) : '–' }}</td>
                             <td class="actions-col">
                                 <div class="actions">
-                                    <NcButton type="tertiary"
+                                    <NcButton variant="tertiary"
                                         :disabled="reopeningKey === approvedKey(m)"
                                         @click="openReopenApproved(m)">
                                         <template #icon><RestoreIcon :size="18" /></template>
@@ -211,16 +211,16 @@
         </template>
 
         <!-- Monat zurückweisen (Grund erforderlich) -->
-        <NcModal v-if="showRejectModal" @close="closeRejectModal">
+        <NcModal v-if="showRejectModal" label-id="wt-reject-month-title" @close="closeRejectModal">
             <div class="reject-modal">
-                <h3>{{ t('worktime', 'Monat zurückweisen') }}</h3>
+                <h3 id="wt-reject-month-title">{{ t('worktime', 'Monat zurückweisen') }}</h3>
                 <p>{{ rejectTarget ? getMonthName(rejectTarget.month) + ' ' + rejectTarget.year + ' – ' + rejectTarget.employeeName : '' }}</p>
                 <label for="reject-reason">{{ t('worktime', 'Begründung') }}</label>
                 <textarea id="reject-reason" v-model="rejectReason" rows="3"
                     :placeholder="t('worktime', 'Warum wird der Monat zurückgewiesen?')"></textarea>
                 <div class="form-actions">
-                    <NcButton type="tertiary" @click="closeRejectModal">{{ t('worktime', 'Abbrechen') }}</NcButton>
-                    <NcButton type="primary"
+                    <NcButton variant="tertiary" @click="closeRejectModal">{{ t('worktime', 'Abbrechen') }}</NcButton>
+                    <NcButton variant="primary"
                         :disabled="!rejectReason.trim() || rejectingKey !== null"
                         @click="submitReject">
                         {{ t('worktime', 'Zurückweisen') }}
@@ -230,17 +230,17 @@
         </NcModal>
 
         <!-- Genehmigung zurücknehmen (#387, Grund erforderlich) -->
-        <NcModal v-if="showReopenModal" @close="closeReopenModal">
+        <NcModal v-if="showReopenModal" label-id="wt-reopen-month-title" @close="closeReopenModal">
             <div class="reject-modal">
-                <h3>{{ t('worktime', 'Genehmigung zurücknehmen') }}</h3>
+                <h3 id="wt-reopen-month-title">{{ t('worktime', 'Genehmigung zurücknehmen') }}</h3>
                 <p>{{ reopenTarget ? getMonthName(reopenTarget.month) + ' ' + reopenTarget.year + ' – ' + reopenTarget.employeeName : '' }}</p>
                 <p class="reopen-hint">{{ t('worktime', 'Der Monat wird wieder zur Bearbeitung freigegeben. Der Mitarbeiter kann korrigieren und erneut einreichen.') }}</p>
                 <label for="reopen-reason">{{ t('worktime', 'Begründung') }}</label>
                 <textarea id="reopen-reason" v-model="reopenReason" rows="3"
                     :placeholder="t('worktime', 'Warum wird die Genehmigung zurückgenommen?')"></textarea>
                 <div class="form-actions">
-                    <NcButton type="tertiary" @click="closeReopenModal">{{ t('worktime', 'Abbrechen') }}</NcButton>
-                    <NcButton type="primary"
+                    <NcButton variant="tertiary" @click="closeReopenModal">{{ t('worktime', 'Abbrechen') }}</NcButton>
+                    <NcButton variant="primary"
                         :disabled="!reopenReason.trim() || reopeningKey !== null"
                         @click="submitReopenApproved">
                         {{ t('worktime', 'Genehmigung zurücknehmen') }}
@@ -260,11 +260,11 @@
 </template>
 
 <script>
-import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
-import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
-import NcAvatar from '@nextcloud/vue/dist/Components/NcAvatar.js'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcModal from '@nextcloud/vue/dist/Components/NcModal.js'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
+import NcAvatar from '@nextcloud/vue/components/NcAvatar'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcModal from '@nextcloud/vue/components/NcModal'
 import CheckIcon from 'vue-material-design-icons/Check.vue'
 import CloseIcon from 'vue-material-design-icons/Close.vue'
 import FormatListBulletedIcon from 'vue-material-design-icons/FormatListBulleted.vue'
@@ -272,8 +272,11 @@ import CalendarIcon from 'vue-material-design-icons/Calendar.vue'
 import ClockOutlineIcon from 'vue-material-design-icons/ClockOutline.vue'
 import AlertOutlineIcon from 'vue-material-design-icons/AlertOutline.vue'
 import RestoreIcon from 'vue-material-design-icons/Restore.vue'
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
-import { mapGetters } from 'vuex'
+import NcSelect from '@nextcloud/vue/components/NcSelect'
+import { mapState } from 'pinia'
+import { useDepartmentsStore } from '../stores/departments.ts'
+import { useEmployeesStore } from '../stores/employees.ts'
+import { usePermissionsStore } from '../stores/permissions.ts'
 import TimeEntryService from '../services/TimeEntryService.js'
 import AbsenceService from '../services/AbsenceService.js'
 import { formatDate } from '../utils/dateUtils.js'
@@ -334,9 +337,9 @@ export default {
         }
     },
     computed: {
-        ...mapGetters('departments', ['departments']),
-        ...mapGetters('employees', ['employees']),
-        ...mapGetters('permissions', ['canManageSettings']),
+        ...mapState(useDepartmentsStore, ['departments']),
+        ...mapState(useEmployeesStore, ['employees']),
+        ...mapState(usePermissionsStore, ['canManageSettings']),
         departmentsById() {
             const map = {}
             for (const d of this.departments) {
@@ -457,10 +460,10 @@ export default {
         this.loadData()
         // Departments (labels) + employees (employeeId/userId -> departmentId map)
         // back the department filter. Both endpoints are permission-scoped.
-        this.$store.dispatch('departments/fetchDepartments')
-        this.$store.dispatch('employees/fetchEmployees')
+        useDepartmentsStore().fetchDepartments()
+        useEmployeesStore().fetchEmployees()
     },
-    beforeDestroy() {
+    beforeUnmount() {
         if (this._approvedObserver) {
             this._approvedObserver.disconnect()
         }

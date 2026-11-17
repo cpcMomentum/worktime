@@ -6,30 +6,36 @@
 
         <div class="view-toolbar">
             <div class="view-header__controls">
-                <NcSelect v-model="filterEmployee"
+                <NcSelect label-outside
+                    :aria-label-combobox="t('worktime', 'Alle Mitarbeiter')"
+                    v-model="filterEmployee"
                     :options="employeeOptions"
                     :placeholder="t('worktime', 'Alle Mitarbeiter')"
                     :clearable="true"
                     label="label" />
-                <NcSelect v-model="filterAction"
+                <NcSelect label-outside
+                    :aria-label-combobox="t('worktime', 'Alle Aktionen')"
+                    v-model="filterAction"
                     :options="actionOptions"
                     :placeholder="t('worktime', 'Alle Aktionen')"
                     :clearable="true"
                     label="label" />
-                <NcSelect v-model="filterEntityType"
+                <NcSelect label-outside
+                    :aria-label-combobox="t('worktime', 'Alle Typen')"
+                    v-model="filterEntityType"
                     :options="entityTypeOptions"
                     :placeholder="t('worktime', 'Alle Typen')"
                     :clearable="true"
                     label="label" />
-                <NcDateTimePicker v-model="filterFrom"
+                <NcDateTimePicker v-model="filterFrom" clearable
                     type="date"
-                    :format="'DD.MM.YYYY'"
+                    format="dd.MM.yyyy"
                     :placeholder="t('worktime', 'Von')" />
-                <NcDateTimePicker v-model="filterTo"
+                <NcDateTimePicker v-model="filterTo" clearable
                     type="date"
-                    :format="'DD.MM.YYYY'"
+                    format="dd.MM.yyyy"
                     :placeholder="t('worktime', 'Bis')" />
-                <NcButton type="secondary" @click="load">
+                <NcButton variant="secondary" @click="load">
                     {{ t('worktime', 'Filtern') }}
                 </NcButton>
             </div>
@@ -113,15 +119,16 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
-import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js'
-import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcSelect from '@nextcloud/vue/components/NcSelect'
+import NcDateTimePicker from '@nextcloud/vue/components/NcDateTimePicker'
+import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import ShieldIcon from 'vue-material-design-icons/Shield.vue'
 import AuditService from '../services/AuditService.js'
 import AuditDetailModal from '../components/AuditDetailModal.vue'
 import { formatDateISO, getLocale } from '../utils/dateUtils.js'
-import { mapGetters, mapActions } from 'vuex'
+import { mapState, mapActions } from 'pinia'
+import { useEmployeesStore } from '../stores/employees.ts'
 
 export default {
     name: 'AuditView',
@@ -146,7 +153,7 @@ export default {
         }
     },
     computed: {
-        ...mapGetters('employees', ['employees']),
+        ...mapState(useEmployeesStore, ['employees']),
         employeeOptions() {
             return this.employees.map((e) => ({
                 id: e.userId,
@@ -178,7 +185,7 @@ export default {
         this.load()
     },
     methods: {
-        ...mapActions('employees', ['fetchEmployees']),
+        ...mapActions(useEmployeesStore, ['fetchEmployees']),
         openDetail(entry) {
             this.selectedEntry = entry
         },

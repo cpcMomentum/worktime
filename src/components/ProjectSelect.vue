@@ -1,7 +1,8 @@
 <template>
-    <NcSelect
+    <NcSelect label-outside
+        :aria-label-combobox="placeholder || t('worktime', 'Projekt auswählen')"
         :input-id="inputId"
-        :value="selected"
+        :model-value="selected"
         :options="options"
         :loading="loading"
         :placeholder="placeholder || t('worktime', 'Projekt auswählen')"
@@ -11,7 +12,7 @@
         label="label"
         :class="{ 'input-error': hasError }"
         @search="onSearch"
-        @input="onInput">
+        @update:model-value="onInput">
         <template #option="option">
             <span class="project-option">
                 <span class="project-option__label">{{ option.label }}</span>
@@ -31,7 +32,7 @@
 </template>
 
 <script>
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
+import NcSelect from '@nextcloud/vue/components/NcSelect'
 import Star from 'vue-material-design-icons/Star.vue'
 import StarOutline from 'vue-material-design-icons/StarOutline.vue'
 import ProjectService from '../services/ProjectService.js'
@@ -49,10 +50,11 @@ import ProjectService from '../services/ProjectService.js'
  */
 export default {
     name: 'ProjectSelect',
+    emits: ['loaded', 'update:modelValue'],
     components: { NcSelect, Star, StarOutline },
     props: {
-        // v-model (Vue 2): die gewählte projectId
-        value: {
+        // v-model: die gewählte projectId
+        modelValue: {
             type: Number,
             default: null,
         },
@@ -91,7 +93,7 @@ export default {
         // loadInitial(), so options are populated by the time it runs. An
         // immediate watcher would race it and fire a second, redundant
         // ProjectService.getById() for the edit case (#682).
-        value() {
+        modelValue() {
             this.syncSelected()
         },
     },
@@ -99,7 +101,7 @@ export default {
         await this.loadInitial()
         this.syncSelected()
     },
-    beforeDestroy() {
+    beforeUnmount() {
         clearTimeout(this.searchTimer)
     },
     methods: {
@@ -150,7 +152,7 @@ export default {
         },
         onInput(option) {
             this.selected = option || null
-            this.$emit('input', option ? option.id : null)
+            this.$emit('update:modelValue', option ? option.id : null)
         },
         // #711: toggle the favorite star without selecting the option. The star
         // flips immediately; re-sorting favorites-first happens on the next
@@ -186,7 +188,7 @@ export default {
             }
         },
         async syncSelected() {
-            const id = this.value
+            const id = this.modelValue
             if (!id) {
                 this.selected = null
                 return

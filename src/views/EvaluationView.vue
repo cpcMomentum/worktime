@@ -30,11 +30,11 @@
             <div class="view-header__nav">
                 <YearPicker v-show="mode === 'mitarbeiter'" :year="teamYear" @update="onTeamYearChange" />
                 <div v-show="mode === 'projekte'" class="period-nav">
-                    <NcButton type="tertiary" :aria-label="t('worktime', 'Zurück')" @click="shiftPeriod(-1)">
+                    <NcButton variant="tertiary" :aria-label="t('worktime', 'Zurück')" @click="shiftPeriod(-1)">
                         <template #icon><ChevronLeftIcon :size="20" /></template>
                     </NcButton>
                     <span class="period-nav__label">{{ periodLabel }}</span>
-                    <NcButton type="tertiary" :aria-label="t('worktime', 'Weiter')" @click="shiftPeriod(1)">
+                    <NcButton variant="tertiary" :aria-label="t('worktime', 'Weiter')" @click="shiftPeriod(1)">
                         <template #icon><ChevronRightIcon :size="20" /></template>
                     </NcButton>
                 </div>
@@ -76,7 +76,7 @@
                 <div v-show="teamSubtab === 'overview'" class="ev-card">
                     <div v-if="teamDepartmentOptions.length > 1 || teamFilterDepartmentId !== null" class="ev-dept-filter">
                         <label for="teamDeptFilter">{{ t('worktime', 'Abteilung') }}</label>
-                        <NcSelect id="teamDeptFilter"
+                        <NcSelect label-outside id="teamDeptFilter"
                             v-model="selectedTeamDepartment"
                             :options="teamDepartmentOptions"
                             :placeholder="t('worktime', 'Alle Abteilungen')"
@@ -168,7 +168,9 @@
 
         <div v-if="projectDepartmentOptions.length > 1 || projectFilterDepartmentId !== null" class="ev-filter">
             <div class="ev-filter__label">{{ t('worktime', 'Abteilung') }}</div>
-            <NcSelect id="projectDeptFilter"
+            <NcSelect label-outside
+                :aria-label-combobox="t('worktime', 'Alle Abteilungen')"
+                id="projectDeptFilter"
                 v-model="selectedProjectDepartment"
                 :options="projectDepartmentOptions"
                 :placeholder="t('worktime', 'Alle Abteilungen')"
@@ -228,11 +230,11 @@
                 </button>
             </div>
             <div class="ev-export">
-                <NcButton type="secondary" @click="exportData('csv')">
+                <NcButton variant="secondary" @click="exportData('csv')">
                     <template #icon><DownloadIcon :size="18" /></template>
                     {{ t('worktime', 'CSV') }}
                 </NcButton>
-                <NcButton type="secondary" @click="exportData('pdf')">
+                <NcButton variant="secondary" @click="exportData('pdf')">
                     <template #icon><DownloadIcon :size="18" /></template>
                     {{ t('worktime', 'PDF') }}
                 </NcButton>
@@ -322,8 +324,8 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import ChevronLeftIcon from 'vue-material-design-icons/ChevronLeft.vue'
 import ChevronRightIcon from 'vue-material-design-icons/ChevronRight.vue'
 import DownloadIcon from 'vue-material-design-icons/Download.vue'
@@ -338,10 +340,12 @@ import FormatListBulletedIcon from 'vue-material-design-icons/FormatListBulleted
 import CalendarMonthOutlineIcon from 'vue-material-design-icons/CalendarMonthOutline.vue'
 import CalendarRangeIcon from 'vue-material-design-icons/CalendarRange.vue'
 import CalendarOutlineIcon from 'vue-material-design-icons/CalendarOutline.vue'
-import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
-import NcAvatar from '@nextcloud/vue/dist/Components/NcAvatar.js'
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
-import { mapGetters } from 'vuex'
+import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
+import NcAvatar from '@nextcloud/vue/components/NcAvatar'
+import NcSelect from '@nextcloud/vue/components/NcSelect'
+import { mapState } from 'pinia'
+import { useDepartmentsStore } from '../stores/departments.ts'
+import { useEmployeesStore } from '../stores/employees.ts'
 import YearPicker from '../components/YearPicker.vue'
 import TeamYearTable from '../components/TeamYearTable.vue'
 import ReportService from '../services/ReportService.js'
@@ -410,8 +414,8 @@ export default {
         }
     },
     computed: {
-        ...mapGetters('departments', ['departments']),
-        ...mapGetters('employees', ['employees']),
+        ...mapState(useDepartmentsStore, ['departments']),
+        ...mapState(useEmployeesStore, ['employees']),
         /** departmentId -> name, for label lookup (client-side join, G2). */
         departmentsById() {
             const map = {}
@@ -507,7 +511,7 @@ export default {
             })
             const { key, dir } = this.teamSort
             rows.sort((a, b) => {
-                let cmp = 0
+                let cmp
                 if (key === 'overtime') cmp = a.overtimeMinutes - b.overtimeMinutes
                 else if (key === 'vacation') cmp = a.vacationRemaining - b.vacationRemaining
                 else cmp = a.name.localeCompare(b.name)
@@ -637,8 +641,8 @@ export default {
         // Departments back the filter labels; employees provide the
         // employeeId -> departmentId map for the project evaluation. Both are
         // permission-scoped by their endpoints, so the filter can only narrow.
-        this.$store.dispatch('departments/fetchDepartments')
-        this.$store.dispatch('employees/fetchEmployees')
+        useDepartmentsStore().fetchDepartments()
+        useEmployeesStore().fetchEmployees()
     },
     methods: {
         formatDaysLabel,
@@ -755,13 +759,21 @@ export default {
         },
         toggleProject(id) {
             const s = new Set(this.selectedProjects)
-            s.has(id) ? s.delete(id) : s.add(id)
+            if (s.has(id)) {
+                s.delete(id)
+            } else {
+                s.add(id)
+            }
             this.selectedProjects = s
         },
         clearProjects() { this.selectedProjects = new Set() },
         toggleEmployee(id) {
             const s = new Set(this.selectedEmployees)
-            s.has(id) ? s.delete(id) : s.add(id)
+            if (s.has(id)) {
+                s.delete(id)
+            } else {
+                s.add(id)
+            }
             this.selectedEmployees = s
         },
         clearEmployees() { this.selectedEmployees = new Set() },

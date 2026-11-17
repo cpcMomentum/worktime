@@ -1,7 +1,7 @@
 <template>
-	<NcModal :name="t('worktime', 'Ausstempeln')" @close="$emit('close')">
+	<NcModal label-id="wt-punch-out-title" @close="$emit('close')">
 		<div class="punch-out">
-			<h3>{{ t('worktime', 'Zeiteintrag bestätigen') }}</h3>
+			<h3 id="wt-punch-out-title">{{ t('worktime', 'Zeiteintrag bestätigen') }}</h3>
 			<p class="punch-out__hint">
 				{{ t('worktime', 'Prüfe die Zeiten und bestätige, um den Zeiteintrag anzulegen.') }}
 			</p>
@@ -73,10 +73,10 @@
 			</NcNoteCard>
 
 			<div class="form-actions">
-				<NcButton type="tertiary" :disabled="saving" @click="$emit('close')">
+				<NcButton variant="tertiary" :disabled="saving" @click="$emit('close')">
 					{{ t('worktime', 'Abbrechen') }}
 				</NcButton>
-				<NcButton type="primary" :disabled="!isValid || saving" @click="confirm">
+				<NcButton variant="primary" :disabled="!isValid || saving" @click="confirm">
 					<template v-if="saving" #icon>
 						<NcLoadingIcon :size="20" />
 					</template>
@@ -88,14 +88,16 @@
 </template>
 
 <script>
-import NcModal from '@nextcloud/vue/dist/Components/NcModal.js'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcNoteCard from '@nextcloud/vue/dist/Components/NcNoteCard.js'
-import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
+import NcModal from '@nextcloud/vue/components/NcModal'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import ProjectSelect from './ProjectSelect.vue'
 import TimeEntryService from '../services/TimeEntryService.js'
 import SettingsService from '../services/SettingsService.js'
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { usePermissionsStore } from '../stores/permissions.ts'
+import { usePunchStore } from '../stores/punch.ts'
 
 export default {
 	name: 'PunchOutDialog',
@@ -134,7 +136,7 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters('permissions', ['punchOnly']),
+		...mapState(usePermissionsStore, ['punchOnly']),
 		grossMinutes() {
 			return this.spanMinutes(this.form.startTime, this.form.endTime)
 		},
@@ -191,7 +193,7 @@ export default {
 			if (value !== undefined && value !== null) {
 				this.maxDailyHours = parseFloat(value)
 			}
-		} catch (e) {
+		} catch {
 			// Fallback 10h; the server enforces the real threshold anyway.
 		}
 	},
@@ -220,7 +222,7 @@ export default {
 		async suggestBreak() {
 			try {
 				this.form.breakMinutes = await TimeEntryService.suggestBreak(this.form.startTime, this.form.endTime)
-			} catch (e) {
+			} catch {
 				this.form.breakMinutes = 0
 			}
 		},
@@ -249,7 +251,7 @@ export default {
 			this.saving = true
 			this.error = null
 			try {
-				const entry = await this.$store.dispatch('punch/punchOut', {
+				const entry = await usePunchStore().punchOut({
 					employeeId: this.punch.employeeId,
 					breakMinutes: this.form.breakMinutes,
 					// #615: the dialog is authoritative about the project. Send 0 as

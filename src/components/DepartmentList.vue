@@ -19,14 +19,14 @@
                         </span>
                     </td>
                     <td class="actions-col">
-                        <NcButton type="tertiary"
+                        <NcButton variant="tertiary"
                             :aria-label="t('worktime', 'Bearbeiten')"
                             @click="$emit('edit', department)">
                             <template #icon>
                                 <Pencil :size="20" />
                             </template>
                         </NcButton>
-                        <NcButton type="tertiary"
+                        <NcButton variant="tertiary"
                             :aria-label="t('worktime', 'Löschen')"
                             @click="confirmDelete(department)">
                             <template #icon>
@@ -48,7 +48,7 @@
 
         <NcDialog v-if="showDeleteDialog"
             :name="t('worktime', 'Abteilung löschen?')"
-            @close="showDeleteDialog = false">
+            @update:open="showDeleteDialog = false">
             <p>{{ t('worktime', 'Möchtest du die Abteilung "{name}" wirklich löschen?', { name: departmentToDelete?.name }) }}</p>
             <p v-if="memberCount > 0" class="delete-warning">
                 {{ n('worktime',
@@ -58,10 +58,10 @@
             </p>
             <p class="delete-warning">{{ t('worktime', 'Diese Aktion kann nicht rückgängig gemacht werden.') }}</p>
             <template #actions>
-                <NcButton type="tertiary" @click="showDeleteDialog = false">
+                <NcButton variant="tertiary" @click="showDeleteDialog = false">
                     {{ t('worktime', 'Abbrechen') }}
                 </NcButton>
-                <NcButton type="error" @click="deleteConfirmed">
+                <NcButton variant="error" @click="deleteConfirmed">
                     {{ t('worktime', 'Löschen') }}
                 </NcButton>
             </template>
@@ -70,9 +70,9 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
-import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
+import NcDialog from '@nextcloud/vue/components/NcDialog'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Close from 'vue-material-design-icons/Close.vue'
 import OfficeBuilding from 'vue-material-design-icons/OfficeBuilding.vue'
@@ -80,6 +80,7 @@ import DepartmentService from '../services/DepartmentService.js'
 
 export default {
     name: 'DepartmentList',
+    emits: ['delete', 'edit'],
     components: {
         NcButton,
         NcEmptyContent,
@@ -109,7 +110,7 @@ export default {
             try {
                 const impact = await DepartmentService.deletionImpact(department.id)
                 this.memberCount = impact?.memberCount ?? 0
-            } catch (error) {
+            } catch {
                 // Impact is advisory; the confirmation still works without it.
                 this.memberCount = 0
             }

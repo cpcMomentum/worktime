@@ -4,20 +4,20 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>{{ t('worktime', 'Von') }}</label>
-                    <NcDateTimePicker v-model="form.startDate" type="date" :format="'DD.MM.YYYY'" />
+                    <NcDateTimePicker v-model="form.startDate" clearable type="date" format="dd.MM.yyyy" />
                 </div>
                 <div class="form-group">
                     <label>{{ t('worktime', 'Bis') }}</label>
-                    <NcDateTimePicker v-model="form.endDate" type="date" :format="'DD.MM.YYYY'" />
+                    <NcDateTimePicker v-model="form.endDate" clearable type="date" format="dd.MM.yyyy" />
                 </div>
             </div>
 
             <div class="form-group">
                 <label>{{ t('worktime', 'Für wen') }}</label>
-                <NcCheckboxRadioSwitch :checked.sync="form.target" value="all" name="bf-target" type="radio">
+                <NcCheckboxRadioSwitch v-model="form.target" value="all" name="bf-target" type="radio">
                     {{ t('worktime', 'Alle aktiven Mitarbeiter') }}
                 </NcCheckboxRadioSwitch>
-                <NcCheckboxRadioSwitch :checked.sync="form.target" value="selected" name="bf-target" type="radio">
+                <NcCheckboxRadioSwitch v-model="form.target" value="selected" name="bf-target" type="radio">
                     {{ t('worktime', 'Ausgewählte Mitarbeiter') }}
                 </NcCheckboxRadioSwitch>
             </div>
@@ -30,7 +30,7 @@
                 </p>
                 <div class="bf-employees">
                     <NcCheckboxRadioSwitch v-for="emp in filteredEmployees" :key="emp.id"
-                        :checked.sync="selectedEmployeeIds" :value="String(emp.id)" name="bf-emp">
+                        v-model="selectedEmployeeIds" :value="String(emp.id)" name="bf-emp">
                         {{ emp.firstName }} {{ emp.lastName }}
                     </NcCheckboxRadioSwitch>
                     <p v-if="!filteredEmployees.length" class="help-text">
@@ -42,7 +42,7 @@
             <div class="form-group">
                 <label>{{ t('worktime', 'Wenn der Resturlaub nicht reicht') }}</label>
                 <NcCheckboxRadioSwitch v-for="opt in overageOptions" :key="opt.value"
-                    :checked.sync="form.overageHandling" :value="opt.value" name="bf-overage" type="radio">
+                    v-model="form.overageHandling" :value="opt.value" name="bf-overage" type="radio">
                     {{ opt.label }}
                 </NcCheckboxRadioSwitch>
             </div>
@@ -57,7 +57,7 @@
                 {{ t('worktime', 'Mitarbeiter mit bereits erfassten Zeiten im Zeitraum werden nicht gebucht, sondern dir aufgelistet.') }}
             </p>
 
-            <NcButton type="primary" :disabled="!canSubmit || saving" @click="submit">
+            <NcButton variant="primary" :disabled="!canSubmit || saving" @click="submit">
                 {{ t('worktime', 'Betriebsferien eintragen') }}
             </NcButton>
         </div>
@@ -112,7 +112,7 @@
                         <td>{{ g.note || '–' }}</td>
                         <td>{{ g.count }}</td>
                         <td class="bf-actions">
-                            <NcButton type="tertiary" @click="remove(g)">
+                            <NcButton variant="tertiary" @click="remove(g)">
                                 {{ t('worktime', 'Entfernen') }}
                             </NcButton>
                         </td>
@@ -124,10 +124,10 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
-import NcNoteCard from '@nextcloud/vue/dist/Components/NcNoteCard.js'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcDateTimePicker from '@nextcloud/vue/components/NcDateTimePicker'
+import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
+import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import AbsenceService from '../services/AbsenceService.js'
 import { formatDateISO } from '../utils/dateUtils.js'
 import { showSuccess } from '@nextcloud/dialogs'

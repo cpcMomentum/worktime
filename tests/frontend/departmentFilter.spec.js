@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest'
 import { departmentFilterOptions, matchesDepartment, NO_DEPARTMENT } from '../../src/utils/departmentFilter.js'
 
 /**

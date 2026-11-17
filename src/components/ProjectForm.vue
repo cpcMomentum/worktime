@@ -1,8 +1,8 @@
 <template>
     <div class="project-form">
         <div class="project-form-header">
-            <h3>{{ isEdit ? t('worktime', 'Projekt bearbeiten') : t('worktime', 'Neues Projekt') }}</h3>
-            <NcCheckboxRadioSwitch :checked.sync="form.isActive" type="switch">
+            <h3 id="wt-project-form-title">{{ isEdit ? t('worktime', 'Projekt bearbeiten') : t('worktime', 'Neues Projekt') }}</h3>
+            <NcCheckboxRadioSwitch v-model="form.isActive" type="switch">
                 {{ t('worktime', 'Aktiv') }}
             </NcCheckboxRadioSwitch>
         </div>
@@ -63,7 +63,7 @@
                     </button>
                 </NcColorPicker>
                 <NcButton v-if="form.color"
-                    type="tertiary"
+                    variant="tertiary"
                     @click="form.color = null">
                     {{ t('worktime', 'Zurücksetzen') }}
                 </NcButton>
@@ -75,13 +75,13 @@
 
         <div class="form-group">
             <label class="form-group-label">{{ t('worktime', 'Buchungsberechtigung') }}</label>
-            <NcCheckboxRadioSwitch :checked.sync="bookingMode"
+            <NcCheckboxRadioSwitch v-model="bookingMode"
                 value="all"
                 name="project-booking"
                 type="radio">
                 {{ t('worktime', 'Alle Mitarbeitenden') }}
             </NcCheckboxRadioSwitch>
-            <NcCheckboxRadioSwitch :checked.sync="bookingMode"
+            <NcCheckboxRadioSwitch v-model="bookingMode"
                 value="selected"
                 name="project-booking"
                 type="radio">
@@ -89,20 +89,22 @@
             </NcCheckboxRadioSwitch>
 
             <div v-if="bookingMode === 'selected'" class="member-select">
-                <NcSelect id="projectMembers"
+                <NcSelect label-outside
+                    :aria-label-combobox="t('worktime', 'Mitarbeitende auswählen')"
+                    id="projectMembers"
                     v-model="selectedMembers"
                     :options="employeeOptions"
                     :multiple="true"
-                    :close-on-select="false"
+                    keep-open
                     :placeholder="t('worktime', 'Mitarbeitende auswählen')" />
             </div>
         </div>
 
         <div class="form-actions">
-            <NcButton type="tertiary" @click="cancel">
+            <NcButton variant="tertiary" @click="cancel">
                 {{ t('worktime', 'Abbrechen') }}
             </NcButton>
-            <NcButton type="primary" :disabled="!isValid" @click="save">
+            <NcButton variant="primary" :disabled="!isValid" @click="save">
                 {{ t('worktime', 'Speichern') }}
             </NcButton>
         </div>
@@ -110,16 +112,19 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
-import NcColorPicker from '@nextcloud/vue/dist/Components/NcColorPicker.js'
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
-import { mapActions, mapGetters } from 'vuex'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
+import NcColorPicker from '@nextcloud/vue/components/NcColorPicker'
+import NcSelect from '@nextcloud/vue/components/NcSelect'
+import { mapState, mapActions } from 'pinia'
+import { useEmployeesStore } from '../stores/employees.ts'
+import { useProjectsStore } from '../stores/projects.ts'
 import { nextUnusedColor, textColorOn } from '../utils/colorUtils.js'
 import { showSuccessMessage, showErrorMessage } from '../utils/errorHandler.js'
 
 export default {
     name: 'ProjectForm',
+    emits: ['cancel', 'saved'],
     components: {
         NcButton,
         NcCheckboxRadioSwitch,
@@ -148,8 +153,8 @@ export default {
         }
     },
     computed: {
-        ...mapGetters('employees', ['employees']),
-        ...mapGetters('projects', ['projects']),
+        ...mapState(useEmployeesStore, ['employees']),
+        ...mapState(useProjectsStore, ['projects']),
         isEdit() {
             return !!this.project
         },
@@ -219,11 +224,11 @@ export default {
     created() {
         // Employees are needed for the assignment multi-select.
         if (!this.employees.length) {
-            this.$store.dispatch('employees/fetchEmployees')
+            useEmployeesStore().fetchEmployees()
         }
     },
     methods: {
-        ...mapActions('projects', ['createProject', 'updateProject']),
+        ...mapActions(useProjectsStore, ['createProject', 'updateProject']),
         resetForm() {
             this.form = {
                 name: '',

@@ -6,7 +6,7 @@
                 <div class="kpi-card__head">
                     <span class="kpi-lab">{{ headLabel }}</span>
                     <NcButton v-if="statistics && period === 'month'"
-                        type="tertiary"
+                        variant="tertiary"
                         :aria-label="t('worktime', 'Berechnung anzeigen')"
                         @click="showDetails = !showDetails">
                         <template #icon>
@@ -91,7 +91,7 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
+import NcButton from '@nextcloud/vue/components/NcButton'
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue'
 import ChevronUp from 'vue-material-design-icons/ChevronUp.vue'
 import { formatMinutesWithUnit, formatMinutes as formatHM } from '../utils/timeUtils.js'

@@ -1,10 +1,10 @@
 <template>
     <div class="employee-form">
-        <h3>{{ isEdit ? t('worktime', 'Mitarbeiter bearbeiten') : t('worktime', 'Neuer Mitarbeiter') }}</h3>
+        <h3 id="wt-employee-form-title">{{ isEdit ? t('worktime', 'Mitarbeiter bearbeiten') : t('worktime', 'Neuer Mitarbeiter') }}</h3>
 
         <div class="form-group">
             <label for="ncUser">{{ t('worktime', 'Nextcloud-Benutzer') }}</label>
-            <NcSelect id="ncUser"
+            <NcSelect label-outside id="ncUser"
                 v-model="selectedUser"
                 :options="userOptions"
                 :placeholder="t('worktime', 'Benutzer auswählen')"
@@ -102,7 +102,7 @@
 
         <div class="form-group">
             <label for="federalState">{{ t('worktime', 'Bundesland') }} <InfoIcon>{{ t('worktime', 'Legt fest, welche gesetzlichen Feiertage für diesen Mitarbeiter gelten. Bayern hat z.B. mehr Feiertage als Hamburg.') }}</InfoIcon> *</label>
-            <NcSelect id="federalState"
+            <NcSelect label-outside id="federalState"
                 v-model="selectedFederalState"
                 :options="federalStateOptions"
                 :clearable="false"
@@ -112,7 +112,7 @@
         <div class="form-row">
             <div class="form-group">
                 <label for="supervisor">{{ t('worktime', 'Vorgesetzter') }} <InfoIcon>{{ t('worktime', 'Diese Person kann die Zeiteinträge und Abwesenheitsanträge dieses Mitarbeiters einsehen und genehmigen.') }}</InfoIcon></label>
-                <NcSelect id="supervisor"
+                <NcSelect label-outside id="supervisor"
                     v-model="selectedSupervisor"
                     :options="supervisorOptions"
                     :placeholder="t('worktime', 'Kein Vorgesetzter')"
@@ -120,7 +120,7 @@
             </div>
             <div class="form-group">
                 <label for="department">{{ t('worktime', 'Abteilung') }} <InfoIcon>{{ t('worktime', 'Ordnet den Mitarbeiter einer Organisationseinheit zu. Rein organisatorisch – unabhängig vom Vorgesetzten und ohne Einfluss auf Berechtigungen.') }}</InfoIcon></label>
-                <NcSelect id="department"
+                <NcSelect label-outside id="department"
                     v-model="selectedDepartment"
                     :options="departmentOptions"
                     :placeholder="t('worktime', 'Keine Abteilung')"
@@ -132,22 +132,22 @@
             <div class="form-group">
                 <label for="entryDate">{{ t('worktime', 'Eintrittsdatum') }} <InfoIcon>{{ t('worktime', 'Ab diesem Datum erscheint der Mitarbeiter in der Zeiterfassung. Für Monate davor werden keine Sollstunden berechnet.') }}</InfoIcon></label>
                 <NcDateTimePicker id="entryDate"
-                    v-model="form.entryDate"
+                    v-model="form.entryDate" clearable
                     type="date"
-                    :format="'DD.MM.YYYY'" />
+                    format="dd.MM.yyyy" />
             </div>
             <div v-if="isEdit" class="form-group">
                 <label for="exitDate">{{ t('worktime', 'Austrittsdatum') }} <InfoIcon>{{ t('worktime', 'Ab diesem Datum kann der Mitarbeiter keine neuen Einträge mehr erfassen. Alle bisherigen Daten bleiben erhalten.') }}</InfoIcon></label>
                 <NcDateTimePicker id="exitDate"
-                    v-model="form.exitDate"
+                    v-model="form.exitDate" clearable
                     type="date"
-                    :format="'DD.MM.YYYY'" />
+                    format="dd.MM.yyyy" />
             </div>
         </div>
 
         <div v-if="entryYear" class="form-row">
             <div class="form-group">
-                <NcCheckboxRadioSwitch :checked.sync="form.vacationTransferred">
+                <NcCheckboxRadioSwitch v-model="form.vacationTransferred">
                     {{ t('worktime', 'Resturlaub aus vorheriger Beschäftigung übernehmen') }}
                 </NcCheckboxRadioSwitch>
                 <p class="field-hint">
@@ -174,10 +174,10 @@
             @updated="$emit('schedule-updated')" />
 
         <div class="form-actions">
-            <NcButton type="tertiary" @click="cancel">
+            <NcButton variant="tertiary" @click="cancel">
                 {{ t('worktime', 'Abbrechen') }}
             </NcButton>
-            <NcButton type="primary" :disabled="!isValid || saving" @click="save">
+            <NcButton variant="primary" :disabled="!isValid || saving" @click="save">
                 {{ t('worktime', 'Speichern') }}
             </NcButton>
         </div>
@@ -185,12 +185,14 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
-import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcSelect from '@nextcloud/vue/components/NcSelect'
+import NcDateTimePicker from '@nextcloud/vue/components/NcDateTimePicker'
+import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import WorkScheduleEditor from './WorkScheduleEditor.vue'
-import { mapGetters, mapActions } from 'vuex'
+import { mapState, mapActions } from 'pinia'
+import { useDepartmentsStore } from '../stores/departments.ts'
+import { useEmployeesStore } from '../stores/employees.ts'
 import { formatDateISO } from '../utils/dateUtils.js'
 import { sum } from '../utils/dayHours.js'
 import { showErrorMessage } from '../utils/errorHandler.js'
@@ -200,6 +202,7 @@ import DayHoursInput from './DayHoursInput.vue'
 
 export default {
     name: 'EmployeeForm',
+    emits: ['cancel', 'saved', 'schedule-updated'],
     components: {
         InfoIcon,
         NcButton,
@@ -230,8 +233,8 @@ export default {
         }
     },
     computed: {
-        ...mapGetters('employees', ['employees', 'federalStates', 'availableUsers']),
-        ...mapGetters('departments', ['departments']),
+        ...mapState(useEmployeesStore, ['employees', 'federalStates', 'availableUsers']),
+        ...mapState(useDepartmentsStore, ['departments']),
         isEdit() {
             return !!this.employee
         },
@@ -378,16 +381,16 @@ export default {
         },
     },
     created() {
-        this.$store.dispatch('employees/fetchFederalStates')
-        this.$store.dispatch('employees/fetchEmployees')
-        this.$store.dispatch('departments/fetchDepartments', true)
+        useEmployeesStore().fetchFederalStates()
+        useEmployeesStore().fetchEmployees()
+        useDepartmentsStore().fetchDepartments(true)
         if (!this.isEdit) {
-            this.$store.dispatch('employees/fetchAvailableUsers')
+            useEmployeesStore().fetchAvailableUsers()
             this.loadMaxDailyHours()
         }
     },
     methods: {
-        ...mapActions('employees', ['createEmployee', 'updateEmployee']),
+        ...mapActions(useEmployeesStore, ['createEmployee', 'updateEmployee']),
         emptyForm() {
             return {
                 userId: '',
@@ -417,7 +420,7 @@ export default {
                 if (value > 0) {
                     this.maxDailyHours = value
                 }
-            } catch (e) {
+            } catch {
                 // keep the default of 10
             }
         },

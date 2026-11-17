@@ -1,10 +1,8 @@
 # Dependencies
 node_modules/
 
-# Build output (js/ is committed for easy installation)
-# js/
-css/*.css
-css/*.css.map
+# Build output: js/ and css/ are committed, the release tarball is built from git
+dist/
 
 # IDE
 .idea/

@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest'
 import { isFullyVisible, scrollTargetIndex, LEAD_DAYS } from '../../src/utils/scrollToDay.js'
 
 describe('scrollTargetIndex', () => {

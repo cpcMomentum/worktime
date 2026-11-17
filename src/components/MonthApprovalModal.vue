@@ -1,7 +1,7 @@
 <template>
-    <NcModal size="large" :name="t('worktime', 'Monat prüfen')" @close="$emit('close')">
+    <NcModal size="large" label-id="wt-month-approval-title" @close="$emit('close')">
         <div class="month-detail">
-            <h3>{{ item.employeeName }} · {{ monthLabel }}</h3>
+            <h3 id="wt-month-approval-title">{{ item.employeeName }} · {{ monthLabel }}</h3>
 
             <div class="month-detail__summary">
                 <span>{{ entries.length }} {{ t('worktime', 'Einträge') }}</span>
@@ -41,19 +41,19 @@
 
             <div class="month-detail__actions">
                 <NcCheckboxRadioSwitch v-if="archiveConfigured"
-                    :checked.sync="archiveAfterApprove"
+                    v-model="archiveAfterApprove"
                     class="month-detail__archive-toggle">
                     {{ t('worktime', 'PDF nach dem Genehmigen sofort archivieren') }}
                 </NcCheckboxRadioSwitch>
-                <NcButton type="tertiary" @click="downloadPdf">
+                <NcButton variant="tertiary" @click="downloadPdf">
                     <template #icon><FilePdfBoxIcon :size="18" /></template>
                     {{ t('worktime', 'Monatsbericht als PDF') }}
                 </NcButton>
-                <NcButton type="tertiary" @click="$emit('reject')">
+                <NcButton variant="tertiary" @click="$emit('reject')">
                     <template #icon><RestoreIcon :size="18" /></template>
                     {{ t('worktime', 'Zurückweisen') }}
                 </NcButton>
-                <NcButton type="primary" @click="$emit('approve', archiveAfterApprove)">
+                <NcButton variant="primary" @click="$emit('approve', archiveAfterApprove)">
                     <template #icon><CheckIcon :size="18" /></template>
                     {{ t('worktime', 'Genehmigen') }}
                 </NcButton>
@@ -63,10 +63,10 @@
 </template>
 
 <script>
-import NcModal from '@nextcloud/vue/dist/Components/NcModal.js'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
+import NcModal from '@nextcloud/vue/components/NcModal'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import CheckIcon from 'vue-material-design-icons/Check.vue'
 import RestoreIcon from 'vue-material-design-icons/Restore.vue'
 import FilePdfBoxIcon from 'vue-material-design-icons/FilePdfBox.vue'

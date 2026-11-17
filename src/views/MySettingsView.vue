@@ -72,13 +72,13 @@
                         <div class="form-group">
                             <label for="absenceVisibility">{{ t('worktime', 'Abwesenheiten sichtbar für') }}</label>
                             <div class="visibility-row">
-                                <NcSelect id="absenceVisibility"
+                                <NcSelect label-outside id="absenceVisibility"
                                     v-model="selectedVisibility"
                                     :options="visibilityOptions"
                                     :clearable="false"
                                     :disabled="savingVisibility"
                                     class="visibility-select"
-                                    @input="saveVisibility" />
+                                    @update:model-value="saveVisibility" />
                                 <NcLoadingIcon v-if="savingVisibility" :size="20" />
                                 <span v-if="visibilitySaved" class="saved-hint">{{ t('worktime', 'Gespeichert') }}</span>
                             </div>
@@ -87,13 +87,13 @@
                         <div v-if="form.absenceVisibility !== 'none'" class="form-group">
                             <label for="absenceDetail">{{ t('worktime', 'Detailgrad') }} <InfoIcon>{{ t('worktime', 'Legt fest, ob Kollegen in der Abwesenheitsübersicht deinen Abwesenheitsgrund sehen (z.B. Urlaub) oder nur Abwesend. Vorgesetzte und HR sehen immer den Grund.') }}</InfoIcon></label>
                             <div class="visibility-row">
-                                <NcSelect id="absenceDetail"
+                                <NcSelect label-outside id="absenceDetail"
                                     v-model="selectedDetail"
                                     :options="detailOptions"
                                     :clearable="false"
                                     :disabled="savingDetail"
                                     class="visibility-select"
-                                    @input="saveDetail" />
+                                    @update:model-value="saveDetail" />
                                 <NcLoadingIcon v-if="savingDetail" :size="20" />
                                 <span v-if="detailSaved" class="saved-hint">{{ t('worktime', 'Gespeichert') }}</span>
                             </div>
@@ -111,14 +111,14 @@
                         <div class="form-group">
                             <label for="deputy">{{ t('worktime', 'Meine Vertretung bei Genehmigungen') }}</label>
                             <div class="visibility-row">
-                                <NcSelect id="deputy"
+                                <NcSelect label-outside id="deputy"
                                     v-model="selectedDeputy"
                                     :options="deputyOptions"
                                     :placeholder="t('worktime', 'Keine Vertretung')"
                                     :disabled="savingDeputy"
                                     label="label"
                                     class="visibility-select"
-                                    @input="saveDeputy" />
+                                    @update:model-value="saveDeputy" />
                                 <NcLoadingIcon v-if="savingDeputy" :size="20" />
                                 <span v-if="deputySaved" class="saved-hint">{{ t('worktime', 'Gespeichert') }}</span>
                             </div>
@@ -131,9 +131,11 @@
 </template>
 
 <script>
-import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
-import { mapGetters, mapActions } from 'vuex'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import NcSelect from '@nextcloud/vue/components/NcSelect'
+import { mapState, mapActions } from 'pinia'
+import { useEmployeesStore } from '../stores/employees.ts'
+import { usePermissionsStore } from '../stores/permissions.ts'
 import { showError } from '@nextcloud/dialogs'
 import AccountSwitchOutline from 'vue-material-design-icons/AccountSwitchOutline.vue'
 import ClockOutline from 'vue-material-design-icons/ClockOutline.vue'
@@ -183,8 +185,8 @@ export default {
         }
     },
     computed: {
-        ...mapGetters('employees', ['currentEmployee']),
-        ...mapGetters('permissions', ['isSupervisor']),
+        ...mapState(useEmployeesStore, ['currentEmployee']),
+        ...mapState(usePermissionsStore, ['isSupervisor']),
         navGroups() {
             const group = (label, items) => ({ label, items: items.filter(i => i.visible) })
             return [
@@ -264,7 +266,7 @@ export default {
         this.colleagues = await EmployeeService.getSelectableEmployees() || []
     },
     methods: {
-        ...mapActions('employees', ['updateMyDefaults', 'updateMyDeputy']),
+        ...mapActions(useEmployeesStore, ['updateMyDefaults', 'updateMyDeputy']),
         setActiveSection(id) {
             this.activeSection = id
             writeSectionToUrl('/my-settings', id)

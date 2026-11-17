@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest'
 import { pickSection, sectionFromHash, sectionHash, shouldRestoreLastView } from '../../src/utils/settingsSection.js'
 
 describe('shouldRestoreLastView', () => {

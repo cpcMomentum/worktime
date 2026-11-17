@@ -13,7 +13,7 @@
 						class="punch-panel__note"
 						:placeholder="t('worktime', 'Notiz (optional)')">
 				</div>
-				<NcButton type="primary" :disabled="busy" @click="doPunchIn">
+				<NcButton variant="primary" :disabled="busy" @click="doPunchIn">
 					<template #icon>
 						<PlayIcon :size="20" />
 					</template>
@@ -36,25 +36,25 @@
 					</span>
 				</div>
 				<div class="punch-panel__actions">
-					<NcButton v-if="!isPunchPaused" type="secondary" :disabled="busy" @click="doPause">
+					<NcButton v-if="!isPunchPaused" variant="secondary" :disabled="busy" @click="doPause">
 						<template #icon>
 							<PauseIcon :size="20" />
 						</template>
 						{{ t('worktime', 'Pause') }}
 					</NcButton>
-					<NcButton v-else type="secondary" :disabled="busy" @click="doResume">
+					<NcButton v-else variant="secondary" :disabled="busy" @click="doResume">
 						<template #icon>
 							<PlayIcon :size="20" />
 						</template>
 						{{ t('worktime', 'Weiter') }}
 					</NcButton>
-					<NcButton type="primary" :disabled="busy" @click="openPunchOut">
+					<NcButton variant="primary" :disabled="busy" @click="openPunchOut">
 						<template #icon>
 							<StopIcon :size="20" />
 						</template>
 						{{ t('worktime', 'Ausstempeln') }}
 					</NcButton>
-					<NcButton type="tertiary" :disabled="busy" @click="doDiscard">
+					<NcButton variant="tertiary" :disabled="busy" @click="doDiscard">
 						<template #icon>
 							<DeleteIcon :size="20" />
 						</template>
@@ -79,9 +79,10 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcNoteCard from '@nextcloud/vue/dist/Components/NcNoteCard.js'
+import { mapState } from 'pinia'
+import { usePunchStore } from '../stores/punch.ts'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import ClockIcon from 'vue-material-design-icons/Clock.vue'
 import PlayIcon from 'vue-material-design-icons/Play.vue'
 import PauseIcon from 'vue-material-design-icons/Pause.vue'
@@ -125,7 +126,7 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters('punch', ['activePunch', 'isPunchedIn', 'isPunchPaused']),
+		...mapState(usePunchStore, ['activePunch', 'isPunchedIn', 'isPunchPaused']),
 		startedLabel() {
 			if (!this.activePunch?.startedAt) return ''
 			return new Date(this.activePunch.startedAt).toLocaleTimeString(getLocale(), { hour: '2-digit', minute: '2-digit' })
@@ -151,14 +152,14 @@ export default {
 			this.now = Date.now()
 		}, 1000)
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		if (this.timer) clearInterval(this.timer)
 	},
 	methods: {
 		async refresh() {
 			try {
-				await this.$store.dispatch('punch/fetchActivePunch', this.employeeId)
-			} catch (e) {
+				await usePunchStore().fetchActivePunch(this.employeeId)
+			} catch {
 				// Non-fatal: the panel simply shows the idle state.
 			}
 		},
@@ -166,7 +167,7 @@ export default {
 			this.busy = true
 			this.error = null
 			try {
-				await this.$store.dispatch('punch/punchIn', {
+				await usePunchStore().punchIn({
 					employeeId: this.employeeId,
 					projectId: this.projectId,
 					description: this.note || null,
@@ -183,7 +184,7 @@ export default {
 			this.busy = true
 			this.error = null
 			try {
-				await this.$store.dispatch('punch/punchPause', this.employeeId)
+				await usePunchStore().punchPause(this.employeeId)
 			} catch (e) {
 				this.error = e.message || this.t('worktime', 'Pause fehlgeschlagen.')
 			} finally {
@@ -194,7 +195,7 @@ export default {
 			this.busy = true
 			this.error = null
 			try {
-				await this.$store.dispatch('punch/punchResume', this.employeeId)
+				await usePunchStore().punchResume(this.employeeId)
 			} catch (e) {
 				this.error = e.message || this.t('worktime', 'Fortsetzen fehlgeschlagen.')
 			} finally {
@@ -226,7 +227,7 @@ export default {
 			this.busy = true
 			this.error = null
 			try {
-				await this.$store.dispatch('punch/punchDiscard', this.employeeId)
+				await usePunchStore().punchDiscard(this.employeeId)
 			} catch (e) {
 				this.error = e.message || this.t('worktime', 'Verwerfen fehlgeschlagen.')
 			} finally {

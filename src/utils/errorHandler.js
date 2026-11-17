@@ -1,4 +1,4 @@
-import { showError, showWarning, showSuccess, DialogSeverity, getDialogBuilder } from '@nextcloud/dialogs'
+import { showError, showWarning, showSuccess, getDialogBuilder } from '@nextcloud/dialogs'
 
 /**
  * Handle and display API errors
@@ -68,19 +68,20 @@ export function confirmAction(message, title = 'Bestätigung', confirmLabel = 'O
             .setButtons([
                 {
                     label: 'Abbrechen',
-                    type: 'secondary',
+                    variant: 'secondary',
                     callback: () => resolve(false),
                 },
                 {
                     label: confirmLabel,
-                    type: destructive ? 'error' : 'primary',
+                    variant: destructive ? 'error' : 'primary',
                     callback: () => resolve(true),
                 },
             ])
         if (destructive) {
-            dialog.setSeverity(DialogSeverity.Warning)
+            dialog.setSeverity('warning')
         }
-        dialog.build().show()
+        // Schliessen ohne Auswahl lehnt das Promise ab und zaehlt als Abbruch
+        dialog.build().show().catch(() => resolve(false))
     })
 }
 

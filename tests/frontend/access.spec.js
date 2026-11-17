@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest'
 import { accessRules, canAccess, isNavVisible } from '../../src/router/access.js'
 
 /**

@@ -20,6 +20,8 @@ use OCP\Migration\IRepairStep;
  */
 class CleanupExtraFiles implements IRepairStep {
 
+	private const ENTRY_FILE = 'js/worktime-main.mjs';
+
 	public function __construct(
 		private IAppManager $appManager,
 	) {
@@ -62,15 +64,7 @@ class CleanupExtraFiles implements IRepairStep {
 		$this->removeStaleJsBundles($appPath, $output);
 	}
 
-	/**
-	 * Webpack emits hashed bundle filenames (e.g. worktime-<hash>.js).
-	 * NC's update path copies new bundles in but does not delete the
-	 * previous version's hash, so each upgrade leaves stale .js / .js.map
-	 * / .js.LICENSE.txt files behind, which the integrity check flags
-	 * as EXTRA_FILE. Keep only the bundles that match the current
-	 * signature.json, drop everything else under js/ that follows the
-	 * worktime-<hash> pattern.
-	 */
+	// Unsignierte Dateien in js/ stammen aus einer Vorversion und wuerden als EXTRA_FILE gemeldet
 	private function removeStaleJsBundles(string $appPath, IOutput $output): void {
 		$jsDir = $appPath . '/js';
 		if (!is_dir($jsDir)) {
@@ -83,32 +77,29 @@ class CleanupExtraFiles implements IRepairStep {
 		}
 
 		$raw = file_get_contents($signaturePath);
-		$signature = json_decode($raw, true);
-		$signedFiles = $signature['hashes'] ?? null;
+		$signature = $raw === false ? null : json_decode($raw, true);
+		$signedFiles = is_array($signature) ? ($signature['hashes'] ?? null) : null;
 		if (!is_array($signedFiles)) {
 			return;
 		}
 
-		$keep = [];
-		foreach (array_keys($signedFiles) as $rel) {
-			if (str_starts_with($rel, 'js/')) {
-				$keep[basename($rel)] = true;
-			}
+		// Nur aufraeumen, wenn die Signatur nachweislich zu den Dateien auf der Platte gehoert
+		$entry = $appPath . '/' . self::ENTRY_FILE;
+		$signedHash = $signedFiles[self::ENTRY_FILE] ?? null;
+		if (!is_string($signedHash) || !is_file($entry) || !hash_equals($signedHash, (string)hash_file('sha512', $entry))) {
+			$output->info('signature.json does not match this build, js/ is left untouched');
+			return;
 		}
 
-		$pattern = '/^worktime-[a-f0-9]{20}\.js(\.map|\.LICENSE\.txt)?$/';
 		foreach (scandir($jsDir) ?: [] as $entry) {
 			if ($entry === '.' || $entry === '..') {
 				continue;
 			}
-			if (!preg_match($pattern, $entry)) {
-				continue;
-			}
-			if (isset($keep[$entry])) {
-				continue;
-			}
 			$path = $jsDir . '/' . $entry;
-			if (is_file($path) && @unlink($path)) {
+			if (!is_file($path) || isset($signedFiles['js/' . $entry])) {
+				continue;
+			}
+			if (@unlink($path)) {
 				$output->info('Removed stale JS bundle: ' . $entry);
 			}
 		}

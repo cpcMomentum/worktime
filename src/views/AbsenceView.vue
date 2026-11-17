@@ -78,7 +78,7 @@
             <div class="list-head">
                 <h3 class="list-title">{{ t('worktime', 'Meine Abwesenheiten') }}</h3>
                 <NcButton v-if="!isResting"
-                    type="primary"
+                    variant="primary"
                     @click="startCreate">
                     <template #icon>
                         <PlusIcon :size="20" />
@@ -88,7 +88,7 @@
             </div>
             <div v-if="absences.length > 0" class="list-filter">
                 <NcCheckboxRadioSwitch
-                    :checked.sync="hideCancelledRejected"
+                    v-model="hideCancelledRejected"
                     type="switch">
                     {{ t('worktime', 'Stornierte und abgelehnte ausblenden') }}
                 </NcCheckboxRadioSwitch>
@@ -216,13 +216,16 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
-import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
+import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import PlusIcon from 'vue-material-design-icons/Plus.vue'
 import CalendarIcon from 'vue-material-design-icons/Calendar.vue'
-import { mapGetters, mapActions } from 'vuex'
+import { mapState, mapActions } from 'pinia'
+import { useAbsencesStore } from '../stores/absences.ts'
+import { useEmployeesStore } from '../stores/employees.ts'
+import { usePermissionsStore } from '../stores/permissions.ts'
 import AbsenceRow from '../components/AbsenceRow.vue'
 import CorrectionReasonModal from '../components/CorrectionReasonModal.vue'
 import YearPicker from '../components/YearPicker.vue'
@@ -260,9 +263,9 @@ export default {
         }
     },
     computed: {
-        ...mapGetters('absences', ['absences', 'absenceTypes', 'vacationStats', 'loading']),
-        ...mapGetters('permissions', ['activeEmployeeId', 'isCorrectionMode', 'hourlySickEnabled']),
-        ...mapGetters('employees', ['currentEmployee']),
+        ...mapState(useAbsencesStore, ['absences', 'absenceTypes', 'vacationStats', 'loading']),
+        ...mapState(usePermissionsStore, ['activeEmployeeId', 'isCorrectionMode', 'hourlySickEnabled']),
+        ...mapState(useEmployeesStore, ['currentEmployee']),
         // Ruhende Mitarbeiter (#486) koennen nichts mehr beantragen.
         isResting() {
             return this.currentEmployee !== null && this.currentEmployee.isActive === false
@@ -342,7 +345,7 @@ export default {
     },
     methods: {
         formatDaysLabel,
-        ...mapActions('absences', [
+        ...mapActions(useAbsencesStore, [
             'fetchAbsences',
             'fetchVacationStats',
             'createAbsence',

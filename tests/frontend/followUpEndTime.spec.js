@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest'
 import { followUpEndTime } from '../../src/utils/timeUtils.js'
 
 describe('followUpEndTime', () => {
