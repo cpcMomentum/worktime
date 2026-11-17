@@ -23,6 +23,7 @@ use Psr\Log\LoggerInterface;
 
 class EntitlementServiceTest extends TestCase {
     use EntitlementTokenFactory;
+    use TraceStrings;
 
     private const KEY = 'wp_B7K2M9QX4TN6RJ8VC3HD5PKW2FSY7GZA3EFA69B6';
     private const OTHER_KEY = 'wp_ANDERERSCHLUESSEL';
@@ -288,25 +289,41 @@ class EntitlementServiceTest extends TestCase {
         $this->assertTrue($service->isRefreshDue());
     }
 
-    public function testTheKeyNeverAppearsInAStackTrace(): void {
-        $this->client->method('validate')->willReturn([
-            'token' => $this->token($this->claims(), [], self::foreignKey()['private']),
-            'expiresAt' => 'x',
-            'graceUntil' => 'y',
-        ]);
+    public function testNeitherKeyNorTokenAppearInATraceOrTheLog(): void {
+        $jwt = $this->token($this->claims(), [], self::foreignKey()['private']);
+        $this->client->method('validate')->willReturn(['token' => $jwt, 'expiresAt' => 'x', 'graceUntil' => 'y']);
+        $logged = [];
+        $this->logger->method('warning')->willReturnCallback(function (string $msg, array $context = []) use (&$logged): void {
+            $logged[] = $context;
+        });
         try {
             $this->service()->activate(self::KEY);
             $this->fail('Ausnahme erwartet');
         } catch (WerkPlusApiException $e) {
-            $args = [];
-            for ($t = $e; $t !== null; $t = $t->getPrevious()) {
-                foreach ($t->getTrace() as $frame) {
-                    $args = array_merge($args, $frame['args'] ?? []);
-                }
-            }
-            $this->assertNotEmpty($args, 'Trace ohne Argumente: zend.exception_ignore_args ist an, der Test prueft nichts');
-            $this->assertNotContains(self::KEY, $args);
+            self::assertNotInTrace(self::KEY, $e);
+            self::assertNotInTrace(explode('.', $jwt)[2], $e);
+            $this->assertNull($e->getPrevious());
         }
+        $this->assertSame([['reason' => 'Signatur ungueltig']], $logged);
+    }
+
+    public function testFailedRenewalIsLoggedWithoutTheException(): void {
+        $this->storeToken();
+        $this->now = self::NOW + 8 * 86400;
+        $this->client->method('validate')->willThrowException(new WerkPlusApiException(WerkPlusClient::UNREACHABLE));
+        $this->logger->expects($this->once())->method('info')
+            ->with($this->anything(), ['reason' => WerkPlusApiException::class . ': WerkPlus: UNREACHABLE']);
+
+        $this->service()->refreshIfDue();
+    }
+
+    public function testAnInvalidStoredTokenIsLoggedWithoutIt(): void {
+        $this->storeToken();
+        $this->config['werkwolke/token'] = $this->token($this->claims(), [], self::foreignKey()['private']);
+        $this->logger->expects($this->once())->method('debug')
+            ->with($this->anything(), ['reason' => 'Signatur ungueltig']);
+
+        $this->assertSame('invalid', $this->service()->getStatus()['state']);
     }
 
     public function testRevokedNewKeyDoesNotCostTheStoredToken(): void {

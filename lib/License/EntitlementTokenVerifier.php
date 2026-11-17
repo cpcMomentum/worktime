@@ -29,7 +29,7 @@ final class EntitlementTokenVerifier {
     /**
      * @throws InvalidTokenException
      */
-    public function verify(string $jwt, string $instanceUuid, int $now): EntitlementToken {
+    public function verify(#[\SensitiveParameter] string $jwt, string $instanceUuid, int $now): EntitlementToken {
         $parts = explode('.', $jwt);
         if (count($parts) !== 3) {
             throw new InvalidTokenException('Token hat nicht drei Teile');
@@ -109,7 +109,7 @@ final class EntitlementTokenVerifier {
     /**
      * @return array<string, mixed>
      */
-    private function decodeJson(string $part): array {
+    private function decodeJson(#[\SensitiveParameter] string $part): array {
         $data = json_decode($this->base64UrlDecode($part), true);
         if (!is_array($data) || array_is_list($data)) {
             throw new InvalidTokenException('Token-Teil ist kein JSON-Objekt');
@@ -117,7 +117,7 @@ final class EntitlementTokenVerifier {
         return $data;
     }
 
-    private function base64UrlDecode(string $part): string {
+    private function base64UrlDecode(#[\SensitiveParameter] string $part): string {
         $padded = strtr($part, '-_', '+/') . str_repeat('=', (4 - strlen($part) % 4) % 4);
         $decoded = base64_decode($padded, true);
         if ($decoded === false) {

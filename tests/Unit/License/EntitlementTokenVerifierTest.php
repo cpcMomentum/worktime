@@ -18,6 +18,21 @@ use PHPUnit\Framework\TestCase;
 // Die Pflichtpruefungen aus entitlement-v1, Abschnitte 3 bis 5.
 class EntitlementTokenVerifierTest extends TestCase {
     use EntitlementTokenFactory;
+    use TraceStrings;
+
+    public function testARejectedTokenNeverAppearsInTheTrace(): void {
+        $parts = explode('.', $this->token($this->claims(), [], self::foreignKey()['private']));
+        foreach ([implode('.', $parts), $parts[0] . '.!!.' . $parts[2], $parts[0] . '.' . $parts[1]] as $jwt) {
+            try {
+                $this->verifier()->verify($jwt, self::UUID, self::NOW);
+                $this->fail('Ausnahme erwartet');
+            } catch (InvalidTokenException $e) {
+                foreach ($parts as $part) {
+                    self::assertNotInTrace($part, $e);
+                }
+            }
+        }
+    }
 
     public function testLicensedEmployeesIsReadWhenItIsAPositiveNumber(): void {
         $read = fn (mixed $value) => $this->verifier()->verify($this->token($this->claims(['licensedEmployees' => $value])), self::UUID, self::NOW)->licensedEmployees;
