@@ -18,7 +18,14 @@ export function shouldRestoreLastView(hash, savedView) {
 
 export function sectionFromHash(hash) {
     const match = (hash || '').match(/[?&]sec=([^&]+)/)
-    return match ? decodeURIComponent(match[1]) : null
+    if (!match) {
+        return null
+    }
+    try {
+        return decodeURIComponent(match[1])
+    } catch (e) {
+        return null
+    }
 }
 
 export function pickSection(fromUrl, ids, current = null) {
