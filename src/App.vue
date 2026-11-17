@@ -57,14 +57,6 @@
 
 			<template #footer>
 				<NcAppNavigationItem
-					v-if="navVisible('my-settings')"
-					:name="t('worktime', 'Meine Einstellungen')"
-					to="/my-settings">
-					<template #icon>
-						<AccountCogIcon :size="20" />
-					</template>
-				</NcAppNavigationItem>
-				<NcAppNavigationItem
 					:name="t('worktime', 'Neuerungen')"
 					@click="openWhatsNew">
 					<template #icon>
@@ -72,11 +64,19 @@
 					</template>
 				</NcAppNavigationItem>
 				<NcAppNavigationItem
-					v-if="navVisible('settings')"
+					v-if="navVisible('my-settings')"
 					:name="t('worktime', 'Einstellungen')"
-					to="/settings">
+					to="/my-settings">
 					<template #icon>
 						<CogIcon :size="20" />
+					</template>
+				</NcAppNavigationItem>
+				<NcAppNavigationItem
+					v-if="navVisible('settings')"
+					:name="t('worktime', 'Verwaltung')"
+					to="/settings">
+					<template #icon>
+						<ShieldAccountIcon :size="20" />
 					</template>
 				</NcAppNavigationItem>
 			</template>
@@ -113,10 +113,10 @@
 						<AccountGroupIcon />
 					</template>
 					<template #description>
-						<p>{{ t('worktime', 'Es sind noch keine Mitarbeiter eingerichtet. Lege unter Einstellungen Mitarbeiter an, um zu starten.') }}</p>
+						<p>{{ t('worktime', 'Es sind noch keine Mitarbeiter eingerichtet. Lege unter Verwaltung Mitarbeiter an, um zu starten.') }}</p>
 						<NcButton type="primary"
 							@click="$router.push('/settings')">
-							{{ t('worktime', 'Zu den Einstellungen') }}
+							{{ t('worktime', 'Zur Verwaltung') }}
 						</NcButton>
 					</template>
 				</NcEmptyContent>
@@ -155,7 +155,7 @@ import CalendarIcon from 'vue-material-design-icons/Calendar.vue'
 import AccountGroupIcon from 'vue-material-design-icons/AccountGroup.vue'
 import CheckDecagramIcon from 'vue-material-design-icons/CheckDecagram.vue'
 import CogIcon from 'vue-material-design-icons/Cog.vue'
-import AccountCogIcon from 'vue-material-design-icons/AccountCog.vue'
+import ShieldAccountIcon from 'vue-material-design-icons/ShieldAccount.vue'
 import AlertIcon from 'vue-material-design-icons/Alert.vue'
 import ShieldIcon from 'vue-material-design-icons/Shield.vue'
 import ChartBarIcon from 'vue-material-design-icons/ChartBar.vue'
@@ -181,7 +181,7 @@ export default {
 		AccountGroupIcon,
 		CheckDecagramIcon,
 		CogIcon,
-		AccountCogIcon,
+		ShieldAccountIcon,
 		AlertIcon,
 		ShieldIcon,
 		ChartBarIcon,
@@ -312,11 +312,6 @@ export default {
 	--wt-compensatory: #7c3aed;
 	--wt-unpaid: #6b7280;
 	--wt-special: #0891b2;
-}
-
-/* Trenner zwischen NcSettingsSection-Themen kräftiger (Default --color-border ist kaum sichtbar) */
-.settings-section:not(:last-child) {
-	border-bottom-color: var(--color-border-dark, var(--color-border)) !important;
 }
 
 /* Uhr-Symbol ist in Chromium ein eigener Tab-Stopp; global, weil NcModal im body hängt */

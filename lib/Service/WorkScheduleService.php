@@ -724,7 +724,7 @@ class WorkScheduleService {
             }
             $hours = round((float)$value, 2);
             if ((float)$value < 0 || $hours > $maxDailyHours) {
-                $errors['range'] = $l->t('Maximale tägliche Arbeitszeit ist %s Stunden (siehe Einstellungen)', [(string)$maxDailyHours]);
+                $errors['range'] = $l->t('Maximale tägliche Arbeitszeit ist %s Stunden (siehe Verwaltung)', [(string)$maxDailyHours]);
                 continue;
             }
             $normalized[$day] = number_format($hours, 2, '.', '');
@@ -754,7 +754,7 @@ class WorkScheduleService {
         foreach ($days as $day) {
             $value = (float)($dayHours[$day] ?? 0);
             if ($value < 0 || $value > $maxDailyHours) {
-                $errors[$day] = [$this->l->t('Maximale tägliche Arbeitszeit ist %s Stunden (siehe Einstellungen)', [(string)$maxDailyHours])];
+                $errors[$day] = [$this->l->t('Maximale tägliche Arbeitszeit ist %s Stunden (siehe Verwaltung)', [(string)$maxDailyHours])];
             }
         }
 

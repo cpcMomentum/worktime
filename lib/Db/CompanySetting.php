@@ -48,6 +48,7 @@ class CompanySetting extends Entity implements JsonSerializable {
     public const KEY_EMERGENCY_WORK_REQUIRES_APPROVAL = 'emergency_work_requires_approval';
     // Leer = automatisch (default_timezone des Servers, sonst Europe/Berlin)
     public const KEY_TIMEZONE = 'timezone';
+    public const KEY_PUNCH_ONLY = 'punch_only';
 
     public const DEFAULTS = [
         self::KEY_COMPANY_NAME => '',
@@ -73,6 +74,7 @@ class CompanySetting extends Entity implements JsonSerializable {
         self::KEY_EMERGENCY_WORK_ENABLED => '0',
         self::KEY_EMERGENCY_WORK_REQUIRES_APPROVAL => '0',
         self::KEY_TIMEZONE => '',
+        self::KEY_PUNCH_ONLY => '0',
     ];
 
     protected string $settingKey = '';

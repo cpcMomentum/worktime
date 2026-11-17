@@ -13,6 +13,7 @@ use OCA\WorkTime\Db\CompanySettingMapper;
 use OCA\WorkTime\Db\TimeEntry;
 use OCA\WorkTime\Service\PunchConfirmationRequiredException;
 use OCA\WorkTime\Service\PunchConflictException;
+use OCA\WorkTime\Service\PunchEndCorrectionNotAllowedException;
 use OCA\WorkTime\Service\PunchReasonRequiredException;
 use OCA\WorkTime\Service\PunchService;
 use OCA\WorkTime\Service\PunchTooLongException;
@@ -484,6 +485,29 @@ class PunchServiceTest extends TestCase {
 			->willReturn(new TimeEntry());
 
 		$this->service->punchOut(7, 'user1', null, null, null, '17:00', false);
+	}
+
+	public function testWithoutCorrectionRightTheRoundTrippedEndTimeIsAccepted(): void {
+		// Der Dialog schickt die vorbelegte Endzeit immer mit; eine Minute Abstand ist keine Korrektur.
+		$punch = $this->punch($this->utc('2020-01-01 08:00:00'), 0, $this->utc('2020-01-01 12:00:00'));
+		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		$this->mapper->method('deleteById')->willReturn(1);
+		$this->timeEntryService->method('suggestBreak')->willReturn(0);
+		$this->timeEntryService->expects($this->once())->method('create')
+			->with(7, '2020-01-01', '08:00', '12:00')
+			->willReturn(new TimeEntry());
+
+		$this->service->punchOut(7, 'user1', null, null, null, '12:01', false, false);
+	}
+
+	public function testWithoutCorrectionRightAChangedEndTimeIsRefused(): void {
+		$punch = $this->punch($this->utc('2020-01-01 08:00:00'), 0, $this->utc('2020-01-01 12:00:00'));
+		$this->mapper->method('findByEmployeeOrNull')->willReturn($punch);
+		$this->timeEntryService->expects($this->never())->method('create');
+		$this->mapper->expects($this->never())->method('deleteById');
+
+		$this->expectException(PunchEndCorrectionNotAllowedException::class);
+		$this->service->punchOut(7, 'user1', null, null, null, '17:00', false, false);
 	}
 
 	public function testPunchOutLongPausedIsNotFlaggedOverlong(): void {

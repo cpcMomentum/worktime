@@ -1,130 +1,147 @@
 <template>
     <div class="my-settings-view">
         <div class="view-header">
-            <h2>{{ t('worktime', 'Meine Einstellungen') }}</h2>
+            <h2>{{ t('worktime', 'Einstellungen') }}</h2>
         </div>
 
-        <NcSettingsSection :name="t('worktime', 'Standard-Arbeitszeiten')"
-            :description="t('worktime', 'Diese Zeiten werden beim Anlegen neuer Zeiteinträge vorausgefüllt.')">
+        <div class="settings-layout">
+            <SettingsNav :groups="navGroups" :active="activeSection" @select="setActiveSection" />
 
-            <div class="settings-form">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="defaultStartTime">{{ t('worktime', 'Arbeitsbeginn') }}</label>
-                        <input id="defaultStartTime"
-                            v-model="form.defaultStartTime"
-                            type="time"
-                            class="time-input"
-                            :placeholder="t('worktime', 'z.B. 08:00')"
-                            @change="saveWorkTimes">
+            <div class="settings-content">
+                <SettingsCard v-show="activeSection === 'sec-arbeitszeiten'"
+                    id="sec-arbeitszeiten"
+                    :name="t('worktime', 'Standard-Arbeitszeiten')"
+                    :description="t('worktime', 'Diese Zeiten werden beim Anlegen neuer Zeiteinträge vorausgefüllt.')">
+
+                    <div class="settings-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="defaultStartTime">{{ t('worktime', 'Arbeitsbeginn') }}</label>
+                                <input id="defaultStartTime"
+                                    v-model="form.defaultStartTime"
+                                    type="time"
+                                    class="time-input"
+                                    :placeholder="t('worktime', 'z.B. 08:00')"
+                                    @change="saveWorkTimes">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="defaultEndTime">{{ t('worktime', 'Arbeitsende') }}</label>
+                                <input id="defaultEndTime"
+                                    v-model="form.defaultEndTime"
+                                    type="time"
+                                    class="time-input"
+                                    :placeholder="t('worktime', 'z.B. 17:00')"
+                                    @change="saveWorkTimes">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="defaultBreakMinutes">{{ t('worktime', 'Pause (Minuten)') }}</label>
+                                <input id="defaultBreakMinutes"
+                                    v-model="form.defaultBreakMinutes"
+                                    type="number"
+                                    min="0"
+                                    max="480"
+                                    step="5"
+                                    class="break-input"
+                                    :placeholder="t('worktime', 'z.B. 45')"
+                                    @change="saveWorkTimes">
+                            </div>
+
+                            <div class="save-indicator">
+                                <NcLoadingIcon v-if="savingWorkTimes" :size="20" />
+                                <span v-if="workTimesSaved" class="saved-hint">{{ t('worktime', 'Gespeichert') }}</span>
+                            </div>
+                        </div>
+
+                        <p class="hint">
+                            {{ t('worktime', 'Leer lassen für Standardwerte (08:00 - 17:00).') }}
+                        </p>
+                        <p class="hint">
+                            {{ t('worktime', 'Deine gewohnte Pause wird bei neuen Einträgen vorausgefüllt. Sie kann die gesetzliche Mindestpause (§4 ArbZG) nie unterschreiten — bei Bedarf wird automatisch der gesetzliche Wert verwendet. Leer lassen für die gesetzliche Mindestpause.') }}
+                        </p>
                     </div>
+                </SettingsCard>
 
-                    <div class="form-group">
-                        <label for="defaultEndTime">{{ t('worktime', 'Arbeitsende') }}</label>
-                        <input id="defaultEndTime"
-                            v-model="form.defaultEndTime"
-                            type="time"
-                            class="time-input"
-                            :placeholder="t('worktime', 'z.B. 17:00')"
-                            @change="saveWorkTimes">
+                <SettingsCard v-show="activeSection === 'sec-datenschutz'"
+                    id="sec-datenschutz"
+                    :name="t('worktime', 'Datenschutz')"
+                    :description="t('worktime', 'Lege fest, wer deine Abwesenheiten in der Abwesenheitsübersicht sehen kann. Vorgesetzte und HR sehen deine Abwesenheiten immer.')">
+
+                    <div class="settings-form">
+                        <div class="form-group">
+                            <label for="absenceVisibility">{{ t('worktime', 'Abwesenheiten sichtbar für') }}</label>
+                            <div class="visibility-row">
+                                <NcSelect id="absenceVisibility"
+                                    v-model="selectedVisibility"
+                                    :options="visibilityOptions"
+                                    :clearable="false"
+                                    :disabled="savingVisibility"
+                                    class="visibility-select"
+                                    @input="saveVisibility" />
+                                <NcLoadingIcon v-if="savingVisibility" :size="20" />
+                                <span v-if="visibilitySaved" class="saved-hint">{{ t('worktime', 'Gespeichert') }}</span>
+                            </div>
+                        </div>
+
+                        <div v-if="form.absenceVisibility !== 'none'" class="form-group">
+                            <label for="absenceDetail">{{ t('worktime', 'Detailgrad') }} <InfoIcon>{{ t('worktime', 'Legt fest, ob Kollegen in der Abwesenheitsübersicht deinen Abwesenheitsgrund sehen (z.B. Urlaub) oder nur Abwesend. Vorgesetzte und HR sehen immer den Grund.') }}</InfoIcon></label>
+                            <div class="visibility-row">
+                                <NcSelect id="absenceDetail"
+                                    v-model="selectedDetail"
+                                    :options="detailOptions"
+                                    :clearable="false"
+                                    :disabled="savingDetail"
+                                    class="visibility-select"
+                                    @input="saveDetail" />
+                                <NcLoadingIcon v-if="savingDetail" :size="20" />
+                                <span v-if="detailSaved" class="saved-hint">{{ t('worktime', 'Gespeichert') }}</span>
+                            </div>
+                        </div>
                     </div>
+                </SettingsCard>
 
-                    <div class="form-group">
-                        <label for="defaultBreakMinutes">{{ t('worktime', 'Pause (Minuten)') }}</label>
-                        <input id="defaultBreakMinutes"
-                            v-model="form.defaultBreakMinutes"
-                            type="number"
-                            min="0"
-                            max="480"
-                            step="5"
-                            class="break-input"
-                            :placeholder="t('worktime', 'z.B. 45')"
-                            @change="saveWorkTimes">
+                <SettingsCard v-if="isSupervisor"
+                    v-show="activeSection === 'sec-vertretung'"
+                    id="sec-vertretung"
+                    :name="t('worktime', 'Vertretung')"
+                    :description="t('worktime', 'Wähle eine Person, die deine Genehmigungen für dein Team übernimmt, während du abwesend bist. Die Vertretung wird automatisch aktiv, sobald für dich eine Abwesenheit genehmigt ist (z. B. Urlaub oder Krankheit) — ohne genehmigte Abwesenheit greift sie nicht. Einmal festgelegt, gilt sie für alle deine Abwesenheiten, bis du sie änderst.')">
+
+                    <div class="settings-form">
+                        <div class="form-group">
+                            <label for="deputy">{{ t('worktime', 'Meine Vertretung bei Genehmigungen') }}</label>
+                            <div class="visibility-row">
+                                <NcSelect id="deputy"
+                                    v-model="selectedDeputy"
+                                    :options="deputyOptions"
+                                    :placeholder="t('worktime', 'Keine Vertretung')"
+                                    :disabled="savingDeputy"
+                                    label="label"
+                                    class="visibility-select"
+                                    @input="saveDeputy" />
+                                <NcLoadingIcon v-if="savingDeputy" :size="20" />
+                                <span v-if="deputySaved" class="saved-hint">{{ t('worktime', 'Gespeichert') }}</span>
+                            </div>
+                        </div>
                     </div>
-
-                    <div class="save-indicator">
-                        <NcLoadingIcon v-if="savingWorkTimes" :size="20" />
-                        <span v-if="workTimesSaved" class="saved-hint">{{ t('worktime', 'Gespeichert') }}</span>
-                    </div>
-                </div>
-
-                <p class="hint">
-                    {{ t('worktime', 'Leer lassen für Standardwerte (08:00 - 17:00).') }}
-                </p>
-                <p class="hint">
-                    {{ t('worktime', 'Deine gewohnte Pause wird bei neuen Einträgen vorausgefüllt. Sie kann die gesetzliche Mindestpause (§4 ArbZG) nie unterschreiten — bei Bedarf wird automatisch der gesetzliche Wert verwendet. Leer lassen für die gesetzliche Mindestpause.') }}
-                </p>
+                </SettingsCard>
             </div>
-        </NcSettingsSection>
-
-        <NcSettingsSection :name="t('worktime', 'Datenschutz')"
-            :description="t('worktime', 'Lege fest, wer deine Abwesenheiten in der Abwesenheitsübersicht sehen kann. Vorgesetzte und HR sehen deine Abwesenheiten immer.')">
-
-            <div class="settings-form">
-                <div class="form-group">
-                    <label for="absenceVisibility">{{ t('worktime', 'Abwesenheiten sichtbar für') }}</label>
-                    <div class="visibility-row">
-                        <NcSelect id="absenceVisibility"
-                            v-model="selectedVisibility"
-                            :options="visibilityOptions"
-                            :clearable="false"
-                            :disabled="savingVisibility"
-                            class="visibility-select"
-                            @input="saveVisibility" />
-                        <NcLoadingIcon v-if="savingVisibility" :size="20" />
-                        <span v-if="visibilitySaved" class="saved-hint">{{ t('worktime', 'Gespeichert') }}</span>
-                    </div>
-                </div>
-
-                <div v-if="form.absenceVisibility !== 'none'" class="form-group">
-                    <label for="absenceDetail">{{ t('worktime', 'Detailgrad') }} <InfoIcon>{{ t('worktime', 'Legt fest, ob Kollegen in der Abwesenheitsübersicht deinen Abwesenheitsgrund sehen (z.B. Urlaub) oder nur Abwesend. Vorgesetzte und HR sehen immer den Grund.') }}</InfoIcon></label>
-                    <div class="visibility-row">
-                        <NcSelect id="absenceDetail"
-                            v-model="selectedDetail"
-                            :options="detailOptions"
-                            :clearable="false"
-                            :disabled="savingDetail"
-                            class="visibility-select"
-                            @input="saveDetail" />
-                        <NcLoadingIcon v-if="savingDetail" :size="20" />
-                        <span v-if="detailSaved" class="saved-hint">{{ t('worktime', 'Gespeichert') }}</span>
-                    </div>
-                </div>
-            </div>
-        </NcSettingsSection>
-
-        <NcSettingsSection v-if="isSupervisor"
-            :name="t('worktime', 'Vertretung')"
-            :description="t('worktime', 'Wähle eine Person, die deine Genehmigungen für dein Team übernimmt, während du abwesend bist. Die Vertretung wird automatisch aktiv, sobald für dich eine Abwesenheit genehmigt ist (z. B. Urlaub oder Krankheit) — ohne genehmigte Abwesenheit greift sie nicht. Einmal festgelegt, gilt sie für alle deine Abwesenheiten, bis du sie änderst.')">
-
-            <div class="settings-form">
-                <div class="form-group">
-                    <label for="deputy">{{ t('worktime', 'Meine Vertretung bei Genehmigungen') }}</label>
-                    <div class="visibility-row">
-                        <NcSelect id="deputy"
-                            v-model="selectedDeputy"
-                            :options="deputyOptions"
-                            :placeholder="t('worktime', 'Keine Vertretung')"
-                            :disabled="savingDeputy"
-                            label="label"
-                            class="visibility-select"
-                            @input="saveDeputy" />
-                        <NcLoadingIcon v-if="savingDeputy" :size="20" />
-                        <span v-if="deputySaved" class="saved-hint">{{ t('worktime', 'Gespeichert') }}</span>
-                    </div>
-                </div>
-            </div>
-        </NcSettingsSection>
+        </div>
     </div>
 </template>
 
 <script>
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
-import NcSettingsSection from '@nextcloud/vue/dist/Components/NcSettingsSection.js'
 import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import { mapGetters, mapActions } from 'vuex'
 import { showError } from '@nextcloud/dialogs'
+import AccountSwitchOutline from 'vue-material-design-icons/AccountSwitchOutline.vue'
+import ClockOutline from 'vue-material-design-icons/ClockOutline.vue'
+import EyeOutline from 'vue-material-design-icons/EyeOutline.vue'
 import InfoIcon from '../components/InfoIcon.vue'
+import SettingsCard from '../components/SettingsCard.vue'
+import SettingsNav from '../components/SettingsNav.vue'
+import { pickSection, sectionFromHash, writeSectionToUrl } from '../utils/settingsSection.js'
 import EmployeeService from '../services/EmployeeService.js'
 
 export default {
@@ -132,8 +149,9 @@ export default {
     components: {
         InfoIcon,
         NcLoadingIcon,
-        NcSettingsSection,
         NcSelect,
+        SettingsCard,
+        SettingsNav,
     },
     data() {
         return {
@@ -161,11 +179,27 @@ export default {
             savingDeputy: false,
             deputySaved: false,
             colleagues: [],
+            activeSection: null,
         }
     },
     computed: {
         ...mapGetters('employees', ['currentEmployee']),
         ...mapGetters('permissions', ['isSupervisor']),
+        navGroups() {
+            const group = (label, items) => ({ label, items: items.filter(i => i.visible) })
+            return [
+                group(this.t('worktime', 'Zeiterfassung'), [
+                    { id: 'sec-arbeitszeiten', label: this.t('worktime', 'Standard-Arbeitszeiten'), icon: ClockOutline, visible: true },
+                ]),
+                group(this.t('worktime', 'Abwesenheiten'), [
+                    { id: 'sec-datenschutz', label: this.t('worktime', 'Datenschutz'), icon: EyeOutline, visible: true },
+                    { id: 'sec-vertretung', label: this.t('worktime', 'Vertretung'), icon: AccountSwitchOutline, visible: this.isSupervisor },
+                ]),
+            ]
+        },
+        availableSectionIds() {
+            return this.navGroups.flatMap(g => g.items.map(i => i.id))
+        },
         deputyOptions() {
             const myId = this.currentEmployee?.id
             return this.colleagues
@@ -219,13 +253,22 @@ export default {
                 }
             },
         },
+        // Rechte koennen sich per fetchPermissions aendern: ein per Link gewaehlter Punkt soll dann noch greifen.
+        availableSectionIds(ids) {
+            this.activeSection = pickSection(sectionFromHash(window.location.hash), ids, this.activeSection)
+        },
     },
     async created() {
+        this.activeSection = pickSection(sectionFromHash(window.location.hash), this.availableSectionIds)
         // Load colleagues (id + name only) for the deputy picker (#343).
         this.colleagues = await EmployeeService.getSelectableEmployees() || []
     },
     methods: {
         ...mapActions('employees', ['updateMyDefaults', 'updateMyDeputy']),
+        setActiveSection(id) {
+            this.activeSection = id
+            writeSectionToUrl('/my-settings', id)
+        },
         loadFromEmployee(employee) {
             this.form.defaultStartTime = employee.defaultStartTime || '08:00'
             this.form.defaultEndTime = employee.defaultEndTime || '17:00'
@@ -325,7 +368,24 @@ export default {
 .my-settings-view {
     padding: 20px;
     padding-left: 50px;
-    max-width: 600px;
+    max-width: 1100px;
+}
+
+.settings-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+.settings-content {
+    min-width: 0;
+}
+
+@media (max-width: 900px) {
+    .settings-layout {
+        grid-template-columns: 1fr;
+    }
 }
 
 .view-header {
@@ -354,21 +414,26 @@ export default {
 
 .form-group label {
     display: block;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     font-weight: 500;
 }
 
 .time-input {
     width: 8rem;
     padding: 8px;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-border-dark, var(--color-border));
     border-radius: var(--border-radius);
+}
+
+.time-input:focus,
+.break-input:focus {
+    border-color: var(--color-primary-element);
 }
 
 .break-input {
     width: 8rem;
     padding: 8px;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-border-dark, var(--color-border));
     border-radius: var(--border-radius);
 }
 

@@ -13,6 +13,9 @@ const state = {
         canManageProjects: false,
         canManageHolidays: false,
         canApprove: false,
+        // Eintraege nur ueber die Stempeluhr; der Server setzt die Sperre durch.
+        punchOnly: false,
+        punchOnlyLicensed: false,
     },
     loading: false,
     loaded: false,
@@ -64,6 +67,8 @@ const getters = {
     canManageProjects: (state) => state.permissions.canManageProjects,
     canManageHolidays: (state) => state.permissions.canManageHolidays,
     canApprove: (state) => state.permissions.canApprove,
+    punchOnly: (state) => state.permissions.punchOnly,
+    punchOnlyLicensed: (state) => state.permissions.punchOnlyLicensed,
     loading: (state) => state.loading,
     loaded: (state) => state.loaded,
 }

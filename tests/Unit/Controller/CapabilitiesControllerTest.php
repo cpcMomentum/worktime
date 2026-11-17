@@ -7,6 +7,7 @@ namespace OCA\WorkTime\Tests\Unit\Controller;
 use OCA\WorkTime\Controller\CapabilitiesController;
 use OCP\App\IAppManager;
 use OCP\IRequest;
+use OCA\WorkTime\Service\PunchOnlyService;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -16,13 +17,21 @@ use PHPUnit\Framework\TestCase;
 class CapabilitiesControllerTest extends TestCase {
 
     private IAppManager $appManager;
+    private bool $restricted = false;
 
     private function makeController(?string $userId = 'alice'): CapabilitiesController {
         return new CapabilitiesController(
             $this->createMock(IRequest::class),
             $userId,
             $this->appManager,
+            $this->punchOnly(),
         );
+    }
+
+    private function punchOnly(): PunchOnlyService {
+        $service = $this->createMock(PunchOnlyService::class);
+        $service->method('restricts')->willReturnCallback(fn () => $this->restricted);
+        return $service;
     }
 
     protected function setUp(): void {
@@ -49,5 +58,12 @@ class CapabilitiesControllerTest extends TestCase {
         $this->assertContains('stopwatch', $data['features']);
         // No feature must be advertised that does not exist in the backend.
         $this->assertNotContains('datev_export', $data['features']);
+        $this->assertContains('punch_only', $data['features']);
+        $this->assertFalse($data['punchOnly']);
+    }
+
+    public function testReportsWhenEntriesAreLimitedToTheTimeClock(): void {
+        $this->restricted = true;
+        $this->assertTrue($this->makeController()->index()->getData()['punchOnly']);
     }
 }

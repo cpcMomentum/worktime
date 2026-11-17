@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace OCA\WorkTime\Controller;
 
 use OCA\WorkTime\AppInfo\Application;
+use OCA\WorkTime\Service\PunchOnlyService;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -34,12 +35,15 @@ class CapabilitiesController extends BaseController {
         'personal_break',    // #696: per-employee default break
         'project_favorites', // #710: starred projects
         'stopwatch',         // #584: server-authoritative punch in/out
+        'werkplus_status',   // GET /api/license/status
+        'punch_only',        // Antwortfeld punchOnly: Eintraege nur ueber die Stempeluhr
     ];
 
     public function __construct(
         IRequest $request,
         ?string $userId,
         private IAppManager $appManager,
+        private PunchOnlyService $punchOnlyService,
     ) {
         parent::__construct($request, $userId);
     }
@@ -53,6 +57,7 @@ class CapabilitiesController extends BaseController {
         return new JSONResponse([
             'version' => $this->appManager->getAppVersion(Application::APP_ID),
             'features' => self::FEATURES,
+            'punchOnly' => $this->punchOnlyService->restricts($this->userId),
         ]);
     }
 }

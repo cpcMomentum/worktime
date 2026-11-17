@@ -12,6 +12,7 @@ namespace OCA\WorkTime\Controller;
 use OCA\WorkTime\AppInfo\Application;
 use OCA\WorkTime\Service\CompanySettingsService;
 use OCA\WorkTime\Service\PermissionService;
+use OCA\WorkTime\Service\PunchOnlyService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
@@ -26,6 +27,7 @@ class PageController extends Controller {
         private PermissionService $permissionService,
         private CompanySettingsService $settingsService,
         private IInitialState $initialState,
+        private PunchOnlyService $punchOnlyService,
     ) {
         parent::__construct(Application::APP_ID, $request);
     }
@@ -39,7 +41,8 @@ class PageController extends Controller {
 
         // Provide permission info via Initial State API
         if ($this->userId !== null) {
-            $permissions = $this->permissionService->getPermissionInfo($this->userId);
+            $permissions = $this->permissionService->getPermissionInfo($this->userId)
+                + $this->punchOnlyService->permissionFields($this->userId);
             $this->initialState->provideInitialState('permissions', $permissions);
         }
 
