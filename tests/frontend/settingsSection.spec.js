@@ -27,6 +27,10 @@ describe('sectionFromHash', () => {
         expect(sectionFromHash('#/settings?parsec=x')).toBeNull()
     })
 
+    it('wirft bei kaputt kodiertem Abschnitt nicht', () => {
+        expect(sectionFromHash('#/settings?sec=%E0%A4%A')).toBeNull()
+    })
+
     it('ist die Umkehrung von sectionHash', () => {
         expect(sectionFromHash(sectionHash('/my-settings', 'sec-ä b'))).toBe('sec-ä b')
     })
