@@ -1,4 +1,63 @@
 {
+	"0.26.0": [
+		{
+			"title": {
+				"de": "Zeiterfassung nur über die Stempeluhr",
+				"en": "Time tracking via the time clock only",
+				"cs": "Evidence času pouze přes píchačky"
+			},
+			"text": {
+				"de": "Auf Wunsch erfassen Mitarbeitende ihre Zeiten nur noch über die Stempeluhr. Einträge von Hand anlegen, ändern oder löschen und die Endzeit beim Ausstempeln verschieben geht dann nicht mehr, Korrekturen übernimmt HR. Die Einstellung braucht WerkPlus.",
+				"en": "Employees can be limited to recording their times with the time clock. Creating, changing or deleting entries by hand and moving the end time when clocking out is then no longer possible; HR takes care of corrections. The setting requires WerkPlus.",
+				"cs": "Zaměstnanci mohou zaznamenávat čas pouze přes píchačky. Ruční vytváření, úprava nebo mazání záznamů a posun času konce při odpíchnutí pak nejsou možné, opravy provádí HR. Nastavení vyžaduje WerkPlus."
+			},
+			"icon": "counter",
+			"where": {
+				"de": "Verwaltung › Arbeitszeit-Regeln",
+				"en": "Management › Working Time Rules",
+				"cs": "Správa › Pravidla pracovní doby"
+			},
+			"plus": true
+		},
+		{
+			"title": {
+				"de": "WerkPlus-Lizenz",
+				"en": "WerkPlus licence",
+				"cs": "Licence WerkPlus"
+			},
+			"text": {
+				"de": "WorkTime bleibt ohne Schlüssel vollständig nutzbar. Ein WerkPlus-Schlüssel schaltet zusätzliche Funktionen frei, gilt für alle Werk-Apps einer Nextcloud und lässt sich 30 Tage kostenlos testen.",
+				"en": "WorkTime remains fully usable without a key. A WerkPlus key unlocks additional features, applies to all Werk apps of a Nextcloud and can be tried free of charge for 30 days.",
+				"cs": "WorkTime zůstává bez klíče plně použitelný. Klíč WerkPlus odemyká další funkce, platí pro všechny aplikace Werk jednoho Nextcloudu a lze jej 30 dní zdarma vyzkoušet."
+			},
+			"icon": "star",
+			"where": {
+				"de": "Verwaltung › WerkPlus",
+				"en": "Management › WerkPlus",
+				"cs": "Správa › WerkPlus"
+			},
+			"plus": false
+		},
+		{
+			"title": {
+				"de": "Verwaltung und Einstellungen",
+				"en": "Management and Settings",
+				"cs": "Správa a nastavení"
+			},
+			"text": {
+				"de": "Die firmenweiten Einstellungen heißen jetzt „Verwaltung“, die persönlichen „Einstellungen“. Beide Seiten haben dieselbe Navigation mit Gruppen, jeder Abschnitt steht in einer eigenen Karte.",
+				"en": "The company-wide settings are now called “Management”, the personal ones “Settings”. Both pages share the same grouped navigation, and each section has its own card.",
+				"cs": "Celofiremní nastavení se nyní jmenuje „Správa“, osobní „Nastavení“. Obě stránky mají stejnou navigaci se skupinami a každá sekce má vlastní kartu."
+			},
+			"icon": "cog",
+			"where": {
+				"de": "Navigation unten links",
+				"en": "Navigation, bottom left",
+				"cs": "Navigace vlevo dole"
+			},
+			"plus": false
+		}
+	],
 	"0.25.0": [
 		{
 			"title": {

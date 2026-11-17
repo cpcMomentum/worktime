@@ -7,6 +7,19 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.26.0] - 2026-11-17
+
+### Added
+- **WerkPlus-Lizenz (#871)**: Neuer Punkt Verwaltung › WerkPlus. WorkTime bleibt ohne Schlüssel vollständig nutzbar. Ein WerkPlus-Schlüssel gilt für alle Werk-Apps einer Nextcloud und muss nur in einer davon eingetragen werden, ein Testzeitraum von 30 Tagen ist ohne Zahlungsdaten möglich. Die Lizenz wird auf dem eigenen Server geprüft. Übertragen werden nur eine aus der Nextcloud abgeleitete Kennung, die Versionen der aktivierten Werk-Apps und der Schlüssel, keine Arbeitszeiten oder Personendaten. Ist WerkPlus nicht erreichbar, arbeitet WorkTime normal weiter.
+- **Zeiterfassung nur über die Stempeluhr (#849, WerkPlus)**: Unter Verwaltung › Arbeitszeit-Regeln lässt sich festlegen, dass Mitarbeitende ihre Zeiten nur noch über die Stempeluhr erfassen. Einträge von Hand anlegen, ändern oder löschen und die Endzeit beim Ausstempeln verschieben ist dann gesperrt, auch serverseitig. HR und Admins pflegen Einträge weiter. Ohne WerkPlus ist die Einstellung ausgegraut, ein gespeicherter Wert bleibt erhalten.
+- **Einstempelzeit sichtbar (#849)**: Die Stempeluhr zeigt „seit 08:12“ statt nur der laufenden Dauer.
+
+### Changed
+- **Verwaltung und Einstellungen (#874)**: Die firmenweiten Einstellungen heißen jetzt „Verwaltung“, die persönlichen („Meine Einstellungen“) heißen „Einstellungen“. Im Fuß der Navigation stehen Neuerungen, Einstellungen und Verwaltung in dieser Reihenfolge. Jeder Abschnitt steht in einer eigenen Karte, die persönliche Seite hat dieselbe Navigation mit Gruppen wie die Verwaltung. Bestehende Links funktionieren weiter.
+
+### Fixed
+- **Links auf einen Abschnitt der Verwaltung (#874)**: Ein Link wie `#/settings?sec=sec-feiertage` landete beim Öffnen auf der zuletzt besuchten Ansicht statt auf dem gewählten Abschnitt.
+
 ## [0.25.0] - 2026-11-13
 
 ### Added
