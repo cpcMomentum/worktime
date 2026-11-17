@@ -138,8 +138,8 @@ class EntitlementService {
             $this->verifier->verify($response['token'], $uuid, $now);
         } catch (InvalidTokenException $e) {
             // Kein Abbruch, sonst sieht der Betreiber den Schluessel nie; die Erneuerung holt ein gueltiges Token.
-            $this->logger->warning('WorkTime: WerkPlus-Token abgelehnt', ['exception' => $e]);
-            $this->recordError(new WerkPlusApiException(self::TOKEN_REJECTED, '', $e), $now, $key);
+            $this->logger->warning('WorkTime: WerkPlus-Token abgelehnt', ['reason' => $e->getMessage()]);
+            $this->recordError(new WerkPlusApiException(self::TOKEN_REJECTED), $now, $key);
             // Die naechste Erneuerung soll nicht auf die Wartezeit warten.
             $this->appConfig->deleteKey(Application::APP_ID, self::K_LAST_ATTEMPT);
             return $key;
@@ -171,7 +171,7 @@ class EntitlementService {
         try {
             $this->refresh();
         } catch (\Throwable $e) {
-            $this->logger->info('WorkTime: WerkPlus-Lizenz nicht erneuert', ['exception' => $e]);
+            $this->logger->info('WorkTime: WerkPlus-Lizenz nicht erneuert', ['reason' => get_class($e) . ': ' . $e->getMessage()]);
         }
     }
 
@@ -286,8 +286,8 @@ class EntitlementService {
             try {
                 $token = $this->verifier->verify($response['token'], $uuid, $now);
             } catch (InvalidTokenException $e) {
-                $this->logger->warning('WorkTime: WerkPlus-Token abgelehnt', ['exception' => $e]);
-                throw new WerkPlusApiException(self::TOKEN_REJECTED, '', $e);
+                $this->logger->warning('WorkTime: WerkPlus-Token abgelehnt', ['reason' => $e->getMessage()]);
+                throw new WerkPlusApiException(self::TOKEN_REJECTED);
             }
         } catch (WerkPlusApiException $e) {
             $this->recordError($e, $now, $isStoredKey ? $key : null);
@@ -296,7 +296,7 @@ class EntitlementService {
         return [$response['token'], $token];
     }
 
-    private function storeToken(#[\SensitiveParameter] string $key, string $jwt, EntitlementToken $token): void {
+    private function storeToken(#[\SensitiveParameter] string $key, #[\SensitiveParameter] string $jwt, EntitlementToken $token): void {
         $this->store->replaceTokenIfNewer($key, $jwt, $token->issuedAt, fn (string $stored): ?int => $this->issuedAtOf($stored));
         $this->afterSuccess();
     }
@@ -306,7 +306,7 @@ class EntitlementService {
         $this->current = null;
     }
 
-    private function issuedAtOf(string $jwt): ?int {
+    private function issuedAtOf(#[\SensitiveParameter] string $jwt): ?int {
         try {
             return $this->verifier->verify($jwt, $this->getInstanceUuid(), $this->now())->issuedAt;
         } catch (InvalidTokenException) {
@@ -382,7 +382,7 @@ class EntitlementService {
         try {
             $token = $this->verifier->verify($jwt, $this->getInstanceUuid(), $now);
         } catch (InvalidTokenException $e) {
-            $this->logger->debug('WorkTime: gespeichertes WerkPlus-Token ungueltig', ['exception' => $e]);
+            $this->logger->debug('WorkTime: gespeichertes WerkPlus-Token ungueltig', ['reason' => $e->getMessage()]);
             return $this->current = ['jwt' => $jwt, 'token' => null, 'state' => self::STATE_INVALID];
         }
         return $this->current = ['jwt' => $jwt, 'token' => $token, 'state' => $token->stateAt($now)];

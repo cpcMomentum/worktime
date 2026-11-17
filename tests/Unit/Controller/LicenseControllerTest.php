@@ -24,10 +24,12 @@ use Psr\Log\LoggerInterface;
 class LicenseControllerTest extends TestCase {
 
     private EntitlementService&MockObject $entitlement;
+    private LoggerInterface&MockObject $logger;
 
     protected function setUp(): void {
         parent::setUp();
         $this->entitlement = $this->createMock(EntitlementService::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
         $this->entitlement->method('getStatus')->willReturn(['keySet' => true, 'lastError' => null]);
     }
 
@@ -43,7 +45,7 @@ class LicenseControllerTest extends TestCase {
             $permissions,
             $this->entitlement,
             $l10n,
-            $this->createMock(LoggerInterface::class),
+            $this->logger,
         );
     }
 
@@ -78,6 +80,7 @@ class LicenseControllerTest extends TestCase {
 
     public function testPublicStatusNeverFailsWithAServerError(): void {
         $this->entitlement->method('getPublicStatus')->willThrowException(new \RuntimeException('kaputt'));
+        $this->logger->expects($this->once())->method('warning')->with($this->anything(), ['reason' => 'RuntimeException: kaputt']);
         $response = $this->controller('lea', false, false)->publicStatus();
 
         $this->assertSame(Http::STATUS_OK, $response->getStatus());

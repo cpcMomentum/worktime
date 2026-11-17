@@ -40,7 +40,7 @@ class WerkwolkeStore {
     }
 
     /** Ein neuer Schluessel ersetzt Schluessel und Token gemeinsam. */
-    public function setKeyAndToken(#[\SensitiveParameter] string $key, string $token): void {
+    public function setKeyAndToken(#[\SensitiveParameter] string $key, #[\SensitiveParameter] string $token): void {
         if ($this->isTooNew()) {
             return;
         }
@@ -70,7 +70,7 @@ class WerkwolkeStore {
     }
 
     /** @param callable(string): ?int $issuedAt `iat` des gespeicherten Tokens, null wenn unlesbar */
-    public function replaceTokenIfNewer(#[\SensitiveParameter] string $forKey, string $token, int $newIssuedAt, callable $issuedAt): bool {
+    public function replaceTokenIfNewer(#[\SensitiveParameter] string $forKey, #[\SensitiveParameter] string $token, int $newIssuedAt, callable $issuedAt): bool {
         // Wurde der Schluessel waehrend des Abrufs entfernt oder gewechselt, gehoert das Token nicht mehr dazu.
         if ($this->isTooNew() || $this->appConfig->getValueString(self::APP, self::K_KEY) !== $forKey) {
             return false;

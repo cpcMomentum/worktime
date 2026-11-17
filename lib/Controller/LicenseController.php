@@ -54,7 +54,7 @@ class LicenseController extends BaseController {
         try {
             return new JSONResponse($this->entitlementService->getPublicStatus());
         } catch (\Throwable $e) {
-            $this->logger->warning('WorkTime: WerkPlus-Status nicht lesbar', ['exception' => $e]);
+            $this->logger->warning('WorkTime: WerkPlus-Status nicht lesbar', ['reason' => get_class($e) . ': ' . $e->getMessage()]);
             return new JSONResponse(['licensed' => false, 'tier' => 'free', 'state' => EntitlementService::STATE_INVALID, 'graceUntil' => null]);
         }
     }
