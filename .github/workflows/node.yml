@@ -52,6 +52,10 @@ jobs:
       - name: Zeitzonen-Check
         run: npm run timezone:check
 
+      # Abgeloeste Seitennamen, Punkt "Neuerungen", App-Symbole (nc-app-tooling docs/design-system.md)
+      - name: Design-Check
+        run: npm run design:check
+
       - name: Produktions-Build
         run: npm run build
 

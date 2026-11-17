@@ -46,7 +46,7 @@ php occ app:enable worktime
 
 ### Ersteinrichtung
 
-1. Als Admin die App öffnen → Einstellungen
+1. Als Admin die App öffnen → Verwaltung
 2. Firmennamen und Standard-Bundesland setzen
 3. Feiertage für das aktuelle/nächste Jahr generieren
 4. Mitarbeiter anlegen (Employees)
@@ -67,7 +67,7 @@ Die App schlägt automatisch Pausenzeiten vor:
 - **>6h bis 9h**: 30 Minuten Pause
 - **>9h**: 45 Minuten Pause
 
-Die Werte sind in den Einstellungen konfigurierbar.
+Die Werte sind in der Verwaltung konfigurierbar.
 
 ## Entwicklung
 
@@ -130,7 +130,7 @@ unterstützen möchte, findet mit WerkPlus optionale Zusatzfunktionen für alle
 Werk-Apps. Welche es für WorkTime gibt, steht auf
 https://werkwolke.de/funktionen#worktime
 
-Den WerkPlus-Schlüssel tragen Nextcloud-Admins unter Einstellungen › WerkPlus ein. Er gilt
+Den WerkPlus-Schlüssel tragen Nextcloud-Admins unter Verwaltung › WerkPlus ein. Er gilt
 für alle Werk-Apps dieser Nextcloud. Ohne Schlüssel nimmt WorkTime keinen Kontakt zum
 Lizenzserver auf. Mit Schlüssel oder Testzeitraum werden nur eine aus der Nextcloud
 abgeleitete Kennung, die Versionen der aktivierten Werk-Apps und der Schlüssel übertragen,

@@ -1,31 +1,17 @@
 <template>
     <div class="settings-view">
         <div class="view-header">
-            <h2>{{ t('worktime', 'Einstellungen') }}</h2>
+            <h2>{{ t('worktime', 'Verwaltung') }}</h2>
         </div>
 
         <NcLoadingIcon v-if="loading" :size="44" />
 
         <div v-else class="settings-layout">
-            <nav class="settings-nav" :aria-label="t('worktime', 'Einstellungs-Navigation')">
-                <template v-for="group in navGroups">
-                    <div v-if="group.items.length" :key="group.label" class="settings-nav-group">
-                        {{ group.label }}
-                    </div>
-                    <button v-for="item in group.items"
-                        :key="item.id"
-                        class="settings-nav-item"
-                        :class="{ active: activeSection === item.id }"
-                        @click="setActiveSection(item.id)">
-                        <component :is="item.icon" :size="18" />
-                        {{ item.label }}
-                    </button>
-                </template>
-            </nav>
+            <SettingsNav :groups="navGroups" :active="activeSection" @select="setActiveSection" />
 
             <div class="settings-content">
 
-            <NcSettingsSection v-if="canManageEmployees"
+            <SettingsCard v-if="canManageEmployees"
                 v-show="activeSection === 'sec-mitarbeiter'"
                 id="sec-mitarbeiter" :name="t('worktime', 'Mitarbeiter')">
                 <div class="section-header-actions">
@@ -54,9 +40,9 @@
                         @saved="onEmployeeSaved"
                         @cancel="closeEmployeeForm" />
                 </NcModal>
-            </NcSettingsSection>
+            </SettingsCard>
 
-            <NcSettingsSection v-if="canManageEmployees"
+            <SettingsCard v-if="canManageEmployees"
                 v-show="activeSection === 'sec-abteilungen'"
                 id="sec-abteilungen" :name="t('worktime', 'Abteilungen')">
                 <div class="section-header-actions">
@@ -81,9 +67,9 @@
                         @saved="onDepartmentSaved"
                         @cancel="closeDepartmentForm" />
                 </NcModal>
-            </NcSettingsSection>
+            </SettingsCard>
 
-            <NcSettingsSection v-if="canManageProjects"
+            <SettingsCard v-if="canManageProjects"
                 v-show="activeSection === 'sec-projekte'"
                 id="sec-projekte" :name="t('worktime', 'Projekte')">
                 <div class="section-header-actions">
@@ -108,9 +94,9 @@
                         @saved="onProjectSaved"
                         @cancel="closeProjectForm" />
                 </NcModal>
-            </NcSettingsSection>
+            </SettingsCard>
 
-            <NcSettingsSection v-if="canManageSettings"
+            <SettingsCard v-if="canManageSettings"
                 v-show="activeSection === 'sec-berechtigungen'"
                 id="sec-berechtigungen" :name="t('worktime', 'Berechtigungen')">
                 <div class="form-group">
@@ -133,9 +119,9 @@
                         </template>
                     </NcSelect>
                 </div>
-            </NcSettingsSection>
+            </SettingsCard>
 
-            <NcSettingsSection v-if="canManageSettings"
+            <SettingsCard v-if="canManageSettings"
                 v-show="activeSection === 'sec-firmendaten'"
                 id="sec-firmendaten" :name="t('worktime', 'Firmendaten')"
                 :description="t('worktime', 'Stammdaten und Standardwerte, die für neue Mitarbeiter vorausgewählt werden.')">
@@ -184,9 +170,9 @@
                             @change="saveSetting('default_vacation_days')">
                     </div>
                 </div>
-            </NcSettingsSection>
+            </SettingsCard>
 
-            <NcSettingsSection v-if="canManageSettings"
+            <SettingsCard v-if="canManageSettings"
                 v-show="activeSection === 'sec-arbeitszeit'"
                 id="sec-arbeitszeit" :name="t('worktime', 'Arbeitszeit-Regeln')">
                 <div class="form-group">
@@ -231,9 +217,9 @@
                         {{ t('worktime', 'Nur mit WerkPlus verfügbar. Den Schlüssel trägst du unter Lizenz › WerkPlus ein.') }}
                     </p>
                 </div>
-            </NcSettingsSection>
+            </SettingsCard>
 
-            <NcSettingsSection v-if="canManageSettings"
+            <SettingsCard v-if="canManageSettings"
                 v-show="activeSection === 'sec-genehmigung'"
                 id="sec-genehmigung" :name="t('worktime', 'Genehmigung')"
                 :description="t('worktime', 'Steuert firmenweit, ob erfasste Zeiten durch Vorgesetzte freigegeben werden müssen. Diese Einstellung betrifft alle Mitarbeitenden.')">
@@ -243,9 +229,9 @@
                         {{ t('worktime', 'Genehmigung erforderlich') }} <InfoIcon>{{ t('worktime', 'Wenn aktiv, durchlaufen Zeiteinträge einen Freigabe-Workflow: Mitarbeitende reichen den Monat ein, Vorgesetzte genehmigen ihn. Ist die Option deaktiviert, entfällt dieser Schritt und die erfassten Zeiten gelten direkt. Die Stundenberechnung ist in beiden Fällen gleich.') }}</InfoIcon>
                     </NcCheckboxRadioSwitch>
                 </div>
-            </NcSettingsSection>
+            </SettingsCard>
 
-            <NcSettingsSection v-if="canManageSettings"
+            <SettingsCard v-if="canManageSettings"
                 v-show="activeSection === 'sec-absenzen'"
                 id="sec-absenzen" :name="t('worktime', 'Teiltages-Absenzen')"
                 :description="t('worktime', 'Steuert firmenweit stundenweise Krankmeldungen und Notarbeit an genehmigten Urlaubstagen. Standardmäßig deaktiviert.')">
@@ -268,11 +254,11 @@
                         {{ t('worktime', 'Notarbeit muss freigegeben werden') }} <InfoIcon>{{ t('worktime', 'Wenn aktiv, zählt eine erfasste Notarbeit erst nach Freigabe durch den/die Vorgesetzte(n) in die Überstunden. Nur relevant, wenn Notarbeit im Urlaub erlaubt ist.') }}</InfoIcon>
                     </NcCheckboxRadioSwitch>
                 </div>
-            </NcSettingsSection>
+            </SettingsCard>
 
-            <NcSettingsSection v-if="canManageSettings"
+            <SettingsCard v-if="canManageSettings"
                 v-show="activeSection === 'sec-pausen'"
-                id="sec-pausen" :name="t('worktime', 'Pausenregelung (§4 ArbZG)')"
+                id="sec-pausen" :name="t('worktime', 'Pausenregelung')"
                 :description="t('worktime', 'Mindestpause gemäß deutschem Arbeitszeitgesetz')">
                 <div class="form-row">
                     <div class="form-group">
@@ -306,9 +292,9 @@
                             @change="saveSetting('max_pause_minutes')">
                     </div>
                 </div>
-            </NcSettingsSection>
+            </SettingsCard>
 
-            <NcSettingsSection v-if="canManageSettings"
+            <SettingsCard v-if="canManageSettings"
                 v-show="activeSection === 'sec-pdf'"
                 id="sec-pdf" :name="t('worktime', 'PDF-Archiv')"
                 :description="t('worktime', 'Genehmigte Monatsberichte werden automatisch als PDF archiviert.')">
@@ -367,16 +353,16 @@
                         </NcButton>
                     </template>
                 </div>
-            </NcSettingsSection>
+            </SettingsCard>
 
-            <NcSettingsSection v-if="canManageEmployees"
+            <SettingsCard v-if="canManageEmployees"
                 v-show="activeSection === 'sec-betriebsferien'"
                 id="sec-betriebsferien" :name="t('worktime', 'Betriebsferien')"
                 :description="t('worktime', 'Trage Betriebsferien zentral für alle oder ausgewählte Mitarbeiter als Urlaub ein.')">
                 <BetriebsferienSettings :employees="employees" />
-            </NcSettingsSection>
+            </SettingsCard>
 
-            <NcSettingsSection v-if="canManageSettings"
+            <SettingsCard v-if="canManageSettings"
                 v-show="activeSection === 'sec-sondertage'"
                 id="sec-sondertage" :name="t('worktime', 'Sondertage')"
                 :description="t('worktime', 'Lege fest, wie Heiligabend und Silvester behandelt werden.')">
@@ -427,11 +413,11 @@
                 <p class="help-text">
                     {{ t('worktime', 'Hinweis: Änderungen wirken sich auf neu generierte Feiertage aus. Generiere die Feiertage erneut, um die Änderungen anzuwenden.') }}
                 </p>
-            </NcSettingsSection>
+            </SettingsCard>
 
-            <NcSettingsSection v-if="canManageHolidays"
+            <SettingsCard v-if="canManageHolidays"
                 v-show="activeSection === 'sec-feiertage'"
-                id="sec-feiertage" :name="t('worktime', 'Feiertage verwalten')"
+                id="sec-feiertage" :name="t('worktime', 'Feiertage')"
                 :description="t('worktime', 'Feiertage anzeigen, hinzufügen, bearbeiten und löschen.')">
                 <div class="form-row holiday-filters">
                     <div class="form-group">
@@ -601,9 +587,9 @@
                     </div>
                 </NcModal>
 
-                </NcSettingsSection>
+                </SettingsCard>
 
-            <NcSettingsSection v-if="canManageEmployees"
+            <SettingsCard v-if="canManageEmployees"
                 v-show="activeSection === 'sec-jahresuebertrag'"
                 id="sec-jahresuebertrag" :name="t('worktime', 'Jahresübertrag')"
                 :description="t('worktime', 'Überstunden und Resturlaub aus dem Vorjahr händisch übertragen. Durchgeführte Überträge sind verbindlich und unveränderbar.')">
@@ -746,9 +732,9 @@
                         </div>
                     </div>
                 </NcModal>
-            </NcSettingsSection>
+            </SettingsCard>
 
-            <NcSettingsSection v-if="canManageEmployees"
+            <SettingsCard v-if="canManageEmployees"
                 v-show="activeSection === 'sec-ueberstunden-auszahlung'"
                 id="sec-ueberstunden-auszahlung" :name="t('worktime', 'Überstunden-Auszahlung')"
                 :description="t('worktime', 'Überstunden in Geld vergüten und vom Saldo abziehen. Auszahlungen werden im Audit-Log protokolliert.')">
@@ -860,13 +846,13 @@
                         </div>
                     </div>
                 </NcModal>
-            </NcSettingsSection>
+            </SettingsCard>
 
-            <NcSettingsSection v-if="canManageEmployees"
+            <SettingsCard v-if="canManageEmployees"
                 v-show="activeSection === 'sec-werkplus'"
                 id="sec-werkplus" :name="t('worktime', 'WerkPlus')">
                 <WerkPlusSettings />
-            </NcSettingsSection>
+            </SettingsCard>
 
             </div>
         </div>
@@ -879,7 +865,9 @@ import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
 import NcModal from '@nextcloud/vue/dist/Components/NcModal.js'
-import NcSettingsSection from '@nextcloud/vue/dist/Components/NcSettingsSection.js'
+import SettingsCard from '../components/SettingsCard.vue'
+import SettingsNav from '../components/SettingsNav.vue'
+import { pickSection, sectionFromHash, writeSectionToUrl } from '../utils/settingsSection.js'
 import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import Plus from 'vue-material-design-icons/Plus.vue'
@@ -939,7 +927,8 @@ export default {
         NcSelect,
         NcCheckboxRadioSwitch,
         NcModal,
-        NcSettingsSection,
+        SettingsCard,
+        SettingsNav,
         NcDateTimePicker,
         NcEmptyContent,
         Plus,
@@ -951,20 +940,8 @@ export default {
         CalendarBlank,
         ChevronRight,
         ChevronDown,
-        KeyVariant,
-        KeyOutline,
         WerkPlusSettings,
-        OfficeBuilding,
-        ClockCheckOutline,
-        CheckDecagram,
-        CoffeeOutline,
-        FilePdfBox,
-        StarOutline,
-        CalendarStar,
-        Beach,
-        SwapHorizontalBold,
         CashMultiple,
-        MedicalBag,
         EmployeeForm,
         EmployeeList,
         BetriebsferienSettings,
@@ -1163,32 +1140,32 @@ export default {
             const group = (label, items) => ({ label, items: items.filter(i => i.visible) })
             return [
                 group(this.t('worktime', 'Team'), [
-                    { id: 'sec-mitarbeiter', label: this.t('worktime', 'Mitarbeiter'), icon: 'AccountGroup', visible: this.canManageEmployees },
-                    { id: 'sec-abteilungen', label: this.t('worktime', 'Abteilungen'), icon: 'OfficeBuilding', visible: this.canManageEmployees },
-                    { id: 'sec-projekte', label: this.t('worktime', 'Projekte'), icon: 'Folder', visible: this.canManageProjects },
-                    { id: 'sec-berechtigungen', label: this.t('worktime', 'Berechtigungen'), icon: 'KeyVariant', visible: this.canManageSettings },
+                    { id: 'sec-mitarbeiter', label: this.t('worktime', 'Mitarbeiter'), icon: AccountGroup, visible: this.canManageEmployees },
+                    { id: 'sec-abteilungen', label: this.t('worktime', 'Abteilungen'), icon: OfficeBuilding, visible: this.canManageEmployees },
+                    { id: 'sec-projekte', label: this.t('worktime', 'Projekte'), icon: Folder, visible: this.canManageProjects },
+                    { id: 'sec-berechtigungen', label: this.t('worktime', 'Berechtigungen'), icon: KeyVariant, visible: this.canManageSettings },
                 ]),
                 group(this.t('worktime', 'Firma'), [
-                    { id: 'sec-firmendaten', label: this.t('worktime', 'Firmendaten'), icon: 'OfficeBuilding', visible: this.canManageSettings },
-                    { id: 'sec-arbeitszeit', label: this.t('worktime', 'Arbeitszeit-Regeln'), icon: 'ClockCheckOutline', visible: this.canManageSettings },
+                    { id: 'sec-firmendaten', label: this.t('worktime', 'Firmendaten'), icon: OfficeBuilding, visible: this.canManageSettings },
+                    { id: 'sec-arbeitszeit', label: this.t('worktime', 'Arbeitszeit-Regeln'), icon: ClockCheckOutline, visible: this.canManageSettings },
                 ]),
                 group(this.t('worktime', 'Abläufe'), [
-                    { id: 'sec-genehmigung', label: this.t('worktime', 'Genehmigung'), icon: 'CheckDecagram', visible: this.canManageSettings },
-                    { id: 'sec-absenzen', label: this.t('worktime', 'Teiltages-Absenzen'), icon: 'MedicalBag', visible: this.canManageSettings },
-                    { id: 'sec-pausen', label: this.t('worktime', 'Pausenregelung'), icon: 'CoffeeOutline', visible: this.canManageSettings },
-                    { id: 'sec-pdf', label: this.t('worktime', 'PDF-Archiv'), icon: 'FilePdfBox', visible: this.canManageSettings },
+                    { id: 'sec-genehmigung', label: this.t('worktime', 'Genehmigung'), icon: CheckDecagram, visible: this.canManageSettings },
+                    { id: 'sec-absenzen', label: this.t('worktime', 'Teiltages-Absenzen'), icon: MedicalBag, visible: this.canManageSettings },
+                    { id: 'sec-pausen', label: this.t('worktime', 'Pausenregelung'), icon: CoffeeOutline, visible: this.canManageSettings },
+                    { id: 'sec-pdf', label: this.t('worktime', 'PDF-Archiv'), icon: FilePdfBox, visible: this.canManageSettings },
                 ]),
                 group(this.t('worktime', 'Kalender'), [
-                    { id: 'sec-betriebsferien', label: this.t('worktime', 'Betriebsferien'), icon: 'Beach', visible: this.canManageEmployees },
-                    { id: 'sec-sondertage', label: this.t('worktime', 'Sondertage'), icon: 'StarOutline', visible: this.canManageSettings },
-                    { id: 'sec-feiertage', label: this.t('worktime', 'Feiertage'), icon: 'CalendarStar', visible: this.canManageHolidays },
+                    { id: 'sec-betriebsferien', label: this.t('worktime', 'Betriebsferien'), icon: Beach, visible: this.canManageEmployees },
+                    { id: 'sec-sondertage', label: this.t('worktime', 'Sondertage'), icon: StarOutline, visible: this.canManageSettings },
+                    { id: 'sec-feiertage', label: this.t('worktime', 'Feiertage'), icon: CalendarStar, visible: this.canManageHolidays },
                 ]),
                 group(this.t('worktime', 'Konten'), [
-                    { id: 'sec-jahresuebertrag', label: this.t('worktime', 'Jahresübertrag'), icon: 'SwapHorizontalBold', visible: this.canManageEmployees },
-                    { id: 'sec-ueberstunden-auszahlung', label: this.t('worktime', 'Überstunden-Auszahlung'), icon: 'CashMultiple', visible: this.canManageEmployees },
+                    { id: 'sec-jahresuebertrag', label: this.t('worktime', 'Jahresübertrag'), icon: SwapHorizontalBold, visible: this.canManageEmployees },
+                    { id: 'sec-ueberstunden-auszahlung', label: this.t('worktime', 'Überstunden-Auszahlung'), icon: CashMultiple, visible: this.canManageEmployees },
                 ]),
                 group(this.t('worktime', 'Lizenz'), [
-                    { id: 'sec-werkplus', label: this.t('worktime', 'WerkPlus'), icon: 'KeyOutline', visible: this.canManageEmployees },
+                    { id: 'sec-werkplus', label: this.t('worktime', 'WerkPlus'), icon: KeyOutline, visible: this.canManageEmployees },
                 ]),
             ]
         },
@@ -1233,9 +1210,7 @@ export default {
         availableSectionIds: {
             immediate: false,
             handler(ids) {
-                if (!this.activeSection || !ids.includes(this.activeSection)) {
-                    this.activeSection = ids[0] || null
-                }
+                this.activeSection = pickSection(sectionFromHash(window.location.hash), ids, this.activeSection)
             },
         },
     },
@@ -1283,23 +1258,10 @@ export default {
         },
         setActiveSection(id) {
             this.activeSection = id
-            if (typeof window !== 'undefined' && window.history?.replaceState) {
-                const target = '#/settings?sec=' + encodeURIComponent(id)
-                if (window.location.hash !== target) {
-                    window.history.replaceState(null, '', target)
-                }
-            }
+            writeSectionToUrl('/settings', id)
         },
         initActiveSection() {
-            const hash = window.location.hash || ''
-            const match = hash.match(/sec=([^&]+)/)
-            const fromUrl = match ? decodeURIComponent(match[1]) : null
-            const ids = this.availableSectionIds
-            if (fromUrl && ids.includes(fromUrl)) {
-                this.activeSection = fromUrl
-            } else if (ids.length) {
-                this.activeSection = ids[0]
-            }
+            this.activeSection = pickSection(sectionFromHash(window.location.hash), this.availableSectionIds)
         },
         async loadSettings() {
             this.loading = true
@@ -2055,10 +2017,9 @@ export default {
     align-items: start;
 }
 
-/* Sektion ist im Sidebar-Layout immer allein sichtbar – Trenner unten weg */
-.settings-content :deep(.settings-section) {
-    border-bottom: none !important;
-    padding-bottom: 0;
+/* Breite Tabellen duerfen die Rasterspalte nicht ueber die Karte hinaus aufweiten. */
+.settings-content {
+    min-width: 0;
 }
 
 /* Stärkere Eingabe-Borders – NC-Default ist zu blass */
@@ -2078,78 +2039,9 @@ export default {
     border-color: var(--color-primary-element);
 }
 
-.settings-nav {
-    position: sticky;
-    top: 0;
-    display: flex;
-    flex-direction: column;
-    padding: 0 16px 0 0;
-    border-right: 1px solid var(--color-border-dark, var(--color-border));
-}
-
-.settings-nav-group {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    color: var(--color-text-maxcontrast);
-    padding: 16px 12px 6px;
-    border-top: 1px solid var(--color-border-dark, var(--color-border));
-    margin-top: 8px;
-}
-
-.settings-nav-group:first-child {
-    padding-top: 0;
-    border-top: none;
-    margin-top: 0;
-}
-
-.settings-nav-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 9px 12px;
-    border: none;
-    background: none;
-    color: var(--color-main-text);
-    font-size: 14px;
-    font-weight: 500;
-    text-align: left;
-    border-radius: var(--border-radius-element, 8px);
-    cursor: pointer;
-    width: 100%;
-    transition: background-color 0.15s;
-}
-
-.settings-nav-item :deep(.material-design-icon) {
-    color: var(--color-text-maxcontrast);
-}
-
-.settings-nav-item:hover {
-    background: var(--color-background-hover);
-}
-
-.settings-nav-item.active {
-    background: var(--color-primary-element-light);
-    color: var(--color-primary-element);
-    font-weight: 600;
-}
-
-.settings-nav-item.active :deep(.material-design-icon) {
-    color: var(--color-primary-element);
-}
-
-.settings-nav-item:focus-visible {
-    outline: 2px solid var(--color-primary-element);
-    outline-offset: -2px;
-}
-
 @media (max-width: 900px) {
     .settings-layout {
         grid-template-columns: 1fr;
-    }
-    .settings-nav {
-        position: static;
     }
 }
 
@@ -2163,7 +2055,7 @@ export default {
 
 .form-group label {
     display: block;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     font-weight: 500;
 }
 

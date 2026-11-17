@@ -21,8 +21,7 @@ eine `.view-toolbar` mit Filtern/Umschaltern; Zeit-Navigation immer rechts.
 | Typ | max-width | Views |
 |-----|-----------|-------|
 | Daten/Tabellen/Auswertung | `1600px` | Zeiterfassung, Abwesenheiten, Team, Genehmigungen, Auswertung, Audit-Log |
-| Settings mit Sidebar | `1100px` | Einstellungen (`settings-layout` = `240px 1fr`; 1600 würde die Formulare unangenehm breit ziehen) |
-| Reines Formular | `600px` | Meine Einstellungen |
+| Settings mit Sidebar | `1100px` | Einstellungen, Verwaltung (`settings-layout` = `240px 1fr`; Regeln: `docs/design-system.md`) |
 
 Alle Views: `padding: 20px; padding-left: 50px;`
 

@@ -133,9 +133,9 @@
 			},
 			"icon": "account-group",
 			"where": {
-				"de": "Einstellungen › Neuer Mitarbeiter",
-				"en": "Settings › New Employee",
-				"cs": "Nastavení › Nový zaměstnanec"
+				"de": "Verwaltung › Neuer Mitarbeiter",
+				"en": "Management › New Employee",
+				"cs": "Správa › Nový zaměstnanec"
 			},
 			"plus": false
 		},
@@ -152,9 +152,9 @@
 			},
 			"icon": "cog",
 			"where": {
-				"de": "Einstellungen › Feiertage verwalten",
-				"en": "Settings › Manage Public Holidays",
-				"cs": "Nastavení › Spravovat státní svátky"
+				"de": "Verwaltung › Feiertage",
+				"en": "Management › Public Holidays",
+				"cs": "Správa › Státní svátky"
 			},
 			"plus": false
 		}
@@ -186,15 +186,15 @@
 				"cs": "Píchačky se správným časem"
 			},
 			"text": {
-				"de": "Ohne gespeicherte Zeitzone hat WorkTime bisher bis zu zwei Stunden zu früh gestempelt. Das ist behoben. Admins können die Zeitzone der Firma zusätzlich unter Einstellungen festlegen.",
-				"en": "Without a saved time zone, WorkTime used to clock times up to two hours too early. This is fixed. Admins can also set the company time zone in the settings.",
-				"cs": "Bez uloženého časového pásma WorkTime dosud zaznamenával čas až o dvě hodiny dříve. To je opraveno. Správci mohou navíc nastavit časové pásmo firmy v nastavení."
+				"de": "Ohne gespeicherte Zeitzone hat WorkTime bisher bis zu zwei Stunden zu früh gestempelt. Das ist behoben. Admins können die Zeitzone der Firma zusätzlich unter Verwaltung › Firmendaten festlegen.",
+				"en": "Without a saved time zone, WorkTime used to clock times up to two hours too early. This is fixed. Admins can also set the company time zone in Management › Company data.",
+				"cs": "Bez uloženého časového pásma WorkTime dosud zaznamenával čas až o dvě hodiny dříve. To je opraveno. Správci mohou navíc nastavit časové pásmo firmy ve Správě › Údaje o firmě."
 			},
 			"icon": "cog",
 			"where": {
-				"de": "Einstellungen › Firmendaten › Zeitzone",
-				"en": "Settings › Company data › Time zone",
-				"cs": "Nastavení › Údaje o firmě › Časové pásmo"
+				"de": "Verwaltung › Firmendaten › Zeitzone",
+				"en": "Management › Company data › Time zone",
+				"cs": "Správa › Údaje o firmě › Časové pásmo"
 			},
 			"plus": false
 		},
