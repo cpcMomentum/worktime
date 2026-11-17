@@ -272,6 +272,11 @@ export default {
     margin-bottom: 16px;
 }
 
+.wt-werkplus__field input {
+    width: 100%;
+    max-width: 480px;
+}
+
 .wt-werkplus__actions {
     display: flex;
     flex-wrap: wrap;

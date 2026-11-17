@@ -2,6 +2,7 @@ import Vue from 'vue'
 import App from './App.vue'
 import store from './store/index.js'
 import router from './router/index.js'
+import { shouldRestoreLastView } from './utils/settingsSection.js'
 import { translate, translatePlural } from '@nextcloud/l10n'
 import { loadState } from '@nextcloud/initial-state'
 
@@ -33,9 +34,9 @@ store.dispatch('permissions/setHourlySickEnabled', loadState('worktime', 'hourly
 // #626: whether emergency work during an approved vacation day is offered.
 store.dispatch('permissions/setEmergencyWorkEnabled', loadState('worktime', 'emergencyWorkEnabled', false))
 
-// Restore last view from localStorage (if not already on a valid route)
+// Restore last view from localStorage (if the URL names no route of its own)
 const savedView = localStorage.getItem('worktime_last_view')
-if (savedView && savedView !== '/' && router.currentRoute.path === '/') {
+if (shouldRestoreLastView(window.location.hash, savedView)) {
 	router.push(savedView).catch(() => {})
 }
 
