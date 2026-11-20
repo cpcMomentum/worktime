@@ -1,6 +1,6 @@
 <template>
 	<NcContent app-name="worktime">
-		<NcAppNavigation>
+		<NcAppNavigation :aria-label="t('worktime', 'Hauptnavigation')">
 			<NcAppNavigationItem
 				v-if="navVisible('tracking')"
 				:name="t('worktime', 'Zeiterfassung')"
@@ -93,7 +93,7 @@
 						<small>{{ t('worktime', 'Änderungen werden protokolliert und dem Mitarbeiter angezeigt.') }}</small>
 					</span>
 				</span>
-				<NcButton type="tertiary" @click="exitCorrection">
+				<NcButton variant="tertiary" @click="exitCorrection">
 					{{ t('worktime', 'Korrektur beenden') }}
 				</NcButton>
 			</div>
@@ -114,7 +114,7 @@
 					</template>
 					<template #description>
 						<p>{{ t('worktime', 'Es sind noch keine Mitarbeiter eingerichtet. Lege unter Verwaltung Mitarbeiter an, um zu starten.') }}</p>
-						<NcButton type="primary"
+						<NcButton variant="primary"
 							@click="$router.push('/settings')">
 							{{ t('worktime', 'Zur Verwaltung') }}
 						</NcButton>
@@ -144,12 +144,12 @@
 </template>
 
 <script>
-import NcContent from '@nextcloud/vue/dist/Components/NcContent.js'
-import NcAppNavigation from '@nextcloud/vue/dist/Components/NcAppNavigation.js'
-import NcAppNavigationItem from '@nextcloud/vue/dist/Components/NcAppNavigationItem.js'
-import NcAppContent from '@nextcloud/vue/dist/Components/NcAppContent.js'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
+import NcContent from '@nextcloud/vue/components/NcContent'
+import NcAppNavigation from '@nextcloud/vue/components/NcAppNavigation'
+import NcAppNavigationItem from '@nextcloud/vue/components/NcAppNavigationItem'
+import NcAppContent from '@nextcloud/vue/components/NcAppContent'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import ClockIcon from 'vue-material-design-icons/Clock.vue'
 import CalendarIcon from 'vue-material-design-icons/Calendar.vue'
 import AccountGroupIcon from 'vue-material-design-icons/AccountGroup.vue'
@@ -162,7 +162,10 @@ import ChartBarIcon from 'vue-material-design-icons/ChartBar.vue'
 import BullhornOutlineIcon from 'vue-material-design-icons/BullhornOutline.vue'
 import WrenchIcon from 'vue-material-design-icons/Wrench.vue'
 import SleepIcon from 'vue-material-design-icons/Sleep.vue'
-import { mapGetters, mapActions } from 'vuex'
+import { mapState, mapActions } from 'pinia'
+import { useAbsencesStore } from './stores/absences.ts'
+import { useEmployeesStore } from './stores/employees.ts'
+import { usePermissionsStore } from './stores/permissions.ts'
 import { isNavVisible } from './router/access.js'
 import WhatsNewDialog from './components/WhatsNewDialog.vue'
 
@@ -190,8 +193,8 @@ export default {
 		SleepIcon,
 	},
 	computed: {
-		...mapGetters('permissions', ['accessProfile', 'isEmployee', 'hasEmployees', 'canManageSettings', 'canApprove', 'isCorrectionMode', 'correctionEmployeeName']),
-		...mapGetters('employees', ['currentEmployee']),
+		...mapState(usePermissionsStore, ['accessProfile', 'isEmployee', 'hasEmployees', 'canManageSettings', 'canApprove', 'isCorrectionMode', 'correctionEmployeeName']),
+		...mapState(useEmployeesStore, ['currentEmployee']),
 
 		/**
 		 * A resting employee (#486) keeps read access to their own history but
@@ -216,9 +219,9 @@ export default {
 			// correcting an employee, even for HR/admin without an own profile.
 			return isNavVisible(routeName, this.accessProfile)
 		},
-		...mapActions('employees', ['fetchCurrentEmployee', 'fetchFederalStates']),
-		...mapActions('absences', ['fetchAbsenceTypes']),
-		...mapActions('permissions', ['endCorrection']),
+		...mapActions(useEmployeesStore, ['fetchCurrentEmployee', 'fetchFederalStates']),
+		...mapActions(useAbsencesStore, ['fetchAbsenceTypes']),
+		...mapActions(usePermissionsStore, ['endCorrection']),
 		openWhatsNew(event) {
 			// Der Eintrag rendert href="#"; ohne das springt der Router auf die Startansicht
 			event?.preventDefault()

@@ -1,6 +1,6 @@
 <template>
     <span class="info-icon-wrapper">
-        <NcPopover popup-role="tooltip" no-focus-trap>
+        <NcPopover no-focus-trap>
             <template #trigger>
                 <InformationOutline class="info-icon" :size="14" />
             </template>
@@ -12,7 +12,7 @@
 </template>
 
 <script>
-import NcPopover from '@nextcloud/vue/dist/Components/NcPopover.js'
+import NcPopover from '@nextcloud/vue/components/NcPopover'
 import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
 
 export default {

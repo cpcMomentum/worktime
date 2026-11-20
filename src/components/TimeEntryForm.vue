@@ -7,7 +7,7 @@
             <NcDateTimePicker id="date"
                 v-model="form.date"
                 type="date"
-                :format="'DD.MM.YYYY'" />
+                format="dd.MM.yyyy" />
         </div>
 
         <div class="form-row">
@@ -55,7 +55,7 @@
         </div>
 
         <div v-if="emergencyEligible" class="form-group emergency-group">
-            <NcCheckboxRadioSwitch :checked.sync="form.isEmergency" :disabled="isEdit">
+            <NcCheckboxRadioSwitch v-model="form.isEmergency" :disabled="isEdit">
                 {{ t('worktime', 'Notarbeit/Bereitschaft im Urlaub') }} <InfoIcon>{{ t('worktime', 'An diesem genehmigten Urlaubstag hast du außerplanmäßig gearbeitet. Der Urlaub bleibt bestehen, die Zeit zählt als Überstunden. Eine Begründung ist Pflicht, der/die Vorgesetzte wird informiert.') }}</InfoIcon>
             </NcCheckboxRadioSwitch>
         </div>
@@ -76,10 +76,10 @@
         </div>
 
         <div class="form-actions">
-            <NcButton type="tertiary" @click="cancel">
+            <NcButton variant="tertiary" @click="cancel">
                 {{ t('worktime', 'Abbrechen') }}
             </NcButton>
-            <NcButton type="primary" :disabled="!isValid" @click="save">
+            <NcButton variant="primary" :disabled="!isValid" @click="save">
                 {{ t('worktime', 'Speichern') }}
             </NcButton>
         </div>
@@ -91,10 +91,13 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
-import { mapGetters, mapActions } from 'vuex'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcDateTimePicker from '@nextcloud/vue/components/NcDateTimePicker'
+import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
+import { mapState, mapActions } from 'pinia'
+import { useEmployeesStore } from '../stores/employees.ts'
+import { usePermissionsStore } from '../stores/permissions.ts'
+import { useTimeEntriesStore } from '../stores/timeEntries.ts'
 import { formatDateISO } from '../utils/dateUtils.js'
 import { formatMinutesWithUnit, calculateWorkMinutes, suggestBreak as suggestBreakUtil } from '../utils/timeUtils.js'
 import { showErrorMessage } from '../utils/errorHandler.js'
@@ -105,6 +108,7 @@ import CorrectionReasonModal from '../components/CorrectionReasonModal.vue'
 
 export default {
     name: 'TimeEntryForm',
+    emits: ['cancel', 'saved'],
     components: {
         InfoIcon,
         ProjectSelect,
@@ -163,8 +167,8 @@ export default {
         }
     },
     computed: {
-        ...mapGetters('permissions', ['isCorrectionMode', 'requireProject', 'requireDescription']),
-        ...mapGetters('employees', ['currentEmployee']),
+        ...mapState(usePermissionsStore, ['isCorrectionMode', 'requireProject', 'requireDescription']),
+        ...mapState(useEmployeesStore, ['currentEmployee']),
         requiredBreak() {
             if (!this.form.startTime || !this.form.endTime) return 0
             const grossMinutes = calculateWorkMinutes(this.form.startTime, this.form.endTime, 0)
@@ -240,12 +244,12 @@ export default {
             if (!this.isEdit) {
                 this.onTimeChange()
             }
-        } catch (e) {
+        } catch {
             // Fallback bleibt bei 30/45
         }
     },
     methods: {
-        ...mapActions('timeEntries', ['createTimeEntry', 'updateTimeEntry']),
+        ...mapActions(useTimeEntriesStore, ['createTimeEntry', 'updateTimeEntry']),
         formatMinutes(minutes) {
             return formatMinutesWithUnit(minutes)
         },

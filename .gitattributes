@@ -1,6 +1,7 @@
-# Gebautes JS-Bundle: bei Merges die lokale (gebaute) Version behalten, nicht als
+# Gebaute Bundles: bei Merges die lokale (gebaute) Version behalten, nicht als
 # Diff oder Sprache werten.
 js/** merge=ours -diff linguist-generated
+css/** merge=ours -diff linguist-generated
 
 # Release-Hygiene (#702, cpcMomentum/nc-app-tooling#21): alles aus dem
 # `git archive HEAD`-Tarball halten, was NICHT in der Check-9-Whitelist steht
@@ -8,8 +9,6 @@ js/** merge=ours -diff linguist-generated
 # vendor). vendor bleibt drin — tcpdf ist eine Runtime-Dependency.
 # Verifikation: git archive HEAD | tar t | sed 's|/.*||' | sort -u
 /.claude export-ignore
-/.eslintignore export-ignore
-/.eslintrc.js export-ignore
 /.gitattributes export-ignore
 /.githooks export-ignore
 /.github export-ignore
@@ -18,7 +17,7 @@ js/** merge=ours -diff linguist-generated
 /composer.json export-ignore
 /composer.lock export-ignore
 /docs export-ignore
-/jest.config.js export-ignore
+/eslint.config.js export-ignore
 /package-lock.json export-ignore
 /package.json export-ignore
 /phpunit.xml export-ignore
@@ -26,4 +25,6 @@ js/** merge=ours -diff linguist-generated
 /sessions export-ignore
 /src export-ignore
 /tests export-ignore
-/webpack.config.js export-ignore
+/tsconfig.json export-ignore
+/vite.config.js export-ignore
+/vitest.config.ts export-ignore

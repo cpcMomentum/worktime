@@ -1,8 +1,8 @@
 <template>
     <div class="department-form">
         <div class="department-form-header">
-            <h3>{{ isEdit ? t('worktime', 'Abteilung bearbeiten') : t('worktime', 'Neue Abteilung') }}</h3>
-            <NcCheckboxRadioSwitch :checked.sync="form.isActive" type="switch">
+            <h3 id="wt-department-form-title">{{ isEdit ? t('worktime', 'Abteilung bearbeiten') : t('worktime', 'Neue Abteilung') }}</h3>
+            <NcCheckboxRadioSwitch v-model="form.isActive" type="switch">
                 {{ t('worktime', 'Aktiv') }}
             </NcCheckboxRadioSwitch>
         </div>
@@ -19,10 +19,10 @@
         </div>
 
         <div class="form-actions">
-            <NcButton type="tertiary" @click="cancel">
+            <NcButton variant="tertiary" @click="cancel">
                 {{ t('worktime', 'Abbrechen') }}
             </NcButton>
-            <NcButton type="primary" :disabled="!isValid" @click="save">
+            <NcButton variant="primary" :disabled="!isValid" @click="save">
                 {{ t('worktime', 'Speichern') }}
             </NcButton>
         </div>
@@ -30,13 +30,15 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
-import { mapActions } from 'vuex'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
+import { mapActions } from 'pinia'
+import { useDepartmentsStore } from '../stores/departments.ts'
 import { showSuccessMessage, showErrorMessage } from '../utils/errorHandler.js'
 
 export default {
     name: 'DepartmentForm',
+    emits: ['cancel', 'saved'],
     components: {
         NcButton,
         NcCheckboxRadioSwitch,
@@ -79,7 +81,7 @@ export default {
         },
     },
     methods: {
-        ...mapActions('departments', ['createDepartment', 'updateDepartment']),
+        ...mapActions(useDepartmentsStore, ['createDepartment', 'updateDepartment']),
         cancel() {
             this.$emit('cancel')
         },

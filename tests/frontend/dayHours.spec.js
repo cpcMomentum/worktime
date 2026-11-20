@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest'
 import { countWorkingDays, normalize, sum } from '../../src/utils/dayHours.js'
 
 const week = (overrides = {}) => ({ mon: 8, tue: 8, wed: 8, thu: 8, fri: 8, sat: 0, sun: 0, ...overrides })

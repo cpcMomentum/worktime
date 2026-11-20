@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '24'
       # Der Pruefer kommt aus nc-app-tooling und liegt erst nach dem Install vor.
       # Bewusst der normale Install statt eines direkten Griffs zum Tag: die
       # gepinnte Version steht in package.json, und die soll die einzige Stelle

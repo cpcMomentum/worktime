@@ -40,6 +40,11 @@ export default {
         }
     },
 
+    /**
+     * @param {number} employeeId
+     * @param {number|null} [year]
+     * @param {number|null} [month]
+     */
     async getByEmployee(employeeId, year = null, month = null) {
         try {
             const params = { employeeId }
@@ -79,6 +84,10 @@ export default {
         }
     },
 
+    /**
+     * @param {number} id
+     * @param {string|null} [reason]
+     */
     async delete(id, reason = null) {
         try {
             await api.delete(`/time-entries/${id}`, reason ? { params: { reason } } : undefined)
@@ -134,6 +143,11 @@ export default {
         }
     },
 
+    /**
+     * @param {number} employeeId
+     * @param {number|null} [projectId]
+     * @param {string|null} [description]
+     */
     async punchIn(employeeId, projectId = null, description = null) {
         try {
             const response = await api.post('/time-entries/punch-in', { employeeId, projectId, description })

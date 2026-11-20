@@ -1,6 +1,6 @@
 <template>
     <div class="day-panel">
-        <h3 class="dp-title">{{ dayTitle }}</h3>
+        <h3 id="wt-day-panel-title" class="dp-title">{{ dayTitle }}</h3>
         <p class="dp-sub">{{ subtitle }}</p>
 
         <!-- Kontext-Hinweis: Feiertag / Abwesenheit (Erfassen bleibt möglich) -->
@@ -12,7 +12,7 @@
             <div class="dp-note" :class="absenceColorClass(day.absence.type)">
                 {{ day.absence.typeName }}<span v-if="absenceDetail"> ({{ absenceDetail }})</span>
             </div>
-            <NcButton type="tertiary" class="dp-open-abs" @click="goToAbsence">
+            <NcButton variant="tertiary" class="dp-open-abs" @click="goToAbsence">
                 {{ t('worktime', 'In „Abwesenheit" öffnen') }}
             </NcButton>
         </template>
@@ -56,12 +56,12 @@
                         <div v-if="entry.description" class="dp-entry-desc">{{ entry.description }}</div>
                     </div>
                     <div v-if="!readonly" class="dp-entry-actions">
-                        <NcButton type="tertiary"
+                        <NcButton variant="tertiary"
                             :aria-label="t('worktime', 'Bearbeiten')"
                             @click="startEdit(entry)">
                             <template #icon><PencilIcon :size="18" /></template>
                         </NcButton>
-                        <NcButton type="tertiary"
+                        <NcButton variant="tertiary"
                             :aria-label="t('worktime', 'Löschen')"
                             @click="confirmDelete(entry)">
                             <template #icon><DeleteIcon :size="18" /></template>
@@ -77,7 +77,7 @@
                 <LockIcon :size="16" />
                 {{ lockedMessage }}
             </div>
-            <NcButton v-else type="primary" wide class="dp-add" @click="startAdd">
+            <NcButton v-else variant="primary" wide class="dp-add" @click="startAdd">
                 <template #icon><PlusIcon :size="20" /></template>
                 {{ t('worktime', 'Eintrag hinzufügen') }}
             </NcButton>
@@ -90,14 +90,17 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
+import NcButton from '@nextcloud/vue/components/NcButton'
 import PlusIcon from 'vue-material-design-icons/Plus.vue'
 import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import DeleteIcon from 'vue-material-design-icons/Delete.vue'
 import LockIcon from 'vue-material-design-icons/Lock.vue'
 import CalendarStarIcon from 'vue-material-design-icons/CalendarStar.vue'
 import AlertIcon from 'vue-material-design-icons/Alert.vue'
-import { mapActions, mapGetters } from 'vuex'
+import { mapState, mapActions } from 'pinia'
+import { useEmployeesStore } from '../stores/employees.ts'
+import { usePermissionsStore } from '../stores/permissions.ts'
+import { useTimeEntriesStore } from '../stores/timeEntries.ts'
 import TimeEntryForm from './TimeEntryForm.vue'
 import CorrectionReasonModal from './CorrectionReasonModal.vue'
 import { formatDateWithWeekday, getToday } from '../utils/dateUtils.js'
@@ -141,8 +144,8 @@ export default {
         }
     },
     computed: {
-        ...mapGetters('permissions', ['isCorrectionMode', 'emergencyWorkEnabled', 'punchOnly']),
-        ...mapGetters('employees', ['currentEmployee']),
+        ...mapState(usePermissionsStore, ['isCorrectionMode', 'emergencyWorkEnabled', 'punchOnly']),
+        ...mapState(useEmployeesStore, ['currentEmployee']),
         // #626: an einem genehmigten vollen Urlaubstag darf Notarbeit erfasst werden.
         emergencyEligibleDay() {
             const a = this.day && this.day.absence
@@ -226,7 +229,7 @@ export default {
         },
     },
     methods: {
-        ...mapActions('timeEntries', ['deleteTimeEntry']),
+        ...mapActions(useTimeEntriesStore, ['deleteTimeEntry']),
         hoursLabel(minutes) {
             return `${formatMinutes(minutes)} h`
         },

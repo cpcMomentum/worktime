@@ -78,7 +78,6 @@
 		"Korrektur-Modus · {name}": "Režim opravy · {name}",
 		"Änderungen werden protokolliert und dem Mitarbeiter angezeigt.": "Změny jsou zaznamenávány a zobrazeny zaměstnanci.",
 		"Korrektur beenden": "Ukončit opravu",
-		"Korrektur – Begründung": "Oprava – odůvodnění",
 		"Begründung für die Korrektur": "Odůvodnění opravy",
 		"Die Änderung wird protokolliert. In abgeschlossenen Monaten ist eine Begründung Pflicht; der Monat wird danach zur erneuten Genehmigung geöffnet.": "Změna bude zaznamenána. V uzavřených měsících je odůvodnění povinné; měsíc se poté otevře k opětovnému schválení.",
 		"Begründung (mindestens 10 Zeichen)": "Odůvodnění (alespoň 10 znaků)",
@@ -411,7 +410,6 @@
 		"Korrektur": "Oprava",
 		"Übertrag durchgeführt": "Převod proveden",
 		"Übertrag korrigiert": "Převod opraven",
-		"Übertrag korrigieren": "Opravit převod",
 		"Übertrag korrigieren für {name}": "Opravit převod pro {name}",
 		"Der bestehende Übertrag wird storniert und durch die neuen Werte ersetzt. Beide Einträge bleiben im Audit-Log erhalten.": "Stávající převod bude zrušen a nahrazen novými hodnotami. Obě položky zůstanou v auditním záznamu.",
 		"Neue Überstunden (Std.)": "Nové přesčasy (hod.)",
@@ -490,7 +488,6 @@
 		"Schließen": "Zavřít",
 		"Aktuell gültiger Wert aus dem Arbeitszeitprofil. Zum Ändern unten das Profil bearbeiten oder ein neues anlegen.": "Aktuálně platná hodnota z profilu pracovní doby. Pro změnu níže upravte profil nebo vytvořte nový.",
 		"Wochenstunden und Urlaubstage ergeben sich aus dem Arbeitszeitprofil unten und werden dort gepflegt.": "Týdenní hodiny a dny dovolené vyplývají z profilu pracovní doby níže a tam se také spravují.",
-		"Monat prüfen": "Zkontrolovat měsíc",
 		"Keine Einträge in diesem Monat.": "V tomto měsíci nejsou žádné záznamy.",
 		"Min": "min",
 		"PDF nach dem Genehmigen sofort archivieren": "PDF ihned po schválení archivovat",
@@ -536,7 +533,6 @@
 		"Notiz": "Poznámka",
 		"Auszahlung löschen": "Smazat výplatu",
 		"Noch keine Auszahlungen erfasst.": "Zatím nebyly zaznamenány žádné výplaty.",
-		"Überstunden auszahlen": "Proplatit přesčasy",
 		"Überstunden auszahlen für {name}": "Proplatit přesčasy pro {name}",
 		"Verfügbarer Saldo: {saldo} h": "Dostupné saldo: {saldo} h",
 		"Auszuzahlende Stunden": "Hodiny k proplacení",
@@ -910,7 +906,9 @@
 		"Verwaltung": "Správa",
 		"Es sind noch keine Mitarbeiter eingerichtet. Lege unter Verwaltung Mitarbeiter an, um zu starten.": "Zatím nejsou nastaveni žádní zaměstnanci. Přejděte do Správy a přidejte zaměstnance, abyste mohli začít.",
 		"Zur Verwaltung": "Přejít do správy",
-		"Maximale tägliche Arbeitszeit ist %s Stunden (siehe Verwaltung)": "Maximální denní pracovní doba je %s hodin (viz Správa)"
+		"Maximale tägliche Arbeitszeit ist %s Stunden (siehe Verwaltung)": "Maximální denní pracovní doba je %s hodin (viz Správa)",
+		"Hauptnavigation": "Hlavní navigace",
+		"Auswählen": "Vybrat"
 	},
 	"pluralForm": "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;"
 }

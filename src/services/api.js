@@ -8,7 +8,7 @@ const baseUrl = generateUrl('/apps/worktime/api')
 function browserTimeZone() {
     try {
         return Intl.DateTimeFormat().resolvedOptions().timeZone || ''
-    } catch (e) {
+    } catch {
         return ''
     }
 }

@@ -4,8 +4,8 @@
 -->
 <template>
     <nav class="settings-nav" :aria-label="t('worktime', 'Einstellungs-Navigation')">
-        <template v-for="group in groups">
-            <div v-if="group.items.length" :key="group.label" class="settings-nav-group">
+        <template v-for="group in groups" :key="group.label">
+            <div v-if="group.items.length" class="settings-nav-group">
                 {{ group.label }}
             </div>
             <button v-for="item in group.items"
@@ -28,6 +28,7 @@ import { translate as t } from '@nextcloud/l10n'
 // Gruppen-Navigation fuer Einstellungen und Verwaltung, Werte aus docs/design-system.md, Abschnitt 3.
 export default {
     name: 'SettingsNav',
+    emits: ['select'],
     props: {
         groups: {
             type: Array,

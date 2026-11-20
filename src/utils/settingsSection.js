@@ -23,7 +23,7 @@ export function sectionFromHash(hash) {
     }
     try {
         return decodeURIComponent(match[1])
-    } catch (e) {
+    } catch {
         return null
     }
 }
@@ -42,10 +42,10 @@ export function sectionHash(basePath, id) {
     return '#' + basePath + '?sec=' + encodeURIComponent(id)
 }
 
-// replaceState statt router.push: der Punktwechsel soll keinen eigenen Eintrag fuer "Zurueck" erzeugen.
+// replaceState statt router.push: kein eigener Zurueck-Eintrag; history.state bleibt fuer den Router erhalten
 export function writeSectionToUrl(basePath, id) {
     const target = sectionHash(basePath, id)
     if (typeof window !== 'undefined' && window.history?.replaceState && window.location.hash !== target) {
-        window.history.replaceState(null, '', target)
+        window.history.replaceState(window.history.state, '', target)
     }
 }

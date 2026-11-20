@@ -1,7 +1,7 @@
 <template>
-	<NcModal :name="t('worktime', 'Korrektur – Begründung')" @close="$emit('close')">
+	<NcModal label-id="wt-correction-reason-title" @close="$emit('close')">
 		<div class="correction-reason">
-			<h3>{{ t('worktime', 'Begründung für die Korrektur') }}</h3>
+			<h3 id="wt-correction-reason-title">{{ t('worktime', 'Begründung für die Korrektur') }}</h3>
 			<p class="correction-reason__hint">
 				{{ t('worktime', 'Die Änderung wird protokolliert. In abgeschlossenen Monaten ist eine Begründung Pflicht; der Monat wird danach zur erneuten Genehmigung geöffnet.') }}
 			</p>
@@ -18,10 +18,10 @@
 				</div>
 			</div>
 			<div class="form-actions">
-				<NcButton type="tertiary" @click="$emit('close')">
+				<NcButton variant="tertiary" @click="$emit('close')">
 					{{ t('worktime', 'Abbrechen') }}
 				</NcButton>
-				<NcButton type="primary"
+				<NcButton variant="primary"
 					:disabled="reason.trim().length < 10"
 					@click="confirm">
 					{{ t('worktime', 'Korrektur speichern') }}
@@ -32,8 +32,8 @@
 </template>
 
 <script>
-import NcModal from '@nextcloud/vue/dist/Components/NcModal.js'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
+import NcModal from '@nextcloud/vue/components/NcModal'
+import NcButton from '@nextcloud/vue/components/NcButton'
 
 export default {
 	name: 'CorrectionReasonModal',

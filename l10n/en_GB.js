@@ -177,7 +177,6 @@ OC.L10N.register(
     "Kein Projekt" : "No Project",
     "Bemerkung" : "Note",
     "Beschreibung" : "Description",
-    "Monat prüfen" : "Review month",
     "Keine Einträge in diesem Monat." : "No entries in this month.",
     "Min" : "min",
     "Speichern" : "Save",
@@ -460,7 +459,6 @@ OC.L10N.register(
     "Korrektur" : "Correction",
     "Übertrag durchgeführt" : "Carryover completed",
     "Übertrag korrigiert" : "Carryover corrected",
-    "Übertrag korrigieren" : "Correct carryover",
     "Übertrag korrigieren für {name}" : "Correct carryover for {name}",
     "Der bestehende Übertrag wird storniert und durch die neuen Werte ersetzt. Beide Einträge bleiben im Audit-Log erhalten." : "The existing carryover will be cancelled and replaced with new values. Both entries are preserved in the audit log.",
     "Neue Überstunden (Std.)" : "New overtime (hrs)",
@@ -522,7 +520,6 @@ OC.L10N.register(
     "Korrektur-Modus · {name}" : "Correction mode · {name}",
     "Änderungen werden protokolliert und dem Mitarbeiter angezeigt." : "Changes are logged and shown to the employee.",
     "Korrektur beenden" : "End correction",
-    "Korrektur – Begründung" : "Correction – reason",
     "Begründung für die Korrektur" : "Reason for the correction",
     "Die Änderung wird protokolliert. In abgeschlossenen Monaten ist eine Begründung Pflicht; der Monat wird danach zur erneuten Genehmigung geöffnet." : "The change is logged. In closed months a reason is mandatory; the month is then reopened for re-approval.",
     "Begründung (mindestens 10 Zeichen)" : "Reason (at least 10 characters)",
@@ -538,7 +535,6 @@ OC.L10N.register(
     "Notiz" : "Note",
     "Auszahlung löschen" : "Delete payout",
     "Noch keine Auszahlungen erfasst." : "No payouts recorded yet.",
-    "Überstunden auszahlen" : "Pay out overtime",
     "Überstunden auszahlen für {name}" : "Pay out overtime for {name}",
     "Verfügbarer Saldo: {saldo} h" : "Available balance: {saldo} h",
     "Auszuzahlende Stunden" : "Hours to pay out",
@@ -904,6 +900,8 @@ OC.L10N.register(
     "Verwaltung" : "Management",
     "Es sind noch keine Mitarbeiter eingerichtet. Lege unter Verwaltung Mitarbeiter an, um zu starten." : "No employees have been set up yet. Go to Management to add employees and get started.",
     "Zur Verwaltung" : "Go to Management",
-    "Maximale tägliche Arbeitszeit ist %s Stunden (siehe Verwaltung)" : "Maximum daily working time is %s hours (see Management)"
+    "Maximale tägliche Arbeitszeit ist %s Stunden (siehe Verwaltung)" : "Maximum daily working time is %s hours (see Management)",
+    "Hauptnavigation" : "Main navigation",
+    "Auswählen" : "Choose"
 },
 "nplurals=2; plural=(n != 1);");

@@ -2,7 +2,7 @@
     <div class="employee-list">
         <div v-if="hasDepartments && employees.length > 0" class="list-filter">
             <label for="employeeDeptFilter">{{ t('worktime', 'Abteilung') }}</label>
-            <NcSelect id="employeeDeptFilter"
+            <NcSelect label-outside id="employeeDeptFilter"
                 v-model="selectedFilterDepartment"
                 :options="departmentFilterOptions"
                 :placeholder="t('worktime', 'Alle Abteilungen')"
@@ -43,7 +43,7 @@
                         </div>
                     </td>
                     <td class="actions-col">
-                        <NcButton type="tertiary"
+                        <NcButton variant="tertiary"
                             :aria-label="t('worktime', 'Korrigieren')"
                             :title="t('worktime', 'Zeiten/Abwesenheiten dieses Mitarbeiters korrigieren')"
                             @click="$emit('correct', employee)">
@@ -51,7 +51,7 @@
                                 <Wrench :size="20" />
                             </template>
                         </NcButton>
-                        <NcButton type="tertiary"
+                        <NcButton variant="tertiary"
                             :aria-label="employee.isActive ? t('worktime', 'Ruhend setzen') : t('worktime', 'Reaktivieren')"
                             :title="employee.isActive ? t('worktime', 'Mitarbeiter ruhend setzen: keine neue Erfassung mehr, Daten bleiben einsehbar') : t('worktime', 'Mitarbeiter wieder aktiv setzen')"
                             @click="employee.isActive ? confirmResting(employee) : $emit('reactivate', employee)">
@@ -60,14 +60,14 @@
                                 <SleepOffIcon v-else :size="20" />
                             </template>
                         </NcButton>
-                        <NcButton type="tertiary"
+                        <NcButton variant="tertiary"
                             :aria-label="t('worktime', 'Bearbeiten')"
                             @click="$emit('edit', employee)">
                             <template #icon>
                                 <Pencil :size="20" />
                             </template>
                         </NcButton>
-                        <NcButton type="tertiary"
+                        <NcButton variant="tertiary"
                             :aria-label="t('worktime', 'Löschen')"
                             @click="confirmDelete(employee)">
                             <template #icon>
@@ -93,13 +93,13 @@
 
         <NcDialog v-if="showRestingDialog"
             :name="t('worktime', 'Mitarbeiter ruhend setzen?')"
-            @close="closeRestingDialog">
+            @update:open="closeRestingDialog">
             <p>
                 {{ t('worktime', '"{name}" kann dann keine Zeiten und Abwesenheiten mehr erfassen. Bestehende Daten bleiben einsehbar und exportierbar.', { name: employeeToRest?.fullName }) }}
                 <InfoIcon>{{ t('worktime', 'Gedacht für Elternzeit, Mutterschutz, Langzeiterkrankung oder Ausscheiden. Der Mitarbeiter bleibt in der Verwaltung sichtbar und sieht seine eigenen Daten weiterhin, kann aber nichts mehr erfassen. Personalverwaltung und Administration können zurückliegende Einträge weiterhin korrigieren. Jederzeit umkehrbar.') }}</InfoIcon>
             </p>
 
-            <NcTextField :value.sync="restingReason"
+            <NcTextField v-model="restingReason"
                 maxlength="500"
                 :label="t('worktime', 'Grund (optional)')"
                 :placeholder="t('worktime', 'z. B. Elternzeit, Langzeiterkrankung, ausgeschieden')" />
@@ -128,10 +128,10 @@
             </div>
 
             <template #actions>
-                <NcButton type="tertiary" @click="closeRestingDialog">
+                <NcButton variant="tertiary" @click="closeRestingDialog">
                     {{ t('worktime', 'Abbrechen') }}
                 </NcButton>
-                <NcButton type="primary" @click="restingConfirmed">
+                <NcButton variant="primary" @click="restingConfirmed">
                     {{ t('worktime', 'Ruhend setzen') }}
                 </NcButton>
             </template>
@@ -139,7 +139,7 @@
 
         <NcDialog v-if="showDeleteDialog"
             :name="t('worktime', 'Mitarbeiter löschen?')"
-            @close="closeDeleteDialog">
+            @update:open="closeDeleteDialog">
             <p>{{ t('worktime', 'Möchtest du den Mitarbeiter "{name}" wirklich löschen?', { name: employeeToDelete?.fullName }) }}</p>
 
             <p v-if="deleteImpactLoading" class="impact-loading">{{ t('worktime', 'Umfang wird ermittelt …') }}</p>
@@ -182,10 +182,10 @@
             </NcNoteCard>
 
             <template #actions>
-                <NcButton type="tertiary" @click="closeDeleteDialog">
+                <NcButton variant="tertiary" @click="closeDeleteDialog">
                     {{ t('worktime', 'Abbrechen') }}
                 </NcButton>
-                <NcButton type="error" @click="deleteConfirmed">
+                <NcButton variant="error" @click="deleteConfirmed">
                     {{ t('worktime', 'Löschen') }}
                 </NcButton>
             </template>
@@ -194,13 +194,14 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
-import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
-import NcNoteCard from '@nextcloud/vue/dist/Components/NcNoteCard.js'
-import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
-import { mapGetters } from 'vuex'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
+import NcDialog from '@nextcloud/vue/components/NcDialog'
+import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
+import NcTextField from '@nextcloud/vue/components/NcTextField'
+import NcSelect from '@nextcloud/vue/components/NcSelect'
+import { mapState } from 'pinia'
+import { useDepartmentsStore } from '../stores/departments.ts'
 import InfoIcon from './InfoIcon.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Close from 'vue-material-design-icons/Close.vue'
@@ -212,6 +213,7 @@ import EmployeeService from '../services/EmployeeService.js'
 
 export default {
     name: 'EmployeeList',
+    emits: ['correct', 'delete', 'edit', 'reactivate', 'rest'],
     components: {
         NcButton,
         NcEmptyContent,
@@ -249,7 +251,7 @@ export default {
         }
     },
     computed: {
-        ...mapGetters('departments', ['departments']),
+        ...mapState(useDepartmentsStore, ['departments']),
         hasDepartments() {
             return this.departments.length > 0
         },
@@ -320,7 +322,7 @@ export default {
         // Departments back the column join and the filter. EmployeeList is used by
         // employee managers, so the /all endpoint is permitted.
         if (!this.departments.length) {
-            this.$store.dispatch('departments/fetchDepartments', true)
+            useDepartmentsStore().fetchDepartments(true)
         }
     },
     methods: {
@@ -344,7 +346,7 @@ export default {
                 if (this.employeeToRest === employee) {
                     this.impact = impact
                 }
-            } catch (e) {
+            } catch {
                 // The dialog stays usable without the preview; the server-side
                 // clearing happens regardless of what we managed to show here.
                 if (this.employeeToRest === employee) {
@@ -378,7 +380,7 @@ export default {
                 if (this.employeeToDelete === employee) {
                     this.deleteImpact = impact
                 }
-            } catch (e) {
+            } catch {
                 // Without the preview the dialog still works, it just warns in
                 // general terms instead of naming numbers.
                 if (this.employeeToDelete === employee) {

@@ -1,2 +1,0 @@
-"use strict";(self.webpackChunkworktime=self.webpackChunkworktime||[]).push([["node_modules_nextcloud_dialogs_dist_chunks_index-Kg2hZgGF_mjs"],{8066(e,s,_){const o=(0,_(5471).$V)(()=>Promise.all([_.e("vendors-node_modules_nextcloud_vue_dist_chunks_NcProfileHoverCard-nmkKoCB1_mjs"),_.e("vendors-node_modules_nextcloud_dialogs_dist_chunks_FilePicker-ajWx2Snh_mjs")]).then(()=>_(9026)));_.d(s,["FilePickerVue",0,o])}}]);
-//# sourceMappingURL=worktime-5552986b7cd3bd00e16d.js.map

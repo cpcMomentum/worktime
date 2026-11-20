@@ -17,7 +17,7 @@
             <td v-if="!readonly" class="actions">
                 <div v-if="canEdit || canRemove" class="actions-buttons">
                     <NcButton v-if="canEdit"
-                        type="tertiary"
+                        variant="tertiary"
                         :aria-label="t('worktime', 'Bearbeiten')"
                         @click="$emit('edit')">
                         <template #icon>
@@ -25,7 +25,7 @@
                         </template>
                     </NcButton>
                     <NcButton v-if="canRemove"
-                        type="tertiary"
+                        variant="tertiary"
                         :aria-label="removeLabel"
                         @click="$emit('remove', absence)">
                         <template #icon>
@@ -50,21 +50,22 @@
                                 <NcDateTimePicker
                                     v-model="form.startDate"
                                     type="date"
-                                    :format="'DD.MM.YYYY'"
+                                    format="dd.MM.yyyy"
                                     class="inline-picker"
-                                    @input="onStartDateChange" />
+                                    @update:model-value="onStartDateChange" />
                                 <span class="date-separator">-</span>
                                 <NcDateTimePicker
                                     v-model="form.endDate"
                                     type="date"
-                                    :format="'DD.MM.YYYY'"
+                                    format="dd.MM.yyyy"
                                     class="inline-picker"
-                                    :disabled="form.scope < 1.0"
-                                    @input="onEndDateChange" />
+                                    :class="{ 'inline-picker--locked': form.scope < 1.0 }"
+                                    :inert="form.scope < 1.0 || null"
+                                    @update:model-value="onEndDateChange" />
                             </div>
                         </div>
                         <div class="field">
-                            <NcSelect
+                            <NcSelect label-outside
                                 v-model="selectedType"
                                 :options="typeOptions"
                                 :clearable="false"
@@ -88,7 +89,7 @@
                                     {{ t('worktime', '{hours} Std. krank', { hours: storedSickHours }) }}
                                 </span>
                                 <template v-else>
-                                    <NcSelect
+                                    <NcSelect label-outside
                                         v-model="selectedScope"
                                         :options="scopeOptions"
                                         :clearable="false"
@@ -107,7 +108,7 @@
                         </div>
                         <div class="field actions">
                             <div class="actions-buttons">
-                                <NcButton type="primary"
+                                <NcButton variant="primary"
                                     :disabled="!isValid"
                                     :aria-label="t('worktime', 'Speichern')"
                                     @click="save">
@@ -115,7 +116,7 @@
                                         <ContentSaveIcon :size="20" />
                                     </template>
                                 </NcButton>
-                                <NcButton type="tertiary"
+                                <NcButton variant="tertiary"
                                     :aria-label="t('worktime', 'Abbrechen')"
                                     @click="$emit('cancel')">
                                     <template #icon>
@@ -138,13 +139,13 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
-import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcSelect from '@nextcloud/vue/components/NcSelect'
+import NcDateTimePicker from '@nextcloud/vue/components/NcDateTimePicker'
 import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import CloseIcon from 'vue-material-design-icons/Close.vue'
 import ContentSaveIcon from 'vue-material-design-icons/ContentSave.vue'
-import { formatDateISO, getLocale, parseISODate } from '../utils/dateUtils.js'
+import { formatDateISO, getLocale, getToday, parseISODate } from '../utils/dateUtils.js'
 import { formatDateWithWeekday, formatDaysLabel, getAbsenceTypeLabel, getStatusLabel } from '../utils/formatters.js'
 import AbsenceService from '../services/AbsenceService.js'
 
@@ -196,8 +197,8 @@ export default {
         return {
             form: {
                 type: 'vacation',
-                startDate: new Date(),
-                endDate: new Date(),
+                startDate: parseISODate(getToday()),
+                endDate: parseISODate(getToday()),
                 note: '',
                 scope: 1.0,
                 // #625: krank-Stunden fuer einen Einzeltag (null = ganzer Tag).
@@ -304,10 +305,8 @@ export default {
         },
         isValid() {
             if (!this.form.type || !this.form.startDate || !this.form.endDate) return false
-            const start = new Date(this.form.startDate)
-            const end = new Date(this.form.endDate)
             // Der Resturlaub-Hinweis blockiert nicht; die Quote prüft das Backend
-            return start <= end
+            return formatDateISO(this.form.startDate) <= formatDateISO(this.form.endDate)
         },
         canEdit() {
             // Auch genehmigte Abwesenheiten können bearbeitet werden
@@ -359,7 +358,7 @@ export default {
             },
         },
     },
-    beforeDestroy() {
+    beforeUnmount() {
         clearTimeout(this.previewTimer)
         this.previewRequest++
     },
@@ -370,7 +369,7 @@ export default {
         },
         async fetchPreviewDays() {
             const request = this.previewRequest
-            let days = null
+            let days
             try {
                 const data = await AbsenceService.previewDays(
                     this.employeeId,
@@ -402,8 +401,8 @@ export default {
         resetForm() {
             this.form = {
                 type: 'vacation',
-                startDate: new Date(),
-                endDate: new Date(),
+                startDate: parseISODate(getToday()),
+                endDate: parseISODate(getToday()),
                 note: '',
                 scope: 1.0,
                 absenceHours: null,
@@ -421,11 +420,15 @@ export default {
             // explicitly, or whenever the start moves past the current end. This
             // prevents the phantom range that occurred when the end stayed on the
             // form default ("today") while the start was moved to an earlier day.
-            if (!this.endTouched || this.form.endDate < this.form.startDate) {
+            if (!this.endTouched || formatDateISO(this.form.endDate) < formatDateISO(this.form.startDate)) {
                 this.form.endDate = new Date(this.form.startDate)
             }
         },
         onEndDateChange() {
+            if (this.form.scope < 1.0) {
+                this.form.endDate = new Date(this.form.startDate)
+                return
+            }
             // User deliberately picked an end date -> stop auto-following the start.
             this.endTouched = true
         },
@@ -563,6 +566,10 @@ tr.creating {
 
 .inline-picker {
     width: 8rem;
+}
+
+.inline-picker--locked {
+    opacity: 0.5;
 }
 
 .inline-select {

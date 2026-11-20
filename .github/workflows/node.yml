@@ -1,6 +1,6 @@
 name: node
 
-# Frontend-Gate (worktime#405/#21). ESLint + Produktions-Build muessen gruen
+# Frontend-Gate (worktime#405/#21). ESLint, Typecheck, vitest und Produktions-Build muessen gruen
 # sein, bevor gemergt wird — ein gebrochener Build oder Lint-Fehler ist genau
 # der Regressionsvektor, den 0.12.0 gezeigt hat.
 
@@ -41,7 +41,10 @@ jobs:
       - name: ESLint
         run: npm run lint
 
-      - name: Frontend-Unit-Tests (Rolle×Route-Matrix, 0.12.0-Schutz)
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Frontend-Unit-Tests (vitest)
         run: npm test
 
       # Schema der whatsnew.json, zentral statt als PHPUnit-Methode je App
@@ -80,13 +83,6 @@ jobs:
       # Datei unveraendert daneben liegen bleibt. status --porcelain erfasst
       # geaendert, geloescht und neu.
       #
-      # Zum css/ im Pfad: worktime erzeugt gar keines. Der webpack-Build
-      # injiziert die Styles per style-loader IN das JS-Bundle (nachgesehen
-      # 15.08.2026: nach `npm run build` existiert kein css/-Verzeichnis).
-      # Die Styles sind damit ueber js/ mitgeprueft. Der Pfad bleibt trotzdem
-      # stehen, damit der Schritt in allen fuenf Apps gleich lautet -- und
-      # falls hier je ein CSS-Bundle entsteht, muesste `css/*.css` aus der
-      # .gitignore, sonst waere es weder getrackt noch geprueft.
       - name: Bundle passt zum Quellstand
         run: |
           ABWEICHUNG=$(git status --porcelain -- js/ css/)

@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest'
 import { archiveGroups, shouldOpen, KNOWN_ICONS } from '../../src/utils/whatsnew.js'
 
 /**
