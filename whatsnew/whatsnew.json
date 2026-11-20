@@ -11,7 +11,8 @@
 				"en": "WorkTime now runs on the same technical foundation as current Nextcloud. Selection and date fields look like in the rest of Nextcloud, and date fields can be cleared with one click. Features and calculations are unchanged.",
 				"cs": "WorkTime nyní běží na stejném technickém základu jako aktuální Nextcloud. Výběrová a datová pole vypadají jako ve zbytku Nextcloudu a datová pole lze vymazat jedním kliknutím. Funkce a výpočty se nemění."
 			},
-			"icon": "cog"
+			"icon": "cog",
+			"plus": false
 		}
 	],
 	"0.26.0": [
