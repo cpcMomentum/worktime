@@ -7,6 +7,8 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.27.0] - 2026-11-20
+
 ### Changed
 - **Technische Grundlage erneuert (#436)**: Die Oberfläche läuft jetzt auf Vue 3 mit den aktuellen Nextcloud-Bausteinen. An Funktionen und Berechnungen ändert sich nichts. Auswahlfelder und Datumsfelder sehen aus wie in der übrigen Nextcloud, Datumsfelder lassen sich mit einem Klick leeren. Dialogtitel stehen im Dialog statt über der Suchleiste.
 
