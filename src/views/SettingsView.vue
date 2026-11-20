@@ -15,7 +15,7 @@
                 v-show="activeSection === 'sec-mitarbeiter'"
                 id="sec-mitarbeiter" :name="t('worktime', 'Mitarbeiter')">
                 <div class="section-header-actions">
-                    <NcButton type="primary" @click="openNewEmployeeForm">
+                    <NcButton variant="primary" @click="openNewEmployeeForm">
                         <template #icon>
                             <Plus :size="20" />
                         </template>
@@ -32,7 +32,7 @@
                     @delete="handleDeleteEmployee" />
 
                 <NcModal v-if="showEmployeeForm"
-                    :name="editingEmployee ? t('worktime', 'Mitarbeiter bearbeiten') : t('worktime', 'Neuer Mitarbeiter')"
+                    label-id="wt-employee-form-title"
                     @close="closeEmployeeForm">
                     <EmployeeForm
                         :employee="editingEmployee"
@@ -46,7 +46,7 @@
                 v-show="activeSection === 'sec-abteilungen'"
                 id="sec-abteilungen" :name="t('worktime', 'Abteilungen')">
                 <div class="section-header-actions">
-                    <NcButton type="primary" @click="openNewDepartmentForm">
+                    <NcButton variant="primary" @click="openNewDepartmentForm">
                         <template #icon>
                             <Plus :size="20" />
                         </template>
@@ -60,7 +60,7 @@
                     @delete="handleDeleteDepartment" />
 
                 <NcModal v-if="showDepartmentForm"
-                    :name="editingDepartment ? t('worktime', 'Abteilung bearbeiten') : t('worktime', 'Neue Abteilung')"
+                    label-id="wt-department-form-title"
                     @close="closeDepartmentForm">
                     <DepartmentForm
                         :department="editingDepartment"
@@ -73,7 +73,7 @@
                 v-show="activeSection === 'sec-projekte'"
                 id="sec-projekte" :name="t('worktime', 'Projekte')">
                 <div class="section-header-actions">
-                    <NcButton type="primary" @click="openNewProjectForm">
+                    <NcButton variant="primary" @click="openNewProjectForm">
                         <template #icon>
                             <Plus :size="20" />
                         </template>
@@ -87,7 +87,7 @@
                     @delete="handleDeleteProject" />
 
                 <NcModal v-if="showProjectForm"
-                    :name="editingProject ? t('worktime', 'Projekt bearbeiten') : t('worktime', 'Neues Projekt')"
+                    label-id="wt-project-form-title"
                     @close="closeProjectForm">
                     <ProjectForm
                         :project="editingProject"
@@ -101,14 +101,14 @@
                 id="sec-berechtigungen" :name="t('worktime', 'Berechtigungen')">
                 <div class="form-group">
                     <label>{{ t('worktime', 'HR-Manager') }} <InfoIcon>{{ t('worktime', 'Admin: Volle Rechte (automatisch). HR-Manager: Mitarbeiter verwalten und Anträge genehmigen (manuell zuweisen). Vorgesetzter: Genehmigt Zeiten seines Teams (automatisch). Mitarbeiter: Eigene Zeiten erfassen (automatisch).') }}</InfoIcon></label>
-                    <NcSelect
+                    <NcSelect label-outside
                         v-model="selectedHrManagers"
                         :options="principalOptions"
                         :multiple="true"
-                        :close-on-select="false"
+                        keep-open
                         :placeholder="t('worktime', 'Benutzer oder Gruppen auswählen')"
                         label="label"
-                        @input="saveHrManagers">
+                        @update:model-value="saveHrManagers">
                         <template #option="{ label, sublabel, type }">
                             <div class="principal-option">
                                 <AccountGroup v-if="type === 'group'" :size="20" />
@@ -135,18 +135,18 @@
                 </div>
                 <div class="form-group">
                     <label for="defaultState">{{ t('worktime', 'Standard-Bundesland') }} <InfoIcon>{{ t('worktime', 'Neue Mitarbeiter bekommen dieses Bundesland automatisch zugewiesen. Jeder Mitarbeiter kann ein eigenes Bundesland haben — das bestimmt, welche Feiertage für ihn gelten.') }}</InfoIcon></label>
-                    <NcSelect id="defaultState"
+                    <NcSelect label-outside id="defaultState"
                         v-model="selectedFederalState"
                         :options="federalStateOptions"
-                        @input="saveSetting('default_federal_state')" />
+                        @update:model-value="saveSetting('default_federal_state')" />
                 </div>
                 <div class="form-group">
                     <label for="timezone">{{ t('worktime', 'Zeitzone') }} <InfoIcon>{{ t('worktime', 'Gilt für alle, deren Zeitzone Nextcloud nicht kennt, etwa nach Anmeldung per SSO oder nur über die App. Sie bestimmt die Uhrzeit der Stempeluhr und welcher Tag „heute“ ist. Die Zeitzone aus den persönlichen Nextcloud-Einstellungen hat immer Vorrang.') }}</InfoIcon></label>
-                    <NcSelect id="timezone"
+                    <NcSelect label-outside id="timezone"
                         v-model="selectedTimezone"
                         :options="timezoneOptions"
                         :clearable="false"
-                        @input="saveSetting('timezone')" />
+                        @update:model-value="saveSetting('timezone')" />
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -190,27 +190,27 @@
                     </p>
                 </div>
                 <div class="form-group">
-                    <NcCheckboxRadioSwitch :checked.sync="settings.require_project"
-                        @update:checked="saveSettingBool('require_project')">
+                    <NcCheckboxRadioSwitch v-model="settings.require_project"
+                        @update:model-value="saveSettingBool('require_project')">
                         {{ t('worktime', 'Projekt erforderlich') }} <InfoIcon>{{ t('worktime', 'Wenn aktiv, muss bei jedem Zeiteintrag ein Projekt ausgewählt werden — sonst lässt sich der Eintrag nicht speichern.') }}</InfoIcon>
                     </NcCheckboxRadioSwitch>
                 </div>
                 <div class="form-group">
-                    <NcCheckboxRadioSwitch :checked.sync="settings.require_description"
-                        @update:checked="saveSettingBool('require_description')">
+                    <NcCheckboxRadioSwitch v-model="settings.require_description"
+                        @update:model-value="saveSettingBool('require_description')">
                         {{ t('worktime', 'Beschreibung erforderlich') }} <InfoIcon>{{ t('worktime', 'Wenn aktiv, muss bei jedem Zeiteintrag eine Beschreibung eingetragen werden — sonst lässt sich der Eintrag nicht speichern.') }}</InfoIcon>
                     </NcCheckboxRadioSwitch>
                 </div>
                 <div class="form-group">
-                    <NcCheckboxRadioSwitch :checked.sync="settings.allow_future_entries"
-                        @update:checked="saveSettingBool('allow_future_entries')">
+                    <NcCheckboxRadioSwitch v-model="settings.allow_future_entries"
+                        @update:model-value="saveSettingBool('allow_future_entries')">
                         {{ t('worktime', 'Zukünftige Einträge erlauben') }} <InfoIcon>{{ t('worktime', 'Wenn deaktiviert, können Mitarbeiter nur für heute oder vergangene Tage Zeiten eintragen — nicht im Voraus.') }}</InfoIcon>
                     </NcCheckboxRadioSwitch>
                 </div>
                 <div class="form-group">
-                    <NcCheckboxRadioSwitch :checked.sync="settings.punch_only"
+                    <NcCheckboxRadioSwitch v-model="settings.punch_only"
                         :disabled="!punchOnlyLicensed"
-                        @update:checked="saveSettingBool('punch_only')">
+                        @update:model-value="saveSettingBool('punch_only')">
                         {{ t('worktime', 'Zeiterfassung nur über die Stempeluhr') }} <InfoIcon>{{ t('worktime', 'Wenn aktiv, können Mitarbeitende nur ein- und ausstempeln und Pausen setzen. Einträge anlegen, ändern oder löschen können nur HR und Admins.') }}</InfoIcon>
                     </NcCheckboxRadioSwitch>
                     <p v-if="!punchOnlyLicensed" class="help-text">
@@ -224,8 +224,8 @@
                 id="sec-genehmigung" :name="t('worktime', 'Genehmigung')"
                 :description="t('worktime', 'Steuert firmenweit, ob erfasste Zeiten durch Vorgesetzte freigegeben werden müssen. Diese Einstellung betrifft alle Mitarbeitenden.')">
                 <div class="form-group">
-                    <NcCheckboxRadioSwitch :checked.sync="settings.approval_required"
-                        @update:checked="confirmApprovalToggle">
+                    <NcCheckboxRadioSwitch v-model="settings.approval_required"
+                        @update:model-value="confirmApprovalToggle">
                         {{ t('worktime', 'Genehmigung erforderlich') }} <InfoIcon>{{ t('worktime', 'Wenn aktiv, durchlaufen Zeiteinträge einen Freigabe-Workflow: Mitarbeitende reichen den Monat ein, Vorgesetzte genehmigen ihn. Ist die Option deaktiviert, entfällt dieser Schritt und die erfassten Zeiten gelten direkt. Die Stundenberechnung ist in beiden Fällen gleich.') }}</InfoIcon>
                     </NcCheckboxRadioSwitch>
                 </div>
@@ -236,21 +236,21 @@
                 id="sec-absenzen" :name="t('worktime', 'Teiltages-Absenzen')"
                 :description="t('worktime', 'Steuert firmenweit stundenweise Krankmeldungen und Notarbeit an genehmigten Urlaubstagen. Standardmäßig deaktiviert.')">
                 <div class="form-group">
-                    <NcCheckboxRadioSwitch :checked.sync="settings.hourly_sick_enabled"
-                        @update:checked="saveSettingBool('hourly_sick_enabled')">
+                    <NcCheckboxRadioSwitch v-model="settings.hourly_sick_enabled"
+                        @update:model-value="saveSettingBool('hourly_sick_enabled')">
                         {{ t('worktime', 'Stundenweise Krankmeldung erlauben') }} <InfoIcon>{{ t('worktime', 'Wenn aktiv, können Mitarbeitende an einem Einzeltag stundenweise krank sein und die restliche Zeit arbeiten. Die Krank-Stunden füllen bis zum Tagessoll, ohne künstliche Überstunden.') }}</InfoIcon>
                     </NcCheckboxRadioSwitch>
                 </div>
                 <div class="form-group">
-                    <NcCheckboxRadioSwitch :checked.sync="settings.emergency_work_enabled"
-                        @update:checked="saveSettingBool('emergency_work_enabled')">
+                    <NcCheckboxRadioSwitch v-model="settings.emergency_work_enabled"
+                        @update:model-value="saveSettingBool('emergency_work_enabled')">
                         {{ t('worktime', 'Notarbeit im Urlaub erlauben') }} <InfoIcon>{{ t('worktime', 'Wenn aktiv, können Mitarbeitende an einem genehmigten vollen Urlaubstag Notarbeit erfassen. Der Urlaub bleibt bestehen, die Arbeit zählt als Überstunden. Eine Begründung ist Pflicht, der/die Vorgesetzte wird informiert.') }}</InfoIcon>
                     </NcCheckboxRadioSwitch>
                 </div>
                 <div class="form-group">
-                    <NcCheckboxRadioSwitch :checked.sync="settings.emergency_work_requires_approval"
+                    <NcCheckboxRadioSwitch v-model="settings.emergency_work_requires_approval"
                         :disabled="settings.emergency_work_enabled !== true"
-                        @update:checked="saveSettingBool('emergency_work_requires_approval')">
+                        @update:model-value="saveSettingBool('emergency_work_requires_approval')">
                         {{ t('worktime', 'Notarbeit muss freigegeben werden') }} <InfoIcon>{{ t('worktime', 'Wenn aktiv, zählt eine erfasste Notarbeit erst nach Freigabe durch den/die Vorgesetzte(n) in die Überstunden. Nur relevant, wenn Notarbeit im Urlaub erlaubt ist.') }}</InfoIcon>
                     </NcCheckboxRadioSwitch>
                 </div>
@@ -301,7 +301,7 @@
                 <div class="form-group">
                     <label>{{ t('worktime', 'Archiv-Ordner') }} <InfoIcon>{{ t('worktime', 'Wenn ein Monat genehmigt wird, speichert WorkTime automatisch einen PDF-Bericht in diesem Ordner. Der Ordner liegt in deinem persönlichen Speicher — nur du als Admin hast Zugriff. Die automatische Archivierung greift nur bei aktivierter Genehmigung; ist sie deaktiviert, nutze den PDF-Export in der Monatsübersicht.') }}</InfoIcon></label>
                     <div class="folder-picker">
-                        <NcButton type="secondary" @click="openFolderPicker">
+                        <NcButton variant="secondary" @click="openFolderPicker">
                             <template #icon>
                                 <Folder :size="20" />
                             </template>
@@ -333,7 +333,7 @@
                                     <span class="archive-failed-month">{{ archiveMonthLabel(job.month) }} {{ job.year }}</span>
                                     <span v-if="job.lastError" class="archive-failed-error">{{ job.lastError }}</span>
                                 </div>
-                                <NcButton type="secondary"
+                                <NcButton variant="secondary"
                                     :disabled="archiveRetryingId === job.id"
                                     @click="retryArchiveJob(job)">
                                     {{ t('worktime', 'Erneut versuchen') }}
@@ -348,7 +348,7 @@
                                 <span class="archive-done-date">{{ archiveDate(job.processedAt) }}</span>
                             </div>
                         </div>
-                        <NcButton type="tertiary" @click="loadArchiveStatus">
+                        <NcButton variant="tertiary" @click="loadArchiveStatus">
                             {{ t('worktime', 'Aktualisieren') }}
                         </NcButton>
                     </template>
@@ -371,19 +371,19 @@
                         {{ t('worktime', 'Heiligabend (24.12.)') }} <InfoIcon>{{ t('worktime', 'Halber freier Tag halbiert das Tagessoll, ganzer freier Tag setzt es auf null. Beispiel: Bei 8 Std./Tag werden 4 Std. bzw. 0 Std. als Soll angerechnet.') }}</InfoIcon>
                     </label>
                     <div class="special-day-options">
-                        <NcCheckboxRadioSwitch :checked.sync="settings.christmas_eve_half_day"
+                        <NcCheckboxRadioSwitch v-model="settings.christmas_eve_half_day"
                             value="none" name="christmas-eve-mode" type="radio"
-                            @update:checked="saveSetting('christmas_eve_half_day')">
+                            @update:model-value="saveSetting('christmas_eve_half_day')">
                             {{ t('worktime', 'Normaler Arbeitstag') }}
                         </NcCheckboxRadioSwitch>
-                        <NcCheckboxRadioSwitch :checked.sync="settings.christmas_eve_half_day"
+                        <NcCheckboxRadioSwitch v-model="settings.christmas_eve_half_day"
                             value="half" name="christmas-eve-mode" type="radio"
-                            @update:checked="saveSetting('christmas_eve_half_day')">
+                            @update:model-value="saveSetting('christmas_eve_half_day')">
                             {{ t('worktime', 'Halber freier Tag') }}
                         </NcCheckboxRadioSwitch>
-                        <NcCheckboxRadioSwitch :checked.sync="settings.christmas_eve_half_day"
+                        <NcCheckboxRadioSwitch v-model="settings.christmas_eve_half_day"
                             value="full" name="christmas-eve-mode" type="radio"
-                            @update:checked="saveSetting('christmas_eve_half_day')">
+                            @update:model-value="saveSetting('christmas_eve_half_day')">
                             {{ t('worktime', 'Ganzer freier Tag') }}
                         </NcCheckboxRadioSwitch>
                     </div>
@@ -393,19 +393,19 @@
                         {{ t('worktime', 'Silvester (31.12.)') }} <InfoIcon>{{ t('worktime', 'Halber freier Tag halbiert das Tagessoll, ganzer freier Tag setzt es auf null. Beispiel: Bei 8 Std./Tag werden 4 Std. bzw. 0 Std. als Soll angerechnet.') }}</InfoIcon>
                     </label>
                     <div class="special-day-options">
-                        <NcCheckboxRadioSwitch :checked.sync="settings.new_years_eve_half_day"
+                        <NcCheckboxRadioSwitch v-model="settings.new_years_eve_half_day"
                             value="none" name="new-years-eve-mode" type="radio"
-                            @update:checked="saveSetting('new_years_eve_half_day')">
+                            @update:model-value="saveSetting('new_years_eve_half_day')">
                             {{ t('worktime', 'Normaler Arbeitstag') }}
                         </NcCheckboxRadioSwitch>
-                        <NcCheckboxRadioSwitch :checked.sync="settings.new_years_eve_half_day"
+                        <NcCheckboxRadioSwitch v-model="settings.new_years_eve_half_day"
                             value="half" name="new-years-eve-mode" type="radio"
-                            @update:checked="saveSetting('new_years_eve_half_day')">
+                            @update:model-value="saveSetting('new_years_eve_half_day')">
                             {{ t('worktime', 'Halber freier Tag') }}
                         </NcCheckboxRadioSwitch>
-                        <NcCheckboxRadioSwitch :checked.sync="settings.new_years_eve_half_day"
+                        <NcCheckboxRadioSwitch v-model="settings.new_years_eve_half_day"
                             value="full" name="new-years-eve-mode" type="radio"
-                            @update:checked="saveSetting('new_years_eve_half_day')">
+                            @update:model-value="saveSetting('new_years_eve_half_day')">
                             {{ t('worktime', 'Ganzer freier Tag') }}
                         </NcCheckboxRadioSwitch>
                     </div>
@@ -432,15 +432,15 @@
                     </div>
                     <div class="form-group">
                         <label for="holidayStateFilter">{{ t('worktime', 'Bundesland') }}</label>
-                        <NcSelect id="holidayStateFilter"
+                        <NcSelect label-outside id="holidayStateFilter"
                             v-model="selectedHolidayStateFilter"
                             :options="holidayStateFilterOptions"
-                            @input="filterHolidays" />
+                            @update:model-value="filterHolidays" />
                     </div>
-                    <NcButton type="secondary" @click="generateHolidays">
+                    <NcButton variant="secondary" @click="generateHolidays">
                         {{ t('worktime', 'Auto-Generieren') }}
                     </NcButton>
-                    <NcButton type="primary" @click="openHolidayForm(null)">
+                    <NcButton variant="primary" @click="openHolidayForm(null)">
                         <template #icon>
                             <Plus :size="20" />
                         </template>
@@ -464,8 +464,8 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <template v-for="group in groupedHolidays">
-                            <tr :key="group.key" class="holiday-row" @click="toggleGroupExpand(group.key)">
+                        <template v-for="group in groupedHolidays" :key="group.key">
+                            <tr class="holiday-row" @click="toggleGroupExpand(group.key)">
                                 <td class="col-expand">
                                     <ChevronRight v-if="!expandedGroups.includes(group.key)" :size="20" />
                                     <ChevronDown v-else :size="20" />
@@ -482,14 +482,14 @@
                                     </span>
                                 </td>
                                 <td class="actions" @click.stop>
-                                    <NcButton type="tertiary"
+                                    <NcButton variant="tertiary"
                                         :aria-label="t('worktime', 'Bearbeiten')"
                                         @click="openHolidayGroupForm(group)">
                                         <template #icon>
                                             <Pencil :size="20" />
                                         </template>
                                     </NcButton>
-                                    <NcButton type="tertiary"
+                                    <NcButton variant="tertiary"
                                         :aria-label="t('worktime', 'Löschen')"
                                         @click="confirmDeleteHolidayGroup(group)">
                                         <template #icon>
@@ -521,16 +521,16 @@
                 </NcEmptyContent>
 
                 <NcModal v-if="showHolidayForm"
-                    :name="editingHoliday ? t('worktime', 'Feiertag bearbeiten') : t('worktime', 'Neuer Feiertag')"
+                    label-id="wt-holiday-form-title"
                     @close="closeHolidayForm">
                     <div class="holiday-form-modal">
-                        <h3>{{ editingHoliday ? t('worktime', 'Feiertag bearbeiten') : t('worktime', 'Neuer Feiertag') }}</h3>
+                        <h3 id="wt-holiday-form-title">{{ editingHoliday ? t('worktime', 'Feiertag bearbeiten') : t('worktime', 'Neuer Feiertag') }}</h3>
                         <div class="form-group">
                             <label for="holidayDate">{{ t('worktime', 'Datum') }}</label>
                             <NcDateTimePicker id="holidayDate"
-                                v-model="holidayFormData.date"
+                                v-model="holidayFormData.date" clearable
                                 type="date"
-                                :format="'DD.MM.YYYY'" />
+                                format="dd.MM.yyyy" />
                         </div>
                         <div class="form-group">
                             <label for="holidayName">{{ t('worktime', 'Name') }}</label>
@@ -543,18 +543,18 @@
                         <div v-if="!editingHoliday" class="form-group">
                             <label>{{ t('worktime', 'Bundesländer') }}</label>
                             <div class="state-selection">
-                                <NcButton type="tertiary" @click="selectAllStates">
+                                <NcButton variant="tertiary" @click="selectAllStates">
                                     {{ t('worktime', 'Alle auswählen') }}
                                 </NcButton>
-                                <NcButton type="tertiary" @click="deselectAllStates">
+                                <NcButton variant="tertiary" @click="deselectAllStates">
                                     {{ t('worktime', 'Alle abwählen') }}
                                 </NcButton>
                             </div>
                             <div class="state-checkboxes">
                                 <NcCheckboxRadioSwitch v-for="(label, id) in federalStates"
                                     :key="id"
-                                    :checked="holidayFormData.federalStates.includes(id)"
-                                    @update:checked="toggleState(id, $event)">
+                                    :model-value="holidayFormData.federalStates.includes(id)"
+                                    @update:model-value="toggleState(id, $event)">
                                     {{ label }}
                                 </NcCheckboxRadioSwitch>
                             </div>
@@ -569,16 +569,16 @@
                         </div>
                         <div class="form-group">
                             <label>{{ t('worktime', 'Umfang') }}</label>
-                            <NcSelect
+                            <NcSelect label-outside
                                 v-model="selectedHolidayScope"
                                 :options="scopeOptions"
                                 :clearable="false" />
                         </div>
                         <div class="form-actions">
-                            <NcButton type="tertiary" @click="closeHolidayForm">
+                            <NcButton variant="tertiary" @click="closeHolidayForm">
                                 {{ t('worktime', 'Abbrechen') }}
                             </NcButton>
-                            <NcButton type="primary"
+                            <NcButton variant="primary"
                                 :disabled="!isHolidayFormValid"
                                 @click="saveHoliday">
                                 {{ editingHoliday ? t('worktime', 'Speichern') : t('worktime', 'Erstellen') }}
@@ -669,14 +669,14 @@
                             </td>
                             <td class="carryover-actions">
                                 <NcButton v-if="emp.hasValues && !emp.isLocked"
-                                    type="primary"
+                                    variant="primary"
                                     :aria-label="t('worktime', 'Übertrag durchführen')"
                                     @click="lockCarryover(emp)">
                                     {{ t('worktime', 'Übertrag durchführen') }}
                                 </NcButton>
                                 <span v-else-if="emp.isLocked" class="carryover-locked-label">
                                     🔒 {{ t('worktime', 'Durchgeführt') }}
-                                    <NcButton type="tertiary"
+                                    <NcButton variant="tertiary"
                                         :aria-label="t('worktime', 'Korrektur')"
                                         @click="openCancelModal(emp)">
                                         {{ t('worktime', 'Korrektur') }}
@@ -690,10 +690,10 @@
 
                 <!-- Cancel/Correction Modal -->
                 <NcModal v-if="showCancelModal"
-                    :name="t('worktime', 'Übertrag korrigieren')"
+                    label-id="wt-carryover-cancel-title"
                     @close="closeCancelModal">
                     <div class="cancel-modal">
-                        <h3>{{ t('worktime', 'Übertrag korrigieren für {name}', { name: cancellingEmployee?.fullName }) }}</h3>
+                        <h3 id="wt-carryover-cancel-title">{{ t('worktime', 'Übertrag korrigieren für {name}', { name: cancellingEmployee?.fullName }) }}</h3>
                         <p class="cancel-modal__hint">
                             {{ t('worktime', 'Der bestehende Übertrag wird storniert und durch die neuen Werte ersetzt. Beide Einträge bleiben im Audit-Log erhalten.') }}
                         </p>
@@ -721,10 +721,10 @@
                                 required>
                         </div>
                         <div class="form-actions">
-                            <NcButton type="tertiary" @click="closeCancelModal">
+                            <NcButton variant="tertiary" @click="closeCancelModal">
                                 {{ t('worktime', 'Abbrechen') }}
                             </NcButton>
-                            <NcButton type="primary"
+                            <NcButton variant="primary"
                                 :disabled="!cancelForm.reason.trim()"
                                 @click="submitCancel">
                                 {{ t('worktime', 'Stornieren & Ersetzen') }}
@@ -759,7 +759,7 @@
                                 <span v-else class="value-na">–</span>
                             </td>
                             <td class="carryover-actions">
-                                <NcButton type="secondary"
+                                <NcButton variant="secondary"
                                     :disabled="emp.saldoMinutes <= 0"
                                     @click="openPayoutModal(emp)">
                                     <template #icon>
@@ -792,7 +792,7 @@
                             <td class="text-right">{{ formatAbsHours(p.minutes) }} h</td>
                             <td class="payout-note">{{ p.note }}</td>
                             <td class="carryover-actions">
-                                <NcButton type="tertiary"
+                                <NcButton variant="tertiary"
                                     :aria-label="t('worktime', 'Auszahlung löschen')"
                                     @click="deletePayout(p)">
                                     <template #icon>
@@ -808,10 +808,10 @@
 
                 <!-- Payout Modal -->
                 <NcModal v-if="showPayoutModal"
-                    :name="t('worktime', 'Überstunden auszahlen')"
+                    label-id="wt-payout-title"
                     @close="closePayoutModal">
                     <div class="cancel-modal">
-                        <h3>{{ t('worktime', 'Überstunden auszahlen für {name}', { name: payoutTarget?.fullName }) }}</h3>
+                        <h3 id="wt-payout-title">{{ t('worktime', 'Überstunden auszahlen für {name}', { name: payoutTarget?.fullName }) }}</h3>
                         <p class="cancel-modal__hint">
                             {{ t('worktime', 'Verfügbarer Saldo: {saldo} h', { saldo: formatSignedHours(payoutTarget?.saldoMinutes || 0) }) }}
                         </p>
@@ -837,10 +837,10 @@
                         </div>
                         <p v-if="payoutError" class="payout-error">{{ payoutError }}</p>
                         <div class="form-actions">
-                            <NcButton type="tertiary" @click="closePayoutModal">
+                            <NcButton variant="tertiary" @click="closePayoutModal">
                                 {{ t('worktime', 'Abbrechen') }}
                             </NcButton>
-                            <NcButton type="primary" @click="submitPayout">
+                            <NcButton variant="primary" @click="submitPayout">
                                 {{ t('worktime', 'Auszahlung erfassen') }}
                             </NcButton>
                         </div>
@@ -860,16 +860,16 @@
 </template>
 
 <script>
-import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
-import NcModal from '@nextcloud/vue/dist/Components/NcModal.js'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcSelect from '@nextcloud/vue/components/NcSelect'
+import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
+import NcModal from '@nextcloud/vue/components/NcModal'
 import SettingsCard from '../components/SettingsCard.vue'
 import SettingsNav from '../components/SettingsNav.vue'
 import { pickSection, sectionFromHash, writeSectionToUrl } from '../utils/settingsSection.js'
-import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js'
-import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
+import NcDateTimePicker from '@nextcloud/vue/components/NcDateTimePicker'
+import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import Account from 'vue-material-design-icons/Account.vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
@@ -892,8 +892,13 @@ import Beach from 'vue-material-design-icons/Beach.vue'
 import SwapHorizontalBold from 'vue-material-design-icons/SwapHorizontalBold.vue'
 import CashMultiple from 'vue-material-design-icons/CashMultiple.vue'
 import MedicalBag from 'vue-material-design-icons/MedicalBag.vue'
-import { getFilePickerBuilder, FilePickerType, DialogBuilder } from '@nextcloud/dialogs'
-import { mapGetters, mapActions } from 'vuex'
+import { getFilePickerBuilder, FilePickerClosed, DialogBuilder } from '@nextcloud/dialogs'
+import { mapState, mapActions } from 'pinia'
+import { useDepartmentsStore } from '../stores/departments.ts'
+import { useEmployeesStore } from '../stores/employees.ts'
+import { useHolidaysStore } from '../stores/holidays.ts'
+import { usePermissionsStore } from '../stores/permissions.ts'
+import { useProjectsStore } from '../stores/projects.ts'
 import SettingsService from '../services/SettingsService.js'
 import HolidayService from '../services/HolidayService.js'
 import EmployeeService from '../services/EmployeeService.js'
@@ -1013,17 +1018,17 @@ export default {
         }
     },
     computed: {
-        ...mapGetters('permissions', ['canManageSettings', 'canManageHolidays', 'canManageEmployees', 'canManageProjects', 'punchOnlyLicensed']),
+        ...mapState(usePermissionsStore, ['canManageSettings', 'canManageHolidays', 'canManageEmployees', 'canManageProjects', 'punchOnlyLicensed']),
         archiveFailedJobs() {
             return (this.archiveStatus.jobs || []).filter(j => j.status === 'failed')
         },
         archiveDoneJobs() {
             return (this.archiveStatus.jobs || []).filter(j => j.status === 'completed').slice(0, 5)
         },
-        ...mapGetters('holidays', ['federalStates']),
-        ...mapGetters('employees', { employees: 'employees' }),
-        ...mapGetters('projects', { allProjects: 'projects' }),
-        ...mapGetters('departments', { allDepartments: 'departments' }),
+        ...mapState(useHolidaysStore, ['federalStates']),
+        ...mapState(useEmployeesStore, { employees: 'employees' }),
+        ...mapState(useProjectsStore, { allProjects: 'projects' }),
+        ...mapState(useDepartmentsStore, { allDepartments: 'departments' }),
         carryoverYearOptions() {
             const current = getCurrentYear()
             const years = []
@@ -1036,10 +1041,10 @@ export default {
             return Object.entries(this.federalStates).map(([id, label]) => ({ id, label }))
         },
         timezoneOptions() {
-            let zones = []
+            let zones
             try {
                 zones = Intl.supportedValuesOf('timeZone')
-            } catch (e) {
+            } catch {
                 zones = ['Europe/Berlin', 'Europe/Vienna', 'Europe/Zurich']
             }
             if (!zones.includes('UTC')) zones = [...zones, 'UTC']
@@ -1178,7 +1183,7 @@ export default {
         // die Firmen-Einstellungen als auch die Bundesland-Labels geladen sind.
         Promise.all([
             this.loadSettings(),
-            this.$store.dispatch('holidays/fetchFederalStates'),
+            useHolidaysStore().fetchFederalStates(),
         ]).then(() => {
             const defaultState = this.settings.default_federal_state
             if (defaultState && !this.selectedHolidayStateFilter) {
@@ -1187,7 +1192,7 @@ export default {
             }
         })
         if (this.canManageEmployees) {
-            this.$store.dispatch('employees/fetchEmployees')
+            useEmployeesStore().fetchEmployees()
             this.fetchDepartments(true)
         }
         if (this.canManageSettings) {
@@ -1215,10 +1220,10 @@ export default {
         },
     },
     methods: {
-        ...mapActions('holidays', ['generateAllHolidays']),
-        ...mapActions('employees', ['deleteEmployee']),
-        ...mapActions('projects', ['fetchProjects', 'deleteProject']),
-        ...mapActions('departments', ['fetchDepartments', 'deleteDepartment']),
+        ...mapActions(useHolidaysStore, ['generateAllHolidays']),
+        ...mapActions(useEmployeesStore, ['deleteEmployee']),
+        ...mapActions(useProjectsStore, ['fetchProjects', 'deleteProject']),
+        ...mapActions(useDepartmentsStore, ['fetchDepartments', 'deleteDepartment']),
         archiveMonthLabel(month) {
             return getMonthName(month)
         },
@@ -1226,7 +1231,7 @@ export default {
             if (!iso) return ''
             try {
                 return new Date(iso).toLocaleString(getLocale(), { dateStyle: 'short', timeStyle: 'short' })
-            } catch (e) {
+            } catch {
                 return ''
             }
         },
@@ -1326,14 +1331,14 @@ export default {
                 .setButtons([
                     {
                         label: this.t('worktime', 'Abbrechen'),
-                        type: 'secondary',
+                        variant: 'secondary',
                         callback: () => {
                             this.settings.approval_required = !newValue
                         },
                     },
                     {
                         label: this.t('worktime', 'Fortfahren'),
-                        type: 'primary',
+                        variant: 'primary',
                         callback: () => {
                             this.saveSettingBool('approval_required')
                         },
@@ -1341,7 +1346,9 @@ export default {
                 ])
                 .build()
 
-            dialog.show()
+            dialog.show().catch(() => {
+                this.settings.approval_required = !newValue
+            })
         },
         generateHolidays() {
             const dialog = new DialogBuilder()
@@ -1350,12 +1357,12 @@ export default {
                 .setButtons([
                     {
                         label: this.t('worktime', 'Abbrechen'),
-                        type: 'secondary',
+                        variant: 'secondary',
                         callback: () => {},
                     },
                     {
                         label: this.t('worktime', 'Fortfahren'),
-                        type: 'primary',
+                        variant: 'primary',
                         callback: () => {
                             this.runGenerateHolidays()
                         },
@@ -1363,7 +1370,7 @@ export default {
                 ])
                 .build()
 
-            dialog.show()
+            dialog.show().catch(() => {})
         },
         async runGenerateHolidays() {
             try {
@@ -1389,7 +1396,7 @@ export default {
         },
         startCorrection(employee) {
             // Enter HR correction mode for this employee and open the tracking view.
-            this.$store.dispatch('permissions/startCorrection', {
+            usePermissionsStore().startCorrection({
                 employeeId: employee.id,
                 employeeName: employee.fullName,
             })
@@ -1402,8 +1409,8 @@ export default {
         async onEmployeeSaved() {
             const wasEditing = !!this.editingEmployee
             this.closeEmployeeForm()
-            await this.$store.dispatch('employees/fetchEmployees')
-            await this.$store.dispatch('permissions/fetchPermissions')
+            await useEmployeesStore().fetchEmployees()
+            await usePermissionsStore().fetchPermissions()
             showSuccessMessage(
                 wasEditing
                     ? this.t('worktime', 'Mitarbeiter aktualisiert')
@@ -1413,7 +1420,7 @@ export default {
         async handleSetResting({ employee, reason, restingFrom }) {
             try {
                 await EmployeeService.setResting(employee.id, true, reason || null, restingFrom || null)
-                await this.$store.dispatch('employees/fetchEmployees', true)
+                await useEmployeesStore().fetchEmployees(true)
                 showSuccessMessage(this.t('worktime', 'Mitarbeiter ruhend gesetzt'))
             } catch (error) {
                 showErrorMessage(error.message)
@@ -1422,7 +1429,7 @@ export default {
         async handleReactivate(employee) {
             try {
                 await EmployeeService.setResting(employee.id, false)
-                await this.$store.dispatch('employees/fetchEmployees', true)
+                await useEmployeesStore().fetchEmployees(true)
                 showSuccessMessage(this.t('worktime', 'Mitarbeiter reaktiviert'))
             } catch (error) {
                 showErrorMessage(error.message)
@@ -1481,7 +1488,7 @@ export default {
                 await this.deleteDepartment(department.id)
                 showSuccessMessage(this.t('worktime', 'Abteilung gelöscht'))
                 // Members lost their assignment server-side; refresh the list.
-                await this.$store.dispatch('employees/fetchEmployees')
+                await useEmployeesStore().fetchEmployees()
             } catch (error) {
                 showErrorMessage(error.message)
             }
@@ -1520,14 +1527,14 @@ export default {
                 .setButtons([
                     {
                         label: this.t('worktime', 'Abbrechen'),
-                        type: 'secondary',
+                        variant: 'secondary',
                         callback: () => {
                             this.hrManagers = [...this.previousHrManagers]
                         },
                     },
                     {
                         label: this.t('worktime', 'Entfernen'),
-                        type: 'error',
+                        variant: 'error',
                         callback: () => {
                             this.persistHrManagers()
                         },
@@ -1535,7 +1542,9 @@ export default {
                 ])
                 .build()
 
-            dialog.show()
+            dialog.show().catch(() => {
+                this.hrManagers = [...this.previousHrManagers]
+            })
         },
         async persistHrManagers() {
             try {
@@ -1549,20 +1558,24 @@ export default {
         },
         async openFolderPicker() {
             try {
-                const picker = getFilePickerBuilder(this.t('worktime', 'Archiv-Ordner auswählen'))
+                const path = await getFilePickerBuilder(this.t('worktime', 'Archiv-Ordner auswählen'))
                     .setMultiSelect(false)
-                    .setType(FilePickerType.Choose)
+                    .setMimeTypeFilter(['httpd/unix-directory'])
                     .allowDirectories(true)
+                    .addButton({
+                        label: this.t('worktime', 'Auswählen'),
+                        variant: 'primary',
+                        callback: () => {},
+                    })
                     .build()
-
-                const path = await picker.pick()
+                    .pick()
                 if (path) {
                     this.settings.pdf_archive_path = path
                     await this.saveSetting('pdf_archive_path')
                 }
             } catch (error) {
-                // User cancelled the picker - this is not an error
-                if (error?.message !== 'User cancelled') {
+                // Schliessen ohne Auswahl ist kein Fehler
+                if (!(error instanceof FilePickerClosed)) {
                     console.error('Folder picker error:', error)
                 }
             }
@@ -1697,12 +1710,12 @@ export default {
                 .setButtons([
                     {
                         label: this.t('worktime', 'Abbrechen'),
-                        type: 'secondary',
+                        variant: 'secondary',
                         callback: () => {},
                     },
                     {
                         label: this.t('worktime', 'Löschen'),
-                        type: 'error',
+                        variant: 'error',
                         callback: async () => {
                             await this.deleteHolidayGroup(group)
                         },
@@ -1710,7 +1723,7 @@ export default {
                 ])
                 .build()
 
-            dialog.show()
+            dialog.show().catch(() => {})
         },
         async deleteHolidayGroup(group) {
             if (!group) return

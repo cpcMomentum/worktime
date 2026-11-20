@@ -34,7 +34,7 @@
                         <td class="text-right"><strong>{{ schedule.weeklyHours }}</strong></td>
                         <td class="text-right">{{ schedule.vacationDays }}</td>
                         <td class="actions-col">
-                            <NcButton type="tertiary"
+                            <NcButton variant="tertiary"
                                 :aria-label="t('worktime', 'Bearbeiten')"
                                 @click="startEdit(schedule)">
                                 <template #icon>
@@ -42,7 +42,7 @@
                                 </template>
                             </NcButton>
                             <NcButton v-if="schedules.length > 1"
-                                type="tertiary"
+                                variant="tertiary"
                                 :aria-label="t('worktime', 'Löschen')"
                                 @click="confirmDelete(schedule)">
                                 <template #icon>
@@ -55,7 +55,7 @@
             </table>
 
             <div v-if="!showForm" class="add-button">
-                <NcButton type="secondary" @click="startCreate">
+                <NcButton variant="secondary" @click="startCreate">
                     <template #icon>
                         <Plus :size="20" />
                     </template>
@@ -68,10 +68,10 @@
 
                 <div v-if="!editingSchedule" class="form-group">
                     <label>{{ t('worktime', 'Gültig ab') }} *</label>
-                    <NcDateTimePicker v-model="form.validFrom"
+                    <NcDateTimePicker v-model="form.validFrom" clearable
                         type="date"
-                        :format="'DD.MM.YYYY'"
-                        :disabled-date="disablePastDates" />
+                        format="dd.MM.yyyy"
+                        :min="minValidFrom || undefined" />
                 </div>
 
                 <DayHoursInput v-model="form.dayHours" :max-daily-hours="maxDailyHours" />
@@ -92,10 +92,10 @@
                 </div>
 
                 <div class="form-actions">
-                    <NcButton type="tertiary" @click="cancelForm">
+                    <NcButton variant="tertiary" @click="cancelForm">
                         {{ t('worktime', 'Abbrechen') }}
                     </NcButton>
-                    <NcButton type="primary" :disabled="!isFormValid" @click="saveForm">
+                    <NcButton variant="primary" :disabled="!isFormValid" @click="saveForm">
                         {{ t('worktime', 'Speichern') }}
                     </NcButton>
                 </div>
@@ -104,13 +104,13 @@
 
         <NcDialog v-if="showDeleteDialog"
             :name="t('worktime', 'Profil löschen?')"
-            @close="showDeleteDialog = false">
+            @update:open="showDeleteDialog = false">
             <p>{{ t('worktime', 'Möchtest du dieses Arbeitszeitprofil wirklich löschen?') }}</p>
             <template #actions>
-                <NcButton type="tertiary" @click="showDeleteDialog = false">
+                <NcButton variant="tertiary" @click="showDeleteDialog = false">
                     {{ t('worktime', 'Abbrechen') }}
                 </NcButton>
-                <NcButton type="error" @click="deleteConfirmed">
+                <NcButton variant="error" @click="deleteConfirmed">
                     {{ t('worktime', 'Löschen') }}
                 </NcButton>
             </template>
@@ -119,16 +119,17 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js'
-import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
-import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcDateTimePicker from '@nextcloud/vue/components/NcDateTimePicker'
+import NcDialog from '@nextcloud/vue/components/NcDialog'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Close from 'vue-material-design-icons/Close.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import InfoIcon from './InfoIcon.vue'
 import DayHoursInput from './DayHoursInput.vue'
-import { mapGetters, mapActions } from 'vuex'
+import { mapState, mapActions } from 'pinia'
+import { useWorkSchedulesStore } from '../stores/workSchedules.ts'
 import { showError, showWarning } from '@nextcloud/dialogs'
 import { formatDateISO, getLocale } from '../utils/dateUtils.js'
 import { countWorkingDays, sum } from '../utils/dayHours.js'
@@ -136,6 +137,7 @@ import SettingsService from '../services/SettingsService.js'
 
 export default {
     name: 'WorkScheduleEditor',
+    emits: ['updated'],
     components: {
         NcButton,
         NcDateTimePicker,
@@ -174,7 +176,7 @@ export default {
         }
     },
     computed: {
-        ...mapGetters('workSchedules', ['schedules', 'loading']),
+        ...mapState(useWorkSchedulesStore, ['schedules', 'loading']),
         // #571 (D5): number of days with >0 hours in the current form.
         workingDaysInForm() {
             return countWorkingDays(this.form.dayHours)
@@ -212,7 +214,7 @@ export default {
                         if (val) {
                             this.maxDailyHours = parseFloat(val)
                         }
-                    } catch (e) {
+                    } catch {
                         // Fallback bleibt bei 10
                     }
                 }
@@ -231,17 +233,13 @@ export default {
         },
     },
     methods: {
-        ...mapActions('workSchedules', ['fetchSchedules', 'createSchedule', 'updateSchedule', 'deleteSchedule']),
+        ...mapActions(useWorkSchedulesStore, ['fetchSchedules', 'createSchedule', 'updateSchedule', 'deleteSchedule']),
         getEmptyForm() {
             return {
                 validFrom: new Date(),
                 dayHours: { mon: 8, tue: 8, wed: 8, thu: 8, fri: 8, sat: 0, sun: 0 },
                 vacationDays: 30,
             }
-        },
-        disablePastDates(date) {
-            if (!this.minValidFrom) return false
-            return date < this.minValidFrom
         },
         formatDate(dateStr) {
             if (!dateStr) return '-'

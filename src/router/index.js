@@ -1,6 +1,5 @@
-import Vue from 'vue'
-import VueRouter from 'vue-router'
-import store from '../store/index.js'
+import { createRouter, createWebHashHistory } from 'vue-router'
+import { usePermissionsStore } from '../stores/permissions.ts'
 import { canAccess } from './access.js'
 
 import TimeTrackingView from '../views/TimeTrackingView.vue'
@@ -12,15 +11,13 @@ import SettingsView from '../views/SettingsView.vue'
 import AuditView from '../views/AuditView.vue'
 import EvaluationView from '../views/EvaluationView.vue'
 
-Vue.use(VueRouter)
-
 // Rollenabhaengiges Default-Ziel (#394): Mitarbeiter -> Zeiterfassung, sonst die
 // erste fuer die Rolle sinnvolle Ansicht. Verhindert, dass ein Approver/HR ohne
 // eigenes Mitarbeiter-Profil per Default-Redirect auf einer leeren Zeiterfassung
 // landet. /tracking bleibt bewusst ungeguardet (universeller, loop-sicherer
 // Fallback fuer den degenerierten Fall ohne jede Rolle).
 const defaultRoute = () => {
-	const perms = store.getters['permissions/permissions']
+	const perms = usePermissionsStore().permissions
 	if (perms.employeeId) return '/tracking'
 	if (perms.canManageSettings || perms.canManageEmployees) return '/settings'
 	if (perms.canApprove || perms.isAdmin || perms.isHrManager) return '/approvals'
@@ -81,27 +78,26 @@ const routes = [
 	},
 	// Fallback: unbekannte Routes -> Zeiterfassung
 	{
-		path: '*',
+		path: '/:pathMatch(.*)*',
 		redirect: defaultRoute,
 	},
 ]
 
-const router = new VueRouter({
-	mode: 'hash',
-	base: '/apps/worktime/',
+const router = createRouter({
+	history: createWebHashHistory(),
 	routes,
 })
 
 // Route guard: single source of truth in access.js — the same rules feed the
 // App.vue navigation, so a tab can never be visible-but-blocked (0.12.0 #357).
-router.beforeEach((to, from, next) => {
+router.beforeEach((to) => {
 	// #631: gate on the correction-aware profile so an HR/admin correcting an
 	// employee can reach the correctable routes even without an own profile.
-	const perms = store.getters['permissions/accessProfile']
+	const perms = usePermissionsStore().accessProfile
 	if (!canAccess(to.name, perms)) {
-		return next('/')
+		return '/'
 	}
-	next()
+	return true
 })
 
 // View-Persistierung bei Navigation

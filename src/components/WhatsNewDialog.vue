@@ -37,7 +37,7 @@
             </div>
 
             <div class="actions">
-                <NcButton type="primary" @click="dismiss">
+                <NcButton variant="primary" @click="dismiss">
                     {{ archive ? t('worktime', 'Schließen') : t('worktime', 'Alles klar') }}
                 </NcButton>
             </div>
@@ -52,8 +52,8 @@
  * wegklickbar (Knopf, X, Escape) und blockiert nie. Faellt der Abruf aus, bleibt
  * das Fenster einfach aus.
  */
-import NcModal from '@nextcloud/vue/dist/Components/NcModal.js'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
+import NcModal from '@nextcloud/vue/components/NcModal'
+import NcButton from '@nextcloud/vue/components/NcButton'
 import AccountGroupIcon from 'vue-material-design-icons/AccountGroup.vue'
 import ChartBarIcon from 'vue-material-design-icons/ChartBar.vue'
 import CogIcon from 'vue-material-design-icons/Cog.vue'
@@ -127,7 +127,7 @@ export default {
                 this.archive = false
                 this.open = true
             }
-        } catch (e) {
+        } catch {
             // Kein Fenster ist besser als eine Fehlermeldung ueber Neuerungen.
         }
     },
@@ -142,7 +142,7 @@ export default {
                 this.groups = archiveGroups(await WhatsNewService.getAll())
                 this.archive = true
                 this.open = true
-            } catch (e) {
+            } catch {
                 // Kein Fenster ist besser als eine Fehlermeldung ueber Neuerungen.
             }
         },
@@ -154,7 +154,7 @@ export default {
             }
             try {
                 await WhatsNewService.markSeen()
-            } catch (e) {
+            } catch {
                 // Quittung verloren: das Fenster kommt beim naechsten Start noch
                 // einmal. Das ist die harmlosere Seite des Fehlers.
             }

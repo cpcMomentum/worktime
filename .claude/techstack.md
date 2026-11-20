@@ -18,10 +18,10 @@
 ### Frontend
 | Technologie | Version | Zweck |
 |-------------|---------|-------|
-| Vue.js | 2 (LTS) oder 3 | Frontend Framework |
+| Vue.js | 3 | Frontend Framework |
 | @nextcloud/vue | latest | NC-native UI-Komponenten (NcAppContent, NcButton, etc.) |
-| Vuex 3 / Pinia | - | State Management (Vuex fuer Vue 2, Pinia fuer Vue 3) |
-| vue-router | 3 (Vue 2) / 4 (Vue 3) | Routing — **Hash-Mode Pflicht, NICHT History-Mode** |
+| Pinia | - | State Management (Stores in TypeScript unter src/stores/) |
+| vue-router | fuer Vue 3 | Routing — **Hash-Mode Pflicht, NICHT History-Mode** |
 | @nextcloud/axios | latest | HTTP Client |
 | @nextcloud/router | latest | URL-Generierung (generateUrl()) |
 | @nextcloud/l10n | latest | Uebersetzungen |
@@ -45,9 +45,10 @@
 ### JavaScript
 | Tool | Zweck |
 |------|-------|
-| webpack (@nextcloud/webpack-vue-config) | Build |
+| Vite (vite.config.js, ES-Modul nach js/, Stylesheet nach css/) | Build |
 | eslint (@nextcloud/eslint-config) | Linting |
-| jest | Tests (optional) |
+| vitest | Frontend-Tests (tests/frontend/) |
+| tsc --noEmit | Typecheck der Stores |
 
 ## 3. Infrastructure
 
@@ -114,7 +115,7 @@
 ├── CLAUDE.md
 ├── composer.json
 ├── package.json
-├── webpack.config.js       # require('@nextcloud/webpack-vue-config')
+├── vite.config.js          # Vite-Build, js/ und css/ werden committet
 └── README.md
 ```
 
@@ -274,7 +275,7 @@ Diese Skills sind fuer NC-Apps **nicht relevant** und sollten uebersprungen werd
 - **Kein Docker fuer die App:** Docker wird nur als Entwicklungsumgebung genutzt (Nextcloud-Instanz im Container)
 - **API-Einschraenkung:** Nur `OCP\*` APIs erlaubt, niemals `OC\*` (privat, instabil)
 - **DB-Zugriff:** Nur ueber OCP Query Builder, kein raw SQL, kein eigenes ORM
-- **Frontend:** Vue 2/3 mit @nextcloud/vue Komponenten, Hash-Routing, webpack
+- **Frontend:** Vue 3 mit @nextcloud/vue 9 Komponenten, Hash-Routing, Vite
 - **Auth:** Bereitgestellt vom Host — `OCP\IUserSession`, kein eigenes Auth-System
 - **Lizenz:** AGPL-3.0-or-later ist Pflicht (App Store)
 - **Build-Output committen:** `js/` Verzeichnis mit kompiliertem JS muss committed werden

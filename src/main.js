@@ -1,47 +1,38 @@
-import Vue from 'vue'
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 import App from './App.vue'
-import store from './store/index.js'
 import router from './router/index.js'
+import { usePermissionsStore } from './stores/permissions.ts'
 import { shouldRestoreLastView } from './utils/settingsSection.js'
+import { registerModalEscape } from './utils/modalEscape.js'
 import { translate, translatePlural } from '@nextcloud/l10n'
 import { loadState } from '@nextcloud/initial-state'
+import '@nextcloud/dialogs/style.css'
 
-// eslint-disable-next-line
-__webpack_public_path__ = OC.linkTo('worktime', 'js/')
+const app = createApp(App)
+// Pinia vor dem Router: der Routen-Waechter liest den Berechtigungs-Store
+app.use(createPinia())
 
-Vue.prototype.t = translate
-Vue.prototype.n = translatePlural
+app.config.globalProperties.t = translate
+app.config.globalProperties.n = translatePlural
 
-// Get permissions from Nextcloud Initial State API
-const permissions = loadState('worktime', 'permissions', {})
-
-// Initialize permissions in store
-store.dispatch('permissions/initFromInitialState', permissions)
-
-// Whether the approval workflow is active for this instance
-const approvalRequired = loadState('worktime', 'approvalRequired', false)
-store.dispatch('permissions/setApprovalRequired', approvalRequired)
-
-// Company rules: required project / description on time entries (#329)
-store.dispatch('permissions/setRequiredFields', {
+const permissionsStore = usePermissionsStore()
+permissionsStore.initFromInitialState(loadState('worktime', 'permissions', {}))
+permissionsStore.setApprovalRequired(loadState('worktime', 'approvalRequired', false))
+permissionsStore.setRequiredFields({
 	requireProject: loadState('worktime', 'requireProject', false),
 	requireDescription: loadState('worktime', 'requireDescription', false),
 })
+permissionsStore.setHourlySickEnabled(loadState('worktime', 'hourlySickEnabled', false))
+permissionsStore.setEmergencyWorkEnabled(loadState('worktime', 'emergencyWorkEnabled', false))
 
-// #625: whether hourly sick leave for a single day is offered in the absence form.
-store.dispatch('permissions/setHourlySickEnabled', loadState('worktime', 'hourlySickEnabled', false))
+app.use(router)
 
-// #626: whether emergency work during an approved vacation day is offered.
-store.dispatch('permissions/setEmergencyWorkEnabled', loadState('worktime', 'emergencyWorkEnabled', false))
-
-// Restore last view from localStorage (if the URL names no route of its own)
+// Letzte Ansicht wiederherstellen, wenn die URL keine eigene Route nennt
 const savedView = localStorage.getItem('worktime_last_view')
 if (shouldRestoreLastView(window.location.hash, savedView)) {
 	router.push(savedView).catch(() => {})
 }
 
-new Vue({
-	router,
-	store,
-	render: h => h(App),
-}).$mount('.app-worktime')
+app.mount('.app-worktime')
+registerModalEscape()

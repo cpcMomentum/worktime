@@ -1,7 +1,7 @@
 <template>
-    <NcModal :name="t('worktime', 'Audit-Eintrag')" @close="$emit('close')">
+    <NcModal label-id="wt-audit-detail-title" @close="$emit('close')">
         <div class="audit-detail">
-            <h3>{{ t('worktime', 'Audit-Eintrag') }}</h3>
+            <h3 id="wt-audit-detail-title">{{ t('worktime', 'Audit-Eintrag') }}</h3>
 
             <!-- Metadaten -->
             <div class="audit-detail__card">
@@ -63,7 +63,7 @@
             </div>
 
             <div class="audit-detail__actions">
-                <NcButton type="primary" @click="$emit('close')">
+                <NcButton variant="primary" @click="$emit('close')">
                     {{ t('worktime', 'Schließen') }}
                 </NcButton>
             </div>
@@ -72,8 +72,8 @@
 </template>
 
 <script>
-import NcModal from '@nextcloud/vue/dist/Components/NcModal.js'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
+import NcModal from '@nextcloud/vue/components/NcModal'
+import NcButton from '@nextcloud/vue/components/NcButton'
 import { getLocale } from '../utils/dateUtils.js'
 
 // ISO-Zeitstempel mit Uhrzeit, z.B. 2026-06-19T20:48:02+00:00 (reine Datumswerte wie

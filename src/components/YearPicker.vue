@@ -1,6 +1,6 @@
 <template>
     <div class="year-picker">
-        <NcButton type="tertiary"
+        <NcButton variant="tertiary"
             :aria-label="t('worktime', 'Vorheriges Jahr')"
             :disabled="min !== null && year <= min"
             @click="$emit('update', year - 1)">
@@ -13,7 +13,7 @@
             {{ year }}
         </span>
 
-        <NcButton type="tertiary"
+        <NcButton variant="tertiary"
             :aria-label="t('worktime', 'Nächstes Jahr')"
             :disabled="max !== null && year >= max"
             @click="$emit('update', year + 1)">
@@ -25,12 +25,13 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
+import NcButton from '@nextcloud/vue/components/NcButton'
 import ChevronLeft from 'vue-material-design-icons/ChevronLeft.vue'
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue'
 
 export default {
     name: 'YearPicker',
+    emits: ['update'],
     components: {
         NcButton,
         ChevronLeft,

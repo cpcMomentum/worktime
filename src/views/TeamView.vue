@@ -43,12 +43,13 @@
 </template>
 
 <script>
-import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
-import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import AccountGroupIcon from 'vue-material-design-icons/AccountGroup.vue'
 import FlagOutline from 'vue-material-design-icons/FlagOutline.vue'
 import TagOutline from 'vue-material-design-icons/TagOutline.vue'
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { usePermissionsStore } from '../stores/permissions.ts'
 import MonthPicker from '../components/MonthPicker.vue'
 import AbsenceTimeline from '../components/AbsenceTimeline.vue'
 import AbsenceService from '../services/AbsenceService.js'
@@ -78,7 +79,7 @@ export default {
         }
     },
     computed: {
-        ...mapGetters('permissions', ['isAdmin', 'isHrManager', 'canApprove']),
+        ...mapState(usePermissionsStore, ['isAdmin', 'isHrManager', 'canApprove']),
         isPrivileged() {
             return this.isAdmin || this.isHrManager || this.canApprove
         },

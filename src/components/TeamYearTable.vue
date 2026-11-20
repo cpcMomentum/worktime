@@ -79,7 +79,7 @@
 </template>
 
 <script>
-import NcAvatar from '@nextcloud/vue/dist/Components/NcAvatar.js'
+import NcAvatar from '@nextcloud/vue/components/NcAvatar'
 import CheckCircleIcon from 'vue-material-design-icons/CheckCircle.vue'
 import ClockOutlineIcon from 'vue-material-design-icons/ClockOutline.vue'
 import CloseCircleIcon from 'vue-material-design-icons/CloseCircle.vue'

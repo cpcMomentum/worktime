@@ -42,7 +42,7 @@
                 </span>
 
                 <NcButton v-if="!isYearMode && approvalRequired && monthStatus === 'draft' && hasSubmittableEntries"
-                    type="secondary"
+                    variant="secondary"
                     @click="confirmSubmitMonth">
                     <template #icon>
                         <SendIcon :size="20" />
@@ -68,7 +68,7 @@
 
             <div class="view-header__nav">
                 <NcButton v-if="!isYearMode"
-                    type="tertiary"
+                    variant="tertiary"
                     @click="goToToday">
                     {{ t('worktime', 'Heute') }}
                 </NcButton>
@@ -154,6 +154,7 @@
 
         <NcModal v-if="isNarrow && showDayModal && selectedDay"
             size="small"
+            label-id="wt-day-panel-title"
             @close="showDayModal = false">
             <div class="modal-panel">
                 <DayDetailPanel :day="selectedDay"
@@ -165,30 +166,31 @@
 
         <NcModal v-if="showRangeModal"
             size="small"
-            :name="t('worktime', 'Arbeitszeitnachweis über Zeitraum')"
+            label-id="wt-range-modal-title"
             @close="showRangeModal = false">
             <div class="range-modal">
+                <h3 id="wt-range-modal-title">{{ t('worktime', 'Arbeitszeitnachweis über Zeitraum') }}</h3>
                 <p class="range-hint">
                     {{ t('worktime', 'Erzeugt einen Arbeitszeitnachweis als PDF für einen frei wählbaren Zeitraum (z. B. vom 20. bis zum 20.).') }}
                 </p>
                 <div class="range-fields">
                     <div class="form-group">
                         <label>{{ t('worktime', 'Von') }}</label>
-                        <NcDateTimePicker v-model="rangeStart" type="date" :format="'DD.MM.YYYY'" />
+                        <NcDateTimePicker v-model="rangeStart" clearable type="date" format="dd.MM.yyyy" />
                     </div>
                     <div class="form-group">
                         <label>{{ t('worktime', 'Bis') }}</label>
-                        <NcDateTimePicker v-model="rangeEnd" type="date" :format="'DD.MM.YYYY'" />
+                        <NcDateTimePicker v-model="rangeEnd" clearable type="date" format="dd.MM.yyyy" />
                     </div>
                 </div>
                 <p v-if="rangeInvalid" class="range-error">
                     {{ t('worktime', 'Das Enddatum darf nicht vor dem Startdatum liegen.') }}
                 </p>
                 <div class="range-actions">
-                    <NcButton type="tertiary" @click="showRangeModal = false">
+                    <NcButton variant="tertiary" @click="showRangeModal = false">
                         {{ t('worktime', 'Abbrechen') }}
                     </NcButton>
-                    <NcButton type="primary" :disabled="!rangeStart || !rangeEnd || rangeInvalid" @click="exportRangePdf">
+                    <NcButton variant="primary" :disabled="!rangeStart || !rangeEnd || rangeInvalid" @click="exportRangePdf">
                         <template #icon>
                             <FilePdfBox :size="20" />
                         </template>
@@ -201,12 +203,12 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcActions from '@nextcloud/vue/dist/Components/NcActions.js'
-import NcActionButton from '@nextcloud/vue/dist/Components/NcActionButton.js'
-import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
-import NcModal from '@nextcloud/vue/dist/Components/NcModal.js'
-import NcDateTimePicker from '@nextcloud/vue/dist/Components/NcDateTimePicker.js'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcActions from '@nextcloud/vue/components/NcActions'
+import NcActionButton from '@nextcloud/vue/components/NcActionButton'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import NcModal from '@nextcloud/vue/components/NcModal'
+import NcDateTimePicker from '@nextcloud/vue/components/NcDateTimePicker'
 import SendIcon from 'vue-material-design-icons/Send.vue'
 import LockIcon from 'vue-material-design-icons/Lock.vue'
 import InfoIcon from '../components/InfoIcon.vue'
@@ -215,7 +217,11 @@ import FilePdfBox from 'vue-material-design-icons/FilePdfBox.vue'
 import FormatListBulletedIcon from 'vue-material-design-icons/FormatListBulleted.vue'
 import CalendarIcon from 'vue-material-design-icons/Calendar.vue'
 import ChartBarIcon from 'vue-material-design-icons/ChartBar.vue'
-import { mapGetters, mapActions, mapState } from 'vuex'
+import { mapState, mapActions } from 'pinia'
+import { useEmployeesStore } from '../stores/employees.ts'
+import { usePermissionsStore } from '../stores/permissions.ts'
+import { useProjectsStore } from '../stores/projects.ts'
+import { useTimeEntriesStore } from '../stores/timeEntries.ts'
 import { showSuccess, showError } from '@nextcloud/dialogs'
 import { confirmAction } from '../utils/errorHandler.js'
 import { getCurrentYear, getCurrentMonth, getMonthDays, getToday, formatDateISO, getLocale } from '../utils/dateUtils.js'
@@ -287,11 +293,11 @@ export default {
         }
     },
     computed: {
-        ...mapState('timeEntries', ['selectedMonth']),
-        ...mapGetters('timeEntries', ['timeEntries', 'loading']),
-        ...mapGetters('permissions', ['activeEmployeeId', 'approvalRequired', 'employeeId', 'isEmployee', 'isCorrectionMode']),
-        ...mapGetters('employees', ['currentEmployee']),
-        ...mapGetters('projects', ['activeProjects']),
+        ...mapState(useTimeEntriesStore, ['selectedMonth']),
+        ...mapState(useTimeEntriesStore, ['timeEntries', 'loading']),
+        ...mapState(usePermissionsStore, ['activeEmployeeId', 'approvalRequired', 'employeeId', 'isEmployee', 'isCorrectionMode']),
+        ...mapState(useEmployeesStore, ['currentEmployee']),
+        ...mapState(useProjectsStore, ['activeProjects']),
         projects() {
             return this.activeProjects
         },
@@ -301,7 +307,7 @@ export default {
             return this.isEmployee && !!this.employeeId && !this.isCorrectionMode
         },
         rangeInvalid() {
-            return !!(this.rangeStart && this.rangeEnd && new Date(this.rangeEnd) < new Date(this.rangeStart))
+            return !!(this.rangeStart && this.rangeEnd && formatDateISO(this.rangeEnd) < formatDateISO(this.rangeStart))
         },
         effectiveLayout() {
             if (this.layoutMode === 'year') return 'year'
@@ -454,11 +460,11 @@ export default {
         window.addEventListener('resize', this.updateIsNarrow)
         this.scrollToTodayPending = this.isCurrentMonth()
     },
-    beforeDestroy() {
+    beforeUnmount() {
         window.removeEventListener('resize', this.updateIsNarrow)
     },
     methods: {
-        ...mapActions('timeEntries', ['fetchTimeEntries', 'setSelectedMonth']),
+        ...mapActions(useTimeEntriesStore, ['fetchTimeEntries', 'setSelectedMonth']),
         updateIsNarrow() {
             this.isNarrow = window.innerWidth <= 920
         },

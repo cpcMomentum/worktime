@@ -35,8 +35,9 @@ let instanceCounter = 0
 // v-model: { mon..sun } as numbers; an emptied field counts as 0.
 export default {
     name: 'DayHoursInput',
+    emits: ['update:modelValue'],
     props: {
-        value: {
+        modelValue: {
             type: Object,
             required: true,
         },
@@ -50,7 +51,7 @@ export default {
         return {
             uid: instanceCounter,
             // Typed text, kept while editing so a cleared field does not jump to "0".
-            raw: this.toRaw(this.value),
+            raw: this.toRaw(this.modelValue),
             weekdays: [
                 { key: 'mon', label: this.t('worktime', 'Mo') },
                 { key: 'tue', label: this.t('worktime', 'Di') },
@@ -64,11 +65,11 @@ export default {
     },
     computed: {
         weeklyTotal() {
-            return sum(this.value).toLocaleString(getLocale(), { maximumFractionDigits: 2 })
+            return sum(this.modelValue).toLocaleString(getLocale(), { maximumFractionDigits: 2 })
         },
     },
     watch: {
-        value: {
+        modelValue: {
             deep: true,
             handler(value) {
                 DAY_KEYS.forEach((key) => {
@@ -90,7 +91,7 @@ export default {
             return normalize(this.raw[key]) > this.maxDailyHours
         },
         emitDay(key) {
-            this.$emit('input', { ...this.value, [key]: normalize(this.raw[key]) })
+            this.$emit('update:modelValue', { ...this.modelValue, [key]: normalize(this.raw[key]) })
         },
     },
 }

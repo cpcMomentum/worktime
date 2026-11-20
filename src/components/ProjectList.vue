@@ -28,14 +28,14 @@
                         </span>
                     </td>
                     <td class="actions-col">
-                        <NcButton type="tertiary"
+                        <NcButton variant="tertiary"
                             :aria-label="t('worktime', 'Bearbeiten')"
                             @click="$emit('edit', project)">
                             <template #icon>
                                 <Pencil :size="20" />
                             </template>
                         </NcButton>
-                        <NcButton type="tertiary"
+                        <NcButton variant="tertiary"
                             :aria-label="t('worktime', 'Löschen')"
                             @click="confirmDelete(project)">
                             <template #icon>
@@ -57,14 +57,14 @@
 
         <NcDialog v-if="showDeleteDialog"
             :name="t('worktime', 'Projekt löschen?')"
-            @close="showDeleteDialog = false">
+            @update:open="showDeleteDialog = false">
             <p>{{ t('worktime', 'Möchtest du das Projekt "{name}" wirklich löschen?', { name: projectToDelete?.name }) }}</p>
             <p class="delete-warning">{{ t('worktime', 'Diese Aktion kann nicht rückgängig gemacht werden.') }}</p>
             <template #actions>
-                <NcButton type="tertiary" @click="showDeleteDialog = false">
+                <NcButton variant="tertiary" @click="showDeleteDialog = false">
                     {{ t('worktime', 'Abbrechen') }}
                 </NcButton>
-                <NcButton type="error" @click="deleteConfirmed">
+                <NcButton variant="error" @click="deleteConfirmed">
                     {{ t('worktime', 'Löschen') }}
                 </NcButton>
             </template>
@@ -73,15 +73,16 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
-import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
+import NcDialog from '@nextcloud/vue/components/NcDialog'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Close from 'vue-material-design-icons/Close.vue'
 import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
 
 export default {
     name: 'ProjectList',
+    emits: ['delete', 'edit'],
     components: {
         NcButton,
         NcEmptyContent,

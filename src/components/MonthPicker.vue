@@ -1,6 +1,6 @@
 <template>
     <div class="month-picker">
-        <NcButton type="tertiary"
+        <NcButton variant="tertiary"
             :aria-label="t('worktime', 'Vorheriger Monat')"
             @click="previousMonth">
             <template #icon>
@@ -12,7 +12,7 @@
             {{ monthName }} {{ year }}
         </span>
 
-        <NcButton type="tertiary"
+        <NcButton variant="tertiary"
             :aria-label="t('worktime', 'Nächster Monat')"
             @click="nextMonth">
             <template #icon>
@@ -23,13 +23,14 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
+import NcButton from '@nextcloud/vue/components/NcButton'
 import ChevronLeft from 'vue-material-design-icons/ChevronLeft.vue'
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue'
 import { getMonthName } from '../utils/dateUtils.js'
 
 export default {
     name: 'MonthPicker',
+    emits: ['update'],
     components: {
         NcButton,
         ChevronLeft,

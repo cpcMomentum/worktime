@@ -14,7 +14,6 @@
 		"Kalender": "Kalender",
 		"Korrektur beenden": "Korrektur beenden",
 		"Korrektur speichern": "Korrektur speichern",
-		"Korrektur – Begründung": "Korrektur – Begründung",
 		"Korrektur-Modus · {name}": "Korrektur-Modus · {name}",
 		"Korrigieren": "Korrigieren",
 		"Liste": "Liste",
@@ -187,7 +186,6 @@
 		"Kein Projekt": "Kein Projekt",
 		"Bemerkung": "Bemerkung",
 		"Beschreibung": "Beschreibung",
-		"Monat prüfen": "Monat prüfen",
 		"Keine Einträge in diesem Monat.": "Keine Einträge in diesem Monat.",
 		"Min": "Min",
 		"Speichern": "Speichern",
@@ -470,7 +468,6 @@
 		"Korrektur": "Korrektur",
 		"Übertrag durchgeführt": "Übertrag durchgeführt",
 		"Übertrag korrigiert": "Übertrag korrigiert",
-		"Übertrag korrigieren": "Übertrag korrigieren",
 		"Übertrag korrigieren für {name}": "Übertrag korrigieren für {name}",
 		"Der bestehende Übertrag wird storniert und durch die neuen Werte ersetzt. Beide Einträge bleiben im Audit-Log erhalten.": "Der bestehende Übertrag wird storniert und durch die neuen Werte ersetzt. Beide Einträge bleiben im Audit-Log erhalten.",
 		"Neue Überstunden (Std.)": "Neue Überstunden (Std.)",
@@ -537,7 +534,6 @@
 		"Notiz": "Notiz",
 		"Auszahlung löschen": "Auszahlung löschen",
 		"Noch keine Auszahlungen erfasst.": "Noch keine Auszahlungen erfasst.",
-		"Überstunden auszahlen": "Überstunden auszahlen",
 		"Überstunden auszahlen für {name}": "Überstunden auszahlen für {name}",
 		"Verfügbarer Saldo: {saldo} h": "Verfügbarer Saldo: {saldo} h",
 		"Auszuzahlende Stunden": "Auszuzahlende Stunden",
@@ -909,7 +905,9 @@
 		"Verwaltung": "Verwaltung",
 		"Es sind noch keine Mitarbeiter eingerichtet. Lege unter Verwaltung Mitarbeiter an, um zu starten.": "Es sind noch keine Mitarbeiter eingerichtet. Lege unter Verwaltung Mitarbeiter an, um zu starten.",
 		"Zur Verwaltung": "Zur Verwaltung",
-		"Maximale tägliche Arbeitszeit ist %s Stunden (siehe Verwaltung)": "Maximale tägliche Arbeitszeit ist %s Stunden (siehe Verwaltung)"
+		"Maximale tägliche Arbeitszeit ist %s Stunden (siehe Verwaltung)": "Maximale tägliche Arbeitszeit ist %s Stunden (siehe Verwaltung)",
+		"Hauptnavigation": "Hauptnavigation",
+		"Auswählen": "Auswählen"
 	},
 	"pluralForm": "nplurals=2; plural=(n != 1);"
 }

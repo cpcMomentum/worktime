@@ -1,9 +1,10 @@
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { formatDaysLabel } from '../../src/utils/formatters.js'
 
 // getLocale() reads the page language; the node test environment has no DOM.
 global.document = { documentElement: { lang: '' } }
 
-jest.mock('@nextcloud/l10n', () => ({
+vi.mock('@nextcloud/l10n', () => ({
 	translate: (app, text) => text,
 	translatePlural: (app, singular, plural, count, vars) =>
 		(count === 1 ? singular : plural).replace('{days}', vars.days),
