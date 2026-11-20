@@ -1,4 +1,20 @@
 {
+	"0.27.0": [
+		{
+			"title": {
+				"de": "Erneuerte Oberfläche",
+				"en": "Renewed interface",
+				"cs": "Obnovené rozhraní"
+			},
+			"text": {
+				"de": "WorkTime läuft jetzt auf derselben technischen Grundlage wie die aktuelle Nextcloud. Auswahl- und Datumsfelder sehen aus wie in der übrigen Nextcloud, Datumsfelder lassen sich mit einem Klick leeren. An Funktionen und Berechnungen ändert sich nichts.",
+				"en": "WorkTime now runs on the same technical foundation as current Nextcloud. Selection and date fields look like in the rest of Nextcloud, and date fields can be cleared with one click. Features and calculations are unchanged.",
+				"cs": "WorkTime nyní běží na stejném technickém základu jako aktuální Nextcloud. Výběrová a datová pole vypadají jako ve zbytku Nextcloudu a datová pole lze vymazat jedním kliknutím. Funkce a výpočty se nemění."
+			},
+			"icon": "cog",
+			"plus": false
+		}
+	],
 	"0.26.0": [
 		{
 			"title": {
