@@ -2,7 +2,7 @@
     <div class="employee-list">
         <div v-if="hasDepartments && employees.length > 0" class="list-filter">
             <label for="employeeDeptFilter">{{ t('worktime', 'Abteilung') }}</label>
-            <NcSelect label-outside id="employeeDeptFilter"
+            <NcSelect label-outside input-id="employeeDeptFilter"
                 v-model="selectedFilterDepartment"
                 :options="departmentFilterOptions"
                 :placeholder="t('worktime', 'Alle Abteilungen')"
