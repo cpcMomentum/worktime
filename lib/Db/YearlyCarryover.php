@@ -40,6 +40,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setCancelledBy(?string $cancelledBy)
  * @method int|null getReplacesId()
  * @method void setReplacesId(?int $replacesId)
+ * @method int getActiveKey()
+ * @method void setActiveKey(int $activeKey)
  */
 class YearlyCarryover extends Entity implements JsonSerializable {
 
@@ -55,6 +57,12 @@ class YearlyCarryover extends Entity implements JsonSerializable {
     protected ?DateTime $cancelledAt = null;
     protected ?string $cancelledBy = null;
     protected ?int $replacesId = null;
+    /**
+     * 0 while active, the row's own id once cancelled. Together with the unique
+     * index (employee_id, year, active_key) this allows exactly one active
+     * carryover per employee and year on every database (#889).
+     */
+    protected int $activeKey = 0;
 
     public function __construct() {
         $this->addType('id', 'integer');
@@ -66,6 +74,7 @@ class YearlyCarryover extends Entity implements JsonSerializable {
         $this->addType('lockedAt', 'datetime');
         $this->addType('cancelledAt', 'datetime');
         $this->addType('replacesId', 'integer');
+        $this->addType('activeKey', 'integer');
     }
 
     public function isLocked(): bool {

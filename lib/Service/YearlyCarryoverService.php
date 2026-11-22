@@ -13,6 +13,7 @@ use DateTime;
 use OCA\WorkTime\Db\YearlyCarryover;
 use OCA\WorkTime\Db\YearlyCarryoverMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\DB\Exception as DbException;
 use OCP\IL10N;
 
 class YearlyCarryoverService {
@@ -84,27 +85,53 @@ class YearlyCarryoverService {
     ): YearlyCarryover {
         $existing = $this->findActiveByEmployeeAndYear($employeeId, $year);
 
-        if ($existing && $existing->isLocked()) {
+        if ($existing === null) {
+            try {
+                return $this->insertActive($employeeId, $year, $overtimeMinutes, $vacationDays, $note, $currentUserId);
+            } catch (DbException $e) {
+                // A parallel auto-save created the active row first (#889). The
+                // unique index rejected ours, so update that row instead.
+                if ($e->getReason() !== DbException::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
+                    throw $e;
+                }
+                $existing = $this->findActiveByEmployeeAndYear($employeeId, $year);
+                if ($existing === null) {
+                    throw $e;
+                }
+            }
+        }
+
+        if ($existing->isLocked()) {
             throw new \RuntimeException($this->l->t('Der Übertrag ist gesperrt und kann nicht geändert werden. Zum Ändern muss er storniert und durch einen neuen ersetzt werden.'));
         }
 
-        if ($existing) {
-            $oldValues = $existing->jsonSerialize();
-            $existing->setOvertimeMinutes($overtimeMinutes);
-            $existing->setVacationDays(number_format($vacationDays, 1, '.', ''));
-            $existing->setNote($note);
-            $existing->setUpdatedAt(new DateTime());
+        $oldValues = $existing->jsonSerialize();
+        $existing->setOvertimeMinutes($overtimeMinutes);
+        $existing->setVacationDays(number_format($vacationDays, 1, '.', ''));
+        $existing->setNote($note);
+        $existing->setUpdatedAt(new DateTime());
 
-            $result = $this->mapper->update($existing);
+        $result = $this->mapper->update($existing);
 
-            $this->auditLogService->logUpdate(
-                $currentUserId, 'yearly_carryover', $result->getId(),
-                $oldValues, $result->jsonSerialize()
-            );
+        $this->auditLogService->logUpdate(
+            $currentUserId, 'yearly_carryover', $result->getId(),
+            $oldValues, $result->jsonSerialize()
+        );
 
-            return $result;
-        }
+        return $result;
+    }
 
+    /**
+     * @throws DbException on a unique-index violation (an active row already exists)
+     */
+    private function insertActive(
+        int $employeeId,
+        int $year,
+        int $overtimeMinutes,
+        float $vacationDays,
+        ?string $note,
+        string $currentUserId,
+    ): YearlyCarryover {
         $carryover = new YearlyCarryover();
         $carryover->setEmployeeId($employeeId);
         $carryover->setYear($year);
@@ -176,6 +203,8 @@ class YearlyCarryoverService {
         $oldValues = $existing->jsonSerialize();
         $existing->setCancelledAt(new DateTime());
         $existing->setCancelledBy($currentUserId);
+        // Free the active slot before the replacement takes it (#889).
+        $existing->setActiveKey($existing->getId());
         $existing->setUpdatedAt(new DateTime());
         $this->mapper->update($existing);
 
