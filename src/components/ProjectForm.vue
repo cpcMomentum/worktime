@@ -91,7 +91,7 @@
             <div v-if="bookingMode === 'selected'" class="member-select">
                 <NcSelect label-outside
                     :aria-label-combobox="t('worktime', 'Mitarbeitende auswählen')"
-                    id="projectMembers"
+                    input-id="projectMembers"
                     v-model="selectedMembers"
                     :options="employeeOptions"
                     :multiple="true"

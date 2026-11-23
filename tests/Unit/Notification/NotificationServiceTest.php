@@ -206,6 +206,45 @@ class NotificationServiceTest extends TestCase {
 		$this->service->notifyTimeEntriesReopened(1, 2026, 8, 'Bitte korrigieren');
 	}
 
+	public function testRejectedCarriesReason(): void {
+		$employee = new Employee();
+		$employee->setId(1);
+		$employee->setUserId('erika');
+		$this->employeeMapper->method('find')->willReturn($employee);
+
+		$notification = $this->createMock(INotification::class);
+		foreach (['setApp', 'setUser', 'setDateTime', 'setObject'] as $setter) {
+			$notification->method($setter)->willReturnSelf();
+		}
+		$notification->expects($this->once())->method('setSubject')
+			->with('time_entries_rejected', $this->callback(
+				static fn (array $p): bool => ($p['reason'] ?? null) === 'Bitte 14.10. prüfen'
+			))
+			->willReturnSelf();
+		$notificationManager = $this->createMock(INotificationManager::class);
+		$notificationManager->method('createNotification')->willReturn($notification);
+		$service = new NotificationService($notificationManager, $this->employeeMapper, $this->createMock(LoggerInterface::class), $this->jobList);
+
+		$service->notifyTimeEntriesRejected(1, 2026, 10, 'Bitte 14.10. prüfen');
+	}
+
+	public function testRejectedPushOmitsReason(): void {
+		$employee = new Employee();
+		$employee->setId(1);
+		$employee->setUserId('erika');
+		$this->employeeMapper->method('find')->willReturn($employee);
+
+		$this->jobList->expects($this->once())
+			->method('add')
+			->with(
+				PushNotificationJob::class,
+				$this->callback(static fn (array $arg): bool => $arg['subject'] === 'time_entries_rejected'
+					&& !array_key_exists('reason', $arg['params']))
+			);
+
+		$this->service->notifyTimeEntriesRejected(1, 2026, 10, str_repeat('x', 5000));
+	}
+
 	private function stubEmployeeWithoutSupervisor(): void {
 		$employee = new Employee();
 		$employee->setId(1);

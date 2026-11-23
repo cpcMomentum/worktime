@@ -1,4 +1,39 @@
 {
+	"0.27.1": [
+		{
+			"title": {
+				"de": "Datum beim Neuanlegen wählbar",
+				"en": "Choose the date when adding an entry",
+				"cs": "Datum při přidávání záznamu lze zvolit"
+			},
+			"text": {
+				"de": "Beim Hinzufügen eines Eintrags im Tagespanel lässt sich das Datum jetzt ändern. Nach dem Speichern springt die Ansicht auf diesen Tag, auch in einen anderen Monat.",
+				"en": "When adding an entry in the day panel, the date can now be changed. After saving, the view jumps to that day, even in another month.",
+				"cs": "Při přidávání záznamu v denním panelu lze nyní změnit datum. Po uložení se zobrazení přesune na tento den, i do jiného měsíce."
+			},
+			"icon": "counter",
+			"where": {
+				"de": "Zeiterfassung › Eintrag hinzufügen",
+				"en": "Time Tracking › Add entry",
+				"cs": "Evidence pracovní doby › Přidat záznam"
+			},
+			"plus": false
+		},
+		{
+			"title": {
+				"de": "Grund bei zurückgewiesenem Monat",
+				"en": "Reason for a rejected month",
+				"cs": "Důvod zamítnutí měsíce"
+			},
+			"text": {
+				"de": "Wird ein Monat zurückgewiesen, nennt die Benachrichtigung jetzt den eingetragenen Grund.",
+				"en": "When a month is rejected, the notification now shows the reason that was entered.",
+				"cs": "Při zamítnutí měsíce nyní oznámení uvádí zadaný důvod."
+			},
+			"icon": "email",
+			"plus": false
+		}
+	],
 	"0.27.0": [
 		{
 			"title": {

@@ -822,7 +822,7 @@ class TimeEntryService {
 
         if ($rejected > 0) {
             try {
-                $this->notificationService->notifyTimeEntriesRejected($employeeId, $year, $month);
+                $this->notificationService->notifyTimeEntriesRejected($employeeId, $year, $month, $reason);
             } catch (\Throwable $e) {
                 $this->logger->error('Failed to send time entries rejected notification', ['exception' => $e]);
             }

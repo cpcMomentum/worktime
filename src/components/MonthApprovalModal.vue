@@ -32,7 +32,7 @@
                             <td class="nowrap">{{ e.startTime }} – {{ e.endTime }}</td>
                             <td class="num">{{ e.breakMinutes }} {{ t('worktime', 'Min') }}</td>
                             <td class="num">{{ hoursLabel(e.workMinutes) }}</td>
-                            <td>{{ projectName(e.projectId) || '–' }}</td>
+                            <td>{{ e.projectName || '–' }}</td>
                             <td class="desc">{{ e.description || '' }}</td>
                         </tr>
                     </tbody>
@@ -72,7 +72,6 @@ import RestoreIcon from 'vue-material-design-icons/Restore.vue'
 import FilePdfBoxIcon from 'vue-material-design-icons/FilePdfBox.vue'
 import { showError } from '@nextcloud/dialogs'
 import TimeEntryService from '../services/TimeEntryService.js'
-import ProjectService from '../services/ProjectService.js'
 import ReportService from '../services/ReportService.js'
 import { formatDate, getMonthName } from '../utils/dateUtils.js'
 import { formatMinutes } from '../utils/timeUtils.js'
@@ -102,7 +101,6 @@ export default {
     data() {
         return {
             entries: [],
-            projects: [],
             loading: true,
             archiveAfterApprove: false,
         }
@@ -124,12 +122,10 @@ export default {
     },
     async mounted() {
         try {
-            const [entries, projects] = await Promise.all([
-                TimeEntryService.getByEmployee(this.item.employeeId, this.item.year, this.item.month),
-                ProjectService.getAll(),
-            ])
+            // Der Projektname kommt mit jedem Eintrag (projectName, #682). Die volle
+            // Projektliste (/projects/all) dürfen Vorgesetzte nicht lesen (#888).
+            const entries = await TimeEntryService.getByEmployee(this.item.employeeId, this.item.year, this.item.month)
             this.entries = Array.isArray(entries) ? entries : (entries?.data || [])
-            this.projects = Array.isArray(projects) ? projects : (projects?.data || [])
         } catch (error) {
             console.error('Failed to load month entries:', error)
             showError(t('worktime', 'Fehler beim Laden der Monatseinträge'))
@@ -141,11 +137,6 @@ export default {
         formatDate,
         downloadPdf() {
             ReportService.downloadPdf(this.item.employeeId, this.item.year, this.item.month)
-        },
-        projectName(projectId) {
-            if (!projectId) return ''
-            const project = this.projects.find(p => p.id === projectId)
-            return project?.name || project?.displayName || ''
         },
         hoursLabel(minutes) {
             return `${formatMinutes(minutes || 0)} h`

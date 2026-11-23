@@ -96,26 +96,12 @@
         </div>
 
         <!-- KPI-Leiste: monatlich (statistics) oder jährlich (yearAggregates) -->
-        <OvertimeSummary v-if="!isYearMode && statistics"
-            :target-minutes="statistics.adjustedTargetMinutes"
-            :actual-minutes="statistics.actualMinutes"
-            :overtime-minutes="statistics.overtimeMinutes"
-            :balance-minutes="totalOvertimeMinutes"
+        <!-- Eine Instanz für Monat und Jahr, damit die aufgeklappte Berechnung den Wechsel übersteht (#890) -->
+        <OvertimeSummary v-if="isYearMode || statistics"
+            v-bind="overtimeSummaryProps"
             :vacation-remaining="vacationRemaining"
             :vacation-carryover="vacationCarryover"
-            :vacation-total="vacationTotal"
-            :year="selectedMonth.year"
-            :month="selectedMonth.month"
-            :statistics="statistics" />
-        <OvertimeSummary v-else-if="isYearMode"
-            period="year"
-            :target-minutes="yearTargetMinutes"
-            :actual-minutes="yearActualMinutes"
-            :overtime-minutes="yearOvertimeMinutes"
-            :vacation-remaining="vacationRemaining"
-            :vacation-carryover="vacationCarryover"
-            :vacation-total="vacationTotal"
-            :year="overviewYear" />
+            :vacation-total="vacationTotal" />
 
         <NcLoadingIcon v-if="loading" :size="44" />
 
@@ -148,7 +134,7 @@
                 <DayDetailPanel :day="selectedDay"
                     :projects="projects"
                     :month-status="monthStatus"
-                    @refresh="refreshKeepingScroll" />
+                    @refresh="onPanelRefresh" />
             </div>
         </div>
 
@@ -160,7 +146,7 @@
                 <DayDetailPanel :day="selectedDay"
                     :projects="projects"
                     :month-status="monthStatus"
-                    @refresh="refreshKeepingScroll" />
+                    @refresh="onPanelRefresh" />
             </div>
         </NcModal>
 
@@ -176,11 +162,11 @@
                 <div class="range-fields">
                     <div class="form-group">
                         <label>{{ t('worktime', 'Von') }}</label>
-                        <NcDateTimePicker v-model="rangeStart" clearable type="date" format="dd.MM.yyyy" />
+                        <NcDateTimePicker v-model="rangeStart" :aria-label="t('worktime', 'Von')" clearable type="date" format="dd.MM.yyyy" />
                     </div>
                     <div class="form-group">
                         <label>{{ t('worktime', 'Bis') }}</label>
-                        <NcDateTimePicker v-model="rangeEnd" clearable type="date" format="dd.MM.yyyy" />
+                        <NcDateTimePicker v-model="rangeEnd" :aria-label="t('worktime', 'Bis')" clearable type="date" format="dd.MM.yyyy" />
                     </div>
                 </div>
                 <p v-if="rangeInvalid" class="range-error">
@@ -224,7 +210,7 @@ import { useProjectsStore } from '../stores/projects.ts'
 import { useTimeEntriesStore } from '../stores/timeEntries.ts'
 import { showSuccess, showError } from '@nextcloud/dialogs'
 import { confirmAction } from '../utils/errorHandler.js'
-import { getCurrentYear, getCurrentMonth, getMonthDays, getToday, formatDateISO, getLocale } from '../utils/dateUtils.js'
+import { getCurrentYear, getCurrentMonth, getMonthDays, getToday, formatDateISO, getLocale, parseISODate } from '../utils/dateUtils.js'
 import { findScrollContainer } from '../utils/scrollToDay.js'
 import { getAbsenceTypeLabel } from '../utils/formatters.js'
 import MonthPicker from '../components/MonthPicker.vue'
@@ -233,6 +219,7 @@ import OvertimeSummary from '../components/OvertimeSummary.vue'
 import YearOverviewTable from '../components/YearOverviewTable.vue'
 import DayList from '../components/DayList.vue'
 import MonthCalendar from '../components/MonthCalendar.vue'
+import { panelTargetAfterSave } from '../utils/entryDate.js'
 import DayDetailPanel from '../components/DayDetailPanel.vue'
 import PunchPanel from '../components/PunchPanel.vue'
 import ReportService from '../services/ReportService.js'
@@ -301,6 +288,26 @@ export default {
         projects() {
             return this.activeProjects
         },
+        overtimeSummaryProps() {
+            if (this.isYearMode) {
+                return {
+                    period: 'year',
+                    targetMinutes: this.yearTargetMinutes,
+                    actualMinutes: this.yearActualMinutes,
+                    overtimeMinutes: this.yearOvertimeMinutes,
+                    year: this.overviewYear,
+                }
+            }
+            return {
+                targetMinutes: this.statistics.adjustedTargetMinutes,
+                actualMinutes: this.statistics.actualMinutes,
+                overtimeMinutes: this.statistics.overtimeMinutes,
+                balanceMinutes: this.totalOvertimeMinutes,
+                year: this.selectedMonth.year,
+                month: this.selectedMonth.month,
+                statistics: this.statistics,
+            }
+        },
         // Stopwatch (#585): only for the user's own profile, never while an
         // HR correction targets someone else.
         showPunchPanel() {
@@ -336,7 +343,7 @@ export default {
         },
         minYear() {
             if (this.currentEmployee?.entryDate) {
-                return new Date(this.currentEmployee.entryDate).getFullYear()
+                return parseISODate(this.currentEmployee.entryDate).getFullYear()
             }
             return getCurrentYear()
         },
@@ -504,6 +511,21 @@ export default {
                 this.loadOvertime(),
             ])
             this.$nextTick(() => this.scrollToTodayIfPending(false))
+        },
+        async onPanelRefresh(date) {
+            const target = panelTargetAfterSave(date, this.selectedDate, this.selectedMonth)
+            if (target.type === 'refresh') {
+                return this.refreshKeepingScroll()
+            }
+            if (target.type === 'month') {
+                this.onMonthChange({ year: target.year, month: target.month })
+                await this.$nextTick()
+                this.selectedDate = target.date
+                return
+            }
+            this.selectedDate = target.date
+            await this.loadData()
+            this.$nextTick(() => this.$refs.dayList?.scrollToDate(target.date, true))
         },
         // Beim Nachladen ersetzt der Ladekreis kurz die Liste; ohne das stünde man danach wieder oben
         async refreshKeepingScroll() {

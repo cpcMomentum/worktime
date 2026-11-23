@@ -902,6 +902,7 @@ OC.L10N.register(
     "Zur Verwaltung" : "Go to Management",
     "Maximale tägliche Arbeitszeit ist %s Stunden (siehe Verwaltung)" : "Maximum daily working time is %s hours (see Management)",
     "Hauptnavigation" : "Main navigation",
-    "Auswählen" : "Choose"
+    "Auswählen" : "Choose",
+    "Deine Zeiteinträge für %1$s wurden abgelehnt (Grund: %2$s)" : "Your time entries for %1$s have been rejected (reason: %2$s)"
 },
 "nplurals=2; plural=(n != 1);");

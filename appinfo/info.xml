@@ -50,7 +50,7 @@ Ohne Lizenzschlüssel nimmt WorkTime keinen Kontakt zum Lizenzserver auf. Mit Sc
 Behalten Sie den Überblick über Arbeitszeiten, Überstunden und Urlaub.
     ]]></description>
 
-    <version>0.27.0</version>
+    <version>0.27.1</version>
     <licence>AGPL-3.0-or-later</licence>
 
     <author mail="axel.deffner@cpcmomentum.com" homepage="https://github.com/cpcMomentum">Axel Deffner</author>

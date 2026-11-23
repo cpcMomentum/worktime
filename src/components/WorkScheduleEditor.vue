@@ -69,6 +69,7 @@
                 <div v-if="!editingSchedule" class="form-group">
                     <label>{{ t('worktime', 'Gültig ab') }} *</label>
                     <NcDateTimePicker v-model="form.validFrom" clearable
+                        :aria-label="t('worktime', 'Gültig ab')"
                         type="date"
                         format="dd.MM.yyyy"
                         :min="minValidFrom || undefined" />

@@ -38,6 +38,7 @@
                         :employee="editingEmployee"
                         :default-federal-state="settings.default_federal_state || 'BY'"
                         @saved="onEmployeeSaved"
+                        @schedule-updated="onScheduleUpdated"
                         @cancel="closeEmployeeForm" />
                 </NcModal>
             </SettingsCard>
@@ -100,8 +101,9 @@
                 v-show="activeSection === 'sec-berechtigungen'"
                 id="sec-berechtigungen" :name="t('worktime', 'Berechtigungen')">
                 <div class="form-group">
-                    <label>{{ t('worktime', 'HR-Manager') }} <InfoIcon>{{ t('worktime', 'Admin: Volle Rechte (automatisch). HR-Manager: Mitarbeiter verwalten und Anträge genehmigen (manuell zuweisen). Vorgesetzter: Genehmigt Zeiten seines Teams (automatisch). Mitarbeiter: Eigene Zeiten erfassen (automatisch).') }}</InfoIcon></label>
+                    <label for="hrManagers">{{ t('worktime', 'HR-Manager') }} <InfoIcon>{{ t('worktime', 'Admin: Volle Rechte (automatisch). HR-Manager: Mitarbeiter verwalten und Anträge genehmigen (manuell zuweisen). Vorgesetzter: Genehmigt Zeiten seines Teams (automatisch). Mitarbeiter: Eigene Zeiten erfassen (automatisch).') }}</InfoIcon></label>
                     <NcSelect label-outside
+                        input-id="hrManagers"
                         v-model="selectedHrManagers"
                         :options="principalOptions"
                         :multiple="true"
@@ -135,14 +137,14 @@
                 </div>
                 <div class="form-group">
                     <label for="defaultState">{{ t('worktime', 'Standard-Bundesland') }} <InfoIcon>{{ t('worktime', 'Neue Mitarbeiter bekommen dieses Bundesland automatisch zugewiesen. Jeder Mitarbeiter kann ein eigenes Bundesland haben — das bestimmt, welche Feiertage für ihn gelten.') }}</InfoIcon></label>
-                    <NcSelect label-outside id="defaultState"
+                    <NcSelect label-outside input-id="defaultState"
                         v-model="selectedFederalState"
                         :options="federalStateOptions"
                         @update:model-value="saveSetting('default_federal_state')" />
                 </div>
                 <div class="form-group">
                     <label for="timezone">{{ t('worktime', 'Zeitzone') }} <InfoIcon>{{ t('worktime', 'Gilt für alle, deren Zeitzone Nextcloud nicht kennt, etwa nach Anmeldung per SSO oder nur über die App. Sie bestimmt die Uhrzeit der Stempeluhr und welcher Tag „heute“ ist. Die Zeitzone aus den persönlichen Nextcloud-Einstellungen hat immer Vorrang.') }}</InfoIcon></label>
-                    <NcSelect label-outside id="timezone"
+                    <NcSelect label-outside input-id="timezone"
                         v-model="selectedTimezone"
                         :options="timezoneOptions"
                         :clearable="false"
@@ -432,7 +434,7 @@
                     </div>
                     <div class="form-group">
                         <label for="holidayStateFilter">{{ t('worktime', 'Bundesland') }}</label>
-                        <NcSelect label-outside id="holidayStateFilter"
+                        <NcSelect label-outside input-id="holidayStateFilter"
                             v-model="selectedHolidayStateFilter"
                             :options="holidayStateFilterOptions"
                             @update:model-value="filterHolidays" />
@@ -528,6 +530,7 @@
                         <div class="form-group">
                             <label for="holidayDate">{{ t('worktime', 'Datum') }}</label>
                             <NcDateTimePicker id="holidayDate"
+                                :aria-label="t('worktime', 'Datum')"
                                 v-model="holidayFormData.date" clearable
                                 type="date"
                                 format="dd.MM.yyyy" />
@@ -568,8 +571,9 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>{{ t('worktime', 'Umfang') }}</label>
+                            <label for="holidayScope">{{ t('worktime', 'Umfang') }}</label>
                             <NcSelect label-outside
+                                input-id="holidayScope"
                                 v-model="selectedHolidayScope"
                                 :options="scopeOptions"
                                 :clearable="false" />
@@ -911,7 +915,7 @@ import DepartmentForm from '../components/DepartmentForm.vue'
 import DepartmentList from '../components/DepartmentList.vue'
 import WerkPlusSettings from '../components/WerkPlusSettings.vue'
 import { showSuccessMessage, showErrorMessage, confirmAction } from '../utils/errorHandler.js'
-import { getCurrentYear, getLocale, formatDateISO, getMonthName } from '../utils/dateUtils.js'
+import { getCurrentYear, getLocale, formatDateISO, getMonthName, parseISODate } from '../utils/dateUtils.js'
 import YearlyCarryoverService from '../services/YearlyCarryoverService.js'
 import OvertimePayoutService from '../services/OvertimePayoutService.js'
 import ReportService from '../services/ReportService.js'
@@ -1406,6 +1410,10 @@ export default {
             this.showEmployeeForm = false
             this.editingEmployee = null
         },
+        // Profiländerung im offenen Formular: Liste sofort aktualisieren (#890)
+        onScheduleUpdated() {
+            useEmployeesStore().fetchEmployees()
+        },
         async onEmployeeSaved() {
             const wasEditing = !!this.editingEmployee
             this.closeEmployeeForm()
@@ -1597,14 +1605,14 @@ export default {
         },
         formatDate(dateStr) {
             if (!dateStr) return ''
-            const date = new Date(dateStr)
+            const date = parseISODate(dateStr)
             return date.toLocaleDateString(getLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' })
         },
         openHolidayForm(holiday) {
             this.editingHoliday = holiday
             if (holiday) {
                 this.holidayFormData = {
-                    date: new Date(holiday.date),
+                    date: parseISODate(holiday.date),
                     name: holiday.name,
                     federalStates: [holiday.federalState],
                     scope: holiday.scope ?? 1.0,
@@ -1691,7 +1699,7 @@ export default {
                 groupHolidayIds: group.holidays.map(h => h.id),
             }
             this.holidayFormData = {
-                date: new Date(firstHoliday.date),
+                date: parseISODate(firstHoliday.date),
                 name: firstHoliday.name,
                 federalStates: group.states,
                 scope: firstHoliday.scope ?? 1.0,

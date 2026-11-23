@@ -2,9 +2,10 @@
     <div class="time-entry-form" :class="{ embedded }">
         <h3 v-if="!embedded">{{ isEdit ? t('worktime', 'Eintrag bearbeiten') : t('worktime', 'Neuer Eintrag') }}</h3>
 
-        <div v-if="!embedded || isEdit" class="form-group">
+        <div class="form-group">
             <label for="date">{{ t('worktime', 'Datum') }}</label>
             <NcDateTimePicker id="date"
+                :aria-label="t('worktime', 'Datum')"
                 v-model="form.date"
                 type="date"
                 format="dd.MM.yyyy" />
@@ -54,7 +55,7 @@
             </p>
         </div>
 
-        <div v-if="emergencyEligible" class="form-group emergency-group">
+        <div v-if="emergencyOffered" class="form-group emergency-group">
             <NcCheckboxRadioSwitch v-model="form.isEmergency" :disabled="isEdit">
                 {{ t('worktime', 'Notarbeit/Bereitschaft im Urlaub') }} <InfoIcon>{{ t('worktime', 'An diesem genehmigten Urlaubstag hast du außerplanmäßig gearbeitet. Der Urlaub bleibt bestehen, die Zeit zählt als Überstunden. Eine Begründung ist Pflicht, der/die Vorgesetzte wird informiert.') }}</InfoIcon>
             </NcCheckboxRadioSwitch>
@@ -98,7 +99,8 @@ import { mapState, mapActions } from 'pinia'
 import { useEmployeesStore } from '../stores/employees.ts'
 import { usePermissionsStore } from '../stores/permissions.ts'
 import { useTimeEntriesStore } from '../stores/timeEntries.ts'
-import { formatDateISO } from '../utils/dateUtils.js'
+import { formatDateISO, parseISODate } from '../utils/dateUtils.js'
+import { isOnPresetDay } from '../utils/entryDate.js'
 import { formatMinutesWithUnit, calculateWorkMinutes, suggestBreak as suggestBreakUtil } from '../utils/timeUtils.js'
 import { showErrorMessage } from '../utils/errorHandler.js'
 import SettingsService from '../services/SettingsService.js'
@@ -177,6 +179,9 @@ export default {
         isEdit() {
             return !!this.entry
         },
+        emergencyOffered() {
+            return this.emergencyEligible && isOnPresetDay(this.form.date, this.presetDate)
+        },
         calculatedWorkMinutes() {
             if (!this.form.startTime || !this.form.endTime) return 0
             return calculateWorkMinutes(this.form.startTime, this.form.endTime, this.form.breakMinutes)
@@ -191,7 +196,7 @@ export default {
         },
         descriptionRequired() {
             // #626: bei Notarbeit im Urlaub ist die Beschreibung die Pflicht-Begründung.
-            return this.requireDescription || (this.emergencyEligible && this.form.isEmergency)
+            return this.requireDescription || (this.emergencyOffered && this.form.isEmergency)
         },
         descriptionMissing() {
             return this.descriptionRequired && !(this.form.description && this.form.description.trim())
@@ -209,7 +214,7 @@ export default {
             handler(entry) {
                 if (entry) {
                     this.form = {
-                        date: new Date(entry.date),
+                        date: parseISODate(entry.date),
                         startTime: entry.startTime,
                         endTime: entry.endTime,
                         breakMinutes: entry.breakMinutes,
@@ -260,7 +265,7 @@ export default {
             // letzten Eintrags, Ende = aktuelle Uhrzeit (nur heute), sonst leer.
             // `null` bedeutet „kein Vorschlag" → Standardwert verwenden.
             this.form = {
-                date: this.presetDate ? new Date(this.presetDate) : new Date(),
+                date: this.presetDate ? parseISODate(this.presetDate) : new Date(),
                 startTime: this.prefillStart || defaultStart,
                 endTime: this.prefillEnd !== null ? this.prefillEnd : defaultEnd,
                 breakMinutes: 30,
@@ -302,7 +307,7 @@ export default {
             }
             // #626: Notarbeit im Urlaub nur beim Anlegen senden (der update-Pfad
             // uebernimmt das gespeicherte Flag; im Edit waere es ein totes Feld).
-            if (!this.isEdit && this.emergencyEligible && this.form.isEmergency) {
+            if (!this.isEdit && this.emergencyOffered && this.form.isEmergency) {
                 data.isEmergency = true
             }
             // In HR correction mode, capture a mandatory reason before saving.
@@ -328,7 +333,7 @@ export default {
                 } else {
                     await this.createTimeEntry(data)
                 }
-                this.$emit('saved')
+                this.$emit('saved', data.date)
             } catch (error) {
                 console.error('Failed to save time entry:', error)
                 showErrorMessage(error.message || this.t('worktime', 'Fehler beim Speichern'))

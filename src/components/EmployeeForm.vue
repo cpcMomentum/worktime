@@ -4,7 +4,7 @@
 
         <div class="form-group">
             <label for="ncUser">{{ t('worktime', 'Nextcloud-Benutzer') }}</label>
-            <NcSelect label-outside id="ncUser"
+            <NcSelect label-outside input-id="ncUser"
                 v-model="selectedUser"
                 :options="userOptions"
                 :placeholder="t('worktime', 'Benutzer auswählen')"
@@ -102,7 +102,7 @@
 
         <div class="form-group">
             <label for="federalState">{{ t('worktime', 'Bundesland') }} <InfoIcon>{{ t('worktime', 'Legt fest, welche gesetzlichen Feiertage für diesen Mitarbeiter gelten. Bayern hat z.B. mehr Feiertage als Hamburg.') }}</InfoIcon> *</label>
-            <NcSelect label-outside id="federalState"
+            <NcSelect label-outside input-id="federalState"
                 v-model="selectedFederalState"
                 :options="federalStateOptions"
                 :clearable="false"
@@ -112,7 +112,7 @@
         <div class="form-row">
             <div class="form-group">
                 <label for="supervisor">{{ t('worktime', 'Vorgesetzter') }} <InfoIcon>{{ t('worktime', 'Diese Person kann die Zeiteinträge und Abwesenheitsanträge dieses Mitarbeiters einsehen und genehmigen.') }}</InfoIcon></label>
-                <NcSelect label-outside id="supervisor"
+                <NcSelect label-outside input-id="supervisor"
                     v-model="selectedSupervisor"
                     :options="supervisorOptions"
                     :placeholder="t('worktime', 'Kein Vorgesetzter')"
@@ -120,7 +120,7 @@
             </div>
             <div class="form-group">
                 <label for="department">{{ t('worktime', 'Abteilung') }} <InfoIcon>{{ t('worktime', 'Ordnet den Mitarbeiter einer Organisationseinheit zu. Rein organisatorisch – unabhängig vom Vorgesetzten und ohne Einfluss auf Berechtigungen.') }}</InfoIcon></label>
-                <NcSelect label-outside id="department"
+                <NcSelect label-outside input-id="department"
                     v-model="selectedDepartment"
                     :options="departmentOptions"
                     :placeholder="t('worktime', 'Keine Abteilung')"
@@ -132,6 +132,7 @@
             <div class="form-group">
                 <label for="entryDate">{{ t('worktime', 'Eintrittsdatum') }} <InfoIcon>{{ t('worktime', 'Ab diesem Datum erscheint der Mitarbeiter in der Zeiterfassung. Für Monate davor werden keine Sollstunden berechnet.') }}</InfoIcon></label>
                 <NcDateTimePicker id="entryDate"
+                    :aria-label="t('worktime', 'Eintrittsdatum')"
                     v-model="form.entryDate" clearable
                     type="date"
                     format="dd.MM.yyyy" />
@@ -139,6 +140,7 @@
             <div v-if="isEdit" class="form-group">
                 <label for="exitDate">{{ t('worktime', 'Austrittsdatum') }} <InfoIcon>{{ t('worktime', 'Ab diesem Datum kann der Mitarbeiter keine neuen Einträge mehr erfassen. Alle bisherigen Daten bleiben erhalten.') }}</InfoIcon></label>
                 <NcDateTimePicker id="exitDate"
+                    :aria-label="t('worktime', 'Austrittsdatum')"
                     v-model="form.exitDate" clearable
                     type="date"
                     format="dd.MM.yyyy" />
@@ -193,7 +195,7 @@ import WorkScheduleEditor from './WorkScheduleEditor.vue'
 import { mapState, mapActions } from 'pinia'
 import { useDepartmentsStore } from '../stores/departments.ts'
 import { useEmployeesStore } from '../stores/employees.ts'
-import { formatDateISO } from '../utils/dateUtils.js'
+import { formatDateISO, parseISODate } from '../utils/dateUtils.js'
 import { sum } from '../utils/dayHours.js'
 import { showErrorMessage } from '../utils/errorHandler.js'
 import SettingsService from '../services/SettingsService.js'
@@ -243,7 +245,7 @@ export default {
          * dieses eine Jahr, deshalb wird es im Label mitgenannt (#522).
          */
         entryYear() {
-            return this.form.entryDate ? new Date(this.form.entryDate).getFullYear() : null
+            return this.form.entryDate ? parseISODate(this.form.entryDate).getFullYear() : null
         },
         /**
          * Leeres Feld heisst "nichts hinterlegt", nicht 0 — beides rechnet gleich,
@@ -369,8 +371,8 @@ export default {
                         supervisorId: employee.supervisorId,
                         departmentId: employee.departmentId ?? null,
                         federalState: employee.federalState,
-                        entryDate: employee.entryDate ? new Date(employee.entryDate) : null,
-                        exitDate: employee.exitDate ? new Date(employee.exitDate) : null,
+                        entryDate: employee.entryDate ? parseISODate(employee.entryDate) : null,
+                        exitDate: employee.exitDate ? parseISODate(employee.exitDate) : null,
                         vacationDaysUsed: employee.vacationDaysUsed ?? null,
                         vacationTransferred: employee.vacationTransferred ?? false,
                     }

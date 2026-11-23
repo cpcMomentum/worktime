@@ -15,7 +15,7 @@ export function getLocale() {
  */
 export function formatDate(date) {
     if (!date) return ''
-    const d = typeof date === 'string' ? new Date(date) : date
+    const d = typeof date === 'string' ? parseISODate(date) : date
     return d.toLocaleDateString(getLocale(), {
         day: '2-digit',
         month: '2-digit',
@@ -30,7 +30,7 @@ export function formatDate(date) {
  */
 export function formatDateWithWeekday(date) {
     if (!date) return ''
-    const d = typeof date === 'string' ? new Date(date) : date
+    const d = typeof date === 'string' ? parseISODate(date) : date
     const weekday = getDayName(d.getDay())
     const dateStr = d.toLocaleDateString(getLocale(), {
         day: '2-digit',
@@ -47,7 +47,7 @@ export function formatDateWithWeekday(date) {
  */
 export function formatDateShort(date) {
     if (!date) return ''
-    const d = typeof date === 'string' ? new Date(date) : date
+    const d = typeof date === 'string' ? parseISODate(date) : date
     return d.toLocaleDateString(getLocale(), {
         day: '2-digit',
         month: '2-digit',
@@ -62,7 +62,7 @@ export function formatDateShort(date) {
  */
 export function formatDateISO(date) {
     if (!date) return ''
-    const d = typeof date === 'string' ? new Date(date) : date
+    const d = typeof date === 'string' ? parseISODate(date) : date
     const year = d.getFullYear()
     const month = String(d.getMonth() + 1).padStart(2, '0')
     const day = String(d.getDate()).padStart(2, '0')
@@ -143,7 +143,7 @@ export function getToday() {
  * @returns {boolean}
  */
 export function isWeekend(date) {
-    const d = typeof date === 'string' ? new Date(date) : date
+    const d = typeof date === 'string' ? parseISODate(date) : date
     const day = d.getDay()
     return day === 0 || day === 6
 }
@@ -220,7 +220,7 @@ export function parseISODate(dateStr) {
  */
 export function parseDate(dateStr) {
     if (!dateStr) return null
-    const date = new Date(dateStr)
+    const date = parseISODate(dateStr)
     return isNaN(date.getTime()) ? null : date
 }
 

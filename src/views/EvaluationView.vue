@@ -76,7 +76,7 @@
                 <div v-show="teamSubtab === 'overview'" class="ev-card">
                     <div v-if="teamDepartmentOptions.length > 1 || teamFilterDepartmentId !== null" class="ev-dept-filter">
                         <label for="teamDeptFilter">{{ t('worktime', 'Abteilung') }}</label>
-                        <NcSelect label-outside id="teamDeptFilter"
+                        <NcSelect label-outside input-id="teamDeptFilter"
                             v-model="selectedTeamDepartment"
                             :options="teamDepartmentOptions"
                             :placeholder="t('worktime', 'Alle Abteilungen')"
@@ -169,8 +169,8 @@
         <div v-if="projectDepartmentOptions.length > 1 || projectFilterDepartmentId !== null" class="ev-filter">
             <div class="ev-filter__label">{{ t('worktime', 'Abteilung') }}</div>
             <NcSelect label-outside
-                :aria-label-combobox="t('worktime', 'Alle Abteilungen')"
-                id="projectDeptFilter"
+                :aria-label-combobox="t('worktime', 'Abteilung')"
+                input-id="projectDeptFilter"
                 v-model="selectedProjectDepartment"
                 :options="projectDepartmentOptions"
                 :placeholder="t('worktime', 'Alle Abteilungen')"

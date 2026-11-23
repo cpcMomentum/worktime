@@ -17,30 +17,31 @@ Nextcloud App zur Arbeitszeiterfassung für Unternehmen.
 
 ## Voraussetzungen
 
-- Nextcloud 32+
+- Nextcloud 33 bis 35
 - PHP 8.2+
 - MySQL/MariaDB oder PostgreSQL
 
 ## Installation
 
+### Über den App Store (empfohlen)
+
+In Nextcloud als Admin unter **Apps** nach „WorkTime“ suchen und auf **Herunterladen und aktivieren** klicken. Alternativ auf der Kommandozeile:
+
 ```bash
-# In Nextcloud apps Verzeichnis
-cd /var/www/nextcloud/apps
-git clone https://github.com/cpcMomentum/worktime.git
-cd worktime
-
-# PHP Dependencies
-composer install --no-dev
-
-# Frontend bauen
-npm install
-npm run build
+sudo -u www-data php occ app:install worktime
 ```
 
-App aktivieren:
+### Manuell, ohne App Store
+
+Das signierte Paket `worktime-vX.Y.Z.tar.gz` von der [Releases-Seite](https://github.com/cpcMomentum/worktime/releases) laden und in das App-Verzeichnis entpacken (meist `custom_apps/`, bei manchen Installationen `apps/`):
+
 ```bash
-php occ app:enable worktime
+cd /var/www/nextcloud/custom_apps
+sudo -u www-data tar xzf /pfad/zu/worktime-vX.Y.Z.tar.gz
+sudo -u www-data php /var/www/nextcloud/occ app:enable worktime
 ```
+
+`composer` und `npm` sind dafür nicht nötig: Das Paket enthält die PHP-Abhängigkeiten (`vendor/`, unter anderem für den PDF-Export) und das fertig gebaute Frontend (`js/`, `css/`).
 
 ## Konfiguration
 
@@ -71,16 +72,22 @@ Die Werte sind in der Verwaltung konfigurierbar.
 
 ## Entwicklung
 
+Nur für die Arbeit am Code, nicht für den Betrieb. Ein `git clone` gehört auf eine Entwicklungsinstanz, nicht auf ein Produktivsystem.
+
 ```bash
-# Dependencies installieren
+git clone https://github.com/cpcMomentum/worktime.git
+cd worktime
+
+# Abhängigkeiten inklusive Entwicklungswerkzeuge (PHPUnit)
 composer install
-npm install
+npm ci
 
-# Frontend im Watch-Modus
-npm run watch
+# Frontend bauen (nach jeder Änderung in src/)
+npm run build
 
-# Tests ausführen
-./vendor/bin/phpunit
+# Tests
+./vendor/bin/phpunit --testsuite Unit
+npm test
 ```
 
 ## Datenbank-Tabellen
