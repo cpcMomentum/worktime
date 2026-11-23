@@ -7,6 +7,21 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.27.1] - 2026-11-23
+
+### Added
+- **Datum beim Neuanlegen änderbar (#884)**: Im Tagespanel hat „Eintrag hinzufügen“ jetzt ein Datumsfeld, vorbelegt mit dem Tag des Panels. Nach dem Speichern wechselt die Ansicht auf den Tag des Eintrags, bei Bedarf auch in einen anderen Monat. Überschneidungen und Sperren werden gegen das gewählte Datum geprüft.
+- **Begründung bei zurückgewiesenem Monat (#885)**: Die Benachrichtigung an die Mitarbeitenden nennt jetzt den Grund, den die Freigabe beim Zurückweisen eingetragen hat. Die Push-Nachricht ans Handy bleibt ohne Grund.
+
+### Fixed
+- **Monatsdetails für Vorgesetzte (#888)**: Vorgesetzte sahen in den Monatsdetails einer Freigabe „Keine Einträge“, obwohl Einträge vorhanden waren.
+- **Doppelte Jahresüberträge (#889)**: Gleichzeitiges Speichern konnte zwei aktive Jahresüberträge für dieselbe Person und dasselbe Jahr anlegen, danach schlug die Team-Jahresübersicht fehl. Eine Datenbankregel verhindert das jetzt. Vorhandene Doppelungen werden beim Update aufgelöst, ohne etwas zu löschen: Die gesperrte oder zuletzt gespeicherte Zeile bleibt, die übrigen werden storniert und im Audit-Log vermerkt.
+- **Falscher Tag in anderen Zeitzonen (#891)**: Bei Browsern westlich von UTC (z. B. Amerika) zeigten und speicherten mehrere Formulare den Vortag. Reine Datumsangaben werden jetzt als lokales Datum gelesen.
+- **Kleinigkeiten nach der Umstellung auf Vue 3 (#890)**: „0 + 3 beantragt“ wieder mit Leerzeichen, Datums- und Auswahlfelder tragen wieder ihren Namen für Screenreader, die Berechnung bleibt beim Wechsel zwischen Monat und Jahr aufgeklappt, und die Mitarbeiterliste aktualisiert sich nach einer Profiländerung im offenen Formular.
+
+### Changed
+- **Installationsanleitung (#878)**: Die README empfiehlt die Installation über den App Store oder das signierte Paket. composer und npm sind nur für die Entwicklung nötig.
+
 ## [0.27.0] - 2026-11-20
 
 ### Changed
