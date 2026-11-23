@@ -99,7 +99,7 @@ import { mapState, mapActions } from 'pinia'
 import { useEmployeesStore } from '../stores/employees.ts'
 import { usePermissionsStore } from '../stores/permissions.ts'
 import { useTimeEntriesStore } from '../stores/timeEntries.ts'
-import { formatDateISO } from '../utils/dateUtils.js'
+import { formatDateISO, parseISODate } from '../utils/dateUtils.js'
 import { formatMinutesWithUnit, calculateWorkMinutes, suggestBreak as suggestBreakUtil } from '../utils/timeUtils.js'
 import { showErrorMessage } from '../utils/errorHandler.js'
 import SettingsService from '../services/SettingsService.js'
@@ -210,7 +210,7 @@ export default {
             handler(entry) {
                 if (entry) {
                     this.form = {
-                        date: new Date(entry.date),
+                        date: parseISODate(entry.date),
                         startTime: entry.startTime,
                         endTime: entry.endTime,
                         breakMinutes: entry.breakMinutes,
@@ -261,7 +261,7 @@ export default {
             // letzten Eintrags, Ende = aktuelle Uhrzeit (nur heute), sonst leer.
             // `null` bedeutet „kein Vorschlag" → Standardwert verwenden.
             this.form = {
-                date: this.presetDate ? new Date(this.presetDate) : new Date(),
+                date: this.presetDate ? parseISODate(this.presetDate) : new Date(),
                 startTime: this.prefillStart || defaultStart,
                 endTime: this.prefillEnd !== null ? this.prefillEnd : defaultEnd,
                 breakMinutes: 30,
