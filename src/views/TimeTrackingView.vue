@@ -134,7 +134,7 @@
                 <DayDetailPanel :day="selectedDay"
                     :projects="projects"
                     :month-status="monthStatus"
-                    @refresh="refreshKeepingScroll" />
+                    @refresh="onPanelRefresh" />
             </div>
         </div>
 
@@ -146,7 +146,7 @@
                 <DayDetailPanel :day="selectedDay"
                     :projects="projects"
                     :month-status="monthStatus"
-                    @refresh="refreshKeepingScroll" />
+                    @refresh="onPanelRefresh" />
             </div>
         </NcModal>
 
@@ -219,6 +219,7 @@ import OvertimeSummary from '../components/OvertimeSummary.vue'
 import YearOverviewTable from '../components/YearOverviewTable.vue'
 import DayList from '../components/DayList.vue'
 import MonthCalendar from '../components/MonthCalendar.vue'
+import { panelTargetAfterSave } from '../utils/entryDate.js'
 import DayDetailPanel from '../components/DayDetailPanel.vue'
 import PunchPanel from '../components/PunchPanel.vue'
 import ReportService from '../services/ReportService.js'
@@ -510,6 +511,21 @@ export default {
                 this.loadOvertime(),
             ])
             this.$nextTick(() => this.scrollToTodayIfPending(false))
+        },
+        async onPanelRefresh(date) {
+            const target = panelTargetAfterSave(date, this.selectedDate, this.selectedMonth)
+            if (target.type === 'refresh') {
+                return this.refreshKeepingScroll()
+            }
+            if (target.type === 'month') {
+                this.onMonthChange({ year: target.year, month: target.month })
+                await this.$nextTick()
+                this.selectedDate = target.date
+                return
+            }
+            this.selectedDate = target.date
+            await this.loadData()
+            this.$nextTick(() => this.$refs.dayList?.scrollToDate(target.date, true))
         },
         // Beim Nachladen ersetzt der Ladekreis kurz die Liste; ohne das stünde man danach wieder oben
         async refreshKeepingScroll() {

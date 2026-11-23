@@ -254,9 +254,9 @@ export default {
             this.formMode = null
             this.editingEntry = null
         },
-        onSaved() {
+        onSaved(date) {
             this.closeForm()
-            this.$emit('refresh')
+            this.$emit('refresh', date)
         },
         async confirmDelete(entry) {
             // In HR correction mode, capture a mandatory reason instead of the plain confirm.
