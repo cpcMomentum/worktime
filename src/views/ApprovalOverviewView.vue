@@ -42,7 +42,7 @@
                     </div>
                     <div v-if="departmentOptions.length > 1 || filterDepartmentId !== null" class="dept-filter">
                         <label for="approvalDeptFilter">{{ t('worktime', 'Abteilung') }}</label>
-                        <NcSelect label-outside id="approvalDeptFilter"
+                        <NcSelect label-outside input-id="approvalDeptFilter"
                             v-model="selectedDepartment"
                             :options="departmentOptions"
                             :placeholder="t('worktime', 'Alle Abteilungen')"

@@ -72,7 +72,7 @@
                         <div class="form-group">
                             <label for="absenceVisibility">{{ t('worktime', 'Abwesenheiten sichtbar für') }}</label>
                             <div class="visibility-row">
-                                <NcSelect label-outside id="absenceVisibility"
+                                <NcSelect label-outside input-id="absenceVisibility"
                                     v-model="selectedVisibility"
                                     :options="visibilityOptions"
                                     :clearable="false"
@@ -87,7 +87,7 @@
                         <div v-if="form.absenceVisibility !== 'none'" class="form-group">
                             <label for="absenceDetail">{{ t('worktime', 'Detailgrad') }} <InfoIcon>{{ t('worktime', 'Legt fest, ob Kollegen in der Abwesenheitsübersicht deinen Abwesenheitsgrund sehen (z.B. Urlaub) oder nur Abwesend. Vorgesetzte und HR sehen immer den Grund.') }}</InfoIcon></label>
                             <div class="visibility-row">
-                                <NcSelect label-outside id="absenceDetail"
+                                <NcSelect label-outside input-id="absenceDetail"
                                     v-model="selectedDetail"
                                     :options="detailOptions"
                                     :clearable="false"
@@ -111,7 +111,7 @@
                         <div class="form-group">
                             <label for="deputy">{{ t('worktime', 'Meine Vertretung bei Genehmigungen') }}</label>
                             <div class="visibility-row">
-                                <NcSelect label-outside id="deputy"
+                                <NcSelect label-outside input-id="deputy"
                                     v-model="selectedDeputy"
                                     :options="deputyOptions"
                                     :placeholder="t('worktime', 'Keine Vertretung')"

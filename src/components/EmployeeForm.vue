@@ -4,7 +4,7 @@
 
         <div class="form-group">
             <label for="ncUser">{{ t('worktime', 'Nextcloud-Benutzer') }}</label>
-            <NcSelect label-outside id="ncUser"
+            <NcSelect label-outside input-id="ncUser"
                 v-model="selectedUser"
                 :options="userOptions"
                 :placeholder="t('worktime', 'Benutzer auswählen')"
@@ -102,7 +102,7 @@
 
         <div class="form-group">
             <label for="federalState">{{ t('worktime', 'Bundesland') }} <InfoIcon>{{ t('worktime', 'Legt fest, welche gesetzlichen Feiertage für diesen Mitarbeiter gelten. Bayern hat z.B. mehr Feiertage als Hamburg.') }}</InfoIcon> *</label>
-            <NcSelect label-outside id="federalState"
+            <NcSelect label-outside input-id="federalState"
                 v-model="selectedFederalState"
                 :options="federalStateOptions"
                 :clearable="false"
@@ -112,7 +112,7 @@
         <div class="form-row">
             <div class="form-group">
                 <label for="supervisor">{{ t('worktime', 'Vorgesetzter') }} <InfoIcon>{{ t('worktime', 'Diese Person kann die Zeiteinträge und Abwesenheitsanträge dieses Mitarbeiters einsehen und genehmigen.') }}</InfoIcon></label>
-                <NcSelect label-outside id="supervisor"
+                <NcSelect label-outside input-id="supervisor"
                     v-model="selectedSupervisor"
                     :options="supervisorOptions"
                     :placeholder="t('worktime', 'Kein Vorgesetzter')"
@@ -120,7 +120,7 @@
             </div>
             <div class="form-group">
                 <label for="department">{{ t('worktime', 'Abteilung') }} <InfoIcon>{{ t('worktime', 'Ordnet den Mitarbeiter einer Organisationseinheit zu. Rein organisatorisch – unabhängig vom Vorgesetzten und ohne Einfluss auf Berechtigungen.') }}</InfoIcon></label>
-                <NcSelect label-outside id="department"
+                <NcSelect label-outside input-id="department"
                     v-model="selectedDepartment"
                     :options="departmentOptions"
                     :placeholder="t('worktime', 'Keine Abteilung')"
@@ -132,6 +132,7 @@
             <div class="form-group">
                 <label for="entryDate">{{ t('worktime', 'Eintrittsdatum') }} <InfoIcon>{{ t('worktime', 'Ab diesem Datum erscheint der Mitarbeiter in der Zeiterfassung. Für Monate davor werden keine Sollstunden berechnet.') }}</InfoIcon></label>
                 <NcDateTimePicker id="entryDate"
+                    :aria-label="t('worktime', 'Eintrittsdatum')"
                     v-model="form.entryDate" clearable
                     type="date"
                     format="dd.MM.yyyy" />
@@ -139,6 +140,7 @@
             <div v-if="isEdit" class="form-group">
                 <label for="exitDate">{{ t('worktime', 'Austrittsdatum') }} <InfoIcon>{{ t('worktime', 'Ab diesem Datum kann der Mitarbeiter keine neuen Einträge mehr erfassen. Alle bisherigen Daten bleiben erhalten.') }}</InfoIcon></label>
                 <NcDateTimePicker id="exitDate"
+                    :aria-label="t('worktime', 'Austrittsdatum')"
                     v-model="form.exitDate" clearable
                     type="date"
                     format="dd.MM.yyyy" />

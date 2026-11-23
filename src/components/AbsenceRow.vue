@@ -49,6 +49,7 @@
                             <div class="date-row">
                                 <NcDateTimePicker
                                     v-model="form.startDate"
+                                    :aria-label="t('worktime', 'Von')"
                                     type="date"
                                     format="dd.MM.yyyy"
                                     class="inline-picker"
@@ -56,6 +57,7 @@
                                 <span class="date-separator">-</span>
                                 <NcDateTimePicker
                                     v-model="form.endDate"
+                                    :aria-label="t('worktime', 'Bis')"
                                     type="date"
                                     format="dd.MM.yyyy"
                                     class="inline-picker"
@@ -67,6 +69,7 @@
                         <div class="field">
                             <NcSelect label-outside
                                 v-model="selectedType"
+                                :aria-label-combobox="t('worktime', 'Art')"
                                 :options="typeOptions"
                                 :clearable="false"
                                 class="inline-select type-select" />
@@ -91,6 +94,7 @@
                                 <template v-else>
                                     <NcSelect label-outside
                                         v-model="selectedScope"
+                                        :aria-label-combobox="t('worktime', 'Umfang')"
                                         :options="scopeOptions"
                                         :clearable="false"
                                         class="scope-select" />
