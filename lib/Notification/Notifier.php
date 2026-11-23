@@ -172,12 +172,21 @@ class Notifier implements INotifier {
 				break;
 
 			case 'time_entries_rejected':
-				$notification->setParsedSubject(
-					$l->t(
-						'Deine Zeiteinträge für %s wurden abgelehnt',
-						[$monthYear]
-					)
-				);
+				if (!empty($params['reason'])) {
+					$notification->setParsedSubject(
+						$l->t(
+							'Deine Zeiteinträge für %1$s wurden abgelehnt (Grund: %2$s)',
+							[$monthYear, $params['reason']]
+						)
+					);
+				} else {
+					$notification->setParsedSubject(
+						$l->t(
+							'Deine Zeiteinträge für %s wurden abgelehnt',
+							[$monthYear]
+						)
+					);
+				}
 				break;
 
 			case 'time_entries_reopened':

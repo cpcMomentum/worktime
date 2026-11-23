@@ -1167,4 +1167,19 @@ class TimeEntryServiceTest extends TestCase {
             'The warning must report NET hours (12.25), not gross (13)'
         );
     }
+
+    public function testRejectMonthPassesReasonToNotification(): void {
+        $entry = new TimeEntry();
+        $entry->setId(11);
+        $entry->setEmployeeId(5);
+        $entry->setStatus(TimeEntry::STATUS_SUBMITTED);
+        $this->timeEntryMapper->method('findByEmployeeAndMonth')->willReturn([$entry]);
+        $this->timeEntryMapper->method('update')->willReturnArgument(0);
+
+        $this->notificationService->expects($this->once())
+            ->method('notifyTimeEntriesRejected')
+            ->with(5, 2026, 10, 'Bitte 14.10. prüfen');
+
+        $this->service->rejectMonth(5, 2026, 10, '  Bitte 14.10. prüfen ');
+    }
 }
