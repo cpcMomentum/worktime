@@ -20220,7 +20220,6 @@ var GD = /*#__PURE__*/ Y(BD, [["render", WD]]), KD = {
 	data() {
 		return {
 			entries: [],
-			projects: [],
 			loading: !0,
 			archiveAfterApprove: !1
 		};
@@ -20241,8 +20240,8 @@ var GD = /*#__PURE__*/ Y(BD, [["render", WD]]), KD = {
 	},
 	async mounted() {
 		try {
-			let [e, n] = await Promise.all([Sv.getByEmployee(this.item.employeeId, this.item.year, this.item.month), bv.getAll()]);
-			this.entries = Array.isArray(e) ? e : e?.data || [], this.projects = Array.isArray(n) ? n : n?.data || [];
+			let e = await Sv.getByEmployee(this.item.employeeId, this.item.year, this.item.month);
+			this.entries = Array.isArray(e) ? e : e?.data || [];
 		} catch (e) {
 			console.error("Failed to load month entries:", e), qt(t("worktime", "Fehler beim Laden der Monatseinträge"));
 		} finally {
@@ -20253,11 +20252,6 @@ var GD = /*#__PURE__*/ Y(BD, [["render", WD]]), KD = {
 		formatDate: Gv,
 		downloadPdf() {
 			bw.downloadPdf(this.item.employeeId, this.item.year, this.item.month);
-		},
-		projectName(e) {
-			if (!e) return "";
-			let n = this.projects.find((n) => n.id === e);
-			return n?.name || n?.displayName || "";
 		},
 		hoursLabel(e) {
 			return `${fy(e || 0)} h`;
@@ -20314,7 +20308,7 @@ function uO(e, r, i, a, o, s) {
 					r[12] ||= z(),
 					n("td", sO, U(s.hoursLabel(i.workMinutes)), 1),
 					r[13] ||= z(),
-					n("td", null, U(s.projectName(i.projectId) || "–"), 1),
+					n("td", null, U(i.projectName || "–"), 1),
 					r[14] ||= z(),
 					n("td", cO, U(i.description || ""), 1)
 				]))), 128))])
@@ -20362,7 +20356,7 @@ function uO(e, r, i, a, o, s) {
 		_: 1
 	});
 }
-var dO = /*#__PURE__*/ Y(JD, [["render", uO], ["__scopeId", "data-v-df7c07d7"]]);
+var dO = /*#__PURE__*/ Y(JD, [["render", uO], ["__scopeId", "data-v-0ae5edc3"]]);
 function fO(e, n, r, i) {
 	let a = /* @__PURE__ */ new Set(), o = !1;
 	for (let r of e) {
