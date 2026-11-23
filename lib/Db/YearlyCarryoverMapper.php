@@ -89,6 +89,22 @@ class YearlyCarryoverMapper extends QBMapper {
     }
 
     /**
+     * All active (not cancelled) rows of every year, used by the #889 repair.
+     *
+     * @return YearlyCarryover[]
+     */
+    public function findAllActive(): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->isNull('cancelled_at'))
+            ->orderBy('employee_id', 'ASC')
+            ->addOrderBy('year', 'ASC');
+
+        return $this->findEntities($qb);
+    }
+
+    /**
      * @throws DoesNotExistException
      */
     public function findActiveByEmployeeAndYear(int $employeeId, int $year): YearlyCarryover {
