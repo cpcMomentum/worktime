@@ -35,7 +35,7 @@
                     </div>
                     <div class="substat">
                         <span class="substat__l">{{ t('worktime', 'Genommen') }}</span>
-                        <span class="substat__v">{{ vacationStats.used }}<small v-if="vacationStats.pending > 0"> {{ t('worktime', '+ {days} beantragt', { days: vacationStats.pending }) }}</small></span>
+                        <span class="substat__v">{{ vacationStats.used }} <small v-if="vacationStats.pending > 0">{{ t('worktime', '+ {days} beantragt', { days: vacationStats.pending }) }}</small></span>
                     </div>
                     <div class="substat">
                         <span class="substat__l">{{ t('worktime', 'Übertrag Vorjahr') }}</span>
@@ -60,7 +60,7 @@
                 <div class="konto-substats">
                     <div class="substat">
                         <span class="substat__l">{{ t('worktime', 'Freizeitausgleich') }}</span>
-                        <span class="substat__v">{{ formatDaysLabel(compensatoryDays) }}<small v-if="compensatoryDays > 0"> (≈{{ compensatoryHoursLabel }})</small></span>
+                        <span class="substat__v">{{ formatDaysLabel(compensatoryDays) }} <small v-if="compensatoryDays > 0">(≈{{ compensatoryHoursLabel }})</small></span>
                     </div>
                     <div v-if="overtimePaidOutMin > 0" class="substat">
                         <span class="substat__l">{{ t('worktime', 'Ausgezahlt {year}', { year: currentYear }) }}</span>

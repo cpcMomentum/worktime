@@ -28,10 +28,12 @@
                     :clearable="true"
                     label="label" />
                 <NcDateTimePicker v-model="filterFrom" clearable
+                    :aria-label="t('worktime', 'Von')"
                     type="date"
                     format="dd.MM.yyyy"
                     :placeholder="t('worktime', 'Von')" />
                 <NcDateTimePicker v-model="filterTo" clearable
+                    :aria-label="t('worktime', 'Bis')"
                     type="date"
                     format="dd.MM.yyyy"
                     :placeholder="t('worktime', 'Bis')" />

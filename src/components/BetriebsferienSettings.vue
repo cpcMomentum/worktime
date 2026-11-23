@@ -4,11 +4,11 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>{{ t('worktime', 'Von') }}</label>
-                    <NcDateTimePicker v-model="form.startDate" clearable type="date" format="dd.MM.yyyy" />
+                    <NcDateTimePicker v-model="form.startDate" :aria-label="t('worktime', 'Von')" clearable type="date" format="dd.MM.yyyy" />
                 </div>
                 <div class="form-group">
                     <label>{{ t('worktime', 'Bis') }}</label>
-                    <NcDateTimePicker v-model="form.endDate" clearable type="date" format="dd.MM.yyyy" />
+                    <NcDateTimePicker v-model="form.endDate" :aria-label="t('worktime', 'Bis')" clearable type="date" format="dd.MM.yyyy" />
                 </div>
             </div>
 

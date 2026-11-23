@@ -5,6 +5,7 @@
         <div v-if="!embedded || isEdit" class="form-group">
             <label for="date">{{ t('worktime', 'Datum') }}</label>
             <NcDateTimePicker id="date"
+                :aria-label="t('worktime', 'Datum')"
                 v-model="form.date"
                 type="date"
                 format="dd.MM.yyyy" />
