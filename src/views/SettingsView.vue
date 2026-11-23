@@ -915,7 +915,7 @@ import DepartmentForm from '../components/DepartmentForm.vue'
 import DepartmentList from '../components/DepartmentList.vue'
 import WerkPlusSettings from '../components/WerkPlusSettings.vue'
 import { showSuccessMessage, showErrorMessage, confirmAction } from '../utils/errorHandler.js'
-import { getCurrentYear, getLocale, formatDateISO, getMonthName } from '../utils/dateUtils.js'
+import { getCurrentYear, getLocale, formatDateISO, getMonthName, parseISODate } from '../utils/dateUtils.js'
 import YearlyCarryoverService from '../services/YearlyCarryoverService.js'
 import OvertimePayoutService from '../services/OvertimePayoutService.js'
 import ReportService from '../services/ReportService.js'
@@ -1605,14 +1605,14 @@ export default {
         },
         formatDate(dateStr) {
             if (!dateStr) return ''
-            const date = new Date(dateStr)
+            const date = parseISODate(dateStr)
             return date.toLocaleDateString(getLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' })
         },
         openHolidayForm(holiday) {
             this.editingHoliday = holiday
             if (holiday) {
                 this.holidayFormData = {
-                    date: new Date(holiday.date),
+                    date: parseISODate(holiday.date),
                     name: holiday.name,
                     federalStates: [holiday.federalState],
                     scope: holiday.scope ?? 1.0,
@@ -1699,7 +1699,7 @@ export default {
                 groupHolidayIds: group.holidays.map(h => h.id),
             }
             this.holidayFormData = {
-                date: new Date(firstHoliday.date),
+                date: parseISODate(firstHoliday.date),
                 name: firstHoliday.name,
                 federalStates: group.states,
                 scope: firstHoliday.scope ?? 1.0,

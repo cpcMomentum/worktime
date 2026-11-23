@@ -902,6 +902,7 @@ OC.L10N.register(
     "Zur Verwaltung" : "Přejít do správy",
     "Maximale tägliche Arbeitszeit ist %s Stunden (siehe Verwaltung)" : "Maximální denní pracovní doba je %s hodin (viz Správa)",
     "Hauptnavigation" : "Hlavní navigace",
-    "Auswählen" : "Vybrat"
+    "Auswählen" : "Vybrat",
+    "Deine Zeiteinträge für %1$s wurden abgelehnt (Grund: %2$s)" : "Tvoje záznamy o časech pro %1$s byly zamítnuty (důvod: %2$s)"
 },
 "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;");

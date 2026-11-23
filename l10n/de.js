@@ -902,6 +902,7 @@ OC.L10N.register(
     "Zur Verwaltung" : "Zur Verwaltung",
     "Maximale tägliche Arbeitszeit ist %s Stunden (siehe Verwaltung)" : "Maximale tägliche Arbeitszeit ist %s Stunden (siehe Verwaltung)",
     "Hauptnavigation" : "Hauptnavigation",
-    "Auswählen" : "Auswählen"
+    "Auswählen" : "Auswählen",
+    "Deine Zeiteinträge für %1$s wurden abgelehnt (Grund: %2$s)" : "Deine Zeiteinträge für %1$s wurden abgelehnt (Grund: %2$s)"
 },
 "nplurals=2; plural=(n != 1);");

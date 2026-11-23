@@ -14841,7 +14841,7 @@ function Wv() {
 	return document.documentElement.lang || navigator.language || "de-DE";
 }
 function Gv(e) {
-	return e ? (typeof e == "string" ? new Date(e) : e).toLocaleDateString(Wv(), {
+	return e ? (typeof e == "string" ? ry(e) : e).toLocaleDateString(Wv(), {
 		day: "2-digit",
 		month: "2-digit",
 		year: "numeric"
@@ -14849,7 +14849,7 @@ function Gv(e) {
 }
 function Kv(e) {
 	if (!e) return "";
-	let n = typeof e == "string" ? new Date(e) : e;
+	let n = typeof e == "string" ? ry(e) : e;
 	return `${Xv(n.getDay())}, ${n.toLocaleDateString(Wv(), {
 		day: "2-digit",
 		month: "2-digit",
@@ -14858,7 +14858,7 @@ function Kv(e) {
 }
 function qv(e) {
 	if (!e) return "";
-	let n = typeof e == "string" ? new Date(e) : e;
+	let n = typeof e == "string" ? ry(e) : e;
 	return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
 }
 function Jv(e) {
@@ -14914,7 +14914,7 @@ function $v() {
 	return qv(/* @__PURE__ */ new Date());
 }
 function ey(e) {
-	let n = (typeof e == "string" ? new Date(e) : e).getDay();
+	let n = (typeof e == "string" ? ry(e) : e).getDay();
 	return n === 0 || n === 6;
 }
 function ty(e, n) {
@@ -15034,7 +15034,7 @@ function Sy(e) {
 }
 function Cy(e) {
 	if (!e) return "";
-	let n = typeof e == "string" ? new Date(e) : e, r = Wv();
+	let n = typeof e == "string" ? ry(e) : e, r = Wv();
 	return `${n.toLocaleDateString(r, { weekday: "short" })}, ${n.toLocaleDateString(r, {
 		day: "2-digit",
 		month: "2-digit",
@@ -16576,7 +16576,7 @@ var NS = /*#__PURE__*/ Y(wS, [["render", MS], ["__scopeId", "data-v-d5d26aa1"]])
 			immediate: !0,
 			handler(e) {
 				e ? this.form = {
-					date: new Date(e.date),
+					date: ry(e.date),
 					startTime: e.startTime,
 					endTime: e.endTime,
 					breakMinutes: e.breakMinutes,
@@ -16604,7 +16604,7 @@ var NS = /*#__PURE__*/ Y(wS, [["render", MS], ["__scopeId", "data-v-d5d26aa1"]])
 		resetForm() {
 			let e = this.currentEmployee?.defaultStartTime || "08:00", n = this.currentEmployee?.defaultEndTime || "17:00";
 			this.form = {
-				date: this.presetDate ? new Date(this.presetDate) : /* @__PURE__ */ new Date(),
+				date: this.presetDate ? ry(this.presetDate) : /* @__PURE__ */ new Date(),
 				startTime: this.prefillStart || e,
 				endTime: this.prefillEnd === null ? n : this.prefillEnd,
 				breakMinutes: 30,
@@ -16820,7 +16820,7 @@ var iC = {
 		LockIcon: Z_,
 		CalendarStarIcon: dS,
 		AlertIcon: uo,
-		TimeEntryForm: /* @__PURE__ */ Y(PS, [["render", rC], ["__scopeId", "data-v-cfa7a309"]]),
+		TimeEntryForm: /* @__PURE__ */ Y(PS, [["render", rC], ["__scopeId", "data-v-10668cce"]]),
 		CorrectionReasonModal: NS
 	},
 	props: {
@@ -17961,7 +17961,7 @@ var xw = /*#__PURE__*/ Y(uw, [["render", bw], ["__scopeId", "data-v-4a901343"]])
 			return this.yearlyMonths.filter((r) => this.overviewYear < e ? !0 : this.overviewYear > e ? !1 : r.month <= n);
 		},
 		minYear() {
-			return this.currentEmployee?.entryDate ? new Date(this.currentEmployee.entryDate).getFullYear() : Zv();
+			return this.currentEmployee?.entryDate ? ry(this.currentEmployee.entryDate).getFullYear() : Zv();
 		},
 		maxYear() {
 			return Zv() + 1;
@@ -18457,7 +18457,7 @@ function Ww(e, r, i, a, o, s) {
 		})) : K("", !0)
 	]);
 }
-var Gw = /*#__PURE__*/ Y(Cw, [["render", Ww], ["__scopeId", "data-v-eb4c35fe"]]), Kw = {
+var Gw = /*#__PURE__*/ Y(Cw, [["render", Ww], ["__scopeId", "data-v-47a08ede"]]), Kw = {
 	name: "CloseIcon",
 	emits: ["click"],
 	props: {
@@ -22784,7 +22784,7 @@ var PM = {
 			return !!this.employee;
 		},
 		entryYear() {
-			return this.form.entryDate ? new Date(this.form.entryDate).getFullYear() : null;
+			return this.form.entryDate ? ry(this.form.entryDate).getFullYear() : null;
 		},
 		normalizedVacationDaysUsed() {
 			let e = this.form.vacationDaysUsed;
@@ -22879,8 +22879,8 @@ var PM = {
 				supervisorId: e.supervisorId,
 				departmentId: e.departmentId ?? null,
 				federalState: e.federalState,
-				entryDate: e.entryDate ? new Date(e.entryDate) : null,
-				exitDate: e.exitDate ? new Date(e.exitDate) : null,
+				entryDate: e.entryDate ? ry(e.entryDate) : null,
+				exitDate: e.exitDate ? ry(e.exitDate) : null,
 				vacationDaysUsed: e.vacationDaysUsed ?? null,
 				vacationTransferred: e.vacationTransferred ?? !1
 			} : this.resetForm();
@@ -23315,7 +23315,7 @@ function ON(e, r, i, a, o, s) {
 		])
 	]);
 }
-var kN = /*#__PURE__*/ Y(PM, [["render", ON], ["__scopeId", "data-v-2f00b84a"]]), AN = {
+var kN = /*#__PURE__*/ Y(PM, [["render", ON], ["__scopeId", "data-v-986a153c"]]), AN = {
 	name: "SleepOffIcon",
 	emits: ["click"],
 	props: {
@@ -27269,7 +27269,7 @@ var sR = {
 		},
 		filterHolidays() {},
 		formatDate(e) {
-			return e ? new Date(e).toLocaleDateString(Wv(), {
+			return e ? ry(e).toLocaleDateString(Wv(), {
 				day: "2-digit",
 				month: "2-digit",
 				year: "numeric"
@@ -27277,7 +27277,7 @@ var sR = {
 		},
 		openHolidayForm(e) {
 			this.editingHoliday = e, this.holidayFormData = e ? {
-				date: new Date(e.date),
+				date: ry(e.date),
 				name: e.name,
 				federalStates: [e.federalState],
 				scope: e.scope ?? 1
@@ -27332,7 +27332,7 @@ var sR = {
 				...n,
 				groupHolidayIds: e.holidays.map((e) => e.id)
 			}, this.holidayFormData = {
-				date: new Date(n.date),
+				date: ry(n.date),
 				name: n.name,
 				federalStates: e.states,
 				scope: n.scope ?? 1
@@ -28945,7 +28945,7 @@ function XB(e, r, i, a, o, s) {
 		]))
 	]);
 }
-var ZB = /*#__PURE__*/ Y(sR, [["render", XB], ["__scopeId", "data-v-b0a59f68"]]), QB = { async getFiltered({ action: e = "", entityType: n = "", from: r = "", to: i = "", limit: a = 200, offset: o = 0, userId: s = "" } = {}) {
+var ZB = /*#__PURE__*/ Y(sR, [["render", XB], ["__scopeId", "data-v-690d0c1e"]]), QB = { async getFiltered({ action: e = "", entityType: n = "", from: r = "", to: i = "", limit: a = 200, offset: o = 0, userId: s = "" } = {}) {
 	try {
 		let c = {
 			limit: a,

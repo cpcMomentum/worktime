@@ -210,7 +210,7 @@ import { useProjectsStore } from '../stores/projects.ts'
 import { useTimeEntriesStore } from '../stores/timeEntries.ts'
 import { showSuccess, showError } from '@nextcloud/dialogs'
 import { confirmAction } from '../utils/errorHandler.js'
-import { getCurrentYear, getCurrentMonth, getMonthDays, getToday, formatDateISO, getLocale } from '../utils/dateUtils.js'
+import { getCurrentYear, getCurrentMonth, getMonthDays, getToday, formatDateISO, getLocale, parseISODate } from '../utils/dateUtils.js'
 import { findScrollContainer } from '../utils/scrollToDay.js'
 import { getAbsenceTypeLabel } from '../utils/formatters.js'
 import MonthPicker from '../components/MonthPicker.vue'
@@ -343,7 +343,7 @@ export default {
         },
         minYear() {
             if (this.currentEmployee?.entryDate) {
-                return new Date(this.currentEmployee.entryDate).getFullYear()
+                return parseISODate(this.currentEmployee.entryDate).getFullYear()
             }
             return getCurrentYear()
         },

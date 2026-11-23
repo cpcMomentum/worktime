@@ -6,7 +6,7 @@
 
 import { translate as t, translatePlural as n } from '@nextcloud/l10n'
 import { STATUS_LABELS, ABSENCE_TYPE_LABELS, ENTRY_STATUS, ABSENCE_STATUS } from '../constants.js'
-import { formatDate as formatDateFromDateUtils, getLocale } from './dateUtils.js'
+import { formatDate as formatDateFromDateUtils, getLocale, parseISODate } from './dateUtils.js'
 import { formatMinutes, formatMinutesWithUnit, formatHoursDecimal } from './timeUtils.js'
 
 // Re-export time formatting functions for convenience
@@ -75,7 +75,7 @@ export function getAbsenceColorClass(type) {
  */
 export function formatDate(date, format = 'medium') {
     if (!date) return ''
-    const d = typeof date === 'string' ? new Date(date) : date
+    const d = typeof date === 'string' ? parseISODate(date) : date
     const locale = getLocale()
 
     switch (format) {
@@ -96,7 +96,7 @@ export function formatDate(date, format = 'medium') {
  */
 export function formatDateWithWeekday(date) {
     if (!date) return ''
-    const d = typeof date === 'string' ? new Date(date) : date
+    const d = typeof date === 'string' ? parseISODate(date) : date
     const locale = getLocale()
     const weekday = d.toLocaleDateString(locale, { weekday: 'short' })
     const dateStr = d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' })
