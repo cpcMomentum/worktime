@@ -16661,11 +16661,12 @@ function tC(e, r, i, a, o, s) {
 			r[10] ||= z(),
 			I(c, {
 				id: "date",
+				"aria-label": e.t("worktime", "Datum"),
 				modelValue: o.form.date,
 				"onUpdate:modelValue": r[0] ||= (e) => o.form.date = e,
 				type: "date",
 				format: "dd.MM.yyyy"
-			}, null, 8, ["modelValue"])
+			}, null, 8, ["aria-label", "modelValue"])
 		])) : K("", !0),
 		r[22] ||= z(),
 		n("div", IS, [
@@ -16798,7 +16799,7 @@ var nC = {
 		LockIcon: Z_,
 		CalendarStarIcon: lS,
 		AlertIcon: uo,
-		TimeEntryForm: /* @__PURE__ */ Y(MS, [["render", tC], ["__scopeId", "data-v-1e001f0b"]]),
+		TimeEntryForm: /* @__PURE__ */ Y(MS, [["render", tC], ["__scopeId", "data-v-9bf89143"]]),
 		CorrectionReasonModal: jS
 	},
 	props: {
@@ -17896,6 +17897,23 @@ var yw = /*#__PURE__*/ Y(cw, [["render", vw], ["__scopeId", "data-v-4a901343"]])
 		projects() {
 			return this.activeProjects;
 		},
+		overtimeSummaryProps() {
+			return this.isYearMode ? {
+				period: "year",
+				targetMinutes: this.yearTargetMinutes,
+				actualMinutes: this.yearActualMinutes,
+				overtimeMinutes: this.yearOvertimeMinutes,
+				year: this.overviewYear
+			} : {
+				targetMinutes: this.statistics.adjustedTargetMinutes,
+				actualMinutes: this.statistics.actualMinutes,
+				overtimeMinutes: this.statistics.overtimeMinutes,
+				balanceMinutes: this.totalOvertimeMinutes,
+				year: this.selectedMonth.year,
+				month: this.selectedMonth.month,
+				statistics: this.statistics
+			};
+		},
 		showPunchPanel() {
 			return this.isEmployee && !!this.employeeId && !this.isCorrectionMode;
 		},
@@ -18255,54 +18273,21 @@ function Hw(e, r, i, a, o, s) {
 		r[30] ||= z(),
 		!s.isYearMode && o.statistics && o.statistics.workingDays === 0 ? (J(), H("div", Aw, [I(x, { size: 20 }), z(" " + U(e.t("worktime", "0 Arbeitstage in diesem Monat – vermutlich fehlt ein gültiges Arbeitszeitprofil mit Wochenstunden größer als 0. Bitte das Arbeitszeitprofil des Mitarbeiters prüfen.")), 1)])) : K("", !0),
 		r[31] ||= z(),
-		!s.isYearMode && o.statistics ? (J(), L(S, {
-			key: 3,
-			"target-minutes": o.statistics.adjustedTargetMinutes,
-			"actual-minutes": o.statistics.actualMinutes,
-			"overtime-minutes": o.statistics.overtimeMinutes,
-			"balance-minutes": o.totalOvertimeMinutes,
+		s.isYearMode || o.statistics ? (J(), L(S, B({ key: 3 }, s.overtimeSummaryProps, {
 			"vacation-remaining": o.vacationRemaining,
 			"vacation-carryover": o.vacationCarryover,
-			"vacation-total": o.vacationTotal,
-			year: e.selectedMonth.year,
-			month: e.selectedMonth.month,
-			statistics: o.statistics
-		}, null, 8, [
-			"target-minutes",
-			"actual-minutes",
-			"overtime-minutes",
-			"balance-minutes",
+			"vacation-total": o.vacationTotal
+		}), null, 16, [
 			"vacation-remaining",
 			"vacation-carryover",
-			"vacation-total",
-			"year",
-			"month",
-			"statistics"
-		])) : s.isYearMode ? (J(), L(S, {
-			key: 4,
-			period: "year",
-			"target-minutes": s.yearTargetMinutes,
-			"actual-minutes": s.yearActualMinutes,
-			"overtime-minutes": s.yearOvertimeMinutes,
-			"vacation-remaining": o.vacationRemaining,
-			"vacation-carryover": o.vacationCarryover,
-			"vacation-total": o.vacationTotal,
-			year: o.overviewYear
-		}, null, 8, [
-			"target-minutes",
-			"actual-minutes",
-			"overtime-minutes",
-			"vacation-remaining",
-			"vacation-carryover",
-			"vacation-total",
-			"year"
+			"vacation-total"
 		])) : K("", !0),
 		r[32] ||= z(),
 		e.loading ? (J(), L(C, {
-			key: 5,
+			key: 4,
 			size: 44
 		})) : s.isYearMode ? (J(), L(w, {
-			key: 6,
+			key: 5,
 			months: o.yearlyMonths,
 			year: o.overviewYear,
 			"carryover-minutes": o.carryoverMinutes,
@@ -18313,7 +18298,7 @@ function Hw(e, r, i, a, o, s) {
 			"carryover-minutes",
 			"onSelectMonth"
 		])) : (J(), H("div", {
-			key: 7,
+			key: 6,
 			class: G(["zlayout", { narrow: o.isNarrow }])
 		}, [
 			n("div", jw, [s.effectiveLayout === "list" ? (J(), L(T, {
@@ -18359,7 +18344,7 @@ function Hw(e, r, i, a, o, s) {
 		], 2)),
 		r[33] ||= z(),
 		o.isNarrow && o.showDayModal && s.selectedDay ? (J(), L(O, {
-			key: 8,
+			key: 7,
 			size: "small",
 			"label-id": "wt-day-panel-title",
 			onClose: r[3] ||= (e) => o.showDayModal = !1
@@ -18379,7 +18364,7 @@ function Hw(e, r, i, a, o, s) {
 		})) : K("", !0),
 		r[34] ||= z(),
 		o.showRangeModal ? (J(), L(O, {
-			key: 9,
+			key: 8,
 			size: "small",
 			"label-id": "wt-range-modal-title",
 			onClose: r[7] ||= (e) => o.showRangeModal = !1
@@ -18396,10 +18381,11 @@ function Hw(e, r, i, a, o, s) {
 						I(k, {
 							modelValue: o.rangeStart,
 							"onUpdate:modelValue": r[4] ||= (e) => o.rangeStart = e,
+							"aria-label": e.t("worktime", "Von"),
 							clearable: "",
 							type: "date",
 							format: "dd.MM.yyyy"
-						}, null, 8, ["modelValue"])
+						}, null, 8, ["modelValue", "aria-label"])
 					]),
 					r[21] ||= z(),
 					n("div", zw, [
@@ -18408,10 +18394,11 @@ function Hw(e, r, i, a, o, s) {
 						I(k, {
 							modelValue: o.rangeEnd,
 							"onUpdate:modelValue": r[5] ||= (e) => o.rangeEnd = e,
+							"aria-label": e.t("worktime", "Bis"),
 							clearable: "",
 							type: "date",
 							format: "dd.MM.yyyy"
-						}, null, 8, ["modelValue"])
+						}, null, 8, ["modelValue", "aria-label"])
 					])
 				]),
 				r[25] ||= z(),
@@ -18441,7 +18428,7 @@ function Hw(e, r, i, a, o, s) {
 		})) : K("", !0)
 	]);
 }
-var Uw = /*#__PURE__*/ Y(xw, [["render", Hw], ["__scopeId", "data-v-5960aecc"]]), Ww = {
+var Uw = /*#__PURE__*/ Y(xw, [["render", Hw], ["__scopeId", "data-v-b67315b6"]]), Ww = {
 	name: "CloseIcon",
 	emits: ["click"],
 	props: {
@@ -18816,22 +18803,29 @@ function DT(e, r, i, a, o, s) {
 				I(d, {
 					modelValue: o.form.startDate,
 					"onUpdate:modelValue": [r[2] ||= (e) => o.form.startDate = e, s.onStartDateChange],
+					"aria-label": e.t("worktime", "Von"),
 					type: "date",
 					format: "dd.MM.yyyy",
 					class: "inline-picker"
-				}, null, 8, ["modelValue", "onUpdate:modelValue"]),
+				}, null, 8, [
+					"modelValue",
+					"aria-label",
+					"onUpdate:modelValue"
+				]),
 				r[16] ||= z(),
 				r[17] ||= n("span", { class: "date-separator" }, "-", -1),
 				r[18] ||= z(),
 				I(d, {
 					modelValue: o.form.endDate,
 					"onUpdate:modelValue": [r[3] ||= (e) => o.form.endDate = e, s.onEndDateChange],
+					"aria-label": e.t("worktime", "Bis"),
 					type: "date",
 					format: "dd.MM.yyyy",
 					class: G(["inline-picker", { "inline-picker--locked": o.form.scope < 1 }]),
 					inert: o.form.scope < 1 || null
 				}, null, 8, [
 					"modelValue",
+					"aria-label",
 					"class",
 					"inert",
 					"onUpdate:modelValue"
@@ -18842,10 +18836,15 @@ function DT(e, r, i, a, o, s) {
 				"label-outside": "",
 				modelValue: s.selectedType,
 				"onUpdate:modelValue": r[4] ||= (e) => s.selectedType = e,
+				"aria-label-combobox": e.t("worktime", "Art"),
 				options: s.typeOptions,
 				clearable: !1,
 				class: "inline-select type-select"
-			}, null, 8, ["modelValue", "options"])]),
+			}, null, 8, [
+				"modelValue",
+				"aria-label-combobox",
+				"options"
+			])]),
 			r[23] ||= z(),
 			n("div", hT, [n("div", gT, [s.showHourlySick ? (J(), H(F, { key: 0 }, [
 				N(n("input", {
@@ -18870,10 +18869,15 @@ function DT(e, r, i, a, o, s) {
 					"label-outside": "",
 					modelValue: s.selectedScope,
 					"onUpdate:modelValue": r[6] ||= (e) => s.selectedScope = e,
+					"aria-label-combobox": e.t("worktime", "Umfang"),
 					options: o.scopeOptions,
 					clearable: !1,
 					class: "scope-select"
-				}, null, 8, ["modelValue", "options"]),
+				}, null, 8, [
+					"modelValue",
+					"aria-label-combobox",
+					"options"
+				]),
 				r[20] ||= z(),
 				n("span", bT, U(s.calculatedDays), 1)
 			], 64))])]),
@@ -18928,7 +18932,7 @@ var OT = {
 		NcCheckboxRadioSwitch: tt,
 		PlusIcon: Gx,
 		CalendarIcon: Pa,
-		AbsenceRow: /* @__PURE__ */ Y(rT, [["render", DT], ["__scopeId", "data-v-785abf45"]]),
+		AbsenceRow: /* @__PURE__ */ Y(rT, [["render", DT], ["__scopeId", "data-v-8b9c6d73"]]),
 		CorrectionReasonModal: jS,
 		YearPicker: Ky,
 		InfoIcon: sv
@@ -19181,7 +19185,7 @@ function NE(e, r, i, a, o, s) {
 						n("div", VT, [
 							n("span", HT, U(e.t("worktime", "Genommen")), 1),
 							r[4] ||= z(),
-							n("span", UT, [z(U(e.vacationStats.used), 1), e.vacationStats.pending > 0 ? (J(), H("small", WT, U(e.t("worktime", "+ {days} beantragt", { days: e.vacationStats.pending })), 1)) : K("", !0)])
+							n("span", UT, [z(U(e.vacationStats.used) + " ", 1), e.vacationStats.pending > 0 ? (J(), H("small", WT, U(e.t("worktime", "+ {days} beantragt", { days: e.vacationStats.pending })), 1)) : K("", !0)])
 						]),
 						r[8] ||= z(),
 						n("div", GT, [
@@ -19212,7 +19216,7 @@ function NE(e, r, i, a, o, s) {
 						n("div", eE, [
 							n("span", tE, U(e.t("worktime", "Freizeitausgleich")), 1),
 							r[14] ||= z(),
-							n("span", nE, [z(U(s.formatDaysLabel(s.compensatoryDays)), 1), s.compensatoryDays > 0 ? (J(), H("small", rE, " (≈" + U(s.compensatoryHoursLabel) + ")", 1)) : K("", !0)])
+							n("span", nE, [z(U(s.formatDaysLabel(s.compensatoryDays)) + " ", 1), s.compensatoryDays > 0 ? (J(), H("small", rE, "(≈" + U(s.compensatoryHoursLabel) + ")", 1)) : K("", !0)])
 						]),
 						r[17] ||= z(),
 						s.overtimePaidOutMin > 0 ? (J(), H("div", iE, [
@@ -19429,7 +19433,7 @@ function NE(e, r, i, a, o, s) {
 		}, null, 8, ["onConfirm"])) : K("", !0)
 	]);
 }
-var PE = /*#__PURE__*/ Y(OT, [["render", NE], ["__scopeId", "data-v-1e3a8882"]]), FE = {
+var PE = /*#__PURE__*/ Y(OT, [["render", NE], ["__scopeId", "data-v-cb6d98d6"]]), FE = {
 	name: "FlagOutlineIcon",
 	emits: ["click"],
 	props: {
@@ -20771,7 +20775,7 @@ function ck(e, r, i, a, o, s) {
 							r[15] ||= z(),
 							I(m, {
 								"label-outside": "",
-								id: "approvalDeptFilter",
+								"input-id": "approvalDeptFilter",
 								modelValue: s.selectedDepartment,
 								"onUpdate:modelValue": r[6] ||= (e) => s.selectedDepartment = e,
 								options: s.departmentOptions,
@@ -21066,7 +21070,7 @@ function ck(e, r, i, a, o, s) {
 		])) : K("", !0)
 	]);
 }
-var lk = /*#__PURE__*/ Y(mO, [["render", ck], ["__scopeId", "data-v-62db21bf"]]), uk = {
+var lk = /*#__PURE__*/ Y(mO, [["render", ck], ["__scopeId", "data-v-b8a9f883"]]), uk = {
 	name: "AccountSwitchOutlineIcon",
 	emits: ["click"],
 	props: {
@@ -21541,7 +21545,7 @@ function bA(e, r, i, a, o, s) {
 							n("div", lA, [
 								I(d, {
 									"label-outside": "",
-									id: "absenceVisibility",
+									"input-id": "absenceVisibility",
 									modelValue: s.selectedVisibility,
 									"onUpdate:modelValue": [r[6] ||= (e) => s.selectedVisibility = e, s.saveVisibility],
 									options: s.visibilityOptions,
@@ -21573,7 +21577,7 @@ function bA(e, r, i, a, o, s) {
 							n("div", pA, [
 								I(d, {
 									"label-outside": "",
-									id: "absenceDetail",
+									"input-id": "absenceDetail",
 									modelValue: s.selectedDetail,
 									"onUpdate:modelValue": [r[7] ||= (e) => s.selectedDetail = e, s.saveDetail],
 									options: s.detailOptions,
@@ -21611,7 +21615,7 @@ function bA(e, r, i, a, o, s) {
 						n("div", vA, [
 							I(d, {
 								"label-outside": "",
-								id: "deputy",
+								"input-id": "deputy",
 								modelValue: s.selectedDeputy,
 								"onUpdate:modelValue": [r[8] ||= (e) => s.selectedDeputy = e, s.saveDeputy],
 								options: s.deputyOptions,
@@ -21641,7 +21645,7 @@ function bA(e, r, i, a, o, s) {
 		])
 	]);
 }
-var xA = /*#__PURE__*/ Y(Bk, [["render", bA], ["__scopeId", "data-v-10dd6a25"]]), SA = {
+var xA = /*#__PURE__*/ Y(Bk, [["render", bA], ["__scopeId", "data-v-bd8390cc"]]), SA = {
 	name: "AccountIcon",
 	emits: ["click"],
 	props: {
@@ -22611,10 +22615,15 @@ function jM(e, r, i, a, o, s) {
 						modelValue: o.form.validFrom,
 						"onUpdate:modelValue": r[0] ||= (e) => o.form.validFrom = e,
 						clearable: "",
+						"aria-label": e.t("worktime", "Gültig ab"),
 						type: "date",
 						format: "dd.MM.yyyy",
 						min: s.minValidFrom || void 0
-					}, null, 8, ["modelValue", "min"])
+					}, null, 8, [
+						"modelValue",
+						"aria-label",
+						"min"
+					])
 				])),
 				r[34] ||= z(),
 				I(h, {
@@ -22715,7 +22724,7 @@ var MM = {
 		NcSelect: Xt,
 		NcDateTimePicker: z_,
 		NcCheckboxRadioSwitch: tt,
-		WorkScheduleEditor: /* @__PURE__ */ Y(eM, [["render", jM], ["__scopeId", "data-v-c4484037"]]),
+		WorkScheduleEditor: /* @__PURE__ */ Y(eM, [["render", jM], ["__scopeId", "data-v-dcb7dc7f"]]),
 		DayHoursInput: Zj
 	},
 	props: {
@@ -22964,7 +22973,7 @@ function EN(e, r, i, a, o, s) {
 			r[15] ||= z(),
 			I(c, {
 				"label-outside": "",
-				id: "ncUser",
+				"input-id": "ncUser",
 				modelValue: s.selectedUser,
 				"onUpdate:modelValue": r[0] ||= (e) => s.selectedUser = e,
 				options: s.userOptions,
@@ -23133,7 +23142,7 @@ function EN(e, r, i, a, o, s) {
 			r[32] ||= z(),
 			I(c, {
 				"label-outside": "",
-				id: "federalState",
+				"input-id": "federalState",
 				modelValue: s.selectedFederalState,
 				"onUpdate:modelValue": r[7] ||= (e) => s.selectedFederalState = e,
 				options: s.federalStateOptions,
@@ -23151,7 +23160,7 @@ function EN(e, r, i, a, o, s) {
 				r[33] ||= z(),
 				I(c, {
 					"label-outside": "",
-					id: "supervisor",
+					"input-id": "supervisor",
 					modelValue: s.selectedSupervisor,
 					"onUpdate:modelValue": r[8] ||= (e) => s.selectedSupervisor = e,
 					options: s.supervisorOptions,
@@ -23172,7 +23181,7 @@ function EN(e, r, i, a, o, s) {
 				r[34] ||= z(),
 				I(c, {
 					"label-outside": "",
-					id: "department",
+					"input-id": "department",
 					modelValue: s.selectedDepartment,
 					"onUpdate:modelValue": r[9] ||= (e) => s.selectedDepartment = e,
 					options: s.departmentOptions,
@@ -23195,12 +23204,13 @@ function EN(e, r, i, a, o, s) {
 				r[36] ||= z(),
 				I(d, {
 					id: "entryDate",
+					"aria-label": e.t("worktime", "Eintrittsdatum"),
 					modelValue: o.form.entryDate,
 					"onUpdate:modelValue": r[10] ||= (e) => o.form.entryDate = e,
 					clearable: "",
 					type: "date",
 					format: "dd.MM.yyyy"
-				}, null, 8, ["modelValue"])
+				}, null, 8, ["aria-label", "modelValue"])
 			]),
 			r[38] ||= z(),
 			s.isEdit ? (J(), H("div", _N, [
@@ -23211,12 +23221,13 @@ function EN(e, r, i, a, o, s) {
 				r[37] ||= z(),
 				I(d, {
 					id: "exitDate",
+					"aria-label": e.t("worktime", "Austrittsdatum"),
 					modelValue: o.form.exitDate,
 					"onUpdate:modelValue": r[11] ||= (e) => o.form.exitDate = e,
 					clearable: "",
 					type: "date",
 					format: "dd.MM.yyyy"
-				}, null, 8, ["modelValue"])
+				}, null, 8, ["aria-label", "modelValue"])
 			])) : K("", !0)
 		]),
 		r[53] ||= z(),
@@ -23275,7 +23286,7 @@ function EN(e, r, i, a, o, s) {
 		])
 	]);
 }
-var DN = /*#__PURE__*/ Y(MM, [["render", EN], ["__scopeId", "data-v-f99f68b2"]]), ON = {
+var DN = /*#__PURE__*/ Y(MM, [["render", EN], ["__scopeId", "data-v-2f00b84a"]]), ON = {
 	name: "SleepOffIcon",
 	emits: ["click"],
 	props: {
@@ -23496,7 +23507,7 @@ function cP(e, r, i, a, o, s) {
 			r[3] ||= z(),
 			I(c, {
 				"label-outside": "",
-				id: "employeeDeptFilter",
+				"input-id": "employeeDeptFilter",
 				modelValue: s.selectedFilterDepartment,
 				"onUpdate:modelValue": r[0] ||= (e) => s.selectedFilterDepartment = e,
 				options: s.departmentFilterOptions,
@@ -23758,7 +23769,7 @@ function cP(e, r, i, a, o, s) {
 		}, 8, ["name", "onUpdate:open"])) : K("", !0)
 	]);
 }
-var lP = /*#__PURE__*/ Y(NN, [["render", cP], ["__scopeId", "data-v-0c7b06d4"]]), uP = {
+var lP = /*#__PURE__*/ Y(NN, [["render", cP], ["__scopeId", "data-v-5dee23c2"]]), uP = {
 	name: "BetriebsferienSettings",
 	components: {
 		NcButton: Ye,
@@ -23927,10 +23938,11 @@ function FP(e, r, i, a, o, s) {
 					I(c, {
 						modelValue: o.form.startDate,
 						"onUpdate:modelValue": r[0] ||= (e) => o.form.startDate = e,
+						"aria-label": e.t("worktime", "Von"),
 						clearable: "",
 						type: "date",
 						format: "dd.MM.yyyy"
-					}, null, 8, ["modelValue"])
+					}, null, 8, ["modelValue", "aria-label"])
 				]),
 				r[10] ||= z(),
 				n("div", hP, [
@@ -23939,10 +23951,11 @@ function FP(e, r, i, a, o, s) {
 					I(c, {
 						modelValue: o.form.endDate,
 						"onUpdate:modelValue": r[1] ||= (e) => o.form.endDate = e,
+						"aria-label": e.t("worktime", "Bis"),
 						clearable: "",
 						type: "date",
 						format: "dd.MM.yyyy"
-					}, null, 8, ["modelValue"])
+					}, null, 8, ["modelValue", "aria-label"])
 				])
 			]),
 			r[18] ||= z(),
@@ -24114,7 +24127,7 @@ function FP(e, r, i, a, o, s) {
 		])
 	]);
 }
-var IP = /*#__PURE__*/ Y(uP, [["render", FP], ["__scopeId", "data-v-87dfdb21"]]);
+var IP = /*#__PURE__*/ Y(uP, [["render", FP], ["__scopeId", "data-v-0a890578"]]);
 // node_modules/@ckpack/vue-color/libs/style-inject.es-746bb8ed.js
 function LP(e, n) {
 	n === void 0 && (n = {});
@@ -25821,7 +25834,7 @@ function QI(e, r, i, a, o, s) {
 			s.bookingMode === "selected" ? (J(), H("div", XI, [I(d, {
 				"label-outside": "",
 				"aria-label-combobox": e.t("worktime", "Mitarbeitende auswählen"),
-				id: "projectMembers",
+				"input-id": "projectMembers",
 				modelValue: s.selectedMembers,
 				"onUpdate:modelValue": r[9] ||= (e) => s.selectedMembers = e,
 				options: s.employeeOptions,
@@ -25856,7 +25869,7 @@ function QI(e, r, i, a, o, s) {
 		])
 	]);
 }
-var $I = /*#__PURE__*/ Y(EI, [["render", QI], ["__scopeId", "data-v-75844925"]]), eL = {
+var $I = /*#__PURE__*/ Y(EI, [["render", QI], ["__scopeId", "data-v-63a93916"]]), eL = {
 	name: "FolderOutlineIcon",
 	emits: ["click"],
 	props: {
@@ -27099,6 +27112,9 @@ var aR = {
 		closeEmployeeForm() {
 			this.showEmployeeForm = !1, this.editingEmployee = null;
 		},
+		onScheduleUpdated() {
+			$o().fetchEmployees();
+		},
 		async onEmployeeSaved() {
 			let e = !!this.editingEmployee;
 			this.closeEmployeeForm(), await $o().fetchEmployees(), await qo().fetchPermissions(), Vv(e ? this.t("worktime", "Mitarbeiter aktualisiert") : this.t("worktime", "Mitarbeiter erstellt"));
@@ -27481,77 +27497,77 @@ var aR = {
 }, oR = { class: "settings-view" }, sR = { class: "view-header" }, cR = {
 	key: 1,
 	class: "settings-layout"
-}, lR = { class: "settings-content" }, uR = { class: "section-header-actions" }, dR = { class: "section-header-actions" }, fR = { class: "section-header-actions" }, pR = { class: "form-group" }, mR = { class: "principal-option" }, hR = { class: "principal-label" }, gR = { class: "principal-sublabel" }, _R = { class: "form-group" }, vR = { for: "companyName" }, yR = { class: "form-group" }, bR = { for: "defaultState" }, xR = { class: "form-group" }, SR = { for: "timezone" }, CR = { class: "form-row" }, wR = { class: "form-group" }, TR = { for: "weeklyHours" }, ER = { class: "form-group" }, DR = { for: "vacationDays" }, OR = { class: "form-group" }, kR = { for: "maxDailyHours" }, AR = { class: "help-text" }, jR = { class: "form-group" }, MR = { class: "form-group" }, NR = { class: "form-group" }, PR = { class: "form-group" }, FR = {
+}, lR = { class: "settings-content" }, uR = { class: "section-header-actions" }, dR = { class: "section-header-actions" }, fR = { class: "section-header-actions" }, pR = { class: "form-group" }, mR = { for: "hrManagers" }, hR = { class: "principal-option" }, gR = { class: "principal-label" }, _R = { class: "principal-sublabel" }, vR = { class: "form-group" }, yR = { for: "companyName" }, bR = { class: "form-group" }, xR = { for: "defaultState" }, SR = { class: "form-group" }, CR = { for: "timezone" }, wR = { class: "form-row" }, TR = { class: "form-group" }, ER = { for: "weeklyHours" }, DR = { class: "form-group" }, OR = { for: "vacationDays" }, kR = { class: "form-group" }, AR = { for: "maxDailyHours" }, jR = { class: "help-text" }, MR = { class: "form-group" }, NR = { class: "form-group" }, PR = { class: "form-group" }, FR = { class: "form-group" }, IR = {
 	key: 0,
 	class: "help-text"
-}, IR = { class: "form-group" }, LR = { class: "form-group" }, RR = { class: "form-group" }, zR = { class: "form-group" }, BR = { class: "form-row" }, VR = { class: "form-group" }, HR = { for: "break6h" }, UR = { class: "form-group" }, WR = { for: "break9h" }, GR = { class: "form-group" }, KR = { for: "maxPause" }, qR = { class: "form-group" }, JR = { class: "folder-picker" }, YR = { class: "selected-path" }, XR = { class: "help-text" }, ZR = { class: "help-text" }, QR = {
+}, LR = { class: "form-group" }, RR = { class: "form-group" }, zR = { class: "form-group" }, BR = { class: "form-group" }, VR = { class: "form-row" }, HR = { class: "form-group" }, UR = { for: "break6h" }, WR = { class: "form-group" }, GR = { for: "break9h" }, KR = { class: "form-group" }, qR = { for: "maxPause" }, JR = { class: "form-group" }, YR = { class: "folder-picker" }, XR = { class: "selected-path" }, ZR = { class: "help-text" }, QR = { class: "help-text" }, $R = {
 	key: 0,
 	class: "form-group archive-status"
-}, $R = { class: "help-text" }, ez = {
+}, ez = { class: "help-text" }, tz = {
 	key: 0,
 	class: "archive-failed-list"
-}, tz = { class: "archive-failed-info" }, nz = { class: "archive-failed-month" }, rz = {
+}, nz = { class: "archive-failed-info" }, rz = { class: "archive-failed-month" }, iz = {
 	key: 0,
 	class: "archive-failed-error"
-}, iz = {
+}, az = {
 	key: 1,
 	class: "archive-done-list"
-}, az = { class: "help-text archive-done-caption" }, oz = { class: "archive-done-name" }, sz = { class: "archive-done-date" }, cz = { class: "form-group" }, lz = { class: "special-day-label" }, uz = { class: "special-day-options" }, dz = { class: "form-group" }, fz = { class: "special-day-label" }, pz = { class: "special-day-options" }, mz = { class: "help-text" }, hz = { class: "form-row holiday-filters" }, gz = { class: "form-group" }, _z = { for: "holidayYear" }, vz = { class: "form-group" }, yz = { for: "holidayStateFilter" }, bz = {
+}, oz = { class: "help-text archive-done-caption" }, sz = { class: "archive-done-name" }, cz = { class: "archive-done-date" }, lz = { class: "form-group" }, uz = { class: "special-day-label" }, dz = { class: "special-day-options" }, fz = { class: "form-group" }, pz = { class: "special-day-label" }, mz = { class: "special-day-options" }, hz = { class: "help-text" }, gz = { class: "form-row holiday-filters" }, _z = { class: "form-group" }, vz = { for: "holidayYear" }, yz = { class: "form-group" }, bz = { for: "holidayStateFilter" }, xz = {
 	key: 1,
 	class: "settings-table-card"
-}, xz = { class: "holiday-table" }, Sz = ["onClick"], Cz = { class: "col-expand" }, wz = { class: "state-count" }, Tz = { colspan: "7" }, Ez = { class: "state-chips" }, Dz = { class: "holiday-form-modal" }, Oz = { id: "wt-holiday-form-title" }, kz = { class: "form-group" }, Az = { for: "holidayDate" }, jz = { class: "form-group" }, Mz = { for: "holidayName" }, Nz = ["placeholder"], Pz = {
+}, Sz = { class: "holiday-table" }, Cz = ["onClick"], wz = { class: "col-expand" }, Tz = { class: "state-count" }, Ez = { colspan: "7" }, Dz = { class: "state-chips" }, Oz = { class: "holiday-form-modal" }, kz = { id: "wt-holiday-form-title" }, Az = { class: "form-group" }, jz = { for: "holidayDate" }, Mz = { class: "form-group" }, Nz = { for: "holidayName" }, Pz = ["placeholder"], Fz = {
 	key: 0,
 	class: "form-group"
-}, Fz = { class: "state-selection" }, Iz = { class: "state-checkboxes" }, Lz = {
+}, Iz = { class: "state-selection" }, Lz = { class: "state-checkboxes" }, Rz = {
 	key: 1,
 	class: "form-group"
-}, Rz = { class: "state-chips readonly" }, zz = { class: "form-group" }, Bz = { class: "form-actions" }, Vz = { class: "form-row" }, Hz = { class: "form-group" }, Uz = ["value"], Wz = {
+}, zz = { class: "state-chips readonly" }, Bz = { class: "form-group" }, Vz = { for: "holidayScope" }, Hz = { class: "form-actions" }, Uz = { class: "form-row" }, Wz = { class: "form-group" }, Gz = ["value"], Kz = {
 	key: 0,
 	class: "form-group carryover-year-status"
-}, Gz = {
-	key: 0,
-	class: "year-status year-status--closed"
-}, Kz = {
-	key: 1,
-	class: "year-status year-status--open"
 }, qz = {
 	key: 0,
+	class: "year-status year-status--closed"
+}, Jz = {
+	key: 1,
+	class: "year-status year-status--open"
+}, Yz = {
+	key: 0,
 	class: "settings-table-card"
-}, Jz = { class: "carryover-table" }, Yz = { class: "text-right carryover-actual" }, Xz = {
+}, Xz = { class: "carryover-table" }, Zz = { class: "text-right carryover-actual" }, Qz = {
 	key: 1,
 	class: "value-na"
-}, Zz = { class: "text-right" }, Qz = ["onUpdate:modelValue", "onChange"], $z = {
+}, $z = { class: "text-right" }, eB = ["onUpdate:modelValue", "onChange"], tB = {
 	key: 1,
 	class: "carryover-locked-value"
-}, eB = { class: "text-right carryover-actual" }, tB = { key: 0 }, nB = {
+}, nB = { class: "text-right carryover-actual" }, rB = { key: 0 }, iB = {
 	key: 1,
 	class: "value-na"
-}, rB = { class: "text-right" }, iB = ["onUpdate:modelValue", "onChange"], aB = {
+}, aB = { class: "text-right" }, oB = ["onUpdate:modelValue", "onChange"], sB = {
 	key: 1,
 	class: "carryover-locked-value"
-}, oB = { class: "carryover-note-cell" }, sB = ["onUpdate:modelValue", "onChange"], cB = {
+}, cB = { class: "carryover-note-cell" }, lB = ["onUpdate:modelValue", "onChange"], uB = {
 	key: 1,
 	class: "carryover-locked-note"
-}, lB = { class: "carryover-actions" }, uB = {
+}, dB = { class: "carryover-actions" }, fB = {
 	key: 1,
 	class: "carryover-locked-label"
-}, dB = { class: "cancel-modal" }, fB = { id: "wt-carryover-cancel-title" }, pB = { class: "cancel-modal__hint" }, mB = { class: "form-group" }, hB = { class: "form-group" }, gB = { class: "form-group" }, _B = ["placeholder"], vB = { class: "form-actions" }, yB = {
+}, pB = { class: "cancel-modal" }, mB = { id: "wt-carryover-cancel-title" }, hB = { class: "cancel-modal__hint" }, gB = { class: "form-group" }, _B = { class: "form-group" }, vB = { class: "form-group" }, yB = ["placeholder"], bB = { class: "form-actions" }, xB = {
 	key: 0,
 	class: "settings-table-card"
-}, bB = { class: "carryover-table" }, xB = { class: "text-right" }, SB = { class: "text-right" }, CB = { class: "text-right" }, wB = { class: "text-right" }, TB = { key: 0 }, EB = {
+}, SB = { class: "carryover-table" }, CB = { class: "text-right" }, wB = { class: "text-right" }, TB = { class: "text-right" }, EB = { class: "text-right" }, DB = { key: 0 }, OB = {
 	key: 1,
 	class: "value-na"
-}, DB = { class: "carryover-actions" }, OB = { class: "payout-hist-title" }, kB = {
+}, kB = { class: "carryover-actions" }, AB = { class: "payout-hist-title" }, jB = {
 	key: 1,
 	class: "settings-table-card"
-}, AB = { class: "carryover-table" }, jB = { class: "text-right" }, MB = { class: "text-right" }, NB = { class: "payout-note" }, PB = { class: "carryover-actions" }, FB = {
+}, MB = { class: "carryover-table" }, NB = { class: "text-right" }, PB = { class: "text-right" }, FB = { class: "payout-note" }, IB = { class: "carryover-actions" }, LB = {
 	key: 2,
 	class: "payout-hist-empty"
-}, IB = { class: "cancel-modal" }, LB = { id: "wt-payout-title" }, RB = { class: "cancel-modal__hint" }, zB = { class: "form-group" }, BB = ["placeholder"], VB = { class: "form-group" }, HB = { class: "form-group" }, UB = ["placeholder"], WB = {
+}, RB = { class: "cancel-modal" }, zB = { id: "wt-payout-title" }, BB = { class: "cancel-modal__hint" }, VB = { class: "form-group" }, HB = ["placeholder"], UB = { class: "form-group" }, WB = { class: "form-group" }, GB = ["placeholder"], KB = {
 	key: 0,
 	class: "payout-error"
-}, GB = { class: "form-actions" };
-function KB(e, r, i, a, o, s) {
+}, qB = { class: "form-actions" };
+function JB(e, r, i, a, o, s) {
 	let c = P("NcLoadingIcon"), l = P("SettingsNav"), d = P("Plus"), f = P("NcButton"), p = P("EmployeeList"), m = P("EmployeeForm"), h = P("NcModal"), g = P("SettingsCard"), _ = P("DepartmentList"), v = P("DepartmentForm"), b = P("ProjectList"), x = P("ProjectForm"), S = P("InfoIcon"), C = P("AccountGroup"), w = P("Account"), T = P("NcSelect"), E = P("NcCheckboxRadioSwitch"), O = P("Folder"), ee = P("BetriebsferienSettings"), te = P("ChevronRight"), ne = P("ChevronDown"), re = P("Pencil"), ie = P("Close"), ae = P("CalendarBlank"), oe = P("NcEmptyContent"), se = P("NcDateTimePicker"), ce = P("CashMultiple"), le = P("WerkPlusSettings");
 	return J(), H("div", oR, [
 		n("div", sR, [n("h2", null, U(e.t("worktime", "Verwaltung")), 1)]),
@@ -27611,11 +27627,13 @@ function KB(e, r, i, a, o, s) {
 								employee: o.editingEmployee,
 								"default-federal-state": o.settings.default_federal_state || "BY",
 								onSaved: s.onEmployeeSaved,
+								onScheduleUpdated: s.onScheduleUpdated,
 								onCancel: s.closeEmployeeForm
 							}, null, 8, [
 								"employee",
 								"default-federal-state",
 								"onSaved",
+								"onScheduleUpdated",
 								"onCancel"
 							])]),
 							_: 1
@@ -27720,13 +27738,14 @@ function KB(e, r, i, a, o, s) {
 					name: e.t("worktime", "Berechtigungen")
 				}, {
 					default: A(() => [n("div", pR, [
-						n("label", null, [z(U(e.t("worktime", "HR-Manager")) + " ", 1), I(S, null, {
+						n("label", mR, [z(U(e.t("worktime", "HR-Manager")) + " ", 1), I(S, null, {
 							default: A(() => [z(U(e.t("worktime", "Admin: Volle Rechte (automatisch). HR-Manager: Mitarbeiter verwalten und Anträge genehmigen (manuell zuweisen). Vorgesetzter: Genehmigt Zeiten seines Teams (automatisch). Mitarbeiter: Eigene Zeiten erfassen (automatisch).")), 1)]),
 							_: 1
 						})]),
 						r[71] ||= z(),
 						I(T, {
 							"label-outside": "",
+							"input-id": "hrManagers",
 							modelValue: s.selectedHrManagers,
 							"onUpdate:modelValue": [r[0] ||= (e) => s.selectedHrManagers = e, s.saveHrManagers],
 							options: s.principalOptions,
@@ -27735,7 +27754,7 @@ function KB(e, r, i, a, o, s) {
 							placeholder: e.t("worktime", "Benutzer oder Gruppen auswählen"),
 							label: "label"
 						}, {
-							option: A(({ label: e, sublabel: i, type: a }) => [n("div", mR, [
+							option: A(({ label: e, sublabel: i, type: a }) => [n("div", hR, [
 								a === "group" ? (J(), L(C, {
 									key: 0,
 									size: 20
@@ -27744,9 +27763,9 @@ function KB(e, r, i, a, o, s) {
 									size: 20
 								})),
 								r[69] ||= z(),
-								n("span", hR, U(e), 1),
+								n("span", gR, U(e), 1),
 								r[70] ||= z(),
-								n("span", gR, U(i), 1)
+								n("span", _R, U(i), 1)
 							])]),
 							_: 1
 						}, 8, [
@@ -27766,8 +27785,8 @@ function KB(e, r, i, a, o, s) {
 					description: e.t("worktime", "Stammdaten und Standardwerte, die für neue Mitarbeiter vorausgewählt werden.")
 				}, {
 					default: A(() => [
-						n("div", _R, [
-							n("label", vR, U(e.t("worktime", "Firmenname")), 1),
+						n("div", vR, [
+							n("label", yR, U(e.t("worktime", "Firmenname")), 1),
 							r[72] ||= z(),
 							N(n("input", {
 								id: "companyName",
@@ -27778,30 +27797,30 @@ function KB(e, r, i, a, o, s) {
 							}, null, 544), [[y, o.settings.company_name]])
 						]),
 						r[78] ||= z(),
-						n("div", yR, [
-							n("label", bR, [z(U(e.t("worktime", "Standard-Bundesland")) + " ", 1), I(S, null, {
+						n("div", bR, [
+							n("label", xR, [z(U(e.t("worktime", "Standard-Bundesland")) + " ", 1), I(S, null, {
 								default: A(() => [z(U(e.t("worktime", "Neue Mitarbeiter bekommen dieses Bundesland automatisch zugewiesen. Jeder Mitarbeiter kann ein eigenes Bundesland haben — das bestimmt, welche Feiertage für ihn gelten.")), 1)]),
 								_: 1
 							})]),
 							r[73] ||= z(),
 							I(T, {
 								"label-outside": "",
-								id: "defaultState",
+								"input-id": "defaultState",
 								modelValue: s.selectedFederalState,
 								"onUpdate:modelValue": [r[3] ||= (e) => s.selectedFederalState = e, r[4] ||= (e) => s.saveSetting("default_federal_state")],
 								options: s.federalStateOptions
 							}, null, 8, ["modelValue", "options"])
 						]),
 						r[79] ||= z(),
-						n("div", xR, [
-							n("label", SR, [z(U(e.t("worktime", "Zeitzone")) + " ", 1), I(S, null, {
+						n("div", SR, [
+							n("label", CR, [z(U(e.t("worktime", "Zeitzone")) + " ", 1), I(S, null, {
 								default: A(() => [z(U(e.t("worktime", "Gilt für alle, deren Zeitzone Nextcloud nicht kennt, etwa nach Anmeldung per SSO oder nur über die App. Sie bestimmt die Uhrzeit der Stempeluhr und welcher Tag „heute“ ist. Die Zeitzone aus den persönlichen Nextcloud-Einstellungen hat immer Vorrang.")), 1)]),
 								_: 1
 							})]),
 							r[74] ||= z(),
 							I(T, {
 								"label-outside": "",
-								id: "timezone",
+								"input-id": "timezone",
 								modelValue: s.selectedTimezone,
 								"onUpdate:modelValue": [r[5] ||= (e) => s.selectedTimezone = e, r[6] ||= (e) => s.saveSetting("timezone")],
 								options: s.timezoneOptions,
@@ -27809,9 +27828,9 @@ function KB(e, r, i, a, o, s) {
 							}, null, 8, ["modelValue", "options"])
 						]),
 						r[80] ||= z(),
-						n("div", CR, [
-							n("div", wR, [
-								n("label", TR, [z(U(e.t("worktime", "Standard-Wochenstunden")) + " ", 1), I(S, null, {
+						n("div", wR, [
+							n("div", TR, [
+								n("label", ER, [z(U(e.t("worktime", "Standard-Wochenstunden")) + " ", 1), I(S, null, {
 									default: A(() => [z(U(e.t("worktime", "Neue Mitarbeiter bekommen diese Wochenstunden voreingestellt. Sie können im Mitarbeiterprofil individuell angepasst werden.")), 1)]),
 									_: 1
 								})]),
@@ -27832,8 +27851,8 @@ function KB(e, r, i, a, o, s) {
 								]])
 							]),
 							r[77] ||= z(),
-							n("div", ER, [
-								n("label", DR, [z(U(e.t("worktime", "Standard-Urlaubstage")) + " ", 1), I(S, null, {
+							n("div", DR, [
+								n("label", OR, [z(U(e.t("worktime", "Standard-Urlaubstage")) + " ", 1), I(S, null, {
 									default: A(() => [z(U(e.t("worktime", "Neue Mitarbeiter bekommen diesen Urlaubsanspruch voreingestellt. Der tatsächliche Anspruch wird im Mitarbeiterprofil festgelegt.")), 1)]),
 									_: 1
 								})]),
@@ -27864,8 +27883,8 @@ function KB(e, r, i, a, o, s) {
 					name: e.t("worktime", "Arbeitszeit-Regeln")
 				}, {
 					default: A(() => [
-						n("div", OR, [
-							n("label", kR, [z(U(e.t("worktime", "Maximale tägliche Arbeitszeit (Stunden)")) + " ", 1), I(S, null, {
+						n("div", kR, [
+							n("label", AR, [z(U(e.t("worktime", "Maximale tägliche Arbeitszeit (Stunden)")) + " ", 1), I(S, null, {
 								default: A(() => [z(U(e.t("worktime", "Wenn ein Zeiteintrag diesen Wert überschreitet, wird eine Warnung angezeigt. Nach §3 ArbZG sind maximal 10 Stunden erlaubt.")), 1)]),
 								_: 1
 							})]),
@@ -27886,10 +27905,10 @@ function KB(e, r, i, a, o, s) {
 								{ number: !0 }
 							]]),
 							r[82] ||= z(),
-							n("p", AR, U(e.t("worktime", "Nach §3 ArbZG sind maximal 10 Stunden erlaubt (Ausnahmen möglich).")), 1)
+							n("p", jR, U(e.t("worktime", "Nach §3 ArbZG sind maximal 10 Stunden erlaubt (Ausnahmen möglich).")), 1)
 						]),
 						r[84] ||= z(),
-						n("div", jR, [I(E, {
+						n("div", MR, [I(E, {
 							modelValue: o.settings.require_project,
 							"onUpdate:modelValue": [r[13] ||= (e) => o.settings.require_project = e, r[14] ||= (e) => s.saveSettingBool("require_project")]
 						}, {
@@ -27900,7 +27919,7 @@ function KB(e, r, i, a, o, s) {
 							_: 1
 						}, 8, ["modelValue"])]),
 						r[85] ||= z(),
-						n("div", MR, [I(E, {
+						n("div", NR, [I(E, {
 							modelValue: o.settings.require_description,
 							"onUpdate:modelValue": [r[15] ||= (e) => o.settings.require_description = e, r[16] ||= (e) => s.saveSettingBool("require_description")]
 						}, {
@@ -27911,7 +27930,7 @@ function KB(e, r, i, a, o, s) {
 							_: 1
 						}, 8, ["modelValue"])]),
 						r[86] ||= z(),
-						n("div", NR, [I(E, {
+						n("div", PR, [I(E, {
 							modelValue: o.settings.allow_future_entries,
 							"onUpdate:modelValue": [r[17] ||= (e) => o.settings.allow_future_entries = e, r[18] ||= (e) => s.saveSettingBool("allow_future_entries")]
 						}, {
@@ -27922,7 +27941,7 @@ function KB(e, r, i, a, o, s) {
 							_: 1
 						}, 8, ["modelValue"])]),
 						r[87] ||= z(),
-						n("div", PR, [
+						n("div", FR, [
 							I(E, {
 								modelValue: o.settings.punch_only,
 								"onUpdate:modelValue": [r[19] ||= (e) => o.settings.punch_only = e, r[20] ||= (e) => s.saveSettingBool("punch_only")],
@@ -27935,7 +27954,7 @@ function KB(e, r, i, a, o, s) {
 								_: 1
 							}, 8, ["modelValue", "disabled"]),
 							r[83] ||= z(),
-							e.punchOnlyLicensed ? K("", !0) : (J(), H("p", FR, U(e.t("worktime", "Nur mit WerkPlus verfügbar. Den Schlüssel trägst du unter Lizenz › WerkPlus ein.")), 1))
+							e.punchOnlyLicensed ? K("", !0) : (J(), H("p", IR, U(e.t("worktime", "Nur mit WerkPlus verfügbar. Den Schlüssel trägst du unter Lizenz › WerkPlus ein.")), 1))
 						])
 					]),
 					_: 1
@@ -27947,7 +27966,7 @@ function KB(e, r, i, a, o, s) {
 					name: e.t("worktime", "Genehmigung"),
 					description: e.t("worktime", "Steuert firmenweit, ob erfasste Zeiten durch Vorgesetzte freigegeben werden müssen. Diese Einstellung betrifft alle Mitarbeitenden.")
 				}, {
-					default: A(() => [n("div", IR, [I(E, {
+					default: A(() => [n("div", LR, [I(E, {
 						modelValue: o.settings.approval_required,
 						"onUpdate:modelValue": [r[21] ||= (e) => o.settings.approval_required = e, s.confirmApprovalToggle]
 					}, {
@@ -27967,7 +27986,7 @@ function KB(e, r, i, a, o, s) {
 					description: e.t("worktime", "Steuert firmenweit stundenweise Krankmeldungen und Notarbeit an genehmigten Urlaubstagen. Standardmäßig deaktiviert.")
 				}, {
 					default: A(() => [
-						n("div", LR, [I(E, {
+						n("div", RR, [I(E, {
 							modelValue: o.settings.hourly_sick_enabled,
 							"onUpdate:modelValue": [r[22] ||= (e) => o.settings.hourly_sick_enabled = e, r[23] ||= (e) => s.saveSettingBool("hourly_sick_enabled")]
 						}, {
@@ -27978,7 +27997,7 @@ function KB(e, r, i, a, o, s) {
 							_: 1
 						}, 8, ["modelValue"])]),
 						r[88] ||= z(),
-						n("div", RR, [I(E, {
+						n("div", zR, [I(E, {
 							modelValue: o.settings.emergency_work_enabled,
 							"onUpdate:modelValue": [r[24] ||= (e) => o.settings.emergency_work_enabled = e, r[25] ||= (e) => s.saveSettingBool("emergency_work_enabled")]
 						}, {
@@ -27989,7 +28008,7 @@ function KB(e, r, i, a, o, s) {
 							_: 1
 						}, 8, ["modelValue"])]),
 						r[89] ||= z(),
-						n("div", zR, [I(E, {
+						n("div", BR, [I(E, {
 							modelValue: o.settings.emergency_work_requires_approval,
 							"onUpdate:modelValue": [r[26] ||= (e) => o.settings.emergency_work_requires_approval = e, r[27] ||= (e) => s.saveSettingBool("emergency_work_requires_approval")],
 							disabled: o.settings.emergency_work_enabled !== !0
@@ -28010,9 +28029,9 @@ function KB(e, r, i, a, o, s) {
 					name: e.t("worktime", "Pausenregelung"),
 					description: e.t("worktime", "Mindestpause gemäß deutschem Arbeitszeitgesetz")
 				}, {
-					default: A(() => [n("div", BR, [
-						n("div", VR, [
-							n("label", HR, [z(U(e.t("worktime", "Bei >6h Arbeitszeit (min)")) + " ", 1), I(S, null, {
+					default: A(() => [n("div", VR, [
+						n("div", HR, [
+							n("label", UR, [z(U(e.t("worktime", "Bei >6h Arbeitszeit (min)")) + " ", 1), I(S, null, {
 								default: A(() => [z(U(e.t("worktime", "Gesetzliche Mindestpause bei mehr als 6 Stunden Arbeitszeit. Wird beim Anlegen eines Zeiteintrags automatisch als Vorschlag eingetragen.")), 1)]),
 								_: 1
 							})]),
@@ -28033,8 +28052,8 @@ function KB(e, r, i, a, o, s) {
 							]])
 						]),
 						r[93] ||= z(),
-						n("div", UR, [
-							n("label", WR, [z(U(e.t("worktime", "Bei >9h Arbeitszeit (min)")) + " ", 1), I(S, null, {
+						n("div", WR, [
+							n("label", GR, [z(U(e.t("worktime", "Bei >9h Arbeitszeit (min)")) + " ", 1), I(S, null, {
 								default: A(() => [z(U(e.t("worktime", "Gesetzliche Mindestpause bei mehr als 9 Stunden Arbeitszeit. Wird beim Anlegen eines Zeiteintrags automatisch als Vorschlag eingetragen.")), 1)]),
 								_: 1
 							})]),
@@ -28055,8 +28074,8 @@ function KB(e, r, i, a, o, s) {
 							]])
 						]),
 						r[94] ||= z(),
-						n("div", GR, [
-							n("label", KR, [z(U(e.t("worktime", "Max. Pausendauer (min)")) + " ", 1), I(S, null, {
+						n("div", KR, [
+							n("label", qR, [z(U(e.t("worktime", "Max. Pausendauer (min)")) + " ", 1), I(S, null, {
 								default: A(() => [z(U(e.t("worktime", "Läuft eine laufende Pause (Stempeluhr) länger als dieser Wert, erhält der Mitarbeiter eine Erinnerung („Bist du noch in der Pause?“).")), 1)]),
 								_: 1
 							})]),
@@ -28087,13 +28106,13 @@ function KB(e, r, i, a, o, s) {
 					description: e.t("worktime", "Genehmigte Monatsberichte werden automatisch als PDF archiviert.")
 				}, {
 					default: A(() => [
-						n("div", qR, [
+						n("div", JR, [
 							n("label", null, [z(U(e.t("worktime", "Archiv-Ordner")) + " ", 1), I(S, null, {
 								default: A(() => [z(U(e.t("worktime", "Wenn ein Monat genehmigt wird, speichert WorkTime automatisch einen PDF-Bericht in diesem Ordner. Der Ordner liegt in deinem persönlichen Speicher — nur du als Admin hast Zugriff. Die automatische Archivierung greift nur bei aktivierter Genehmigung; ist sie deaktiviert, nutze den PDF-Export in der Monatsübersicht.")), 1)]),
 								_: 1
 							})]),
 							r[96] ||= z(),
-							n("div", JR, [
+							n("div", YR, [
 								I(f, {
 									variant: "secondary",
 									onClick: s.openFolderPicker
@@ -28103,15 +28122,15 @@ function KB(e, r, i, a, o, s) {
 									_: 1
 								}, 8, ["onClick"]),
 								r[95] ||= z(),
-								n("span", YR, U(o.settings.pdf_archive_path || e.t("worktime", "Nicht konfiguriert")), 1)
+								n("span", XR, U(o.settings.pdf_archive_path || e.t("worktime", "Nicht konfiguriert")), 1)
 							]),
 							r[97] ||= z(),
-							n("p", XR, U(e.t("worktime", "PDFs werden in deinem persönlichen Ordner gespeichert. Nur du hast Zugriff.")), 1),
+							n("p", ZR, U(e.t("worktime", "PDFs werden in deinem persönlichen Ordner gespeichert. Nur du hast Zugriff.")), 1),
 							r[98] ||= z(),
-							n("p", ZR, U(e.t("worktime", "Struktur: {path}/{Jahr}/{Nachname_Vorname}/Arbeitszeitnachweis_YYYY-MM.pdf", { path: o.settings.pdf_archive_path || "..." })), 1)
+							n("p", QR, U(e.t("worktime", "Struktur: {path}/{Jahr}/{Nachname_Vorname}/Arbeitszeitnachweis_YYYY-MM.pdf", { path: o.settings.pdf_archive_path || "..." })), 1)
 						]),
 						r[110] ||= z(),
-						o.settings.pdf_archive_path ? (J(), H("div", QR, [
+						o.settings.pdf_archive_path ? (J(), H("div", $R, [
 							n("label", null, [z(U(e.t("worktime", "Archivierungs-Status")) + " ", 1), I(S, null, {
 								default: A(() => [z(U(e.t("worktime", "Die PDF-Archivierung läuft über einen Hintergrund-Job (ca. alle 5 Minuten). Hier siehst du ausstehende und fehlgeschlagene Archivierungen.")), 1)]),
 								_: 1
@@ -28121,21 +28140,21 @@ function KB(e, r, i, a, o, s) {
 								key: 0,
 								size: 20
 							})) : (J(), H(F, { key: 1 }, [
-								n("p", $R, U(e.t("worktime", "{pending} ausstehend · {failed} fehlgeschlagen", {
+								n("p", ez, U(e.t("worktime", "{pending} ausstehend · {failed} fehlgeschlagen", {
 									pending: o.archiveStatus.pending,
 									failed: o.archiveStatus.failed
 								})), 1),
 								r[106] ||= z(),
-								s.archiveFailedJobs.length ? (J(), H("div", ez, [(J(!0), H(F, null, u(s.archiveFailedJobs, (i) => (J(), H("div", {
+								s.archiveFailedJobs.length ? (J(), H("div", tz, [(J(!0), H(F, null, u(s.archiveFailedJobs, (i) => (J(), H("div", {
 									key: i.id,
 									class: "archive-failed-row"
 								}, [
-									n("div", tz, [
+									n("div", nz, [
 										n("strong", null, U(i.employeeName), 1),
 										r[99] ||= z(),
-										n("span", nz, U(s.archiveMonthLabel(i.month)) + " " + U(i.year), 1),
+										n("span", rz, U(s.archiveMonthLabel(i.month)) + " " + U(i.year), 1),
 										r[100] ||= z(),
-										i.lastError ? (J(), H("span", rz, U(i.lastError), 1)) : K("", !0)
+										i.lastError ? (J(), H("span", iz, U(i.lastError), 1)) : K("", !0)
 									]),
 									r[101] ||= z(),
 									I(f, {
@@ -28148,8 +28167,8 @@ function KB(e, r, i, a, o, s) {
 									}, 8, ["disabled", "onClick"])
 								]))), 128))])) : K("", !0),
 								r[107] ||= z(),
-								s.archiveDoneJobs.length ? (J(), H("div", iz, [
-									n("p", az, U(e.t("worktime", "Zuletzt archiviert")), 1),
+								s.archiveDoneJobs.length ? (J(), H("div", az, [
+									n("p", oz, U(e.t("worktime", "Zuletzt archiviert")), 1),
 									r[105] ||= z(),
 									(J(!0), H(F, null, u(s.archiveDoneJobs, (e) => (J(), H("div", {
 										key: e.id,
@@ -28157,9 +28176,9 @@ function KB(e, r, i, a, o, s) {
 									}, [
 										r[102] ||= n("span", { class: "archive-done-check" }, "✓", -1),
 										r[103] ||= z(),
-										n("span", oz, U(e.employeeName) + " · " + U(s.archiveMonthLabel(e.month)) + " " + U(e.year), 1),
+										n("span", sz, U(e.employeeName) + " · " + U(s.archiveMonthLabel(e.month)) + " " + U(e.year), 1),
 										r[104] ||= z(),
-										n("span", sz, U(s.archiveDate(e.processedAt)), 1)
+										n("span", cz, U(s.archiveDate(e.processedAt)), 1)
 									]))), 128))
 								])) : K("", !0),
 								r[108] ||= z(),
@@ -28193,13 +28212,13 @@ function KB(e, r, i, a, o, s) {
 					description: e.t("worktime", "Lege fest, wie Heiligabend und Silvester behandelt werden.")
 				}, {
 					default: A(() => [
-						n("div", cz, [
-							n("label", lz, [z(U(e.t("worktime", "Heiligabend (24.12.)")) + " ", 1), I(S, null, {
+						n("div", lz, [
+							n("label", uz, [z(U(e.t("worktime", "Heiligabend (24.12.)")) + " ", 1), I(S, null, {
 								default: A(() => [z(U(e.t("worktime", "Halber freier Tag halbiert das Tagessoll, ganzer freier Tag setzt es auf null. Beispiel: Bei 8 Std./Tag werden 4 Std. bzw. 0 Std. als Soll angerechnet.")), 1)]),
 								_: 1
 							})]),
 							r[113] ||= z(),
-							n("div", uz, [
+							n("div", dz, [
 								I(E, {
 									modelValue: o.settings.christmas_eve_half_day,
 									"onUpdate:modelValue": [r[34] ||= (e) => o.settings.christmas_eve_half_day = e, r[35] ||= (e) => s.saveSetting("christmas_eve_half_day")],
@@ -28235,13 +28254,13 @@ function KB(e, r, i, a, o, s) {
 							])
 						]),
 						r[117] ||= z(),
-						n("div", dz, [
-							n("label", fz, [z(U(e.t("worktime", "Silvester (31.12.)")) + " ", 1), I(S, null, {
+						n("div", fz, [
+							n("label", pz, [z(U(e.t("worktime", "Silvester (31.12.)")) + " ", 1), I(S, null, {
 								default: A(() => [z(U(e.t("worktime", "Halber freier Tag halbiert das Tagessoll, ganzer freier Tag setzt es auf null. Beispiel: Bei 8 Std./Tag werden 4 Std. bzw. 0 Std. als Soll angerechnet.")), 1)]),
 								_: 1
 							})]),
 							r[116] ||= z(),
-							n("div", pz, [
+							n("div", mz, [
 								I(E, {
 									modelValue: o.settings.new_years_eve_half_day,
 									"onUpdate:modelValue": [r[40] ||= (e) => o.settings.new_years_eve_half_day = e, r[41] ||= (e) => s.saveSetting("new_years_eve_half_day")],
@@ -28277,7 +28296,7 @@ function KB(e, r, i, a, o, s) {
 							])
 						]),
 						r[118] ||= z(),
-						n("p", mz, U(e.t("worktime", "Hinweis: Änderungen wirken sich auf neu generierte Feiertage aus. Generiere die Feiertage erneut, um die Änderungen anzuwenden.")), 1)
+						n("p", hz, U(e.t("worktime", "Hinweis: Änderungen wirken sich auf neu generierte Feiertage aus. Generiere die Feiertage erneut, um die Änderungen anzuwenden.")), 1)
 					]),
 					_: 1
 				}, 8, ["name", "description"])), [[k, o.activeSection === "sec-sondertage"]]) : K("", !0),
@@ -28289,9 +28308,9 @@ function KB(e, r, i, a, o, s) {
 					description: e.t("worktime", "Feiertage anzeigen, hinzufügen, bearbeiten und löschen.")
 				}, {
 					default: A(() => [
-						n("div", hz, [
-							n("div", gz, [
-								n("label", _z, U(e.t("worktime", "Jahr")), 1),
+						n("div", gz, [
+							n("div", _z, [
+								n("label", vz, U(e.t("worktime", "Jahr")), 1),
 								r[119] ||= z(),
 								N(n("input", {
 									id: "holidayYear",
@@ -28309,12 +28328,12 @@ function KB(e, r, i, a, o, s) {
 								]])
 							]),
 							r[121] ||= z(),
-							n("div", vz, [
-								n("label", yz, U(e.t("worktime", "Bundesland")), 1),
+							n("div", yz, [
+								n("label", bz, U(e.t("worktime", "Bundesland")), 1),
 								r[120] ||= z(),
 								I(T, {
 									"label-outside": "",
-									id: "holidayStateFilter",
+									"input-id": "holidayStateFilter",
 									modelValue: o.selectedHolidayStateFilter,
 									"onUpdate:modelValue": [r[48] ||= (e) => o.selectedHolidayStateFilter = e, s.filterHolidays],
 									options: s.holidayStateFilterOptions
@@ -28346,7 +28365,7 @@ function KB(e, r, i, a, o, s) {
 						o.loadingHolidays ? (J(), L(c, {
 							key: 0,
 							size: 32
-						})) : s.groupedHolidays.length > 0 ? (J(), H("div", bz, [n("table", xz, [
+						})) : s.groupedHolidays.length > 0 ? (J(), H("div", xz, [n("table", Sz, [
 							n("thead", null, [n("tr", null, [
 								r[124] ||= n("th", { class: "col-expand" }, null, -1),
 								r[125] ||= z(),
@@ -28368,7 +28387,7 @@ function KB(e, r, i, a, o, s) {
 									class: "holiday-row",
 									onClick: (e) => s.toggleGroupExpand(i.key)
 								}, [
-									n("td", Cz, [o.expandedGroups.includes(i.key) ? (J(), L(ne, {
+									n("td", wz, [o.expandedGroups.includes(i.key) ? (J(), L(ne, {
 										key: 1,
 										size: 20
 									})) : (J(), L(te, {
@@ -28380,7 +28399,7 @@ function KB(e, r, i, a, o, s) {
 									r[133] ||= z(),
 									n("td", null, U(i.name), 1),
 									r[134] ||= z(),
-									n("td", null, [n("span", wz, U(i.states.length) + " " + U(e.t("worktime", "Bundesländer")), 1)]),
+									n("td", null, [n("span", Tz, U(i.states.length) + " " + U(e.t("worktime", "Bundesländer")), 1)]),
 									r[135] ||= z(),
 									n("td", null, U(i.scope < 1 ? e.t("worktime", "½ Tag") : e.t("worktime", "1 Tag")), 1),
 									r[136] ||= z(),
@@ -28408,12 +28427,12 @@ function KB(e, r, i, a, o, s) {
 											_: 1
 										}, 8, ["aria-label", "onClick"])
 									])
-								], 8, Sz),
+								], 8, Cz),
 								r[138] ||= z(),
 								o.expandedGroups.includes(i.key) ? (J(), H("tr", {
 									key: i.key + "-details",
 									class: "holiday-details-row"
-								}, [n("td", Tz, [n("div", Ez, [(J(!0), H(F, null, u(i.states, (n) => (J(), H("span", {
+								}, [n("td", Ez, [n("div", Dz, [(J(!0), H(F, null, u(i.states, (n) => (J(), H("span", {
 									key: n,
 									class: "state-chip"
 								}, U(e.federalStates[n] || n), 1))), 128))])])])) : K("", !0)
@@ -28432,24 +28451,25 @@ function KB(e, r, i, a, o, s) {
 							"label-id": "wt-holiday-form-title",
 							onClose: s.closeHolidayForm
 						}, {
-							default: A(() => [n("div", Dz, [
-								n("h3", Oz, U(o.editingHoliday ? e.t("worktime", "Feiertag bearbeiten") : e.t("worktime", "Neuer Feiertag")), 1),
+							default: A(() => [n("div", Oz, [
+								n("h3", kz, U(o.editingHoliday ? e.t("worktime", "Feiertag bearbeiten") : e.t("worktime", "Neuer Feiertag")), 1),
 								r[148] ||= z(),
-								n("div", kz, [
-									n("label", Az, U(e.t("worktime", "Datum")), 1),
+								n("div", Az, [
+									n("label", jz, U(e.t("worktime", "Datum")), 1),
 									r[140] ||= z(),
 									I(se, {
 										id: "holidayDate",
+										"aria-label": e.t("worktime", "Datum"),
 										modelValue: o.holidayFormData.date,
 										"onUpdate:modelValue": r[51] ||= (e) => o.holidayFormData.date = e,
 										clearable: "",
 										type: "date",
 										format: "dd.MM.yyyy"
-									}, null, 8, ["modelValue"])
+									}, null, 8, ["aria-label", "modelValue"])
 								]),
 								r[149] ||= z(),
-								n("div", jz, [
-									n("label", Mz, U(e.t("worktime", "Name")), 1),
+								n("div", Mz, [
+									n("label", Nz, U(e.t("worktime", "Name")), 1),
 									r[141] ||= z(),
 									N(n("input", {
 										id: "holidayName",
@@ -28457,20 +28477,20 @@ function KB(e, r, i, a, o, s) {
 										type: "text",
 										class: "input-field",
 										placeholder: e.t("worktime", "z.B. Brückentag")
-									}, null, 8, Nz), [[y, o.holidayFormData.name]])
+									}, null, 8, Pz), [[y, o.holidayFormData.name]])
 								]),
 								r[150] ||= z(),
-								o.editingHoliday ? (J(), H("div", Lz, [
+								o.editingHoliday ? (J(), H("div", Rz, [
 									n("label", null, U(e.t("worktime", "Bundesländer")), 1),
 									r[145] ||= z(),
-									n("div", Rz, [(J(!0), H(F, null, u(o.holidayFormData.federalStates, (n) => (J(), H("span", {
+									n("div", zz, [(J(!0), H(F, null, u(o.holidayFormData.federalStates, (n) => (J(), H("span", {
 										key: n,
 										class: "state-chip"
 									}, U(e.federalStates[n] || n), 1))), 128))])
-								])) : (J(), H("div", Pz, [
+								])) : (J(), H("div", Fz, [
 									n("label", null, U(e.t("worktime", "Bundesländer")), 1),
 									r[143] ||= z(),
-									n("div", Fz, [
+									n("div", Iz, [
 										I(f, {
 											variant: "tertiary",
 											onClick: s.selectAllStates
@@ -28488,7 +28508,7 @@ function KB(e, r, i, a, o, s) {
 										}, 8, ["onClick"])
 									]),
 									r[144] ||= z(),
-									n("div", Iz, [(J(!0), H(F, null, u(e.federalStates, (e, n) => (J(), L(E, {
+									n("div", Lz, [(J(!0), H(F, null, u(e.federalStates, (e, n) => (J(), L(E, {
 										key: n,
 										"model-value": o.holidayFormData.federalStates.includes(n),
 										"onUpdate:modelValue": (e) => s.toggleState(n, e)
@@ -28498,11 +28518,12 @@ function KB(e, r, i, a, o, s) {
 									}, 1032, ["model-value", "onUpdate:modelValue"]))), 128))])
 								])),
 								r[151] ||= z(),
-								n("div", zz, [
-									n("label", null, U(e.t("worktime", "Umfang")), 1),
+								n("div", Bz, [
+									n("label", Vz, U(e.t("worktime", "Umfang")), 1),
 									r[146] ||= z(),
 									I(T, {
 										"label-outside": "",
+										"input-id": "holidayScope",
 										modelValue: s.selectedHolidayScope,
 										"onUpdate:modelValue": r[53] ||= (e) => s.selectedHolidayScope = e,
 										options: o.scopeOptions,
@@ -28510,7 +28531,7 @@ function KB(e, r, i, a, o, s) {
 									}, null, 8, ["modelValue", "options"])
 								]),
 								r[152] ||= z(),
-								n("div", Bz, [
+								n("div", Hz, [
 									I(f, {
 										variant: "tertiary",
 										onClick: s.closeHolidayForm
@@ -28542,25 +28563,25 @@ function KB(e, r, i, a, o, s) {
 					description: e.t("worktime", "Überstunden und Resturlaub aus dem Vorjahr händisch übertragen. Durchgeführte Überträge sind verbindlich und unveränderbar.")
 				}, {
 					default: A(() => [
-						n("div", Vz, [
-							n("div", Hz, [N(n("select", {
+						n("div", Uz, [
+							n("div", Wz, [N(n("select", {
 								"onUpdate:modelValue": r[54] ||= (e) => o.carryoverYear = e,
 								class: "input-field",
 								onChange: r[55] ||= (...e) => s.loadCarryovers && s.loadCarryovers(...e)
 							}, [(J(!0), H(F, null, u(s.carryoverYearOptions, (e) => (J(), H("option", {
 								key: e,
 								value: e
-							}, U(e - 1) + " → " + U(e), 9, Uz))), 128))], 544), [[
+							}, U(e - 1) + " → " + U(e), 9, Gz))), 128))], 544), [[
 								we,
 								o.carryoverYear,
 								void 0,
 								{ number: !0 }
 							]])]),
 							r[155] ||= z(),
-							o.carryoverSourceYearStatus ? (J(), H("div", Wz, [o.carryoverSourceYearStatus === "closed" ? (J(), H("span", Gz, "\n                            ✓ " + U(e.t("worktime", "Alle Monate {year} genehmigt", { year: o.carryoverYear - 1 })), 1)) : o.carryoverSourceYearStatus === "open" ? (J(), H("span", Kz, "\n                            ⚠ " + U(e.t("worktime", "{year}: Noch offene Monate", { year: o.carryoverYear - 1 })), 1)) : K("", !0)])) : K("", !0)
+							o.carryoverSourceYearStatus ? (J(), H("div", Kz, [o.carryoverSourceYearStatus === "closed" ? (J(), H("span", qz, "\n                            ✓ " + U(e.t("worktime", "Alle Monate {year} genehmigt", { year: o.carryoverYear - 1 })), 1)) : o.carryoverSourceYearStatus === "open" ? (J(), H("span", Jz, "\n                            ⚠ " + U(e.t("worktime", "{year}: Noch offene Monate", { year: o.carryoverYear - 1 })), 1)) : K("", !0)])) : K("", !0)
 						]),
 						r[183] ||= z(),
-						o.carryoverEmployees.length > 0 ? (J(), H("div", qz, [n("table", Jz, [
+						o.carryoverEmployees.length > 0 ? (J(), H("div", Yz, [n("table", Xz, [
 							n("thead", null, [n("tr", null, [
 								n("th", null, U(e.t("worktime", "Mitarbeiter")), 1),
 								r[160] ||= z(),
@@ -28599,28 +28620,28 @@ function KB(e, r, i, a, o, s) {
 							}, [
 								n("td", null, U(i.fullName), 1),
 								r[167] ||= z(),
-								n("td", Yz, [i.wasActive ? (J(), H("span", {
+								n("td", Zz, [i.wasActive ? (J(), H("span", {
 									key: 0,
 									class: G(i.actualOvertimeHours >= 0 ? "value-positive" : "value-negative")
-								}, U(s.formatHours(i.actualOvertimeHours)), 3)) : (J(), H("span", Xz, "–"))]),
+								}, U(s.formatHours(i.actualOvertimeHours)), 3)) : (J(), H("span", Qz, "–"))]),
 								r[168] ||= z(),
-								n("td", Zz, [i.isLocked ? (J(), H("span", $z, U(s.formatHours(i.overtimeHours)), 1)) : N((J(), H("input", {
+								n("td", $z, [i.isLocked ? (J(), H("span", tB, U(s.formatHours(i.overtimeHours)), 1)) : N((J(), H("input", {
 									key: 0,
 									"onUpdate:modelValue": (e) => i.overtimeHours = e,
 									type: "number",
 									step: "0.5",
 									class: "input-field input-small carryover-input",
 									onChange: (e) => s.autoSaveCarryover(i)
-								}, null, 40, Qz)), [[
+								}, null, 40, eB)), [[
 									y,
 									i.overtimeHours,
 									void 0,
 									{ number: !0 }
 								]])]),
 								r[169] ||= z(),
-								n("td", eB, [i.wasActive ? (J(), H("span", tB, U(i.actualVacationRemaining), 1)) : (J(), H("span", nB, "–"))]),
+								n("td", nB, [i.wasActive ? (J(), H("span", rB, U(i.actualVacationRemaining), 1)) : (J(), H("span", iB, "–"))]),
 								r[170] ||= z(),
-								n("td", rB, [i.isLocked ? (J(), H("span", aB, U(i.vacationDays), 1)) : N((J(), H("input", {
+								n("td", aB, [i.isLocked ? (J(), H("span", sB, U(i.vacationDays), 1)) : N((J(), H("input", {
 									key: 0,
 									"onUpdate:modelValue": (e) => i.vacationDays = e,
 									type: "number",
@@ -28628,23 +28649,23 @@ function KB(e, r, i, a, o, s) {
 									min: "0",
 									class: "input-field input-small carryover-input",
 									onChange: (e) => s.autoSaveCarryover(i)
-								}, null, 40, iB)), [[
+								}, null, 40, oB)), [[
 									y,
 									i.vacationDays,
 									void 0,
 									{ number: !0 }
 								]])]),
 								r[171] ||= z(),
-								n("td", oB, [i.isLocked ? (J(), H("span", cB, U(i.note || "–"), 1)) : N((J(), H("textarea", {
+								n("td", cB, [i.isLocked ? (J(), H("span", uB, U(i.note || "–"), 1)) : N((J(), H("textarea", {
 									key: 0,
 									"onUpdate:modelValue": (e) => i.note = e,
 									class: "input-field carryover-note",
 									rows: "1",
 									onInput: r[56] ||= (e) => s.resizeTextarea(e),
 									onChange: (e) => s.autoSaveCarryover(i)
-								}, null, 40, sB)), [[y, i.note]])]),
+								}, null, 40, lB)), [[y, i.note]])]),
 								r[172] ||= z(),
-								n("td", lB, [i.hasValues && !i.isLocked ? (J(), L(f, {
+								n("td", dB, [i.hasValues && !i.isLocked ? (J(), L(f, {
 									key: 0,
 									variant: "primary",
 									"aria-label": e.t("worktime", "Übertrag durchführen"),
@@ -28652,7 +28673,7 @@ function KB(e, r, i, a, o, s) {
 								}, {
 									default: A(() => [z(U(e.t("worktime", "Übertrag durchführen")), 1)]),
 									_: 1
-								}, 8, ["aria-label", "onClick"])) : i.isLocked ? (J(), H("span", uB, [z("\n                                    🔒 " + U(e.t("worktime", "Durchgeführt")) + " ", 1), I(f, {
+								}, 8, ["aria-label", "onClick"])) : i.isLocked ? (J(), H("span", fB, [z("\n                                    🔒 " + U(e.t("worktime", "Durchgeführt")) + " ", 1), I(f, {
 									variant: "tertiary",
 									"aria-label": e.t("worktime", "Korrektur"),
 									onClick: (e) => s.openCancelModal(i)
@@ -28668,12 +28689,12 @@ function KB(e, r, i, a, o, s) {
 							"label-id": "wt-carryover-cancel-title",
 							onClose: s.closeCancelModal
 						}, {
-							default: A(() => [n("div", dB, [
-								n("h3", fB, U(e.t("worktime", "Übertrag korrigieren für {name}", { name: o.cancellingEmployee?.fullName })), 1),
+							default: A(() => [n("div", pB, [
+								n("h3", mB, U(e.t("worktime", "Übertrag korrigieren für {name}", { name: o.cancellingEmployee?.fullName })), 1),
 								r[178] ||= z(),
-								n("p", pB, U(e.t("worktime", "Der bestehende Übertrag wird storniert und durch die neuen Werte ersetzt. Beide Einträge bleiben im Audit-Log erhalten.")), 1),
+								n("p", hB, U(e.t("worktime", "Der bestehende Übertrag wird storniert und durch die neuen Werte ersetzt. Beide Einträge bleiben im Audit-Log erhalten.")), 1),
 								r[179] ||= z(),
-								n("div", mB, [
+								n("div", gB, [
 									n("label", null, U(e.t("worktime", "Neue Überstunden (Std.)")), 1),
 									r[174] ||= z(),
 									N(n("input", {
@@ -28689,7 +28710,7 @@ function KB(e, r, i, a, o, s) {
 									]])
 								]),
 								r[180] ||= z(),
-								n("div", hB, [
+								n("div", _B, [
 									n("label", null, U(e.t("worktime", "Neuer Resturlaub (Tage)")), 1),
 									r[175] ||= z(),
 									N(n("input", {
@@ -28706,7 +28727,7 @@ function KB(e, r, i, a, o, s) {
 									]])
 								]),
 								r[181] ||= z(),
-								n("div", gB, [
+								n("div", vB, [
 									n("label", null, U(e.t("worktime", "Begründung (Pflicht)")), 1),
 									r[176] ||= z(),
 									N(n("input", {
@@ -28715,10 +28736,10 @@ function KB(e, r, i, a, o, s) {
 										placeholder: e.t("worktime", "Grund für die Korrektur"),
 										class: "input-field",
 										required: ""
-									}, null, 8, _B), [[y, o.cancelForm.reason]])
+									}, null, 8, yB), [[y, o.cancelForm.reason]])
 								]),
 								r[182] ||= z(),
-								n("div", vB, [
+								n("div", bB, [
 									I(f, {
 										variant: "tertiary",
 										onClick: s.closeCancelModal
@@ -28750,13 +28771,13 @@ function KB(e, r, i, a, o, s) {
 					description: e.t("worktime", "Überstunden in Geld vergüten und vom Saldo abziehen. Auszahlungen werden im Audit-Log protokolliert.")
 				}, {
 					default: A(() => [
-						o.payoutEmployees.length > 0 ? (J(), H("div", yB, [n("table", bB, [
+						o.payoutEmployees.length > 0 ? (J(), H("div", xB, [n("table", SB, [
 							n("thead", null, [n("tr", null, [
 								n("th", null, U(e.t("worktime", "Mitarbeiter")), 1),
 								r[185] ||= z(),
-								n("th", xB, U(e.t("worktime", "Saldo aktuell")), 1),
+								n("th", CB, U(e.t("worktime", "Saldo aktuell")), 1),
 								r[186] ||= z(),
-								n("th", SB, U(e.t("worktime", "Ausgezahlt {year}", { year: o.payoutYear })), 1),
+								n("th", wB, U(e.t("worktime", "Ausgezahlt {year}", { year: o.payoutYear })), 1),
 								r[187] ||= z(),
 								r[188] ||= n("th", null, null, -1)
 							])]),
@@ -28764,11 +28785,11 @@ function KB(e, r, i, a, o, s) {
 							n("tbody", null, [(J(!0), H(F, null, u(o.payoutEmployees, (i) => (J(), H("tr", { key: i.employeeId }, [
 								n("td", null, U(i.fullName), 1),
 								r[189] ||= z(),
-								n("td", CB, [n("span", { class: G(i.saldoMinutes >= 0 ? "value-positive" : "value-negative") }, U(s.formatSignedHours(i.saldoMinutes)) + " h", 3)]),
+								n("td", TB, [n("span", { class: G(i.saldoMinutes >= 0 ? "value-positive" : "value-negative") }, U(s.formatSignedHours(i.saldoMinutes)) + " h", 3)]),
 								r[190] ||= z(),
-								n("td", wB, [i.paidOutMinutes > 0 ? (J(), H("span", TB, U(s.formatAbsHours(i.paidOutMinutes)) + " h", 1)) : (J(), H("span", EB, "–"))]),
+								n("td", EB, [i.paidOutMinutes > 0 ? (J(), H("span", DB, U(s.formatAbsHours(i.paidOutMinutes)) + " h", 1)) : (J(), H("span", OB, "–"))]),
 								r[191] ||= z(),
-								n("td", DB, [I(f, {
+								n("td", kB, [I(f, {
 									variant: "secondary",
 									disabled: i.saldoMinutes <= 0,
 									onClick: (e) => s.openPayoutModal(i)
@@ -28780,15 +28801,15 @@ function KB(e, r, i, a, o, s) {
 							]))), 128))])
 						])])) : K("", !0),
 						r[213] ||= z(),
-						n("h3", OB, U(e.t("worktime", "Auszahlungs-Historie {year}", { year: o.payoutYear })), 1),
+						n("h3", AB, U(e.t("worktime", "Auszahlungs-Historie {year}", { year: o.payoutYear })), 1),
 						r[214] ||= z(),
-						o.payoutHistory.length > 0 ? (J(), H("div", kB, [n("table", AB, [
+						o.payoutHistory.length > 0 ? (J(), H("div", jB, [n("table", MB, [
 							n("thead", null, [n("tr", null, [
 								n("th", null, U(e.t("worktime", "Datum")), 1),
 								r[193] ||= z(),
 								n("th", null, U(e.t("worktime", "Mitarbeiter")), 1),
 								r[194] ||= z(),
-								n("th", jB, U(e.t("worktime", "Stunden")), 1),
+								n("th", NB, U(e.t("worktime", "Stunden")), 1),
 								r[195] ||= z(),
 								n("th", null, U(e.t("worktime", "Notiz")), 1),
 								r[196] ||= z(),
@@ -28800,11 +28821,11 @@ function KB(e, r, i, a, o, s) {
 								r[198] ||= z(),
 								n("td", null, U(i.employeeName), 1),
 								r[199] ||= z(),
-								n("td", MB, U(s.formatAbsHours(i.minutes)) + " h", 1),
+								n("td", PB, U(s.formatAbsHours(i.minutes)) + " h", 1),
 								r[200] ||= z(),
-								n("td", NB, U(i.note), 1),
+								n("td", FB, U(i.note), 1),
 								r[201] ||= z(),
-								n("td", PB, [I(f, {
+								n("td", IB, [I(f, {
 									variant: "tertiary",
 									"aria-label": e.t("worktime", "Auszahlung löschen"),
 									onClick: (e) => s.deletePayout(i)
@@ -28813,19 +28834,19 @@ function KB(e, r, i, a, o, s) {
 									_: 1
 								}, 8, ["aria-label", "onClick"])])
 							]))), 128))])
-						])])) : (J(), H("p", FB, U(e.t("worktime", "Noch keine Auszahlungen erfasst.")), 1)),
+						])])) : (J(), H("p", LB, U(e.t("worktime", "Noch keine Auszahlungen erfasst.")), 1)),
 						r[215] ||= z(),
 						o.showPayoutModal ? (J(), L(h, {
 							key: 3,
 							"label-id": "wt-payout-title",
 							onClose: s.closePayoutModal
 						}, {
-							default: A(() => [n("div", IB, [
-								n("h3", LB, U(e.t("worktime", "Überstunden auszahlen für {name}", { name: o.payoutTarget?.fullName })), 1),
+							default: A(() => [n("div", RB, [
+								n("h3", zB, U(e.t("worktime", "Überstunden auszahlen für {name}", { name: o.payoutTarget?.fullName })), 1),
 								r[207] ||= z(),
-								n("p", RB, U(e.t("worktime", "Verfügbarer Saldo: {saldo} h", { saldo: s.formatSignedHours(o.payoutTarget?.saldoMinutes || 0) })), 1),
+								n("p", BB, U(e.t("worktime", "Verfügbarer Saldo: {saldo} h", { saldo: s.formatSignedHours(o.payoutTarget?.saldoMinutes || 0) })), 1),
 								r[208] ||= z(),
-								n("div", zB, [
+								n("div", VB, [
 									n("label", null, U(e.t("worktime", "Auszuzahlende Stunden")), 1),
 									r[203] ||= z(),
 									N(n("input", {
@@ -28833,10 +28854,10 @@ function KB(e, r, i, a, o, s) {
 										type: "text",
 										placeholder: e.t("worktime", "z. B. 8:00 oder 8,5"),
 										class: "input-field input-small"
-									}, null, 8, BB), [[y, o.payoutForm.hours]])
+									}, null, 8, HB), [[y, o.payoutForm.hours]])
 								]),
 								r[209] ||= z(),
-								n("div", VB, [
+								n("div", UB, [
 									n("label", null, U(e.t("worktime", "Datum")), 1),
 									r[204] ||= z(),
 									N(n("input", {
@@ -28846,7 +28867,7 @@ function KB(e, r, i, a, o, s) {
 									}, null, 512), [[y, o.payoutForm.date]])
 								]),
 								r[210] ||= z(),
-								n("div", HB, [
+								n("div", WB, [
 									n("label", null, U(e.t("worktime", "Notiz / Grund (Pflicht)")), 1),
 									r[205] ||= z(),
 									N(n("input", {
@@ -28854,12 +28875,12 @@ function KB(e, r, i, a, o, s) {
 										type: "text",
 										placeholder: e.t("worktime", "mind. 10 Zeichen, landet im Audit-Log"),
 										class: "input-field"
-									}, null, 8, UB), [[y, o.payoutForm.note]])
+									}, null, 8, GB), [[y, o.payoutForm.note]])
 								]),
 								r[211] ||= z(),
-								o.payoutError ? (J(), H("p", WB, U(o.payoutError), 1)) : K("", !0),
+								o.payoutError ? (J(), H("p", KB, U(o.payoutError), 1)) : K("", !0),
 								r[212] ||= z(),
-								n("div", GB, [
+								n("div", qB, [
 									I(f, {
 										variant: "tertiary",
 										onClick: s.closePayoutModal
@@ -28895,7 +28916,7 @@ function KB(e, r, i, a, o, s) {
 		]))
 	]);
 }
-var qB = /*#__PURE__*/ Y(aR, [["render", KB], ["__scopeId", "data-v-f8abf806"]]), JB = { async getFiltered({ action: e = "", entityType: n = "", from: r = "", to: i = "", limit: a = 200, offset: o = 0, userId: s = "" } = {}) {
+var YB = /*#__PURE__*/ Y(aR, [["render", JB], ["__scopeId", "data-v-b0a59f68"]]), XB = { async getFiltered({ action: e = "", entityType: n = "", from: r = "", to: i = "", limit: a = 200, offset: o = 0, userId: s = "" } = {}) {
 	try {
 		let c = {
 			limit: a,
@@ -28905,13 +28926,13 @@ var qB = /*#__PURE__*/ Y(aR, [["render", KB], ["__scopeId", "data-v-f8abf806"]])
 	} catch (e) {
 		Z(e);
 	}
-} }, YB = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/, XB = /* @__PURE__ */ new Set([
+} }, ZB = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/, QB = /* @__PURE__ */ new Set([
 	"id",
 	"employeeId",
 	"createdAt",
 	"updatedAt",
 	"userId"
-]), ZB = {
+]), $B = {
 	name: "AuditDetailModal",
 	components: {
 		NcModal: Kt,
@@ -28939,7 +28960,7 @@ var qB = /*#__PURE__*/ Y(aR, [["render", KB], ["__scopeId", "data-v-f8abf806"]])
 	computed: {
 		diffRows() {
 			let e = this.entry.oldValues || {}, n = this.entry.newValues || {};
-			return [.../* @__PURE__ */ new Set([...Object.keys(e), ...Object.keys(n)])].filter((e) => !XB.has(e)).filter((r) => String(e[r] ?? "") !== String(n[r] ?? "")).map((r) => ({
+			return [.../* @__PURE__ */ new Set([...Object.keys(e), ...Object.keys(n)])].filter((e) => !QB.has(e)).filter((r) => String(e[r] ?? "") !== String(n[r] ?? "")).map((r) => ({
 				key: r,
 				old: this.display(e[r]),
 				new: this.display(n[r])
@@ -28947,7 +28968,7 @@ var qB = /*#__PURE__*/ Y(aR, [["render", KB], ["__scopeId", "data-v-f8abf806"]])
 		},
 		valueRows() {
 			let e = this.entry.action === "delete" ? this.entry.oldValues : this.entry.newValues;
-			return !e || typeof e != "object" ? [] : Object.entries(e).filter(([e, n]) => !XB.has(e) && n !== null && n !== "").map(([e, n]) => ({
+			return !e || typeof e != "object" ? [] : Object.entries(e).filter(([e, n]) => !QB.has(e) && n !== null && n !== "").map(([e, n]) => ({
 				key: e,
 				value: this.display(n)
 			}));
@@ -28957,7 +28978,7 @@ var qB = /*#__PURE__*/ Y(aR, [["render", KB], ["__scopeId", "data-v-f8abf806"]])
 		if (e == null || e === "") return "—";
 		if (typeof e == "object") return JSON.stringify(e, null, 2);
 		let n = String(e);
-		if (YB.test(n)) {
+		if (ZB.test(n)) {
 			let e = new Date(n);
 			if (!isNaN(e.getTime())) return e.toLocaleString(Wv(), {
 				dateStyle: "short",
@@ -28966,60 +28987,60 @@ var qB = /*#__PURE__*/ Y(aR, [["render", KB], ["__scopeId", "data-v-f8abf806"]])
 		}
 		return n;
 	} }
-}, QB = { class: "audit-detail" }, $B = { id: "wt-audit-detail-title" }, eV = { class: "audit-detail__card" }, tV = { class: "audit-detail__meta" }, nV = { class: "meta-row" }, rV = { class: "meta-row" }, iV = { class: "meta-row" }, aV = { class: "meta-row" }, oV = { class: "meta-row" }, sV = { class: "audit-detail__subhead" }, cV = { class: "audit-detail__card" }, lV = {
+}, eV = { class: "audit-detail" }, tV = { id: "wt-audit-detail-title" }, nV = { class: "audit-detail__card" }, rV = { class: "audit-detail__meta" }, iV = { class: "meta-row" }, aV = { class: "meta-row" }, oV = { class: "meta-row" }, sV = { class: "meta-row" }, cV = { class: "meta-row" }, lV = { class: "audit-detail__subhead" }, uV = { class: "audit-detail__card" }, dV = {
 	key: 0,
 	class: "audit-detail__changes"
-}, uV = { class: "change-key" }, dV = { class: "change-old" }, fV = { class: "change-new" }, pV = {
+}, fV = { class: "change-key" }, pV = { class: "change-old" }, mV = { class: "change-new" }, hV = {
 	key: 1,
 	class: "audit-detail__values"
-}, mV = {
+}, gV = {
 	key: 2,
 	class: "audit-detail__empty"
-}, hV = { class: "audit-detail__actions" };
-function gV(e, r, i, a, o, s) {
+}, _V = { class: "audit-detail__actions" };
+function vV(e, r, i, a, o, s) {
 	let c = P("NcButton"), l = P("NcModal");
 	return J(), L(l, {
 		"label-id": "wt-audit-detail-title",
 		onClose: r[1] ||= (n) => e.$emit("close")
 	}, {
-		default: A(() => [n("div", QB, [
-			n("h3", $B, U(e.t("worktime", "Audit-Eintrag")), 1),
+		default: A(() => [n("div", eV, [
+			n("h3", tV, U(e.t("worktime", "Audit-Eintrag")), 1),
 			r[17] ||= z(),
-			n("div", eV, [n("dl", tV, [
-				n("div", nV, [
+			n("div", nV, [n("dl", rV, [
+				n("div", iV, [
 					n("dt", null, U(e.t("worktime", "Zeitpunkt")), 1),
 					r[2] ||= z(),
 					n("dd", null, U(i.dateLabel), 1)
 				]),
 				r[7] ||= z(),
-				n("div", rV, [
+				n("div", aV, [
 					n("dt", null, U(e.t("worktime", "Benutzer")), 1),
 					r[3] ||= z(),
 					n("dd", null, U(i.entry.userId || "-"), 1)
 				]),
 				r[8] ||= z(),
-				n("div", iV, [
+				n("div", oV, [
 					n("dt", null, U(e.t("worktime", "Aktion")), 1),
 					r[4] ||= z(),
 					n("dd", null, [n("span", { class: G(["action-badge", "action-" + i.entry.action]) }, U(i.actionLabel), 3)])
 				]),
 				r[9] ||= z(),
-				n("div", aV, [
+				n("div", sV, [
 					n("dt", null, U(e.t("worktime", "Typ")), 1),
 					r[5] ||= z(),
 					n("dd", null, U(i.entityLabel), 1)
 				]),
 				r[10] ||= z(),
-				n("div", oV, [
+				n("div", cV, [
 					n("dt", null, U(e.t("worktime", "ID")), 1),
 					r[6] ||= z(),
 					n("dd", null, U(i.entry.entityId || "-"), 1)
 				])
 			])]),
 			r[18] ||= z(),
-			n("h4", sV, U(e.t("worktime", "Änderung")), 1),
+			n("h4", lV, U(e.t("worktime", "Änderung")), 1),
 			r[19] ||= z(),
-			n("div", cV, [i.entry.action === "update" && s.diffRows.length ? (J(), H("table", lV, [
+			n("div", uV, [i.entry.action === "update" && s.diffRows.length ? (J(), H("table", dV, [
 				n("thead", null, [n("tr", null, [
 					n("th", null, U(e.t("worktime", "Feld")), 1),
 					r[11] ||= z(),
@@ -29029,22 +29050,22 @@ function gV(e, r, i, a, o, s) {
 				])]),
 				r[15] ||= z(),
 				n("tbody", null, [(J(!0), H(F, null, u(s.diffRows, (e) => (J(), H("tr", { key: e.key }, [
-					n("td", uV, U(e.key), 1),
+					n("td", fV, U(e.key), 1),
 					r[13] ||= z(),
-					n("td", dV, U(e.old), 1),
+					n("td", pV, U(e.old), 1),
 					r[14] ||= z(),
-					n("td", fV, U(e.new), 1)
+					n("td", mV, U(e.new), 1)
 				]))), 128))])
-			])) : s.valueRows.length ? (J(), H("dl", pV, [(J(!0), H(F, null, u(s.valueRows, (e) => (J(), H("div", {
+			])) : s.valueRows.length ? (J(), H("dl", hV, [(J(!0), H(F, null, u(s.valueRows, (e) => (J(), H("div", {
 				key: e.key,
 				class: "value-row"
 			}, [
 				n("dt", null, U(e.key), 1),
 				r[16] ||= z(),
 				n("dd", null, U(e.value), 1)
-			]))), 128))])) : (J(), H("p", mV, U(e.t("worktime", "Keine Detaildaten vorhanden.")), 1))]),
+			]))), 128))])) : (J(), H("p", gV, U(e.t("worktime", "Keine Detaildaten vorhanden.")), 1))]),
 			r[20] ||= z(),
-			n("div", hV, [I(c, {
+			n("div", _V, [I(c, {
 				variant: "primary",
 				onClick: r[0] ||= (n) => e.$emit("close")
 			}, {
@@ -29056,7 +29077,7 @@ function gV(e, r, i, a, o, s) {
 	});
 }
 // src/views/AuditView.vue
-var _V = {
+var yV = {
 	name: "AuditView",
 	components: {
 		NcButton: Ye,
@@ -29064,7 +29085,7 @@ var _V = {
 		NcDateTimePicker: z_,
 		NcEmptyContent: Gt,
 		ShieldIcon: _o,
-		AuditDetailModal: /* @__PURE__ */ Y(ZB, [["render", gV], ["__scopeId", "data-v-9fcb722a"]])
+		AuditDetailModal: /* @__PURE__ */ Y($B, [["render", vV], ["__scopeId", "data-v-9fcb722a"]])
 	},
 	data() {
 		return {
@@ -29148,7 +29169,7 @@ var _V = {
 			this.selectedEntry = e;
 		},
 		async load() {
-			this.loading = !0, this.entries = await JB.getFiltered({
+			this.loading = !0, this.entries = await XB.getFiltered({
 				action: this.filterAction?.id || "",
 				entityType: this.filterEntityType?.id || "",
 				from: this.filterFrom ? qv(this.filterFrom) : "",
@@ -29207,32 +29228,32 @@ var _V = {
 			return Object.entries(e).filter(([e, r]) => !n.has(e) && r !== null && r !== "").map(([e, n]) => `${e}: ${n}`).join(", ") || "-";
 		}
 	}
-}, vV = { class: "audit-view" }, yV = { class: "view-header" }, bV = { class: "view-toolbar" }, xV = { class: "view-header__controls" }, SV = {
+}, bV = { class: "audit-view" }, xV = { class: "view-header" }, SV = { class: "view-toolbar" }, CV = { class: "view-header__controls" }, wV = {
 	key: 0,
 	class: "loading-hint"
-}, CV = {
+}, TV = {
 	key: 2,
 	class: "audit-card"
-}, wV = { class: "audit-table" }, TV = [
+}, EV = { class: "audit-table" }, DV = [
 	"aria-label",
 	"onClick",
 	"onKeydown"
-], EV = { class: "nowrap" }, DV = { class: "diff-cell" }, OV = { class: "diff-key" }, kV = { class: "diff-old-val" }, AV = { class: "diff-new-val" }, jV = {
+], OV = { class: "nowrap" }, kV = { class: "diff-cell" }, AV = { class: "diff-key" }, jV = { class: "diff-old-val" }, MV = { class: "diff-new-val" }, NV = {
 	key: 1,
 	class: "diff-old"
-}, MV = {
+}, PV = {
 	key: 2,
 	class: "diff-new"
-}, NV = { key: 3 }, PV = {
+}, FV = { key: 3 }, IV = {
 	key: 3,
 	class: "limit-hint"
 };
-function FV(e, r, i, a, o, s) {
+function LV(e, r, i, a, o, s) {
 	let c = P("NcSelect"), l = P("NcDateTimePicker"), d = P("NcButton"), f = P("ShieldIcon"), p = P("NcEmptyContent"), m = P("AuditDetailModal");
-	return J(), H("div", vV, [
-		n("div", yV, [n("h2", null, U(e.t("worktime", "Audit-Log")), 1)]),
+	return J(), H("div", bV, [
+		n("div", xV, [n("h2", null, U(e.t("worktime", "Audit-Log")), 1)]),
 		r[26] ||= z(),
-		n("div", bV, [n("div", xV, [
+		n("div", SV, [n("div", CV, [
 			I(c, {
 				"label-outside": "",
 				"aria-label-combobox": e.t("worktime", "Alle Mitarbeiter"),
@@ -29285,19 +29306,29 @@ function FV(e, r, i, a, o, s) {
 				modelValue: o.filterFrom,
 				"onUpdate:modelValue": r[3] ||= (e) => o.filterFrom = e,
 				clearable: "",
+				"aria-label": e.t("worktime", "Von"),
 				type: "date",
 				format: "dd.MM.yyyy",
 				placeholder: e.t("worktime", "Von")
-			}, null, 8, ["modelValue", "placeholder"]),
+			}, null, 8, [
+				"modelValue",
+				"aria-label",
+				"placeholder"
+			]),
 			r[9] ||= z(),
 			I(l, {
 				modelValue: o.filterTo,
 				"onUpdate:modelValue": r[4] ||= (e) => o.filterTo = e,
 				clearable: "",
+				"aria-label": e.t("worktime", "Bis"),
 				type: "date",
 				format: "dd.MM.yyyy",
 				placeholder: e.t("worktime", "Bis")
-			}, null, 8, ["modelValue", "placeholder"]),
+			}, null, 8, [
+				"modelValue",
+				"aria-label",
+				"placeholder"
+			]),
 			r[10] ||= z(),
 			I(d, {
 				variant: "secondary",
@@ -29308,13 +29339,13 @@ function FV(e, r, i, a, o, s) {
 			}, 8, ["onClick"])
 		])]),
 		r[27] ||= z(),
-		o.loading ? (J(), H("div", SV, U(e.t("worktime", "Wird geladen…")), 1)) : o.entries.length === 0 ? (J(), L(p, {
+		o.loading ? (J(), H("div", wV, U(e.t("worktime", "Wird geladen…")), 1)) : o.entries.length === 0 ? (J(), L(p, {
 			key: 1,
 			name: e.t("worktime", "Keine Einträge")
 		}, {
 			icon: A(() => [I(f)]),
 			_: 1
-		}, 8, ["name"])) : (J(), H("div", CV, [n("table", wV, [
+		}, 8, ["name"])) : (J(), H("div", TV, [n("table", EV, [
 			n("thead", null, [n("tr", null, [
 				n("th", null, U(e.t("worktime", "Zeitpunkt")), 1),
 				r[11] ||= z(),
@@ -29338,7 +29369,7 @@ function FV(e, r, i, a, o, s) {
 				onClick: (e) => s.openDetail(i),
 				onKeydown: [vt((e) => s.openDetail(i), ["enter"]), vt(D((e) => s.openDetail(i), ["prevent"]), ["space"])]
 			}, [
-				n("td", EV, U(s.formatDateTime(i.createdAt)), 1),
+				n("td", OV, U(s.formatDateTime(i.createdAt)), 1),
 				r[20] ||= z(),
 				n("td", null, U(i.userId), 1),
 				r[21] ||= z(),
@@ -29348,22 +29379,22 @@ function FV(e, r, i, a, o, s) {
 				r[23] ||= z(),
 				n("td", null, U(i.entityId || "-"), 1),
 				r[24] ||= z(),
-				n("td", DV, [i.action === "update" ? (J(!0), H(F, { key: 0 }, u(s.updateDiff(i), (e) => (J(), H("div", {
+				n("td", kV, [i.action === "update" ? (J(!0), H(F, { key: 0 }, u(s.updateDiff(i), (e) => (J(), H("div", {
 					key: e.key,
 					class: "diff-item"
 				}, [
-					n("span", OV, U(e.key) + ":", 1),
+					n("span", AV, U(e.key) + ":", 1),
 					r[16] ||= z(),
-					n("span", kV, U(e.old), 1),
+					n("span", jV, U(e.old), 1),
 					r[17] ||= z(),
 					r[18] ||= n("span", { class: "diff-arrow" }, "→", -1),
 					r[19] ||= z(),
-					n("span", AV, U(e.new), 1)
-				]))), 128)) : i.action === "delete" && i.oldValues ? (J(), H("span", jV, U(s.formatValues(i.oldValues)), 1)) : i.action === "create" && i.newValues ? (J(), H("span", MV, U(s.formatValues(i.newValues)), 1)) : (J(), H("span", NV, "-"))])
-			], 40, TV))), 128))])
+					n("span", MV, U(e.new), 1)
+				]))), 128)) : i.action === "delete" && i.oldValues ? (J(), H("span", NV, U(s.formatValues(i.oldValues)), 1)) : i.action === "create" && i.newValues ? (J(), H("span", PV, U(s.formatValues(i.newValues)), 1)) : (J(), H("span", FV, "-"))])
+			], 40, DV))), 128))])
 		])])),
 		r[28] ||= z(),
-		o.entries.length >= 200 ? (J(), H("p", PV, U(e.t("worktime", "Es werden maximal 200 Einträge angezeigt. Bitte Filter verwenden um die Ergebnisse einzuschränken.")), 1)) : K("", !0),
+		o.entries.length >= 200 ? (J(), H("p", IV, U(e.t("worktime", "Es werden maximal 200 Einträge angezeigt. Bitte Filter verwenden um die Ergebnisse einzuschränken.")), 1)) : K("", !0),
 		r[29] ||= z(),
 		o.selectedEntry ? (J(), L(m, {
 			key: 4,
@@ -29380,7 +29411,7 @@ function FV(e, r, i, a, o, s) {
 		])) : K("", !0)
 	]);
 }
-var IV = /*#__PURE__*/ Y(_V, [["render", FV], ["__scopeId", "data-v-331d4957"]]), LV = {
+var RV = /*#__PURE__*/ Y(yV, [["render", LV], ["__scopeId", "data-v-5c333436"]]), zV = {
 	name: "DownloadIcon",
 	emits: ["click"],
 	props: {
@@ -29394,12 +29425,12 @@ var IV = /*#__PURE__*/ Y(_V, [["render", FV], ["__scopeId", "data-v-331d4957"]])
 			default: 24
 		}
 	}
-}, RV = ["aria-hidden", "aria-label"], zV = [
+}, BV = ["aria-hidden", "aria-label"], VV = [
 	"fill",
 	"width",
 	"height"
-], BV = { key: 0 };
-function VV(e, r, i, a, o, s) {
+], HV = { key: 0 };
+function UV(e, r, i, a, o, s) {
 	return J(), H("span", B(e.$attrs, {
 		"aria-hidden": i.title ? null : "true",
 		"aria-label": i.title,
@@ -29413,12 +29444,12 @@ function VV(e, r, i, a, o, s) {
 		height: i.size,
 		viewBox: "0 0 24 24"
 	}, [
-		i.title ? (J(), H("title", BV, U(i.title), 1)) : K("", !0),
+		i.title ? (J(), H("title", HV, U(i.title), 1)) : K("", !0),
 		r[1] ||= z(),
 		r[2] ||= n("path", { d: "M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z" }, null, -1)
-	], 8, zV))], 16, RV);
+	], 8, VV))], 16, BV);
 }
-var HV = /*#__PURE__*/ Y(LV, [["render", VV]]), UV = {
+var WV = /*#__PURE__*/ Y(zV, [["render", UV]]), GV = {
 	name: "AccountMultipleIcon",
 	emits: ["click"],
 	props: {
@@ -29432,12 +29463,12 @@ var HV = /*#__PURE__*/ Y(LV, [["render", VV]]), UV = {
 			default: 24
 		}
 	}
-}, WV = ["aria-hidden", "aria-label"], GV = [
+}, KV = ["aria-hidden", "aria-label"], qV = [
 	"fill",
 	"width",
 	"height"
-], KV = { key: 0 };
-function qV(e, r, i, a, o, s) {
+], JV = { key: 0 };
+function YV(e, r, i, a, o, s) {
 	return J(), H("span", B(e.$attrs, {
 		"aria-hidden": i.title ? null : "true",
 		"aria-label": i.title,
@@ -29451,12 +29482,12 @@ function qV(e, r, i, a, o, s) {
 		height: i.size,
 		viewBox: "0 0 24 24"
 	}, [
-		i.title ? (J(), H("title", KV, U(i.title), 1)) : K("", !0),
+		i.title ? (J(), H("title", JV, U(i.title), 1)) : K("", !0),
 		r[1] ||= z(),
 		r[2] ||= n("path", { d: "M16 17V19H2V17S2 13 9 13 16 17 16 17M12.5 7.5A3.5 3.5 0 1 0 9 11A3.5 3.5 0 0 0 12.5 7.5M15.94 13A5.32 5.32 0 0 1 18 17V19H22V17S22 13.37 15.94 13M15 4A3.39 3.39 0 0 0 13.07 4.59A5 5 0 0 1 13.07 10.41A3.39 3.39 0 0 0 15 11A3.5 3.5 0 0 0 15 4Z" }, null, -1)
-	], 8, GV))], 16, WV);
+	], 8, qV))], 16, KV);
 }
-var JV = /*#__PURE__*/ Y(UV, [["render", qV]]), YV = {
+var XV = /*#__PURE__*/ Y(GV, [["render", YV]]), ZV = {
 	name: "ViewListOutlineIcon",
 	emits: ["click"],
 	props: {
@@ -29470,12 +29501,12 @@ var JV = /*#__PURE__*/ Y(UV, [["render", qV]]), YV = {
 			default: 24
 		}
 	}
-}, XV = ["aria-hidden", "aria-label"], ZV = [
+}, QV = ["aria-hidden", "aria-label"], $V = [
 	"fill",
 	"width",
 	"height"
-], QV = { key: 0 };
-function $V(e, r, i, a, o, s) {
+], eH = { key: 0 };
+function tH(e, r, i, a, o, s) {
 	return J(), H("span", B(e.$attrs, {
 		"aria-hidden": i.title ? null : "true",
 		"aria-label": i.title,
@@ -29489,12 +29520,12 @@ function $V(e, r, i, a, o, s) {
 		height: i.size,
 		viewBox: "0 0 24 24"
 	}, [
-		i.title ? (J(), H("title", QV, U(i.title), 1)) : K("", !0),
+		i.title ? (J(), H("title", eH, U(i.title), 1)) : K("", !0),
 		r[1] ||= z(),
 		r[2] ||= n("path", { d: "M3 5V19H20V5H3M7 7V9H5V7H7M5 13V11H7V13H5M5 15H7V17H5V15M18 17H9V15H18V17M18 13H9V11H18V13M18 9H9V7H18V9Z" }, null, -1)
-	], 8, ZV))], 16, XV);
+	], 8, $V))], 16, QV);
 }
-var eH = /*#__PURE__*/ Y(YV, [["render", $V]]), tH = {
+var nH = /*#__PURE__*/ Y(ZV, [["render", tH]]), rH = {
 	name: "CalendarTextOutlineIcon",
 	emits: ["click"],
 	props: {
@@ -29508,12 +29539,12 @@ var eH = /*#__PURE__*/ Y(YV, [["render", $V]]), tH = {
 			default: 24
 		}
 	}
-}, nH = ["aria-hidden", "aria-label"], rH = [
+}, iH = ["aria-hidden", "aria-label"], aH = [
 	"fill",
 	"width",
 	"height"
-], iH = { key: 0 };
-function aH(e, r, i, a, o, s) {
+], oH = { key: 0 };
+function sH(e, r, i, a, o, s) {
 	return J(), H("span", B(e.$attrs, {
 		"aria-hidden": i.title ? null : "true",
 		"aria-label": i.title,
@@ -29527,12 +29558,12 @@ function aH(e, r, i, a, o, s) {
 		height: i.size,
 		viewBox: "0 0 24 24"
 	}, [
-		i.title ? (J(), H("title", iH, U(i.title), 1)) : K("", !0),
+		i.title ? (J(), H("title", oH, U(i.title), 1)) : K("", !0),
 		r[1] ||= z(),
 		r[2] ||= n("path", { d: "M19 3H18V1H16V3H8V1H6V3H5C3.9 3 3 3.9 3 5V19C3 20.11 3.9 21 5 21H19C20.11 21 21 20.11 21 19V5C21 3.9 20.11 3 19 3M19 19H5V9H19V19M5 7V5H19V7H5M7 11H17V13H7V11M7 15H14V17H7V15Z" }, null, -1)
-	], 8, rH))], 16, nH);
+	], 8, aH))], 16, iH);
 }
-var oH = /*#__PURE__*/ Y(tH, [["render", aH]]), sH = {
+var cH = /*#__PURE__*/ Y(rH, [["render", sH]]), lH = {
 	name: "CalendarMonthOutlineIcon",
 	emits: ["click"],
 	props: {
@@ -29546,12 +29577,12 @@ var oH = /*#__PURE__*/ Y(tH, [["render", aH]]), sH = {
 			default: 24
 		}
 	}
-}, cH = ["aria-hidden", "aria-label"], lH = [
+}, uH = ["aria-hidden", "aria-label"], dH = [
 	"fill",
 	"width",
 	"height"
-], uH = { key: 0 };
-function dH(e, r, i, a, o, s) {
+], fH = { key: 0 };
+function pH(e, r, i, a, o, s) {
 	return J(), H("span", B(e.$attrs, {
 		"aria-hidden": i.title ? null : "true",
 		"aria-label": i.title,
@@ -29565,12 +29596,12 @@ function dH(e, r, i, a, o, s) {
 		height: i.size,
 		viewBox: "0 0 24 24"
 	}, [
-		i.title ? (J(), H("title", uH, U(i.title), 1)) : K("", !0),
+		i.title ? (J(), H("title", fH, U(i.title), 1)) : K("", !0),
 		r[1] ||= z(),
 		r[2] ||= n("path", { d: "M7 11H9V13H7V11M21 5V19C21 20.11 20.11 21 19 21H5C3.89 21 3 20.1 3 19V5C3 3.9 3.9 3 5 3H6V1H8V3H16V1H18V3H19C20.11 3 21 3.9 21 5M5 7H19V5H5V7M19 19V9H5V19H19M15 13V11H17V13H15M11 13V11H13V13H11M7 15H9V17H7V15M15 17V15H17V17H15M11 17V15H13V17H11Z" }, null, -1)
-	], 8, lH))], 16, cH);
+	], 8, dH))], 16, uH);
 }
-var fH = /*#__PURE__*/ Y(sH, [["render", dH]]), pH = {
+var mH = /*#__PURE__*/ Y(lH, [["render", pH]]), hH = {
 	name: "CalendarRangeIcon",
 	emits: ["click"],
 	props: {
@@ -29584,12 +29615,12 @@ var fH = /*#__PURE__*/ Y(sH, [["render", dH]]), pH = {
 			default: 24
 		}
 	}
-}, mH = ["aria-hidden", "aria-label"], hH = [
+}, gH = ["aria-hidden", "aria-label"], _H = [
 	"fill",
 	"width",
 	"height"
-], gH = { key: 0 };
-function _H(e, r, i, a, o, s) {
+], vH = { key: 0 };
+function yH(e, r, i, a, o, s) {
 	return J(), H("span", B(e.$attrs, {
 		"aria-hidden": i.title ? null : "true",
 		"aria-label": i.title,
@@ -29603,12 +29634,12 @@ function _H(e, r, i, a, o, s) {
 		height: i.size,
 		viewBox: "0 0 24 24"
 	}, [
-		i.title ? (J(), H("title", gH, U(i.title), 1)) : K("", !0),
+		i.title ? (J(), H("title", vH, U(i.title), 1)) : K("", !0),
 		r[1] ||= z(),
 		r[2] ||= n("path", { d: "M9,10H7V12H9V10M13,10H11V12H13V10M17,10H15V12H17V10M19,3H18V1H16V3H8V1H6V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M19,19H5V8H19V19Z" }, null, -1)
-	], 8, hH))], 16, mH);
+	], 8, _H))], 16, gH);
 }
-var vH = /*#__PURE__*/ Y(pH, [["render", _H]]), yH = {
+var bH = /*#__PURE__*/ Y(hH, [["render", yH]]), xH = {
 	name: "CalendarOutlineIcon",
 	emits: ["click"],
 	props: {
@@ -29622,12 +29653,12 @@ var vH = /*#__PURE__*/ Y(pH, [["render", _H]]), yH = {
 			default: 24
 		}
 	}
-}, bH = ["aria-hidden", "aria-label"], xH = [
+}, SH = ["aria-hidden", "aria-label"], CH = [
 	"fill",
 	"width",
 	"height"
-], SH = { key: 0 };
-function CH(e, r, i, a, o, s) {
+], wH = { key: 0 };
+function TH(e, r, i, a, o, s) {
 	return J(), H("span", B(e.$attrs, {
 		"aria-hidden": i.title ? null : "true",
 		"aria-label": i.title,
@@ -29641,12 +29672,12 @@ function CH(e, r, i, a, o, s) {
 		height: i.size,
 		viewBox: "0 0 24 24"
 	}, [
-		i.title ? (J(), H("title", SH, U(i.title), 1)) : K("", !0),
+		i.title ? (J(), H("title", wH, U(i.title), 1)) : K("", !0),
 		r[1] ||= z(),
 		r[2] ||= n("path", { d: "M12 12H17V17H12V12M19 3H18V1H16V3H8V1H6V3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M19 5V7H5V5H19M5 19V9H19V19H5Z" }, null, -1)
-	], 8, xH))], 16, bH);
+	], 8, CH))], 16, SH);
 }
-var wH = /*#__PURE__*/ Y(yH, [["render", CH]]), TH = {
+var EH = /*#__PURE__*/ Y(xH, [["render", TH]]), DH = {
 	name: "CheckCircleIcon",
 	emits: ["click"],
 	props: {
@@ -29660,12 +29691,12 @@ var wH = /*#__PURE__*/ Y(yH, [["render", CH]]), TH = {
 			default: 24
 		}
 	}
-}, EH = ["aria-hidden", "aria-label"], DH = [
+}, OH = ["aria-hidden", "aria-label"], kH = [
 	"fill",
 	"width",
 	"height"
-], OH = { key: 0 };
-function kH(e, r, i, a, o, s) {
+], AH = { key: 0 };
+function jH(e, r, i, a, o, s) {
 	return J(), H("span", B(e.$attrs, {
 		"aria-hidden": i.title ? null : "true",
 		"aria-label": i.title,
@@ -29679,12 +29710,12 @@ function kH(e, r, i, a, o, s) {
 		height: i.size,
 		viewBox: "0 0 24 24"
 	}, [
-		i.title ? (J(), H("title", OH, U(i.title), 1)) : K("", !0),
+		i.title ? (J(), H("title", AH, U(i.title), 1)) : K("", !0),
 		r[1] ||= z(),
 		r[2] ||= n("path", { d: "M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z" }, null, -1)
-	], 8, DH))], 16, EH);
+	], 8, kH))], 16, OH);
 }
-var AH = /*#__PURE__*/ Y(TH, [["render", kH]]), jH = {
+var MH = /*#__PURE__*/ Y(DH, [["render", jH]]), NH = {
 	name: "CloseCircleIcon",
 	emits: ["click"],
 	props: {
@@ -29698,12 +29729,12 @@ var AH = /*#__PURE__*/ Y(TH, [["render", kH]]), jH = {
 			default: 24
 		}
 	}
-}, MH = ["aria-hidden", "aria-label"], NH = [
+}, PH = ["aria-hidden", "aria-label"], FH = [
 	"fill",
 	"width",
 	"height"
-], PH = { key: 0 };
-function FH(e, r, i, a, o, s) {
+], IH = { key: 0 };
+function LH(e, r, i, a, o, s) {
 	return J(), H("span", B(e.$attrs, {
 		"aria-hidden": i.title ? null : "true",
 		"aria-label": i.title,
@@ -29717,19 +29748,19 @@ function FH(e, r, i, a, o, s) {
 		height: i.size,
 		viewBox: "0 0 24 24"
 	}, [
-		i.title ? (J(), H("title", PH, U(i.title), 1)) : K("", !0),
+		i.title ? (J(), H("title", IH, U(i.title), 1)) : K("", !0),
 		r[1] ||= z(),
 		r[2] ||= n("path", { d: "M12,2C17.53,2 22,6.47 22,12C22,17.53 17.53,22 12,22C6.47,22 2,17.53 2,12C2,6.47 6.47,2 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z" }, null, -1)
-	], 8, NH))], 16, MH);
+	], 8, FH))], 16, PH);
 }
 // src/components/TeamYearTable.vue
-var IH = {
+var RH = {
 	name: "TeamYearTable",
 	components: {
 		NcAvatar: Dn,
-		CheckCircleIcon: AH,
+		CheckCircleIcon: MH,
 		ClockOutlineIcon: ND,
-		CloseCircleIcon: /* @__PURE__ */ Y(jH, [["render", FH]])
+		CloseCircleIcon: /* @__PURE__ */ Y(NH, [["render", LH]])
 	},
 	props: {
 		report: {
@@ -29750,65 +29781,65 @@ var IH = {
 			return e == null ? "" : e > 0 ? "positive" : e < 0 ? "negative" : "";
 		}
 	}
-}, LH = { class: "team-year-table" }, RH = { class: "member-card__header" }, zH = { class: "member-card__name" }, BH = { class: "member-card__hours" }, VH = { class: "month-header" }, HH = { class: "col-label" }, UH = { class: "col-total" }, WH = { class: "row-data" }, GH = { class: "col-label" }, KH = {
+}, zH = { class: "team-year-table" }, BH = { class: "member-card__header" }, VH = { class: "member-card__name" }, HH = { class: "member-card__hours" }, UH = { class: "month-header" }, WH = { class: "col-label" }, GH = { class: "col-total" }, KH = { class: "row-data" }, qH = { class: "col-label" }, JH = {
 	key: 0,
 	class: "vacation-days"
-}, qH = { class: "col-total" }, JH = { class: "row-data" }, YH = { class: "col-label" }, XH = { key: 0 }, ZH = { class: "row-data" }, QH = { class: "col-label" };
-function $H(e, r, i, a, o, s) {
+}, YH = { class: "col-total" }, XH = { class: "row-data" }, ZH = { class: "col-label" }, QH = { key: 0 }, $H = { class: "row-data" }, eU = { class: "col-label" };
+function tU(e, r, i, a, o, s) {
 	let c = P("NcAvatar"), l = P("CheckCircleIcon"), d = P("ClockOutlineIcon"), f = P("CloseCircleIcon");
-	return J(), H("div", LH, [(J(!0), H(F, null, u(i.report, (i) => (J(), H("div", {
+	return J(), H("div", zH, [(J(!0), H(F, null, u(i.report, (i) => (J(), H("div", {
 		key: i.employee.id,
 		class: "member-card"
 	}, [
-		n("div", RH, [
+		n("div", BH, [
 			I(c, {
 				user: i.employee.userId,
 				"display-name": i.employee.fullName,
 				size: 44
 			}, null, 8, ["user", "display-name"]),
 			r[0] ||= z(),
-			n("span", zH, U(i.employee.fullName), 1),
+			n("span", VH, U(i.employee.fullName), 1),
 			r[1] ||= z(),
-			n("span", BH, U(i.employee.weeklyHours) + " " + U(e.t("worktime", "Std./Woche")), 1)
+			n("span", HH, U(i.employee.weeklyHours) + " " + U(e.t("worktime", "Std./Woche")), 1)
 		]),
 		r[14] ||= z(),
 		n("table", null, [
-			n("thead", null, [n("tr", VH, [
-				n("th", HH, U(e.t("worktime", "Art")), 1),
+			n("thead", null, [n("tr", UH, [
+				n("th", WH, U(e.t("worktime", "Art")), 1),
 				r[2] ||= z(),
 				(J(), H(F, null, u(12, (e) => n("th", {
 					key: e,
 					class: "col-month"
 				}, U(s.getMonthNameShort(e)), 1)), 64)),
 				r[3] ||= z(),
-				n("th", UH, U(e.t("worktime", "Gesamt")), 1)
+				n("th", GH, U(e.t("worktime", "Gesamt")), 1)
 			])]),
 			r[13] ||= z(),
 			n("tbody", null, [
-				n("tr", WH, [
-					n("td", GH, U(e.t("worktime", "Urlaub")), 1),
+				n("tr", KH, [
+					n("td", qH, U(e.t("worktime", "Urlaub")), 1),
 					r[4] ||= z(),
 					(J(!0), H(F, null, u(i.months, (e) => (J(), H("td", {
 						key: e.month,
 						class: "col-month"
-					}, [e.vacationDays > 0 ? (J(), H("span", KH, U(e.vacationDays), 1)) : K("", !0)]))), 128)),
+					}, [e.vacationDays > 0 ? (J(), H("span", JH, U(e.vacationDays), 1)) : K("", !0)]))), 128)),
 					r[5] ||= z(),
-					n("td", qH, [n("strong", null, U(i.vacationStats.used) + "/" + U(i.vacationStats.total), 1)])
+					n("td", YH, [n("strong", null, U(i.vacationStats.used) + "/" + U(i.vacationStats.total), 1)])
 				]),
 				r[11] ||= z(),
-				n("tr", JH, [
-					n("td", YH, U(e.t("worktime", "Stunden")), 1),
+				n("tr", XH, [
+					n("td", ZH, U(e.t("worktime", "Stunden")), 1),
 					r[6] ||= z(),
 					(J(!0), H(F, null, u(i.months, (e) => (J(), H("td", {
 						key: e.month,
 						class: G(["col-month", s.overtimeClass(e.overtimeMinutes)])
-					}, [e.overtimeMinutes === null ? K("", !0) : (J(), H("span", XH, U(s.formatOvertimeShort(e.overtimeMinutes)), 1))], 2))), 128)),
+					}, [e.overtimeMinutes === null ? K("", !0) : (J(), H("span", QH, U(s.formatOvertimeShort(e.overtimeMinutes)), 1))], 2))), 128)),
 					r[7] ||= z(),
 					n("td", { class: G(["col-total", s.overtimeClass(i.totalOvertimeMinutes)]) }, [n("strong", null, U(s.formatOvertimeShort(i.totalOvertimeMinutes)), 1)], 2)
 				]),
 				r[12] ||= z(),
-				n("tr", ZH, [
-					n("td", QH, U(e.t("worktime", "Status")), 1),
+				n("tr", $H, [
+					n("td", eU, U(e.t("worktime", "Status")), 1),
 					r[8] ||= z(),
 					(J(!0), H(F, null, u(i.months, (n) => (J(), H("td", {
 						key: n.month,
@@ -29837,7 +29868,7 @@ function $H(e, r, i, a, o, s) {
 	]))), 128))]);
 }
 // src/views/EvaluationView.vue
-var eU = {
+var nU = {
 	name: "EvaluationView",
 	components: {
 		NcButton: Ye,
@@ -29847,20 +29878,20 @@ var eU = {
 		NcSelect: Xt,
 		ChevronLeftIcon: Ay,
 		ChevronRightIcon: Iy,
-		DownloadIcon: HV,
+		DownloadIcon: WV,
 		MagnifyIcon: Ns,
 		AccountGroupIcon: Ba,
-		AccountMultipleIcon: JV,
+		AccountMultipleIcon: XV,
 		FolderOutlineIcon: aL,
-		ViewListOutlineIcon: eH,
-		CalendarTextOutlineIcon: oH,
+		ViewListOutlineIcon: nH,
+		CalendarTextOutlineIcon: cH,
 		ChartBarIcon: Co,
 		FormatListBulletedIcon: yv,
-		CalendarMonthOutlineIcon: fH,
-		CalendarRangeIcon: vH,
-		CalendarOutlineIcon: wH,
+		CalendarMonthOutlineIcon: mH,
+		CalendarRangeIcon: bH,
+		CalendarOutlineIcon: EH,
 		YearPicker: Ky,
-		TeamYearTable: /* @__PURE__ */ Y(IH, [["render", $H], ["__scopeId", "data-v-d901f6e3"]])
+		TeamYearTable: /* @__PURE__ */ Y(RH, [["render", tU], ["__scopeId", "data-v-d901f6e3"]])
 	},
 	data() {
 		let e = /* @__PURE__ */ new Date();
@@ -29974,17 +30005,17 @@ var eU = {
 				{
 					value: "month",
 					label: this.t("worktime", "Monat"),
-					icon: fH
+					icon: mH
 				},
 				{
 					value: "quarter",
 					label: this.t("worktime", "Quartal"),
-					icon: vH
+					icon: bH
 				},
 				{
 					value: "year",
 					label: this.t("worktime", "Jahr"),
-					icon: wH
+					icon: EH
 				}
 			];
 		},
@@ -30225,55 +30256,55 @@ var eU = {
 			});
 		}
 	}
-}, tU = { class: "evaluation-view" }, nU = { class: "view-header" }, rU = { class: "view-toolbar" }, iU = ["aria-label"], aU = ["aria-label"], oU = ["onClick"], sU = { class: "view-header__nav" }, cU = { class: "period-nav" }, lU = { class: "period-nav__label" }, uU = { class: "ev-mitarbeiter" }, dU = {
+}, rU = { class: "evaluation-view" }, iU = { class: "view-header" }, aU = { class: "view-toolbar" }, oU = ["aria-label"], sU = ["aria-label"], cU = ["onClick"], lU = { class: "view-header__nav" }, uU = { class: "period-nav" }, dU = { class: "period-nav__label" }, fU = { class: "ev-mitarbeiter" }, pU = {
 	key: 0,
 	class: "ev-kpis"
-}, fU = { class: "kpi-card" }, pU = { class: "kpi-lab" }, mU = { class: "kpi-num" }, hU = { class: "kpi-card" }, gU = { class: "kpi-lab" }, _U = { class: "kpi-card" }, vU = { class: "kpi-lab" }, yU = { class: "kpi-num" }, bU = { class: "kpi-sub" }, xU = { class: "ev-subtabs" }, SU = {
+}, mU = { class: "kpi-card" }, hU = { class: "kpi-lab" }, gU = { class: "kpi-num" }, _U = { class: "kpi-card" }, vU = { class: "kpi-lab" }, yU = { class: "kpi-card" }, bU = { class: "kpi-lab" }, xU = { class: "kpi-num" }, SU = { class: "kpi-sub" }, CU = { class: "ev-subtabs" }, wU = {
 	class: "layout-seg",
 	role: "group"
-}, CU = { class: "ev-card" }, wU = {
+}, TU = { class: "ev-card" }, EU = {
 	key: 0,
 	class: "ev-dept-filter"
-}, TU = { for: "teamDeptFilter" }, EU = { class: "ev-table" }, DU = { class: "ev-emp" }, OU = { class: "ev-emp-name" }, kU = { class: "ev-emp-sub" }, AU = { class: "ev-vac" }, jU = { class: "ev-vac-num" }, MU = { class: "ev-vac-track" }, NU = {
+}, DU = { for: "teamDeptFilter" }, OU = { class: "ev-table" }, kU = { class: "ev-emp" }, AU = { class: "ev-emp-name" }, jU = { class: "ev-emp-sub" }, MU = { class: "ev-vac" }, NU = { class: "ev-vac-num" }, PU = { class: "ev-vac-track" }, FU = {
 	key: 0,
 	class: "ev-stchip ev-stchip--open"
-}, PU = {
+}, IU = {
 	key: 1,
 	class: "ev-stchip ev-stchip--ok"
-}, FU = { class: "ev-filter" }, IU = { class: "ev-filter__label" }, LU = { class: "ev-chips" }, RU = ["onClick"], zU = {
+}, LU = { class: "ev-filter" }, RU = { class: "ev-filter__label" }, zU = { class: "ev-chips" }, BU = ["onClick"], VU = {
 	key: 0,
 	class: "ev-ccust"
-}, BU = {
+}, HU = {
 	key: 1,
 	class: "ev-x"
-}, VU = { class: "ev-search" }, HU = ["placeholder"], UU = {
+}, UU = { class: "ev-search" }, WU = ["placeholder"], GU = {
 	key: 0,
 	class: "ev-filter"
-}, WU = { class: "ev-filter__label" }, GU = { class: "ev-filter" }, KU = { class: "ev-filter__label" }, qU = { class: "ev-chips" }, JU = ["onClick"], YU = { class: "ev-av" }, XU = {
+}, KU = { class: "ev-filter__label" }, qU = { class: "ev-filter" }, JU = { class: "ev-filter__label" }, YU = { class: "ev-chips" }, XU = ["onClick"], ZU = { class: "ev-av" }, QU = {
 	key: 0,
 	class: "ev-x"
-}, ZU = { class: "ev-search" }, QU = ["placeholder"], $U = { class: "ev-kpis" }, eW = { class: "kpi-card" }, tW = { class: "kpi-lab" }, nW = { class: "kpi-num" }, rW = { class: "kpi-card" }, iW = { class: "kpi-lab" }, aW = { class: "kpi-num" }, oW = { class: "kpi-card" }, sW = { class: "kpi-lab" }, cW = { class: "kpi-num" }, lW = { class: "ev-tabs" }, uW = {
+}, $U = { class: "ev-search" }, eW = ["placeholder"], tW = { class: "ev-kpis" }, nW = { class: "kpi-card" }, rW = { class: "kpi-lab" }, iW = { class: "kpi-num" }, aW = { class: "kpi-card" }, oW = { class: "kpi-lab" }, sW = { class: "kpi-num" }, cW = { class: "kpi-card" }, lW = { class: "kpi-lab" }, uW = { class: "kpi-num" }, dW = { class: "ev-tabs" }, fW = {
 	class: "layout-seg",
 	role: "group"
-}, dW = { class: "ev-export" }, fW = {
+}, pW = { class: "ev-export" }, mW = {
 	key: 2,
 	class: "ev-card"
-}, pW = { class: "ev-table" }, mW = { class: "ev-emp-name" }, hW = {
+}, hW = { class: "ev-table" }, gW = { class: "ev-emp-name" }, _W = {
 	key: 0,
 	class: "ev-emp-sub"
-}, gW = { class: "ev-num" }, _W = { class: "ev-share" }, vW = { class: "ev-bar" }, yW = { class: "ev-muted" }, bW = { class: "ev-num" }, xW = {
+}, vW = { class: "ev-num" }, yW = { class: "ev-share" }, bW = { class: "ev-bar" }, xW = { class: "ev-muted" }, SW = { class: "ev-num" }, CW = {
 	key: 3,
 	class: "ev-card"
-}, SW = { class: "ev-table ev-entries" }, CW = { class: "ev-muted" }, wW = { class: "ev-name" }, TW = { class: "ev-muted" }, EW = { class: "ev-num" }, DW = { class: "ev-muted" }, OW = { colspan: "5" }, kW = { class: "ev-num" }, AW = {
+}, wW = { class: "ev-table ev-entries" }, TW = { class: "ev-muted" }, EW = { class: "ev-name" }, DW = { class: "ev-muted" }, OW = { class: "ev-num" }, kW = { class: "ev-muted" }, AW = { colspan: "5" }, jW = { class: "ev-num" }, MW = {
 	key: 4,
 	class: "ev-empty"
 };
-function jW(e, r, i, a, o, s) {
+function NW(e, r, i, a, o, s) {
 	let c = P("AccountMultipleIcon"), l = P("FolderOutlineIcon"), d = P("YearPicker"), f = P("ChevronLeftIcon"), m = P("NcButton"), h = P("ChevronRightIcon"), g = P("NcLoadingIcon"), _ = P("ViewListOutlineIcon"), v = P("CalendarTextOutlineIcon"), b = P("NcSelect"), x = P("NcAvatar"), S = P("TeamYearTable"), C = P("AccountGroupIcon"), w = P("NcEmptyContent"), T = P("MagnifyIcon"), E = P("ChartBarIcon"), D = P("FormatListBulletedIcon"), O = P("DownloadIcon");
-	return J(), H("div", tU, [
-		n("div", nU, [n("h2", null, U(e.t("worktime", "Auswertung")), 1)]),
+	return J(), H("div", rU, [
+		n("div", iU, [n("h2", null, U(e.t("worktime", "Auswertung")), 1)]),
 		r[117] ||= z(),
-		n("div", rU, [
+		n("div", aU, [
 			n("div", {
 				class: "layout-seg",
 				role: "group",
@@ -30288,7 +30319,7 @@ function jW(e, r, i, a, o, s) {
 					class: G(["seg-btn", { active: o.mode === "projekte" }]),
 					onClick: r[1] ||= (e) => o.mode = "projekte"
 				}, [I(l, { size: 18 }), z(" " + U(e.t("worktime", "Projekte")), 1)], 2)
-			], 8, iU),
+			], 8, oU),
 			r[30] ||= z(),
 			N(n("div", {
 				class: "layout-seg",
@@ -30298,15 +30329,15 @@ function jW(e, r, i, a, o, s) {
 				key: e.value,
 				class: G(["seg-btn", { active: o.period === e.value }]),
 				onClick: (n) => s.setPeriod(e.value)
-			}, [(J(), L(p(e.icon), { size: 18 })), z(" " + U(e.label), 1)], 10, oU))), 128))], 8, aU), [[k, o.mode === "projekte"]]),
+			}, [(J(), L(p(e.icon), { size: 18 })), z(" " + U(e.label), 1)], 10, cU))), 128))], 8, sU), [[k, o.mode === "projekte"]]),
 			r[31] ||= z(),
-			n("div", sU, [
+			n("div", lU, [
 				N(I(d, {
 					year: o.teamYear,
 					onUpdate: s.onTeamYearChange
 				}, null, 8, ["year", "onUpdate"]), [[k, o.mode === "mitarbeiter"]]),
 				r[29] ||= z(),
-				N(n("div", cU, [
+				N(n("div", uU, [
 					I(m, {
 						variant: "tertiary",
 						"aria-label": e.t("worktime", "Zurück"),
@@ -30316,7 +30347,7 @@ function jW(e, r, i, a, o, s) {
 						_: 1
 					}, 8, ["aria-label"]),
 					r[27] ||= z(),
-					n("span", lU, U(s.periodLabel), 1),
+					n("span", dU, U(s.periodLabel), 1),
 					r[28] ||= z(),
 					I(m, {
 						variant: "tertiary",
@@ -30330,24 +30361,24 @@ function jW(e, r, i, a, o, s) {
 			])
 		]),
 		r[118] ||= z(),
-		N(n("div", uU, [
-			o.teamReport.length > 0 ? (J(), H("div", dU, [
-				n("div", fU, [
-					n("div", pU, U(e.t("worktime", "Mitarbeitende")), 1),
+		N(n("div", fU, [
+			o.teamReport.length > 0 ? (J(), H("div", pU, [
+				n("div", mU, [
+					n("div", hU, U(e.t("worktime", "Mitarbeitende")), 1),
 					r[32] ||= z(),
-					n("div", mU, U(s.teamKpis.count), 1)
+					n("div", gU, U(s.teamKpis.count), 1)
 				]),
 				r[35] ||= z(),
-				n("div", hU, [
-					n("div", gU, U(e.t("worktime", "Überstunden gesamt")), 1),
+				n("div", _U, [
+					n("div", vU, U(e.t("worktime", "Überstunden gesamt")), 1),
 					r[33] ||= z(),
 					n("div", { class: G(["kpi-num", s.teamKpis.overtimeMinutes >= 0 ? "kpi-pos" : "kpi-neg"]) }, U(s.signedHours(s.teamKpis.overtimeMinutes)), 3)
 				]),
 				r[36] ||= z(),
-				n("div", _U, [
-					n("div", vU, U(e.t("worktime", "Urlaub genommen")), 1),
+				n("div", yU, [
+					n("div", bU, U(e.t("worktime", "Urlaub genommen")), 1),
 					r[34] ||= z(),
-					n("div", yU, [z(U(s.teamKpis.vacationUsed) + " ", 1), n("span", bU, "/ " + U(s.formatDaysLabel(s.teamKpis.vacationTotal)), 1)])
+					n("div", xU, [z(U(s.teamKpis.vacationUsed) + " ", 1), n("span", SU, "/ " + U(s.formatDaysLabel(s.teamKpis.vacationTotal)), 1)])
 				])
 			])) : K("", !0),
 			r[58] ||= z(),
@@ -30355,7 +30386,7 @@ function jW(e, r, i, a, o, s) {
 				key: 1,
 				size: 44
 			})) : o.teamReport.length > 0 ? (J(), H(F, { key: 2 }, [
-				n("div", xU, [n("div", SU, [
+				n("div", CU, [n("div", wU, [
 					n("button", {
 						class: G(["seg-btn", { active: o.teamSubtab === "overview" }]),
 						onClick: r[4] ||= (e) => o.teamSubtab = "overview"
@@ -30367,13 +30398,13 @@ function jW(e, r, i, a, o, s) {
 					}, [I(v, { size: 18 }), z(" " + U(e.t("worktime", "Monatsdetail")), 1)], 2)
 				])]),
 				r[55] ||= z(),
-				N(n("div", CU, [
-					s.teamDepartmentOptions.length > 1 || o.teamFilterDepartmentId !== null ? (J(), H("div", wU, [
-						n("label", TU, U(e.t("worktime", "Abteilung")), 1),
+				N(n("div", TU, [
+					s.teamDepartmentOptions.length > 1 || o.teamFilterDepartmentId !== null ? (J(), H("div", EU, [
+						n("label", DU, U(e.t("worktime", "Abteilung")), 1),
 						r[38] ||= z(),
 						I(b, {
 							"label-outside": "",
-							id: "teamDeptFilter",
+							"input-id": "teamDeptFilter",
 							modelValue: s.selectedTeamDepartment,
 							"onUpdate:modelValue": r[6] ||= (e) => s.selectedTeamDepartment = e,
 							options: s.teamDepartmentOptions,
@@ -30387,7 +30418,7 @@ function jW(e, r, i, a, o, s) {
 						])
 					])) : K("", !0),
 					r[54] ||= z(),
-					n("table", EU, [
+					n("table", OU, [
 						n("thead", null, [n("tr", null, [
 							n("th", {
 								class: "sortable",
@@ -30408,7 +30439,7 @@ function jW(e, r, i, a, o, s) {
 						])]),
 						r[52] ||= z(),
 						n("tbody", null, [(J(!0), H(F, null, u(s.teamOverviewRows, (i) => (J(), H("tr", { key: i.id }, [
-							n("td", null, [n("div", DU, [
+							n("td", null, [n("div", kU, [
 								I(x, {
 									user: i.userId,
 									"display-name": i.name,
@@ -30416,24 +30447,24 @@ function jW(e, r, i, a, o, s) {
 								}, null, 8, ["user", "display-name"]),
 								r[43] ||= z(),
 								n("div", null, [
-									n("div", OU, U(i.name), 1),
+									n("div", AU, U(i.name), 1),
 									r[42] ||= z(),
-									n("div", kU, U(s.weeklyLabel(i.weeklyHours)) + " " + U(e.t("worktime", "Std./Woche")), 1)
+									n("div", jU, U(s.weeklyLabel(i.weeklyHours)) + " " + U(e.t("worktime", "Std./Woche")), 1)
 								])
 							])]),
 							r[45] ||= z(),
 							n("td", { class: G(["ev-num", i.overtimeMinutes >= 0 ? "kpi-pos" : "kpi-neg"]) }, U(s.signedHours(i.overtimeMinutes)), 3),
 							r[46] ||= z(),
-							n("td", null, [n("div", AU, [
-								n("span", jU, U(i.vacationRemaining) + " / " + U(i.vacationTotal), 1),
+							n("td", null, [n("div", MU, [
+								n("span", NU, U(i.vacationRemaining) + " / " + U(i.vacationTotal), 1),
 								r[44] ||= z(),
-								n("span", MU, [n("span", {
+								n("span", PU, [n("span", {
 									class: "ev-vac-fill",
 									style: Pe({ width: i.vacationPercent + "%" })
 								}, null, 4)])
 							])]),
 							r[47] ||= z(),
-							n("td", null, [i.openMonths > 0 ? (J(), H("span", NU, U(e.t("worktime", "Offen: {n}", { n: i.openMonths })), 1)) : (J(), H("span", PU, U(e.t("worktime", "✓ aktuell")), 1))])
+							n("td", null, [i.openMonths > 0 ? (J(), H("span", FU, U(e.t("worktime", "Offen: {n}", { n: i.openMonths })), 1)) : (J(), H("span", IU, U(e.t("worktime", "✓ aktuell")), 1))])
 						]))), 128))]),
 						r[53] ||= z(),
 						n("tfoot", null, [n("tr", null, [
@@ -30463,10 +30494,10 @@ function jW(e, r, i, a, o, s) {
 		], 512), [[k, o.mode === "mitarbeiter"]]),
 		r[119] ||= z(),
 		N(n("div", null, [
-			n("div", FU, [
-				n("div", IU, U(e.t("worktime", "Projekte")), 1),
+			n("div", LU, [
+				n("div", RU, U(e.t("worktime", "Projekte")), 1),
 				r[66] ||= z(),
-				n("div", LU, [
+				n("div", zU, [
 					n("button", {
 						class: G(["ev-chip ev-chip--all", { on: !o.selectedProjects.size }]),
 						onClick: r[10] ||= (...e) => s.clearProjects && s.clearProjects(...e)
@@ -30485,10 +30516,10 @@ function jW(e, r, i, a, o, s) {
 						r[59] ||= z(),
 						n("span", null, U(e.name), 1),
 						r[60] ||= z(),
-						e.customer ? (J(), H("span", zU, "· " + U(e.customer), 1)) : K("", !0),
+						e.customer ? (J(), H("span", VU, "· " + U(e.customer), 1)) : K("", !0),
 						r[61] ||= z(),
-						o.selectedProjects.has(e.id) ? (J(), H("span", BU, "×")) : K("", !0)
-					], 14, RU))), 128)),
+						o.selectedProjects.has(e.id) ? (J(), H("span", HU, "×")) : K("", !0)
+					], 14, BU))), 128)),
 					r[64] ||= z(),
 					s.visibleProjects.hidden ? (J(), H("button", {
 						key: 0,
@@ -30496,25 +30527,25 @@ function jW(e, r, i, a, o, s) {
 						onClick: r[11] ||= (e) => o.projectsExpanded = !0
 					}, U(e.t("worktime", "+ {count} weitere", { count: s.visibleProjects.hidden })), 1)) : K("", !0),
 					r[65] ||= z(),
-					n("label", VU, [
+					n("label", UU, [
 						I(T, { size: 16 }),
 						r[62] ||= z(),
 						N(n("input", {
 							"onUpdate:modelValue": r[12] ||= (e) => o.projectSearch = e,
 							type: "text",
 							placeholder: e.t("worktime", "Projekt suchen …")
-						}, null, 8, HU), [[y, o.projectSearch]])
+						}, null, 8, WU), [[y, o.projectSearch]])
 					])
 				])
 			]),
 			r[112] ||= z(),
-			s.projectDepartmentOptions.length > 1 || o.projectFilterDepartmentId !== null ? (J(), H("div", UU, [
-				n("div", WU, U(e.t("worktime", "Abteilung")), 1),
+			s.projectDepartmentOptions.length > 1 || o.projectFilterDepartmentId !== null ? (J(), H("div", GU, [
+				n("div", KU, U(e.t("worktime", "Abteilung")), 1),
 				r[67] ||= z(),
 				I(b, {
 					"label-outside": "",
-					"aria-label-combobox": e.t("worktime", "Alle Abteilungen"),
-					id: "projectDeptFilter",
+					"aria-label-combobox": e.t("worktime", "Abteilung"),
+					"input-id": "projectDeptFilter",
 					modelValue: s.selectedProjectDepartment,
 					"onUpdate:modelValue": r[13] ||= (e) => s.selectedProjectDepartment = e,
 					options: s.projectDepartmentOptions,
@@ -30529,10 +30560,10 @@ function jW(e, r, i, a, o, s) {
 				])
 			])) : K("", !0),
 			r[113] ||= z(),
-			n("div", GU, [
-				n("div", KU, U(e.t("worktime", "Mitarbeitende")), 1),
+			n("div", qU, [
+				n("div", JU, U(e.t("worktime", "Mitarbeitende")), 1),
 				r[74] ||= z(),
-				n("div", qU, [
+				n("div", YU, [
 					n("button", {
 						class: G(["ev-chip ev-chip--all", { on: !o.selectedEmployees.size }]),
 						onClick: r[14] ||= (...e) => s.clearEmployees && s.clearEmployees(...e)
@@ -30543,12 +30574,12 @@ function jW(e, r, i, a, o, s) {
 						class: G(["ev-chip ev-chip--emp", { on: o.selectedEmployees.has(e.id) }]),
 						onClick: (n) => s.toggleEmployee(e.id)
 					}, [
-						n("span", YU, U(s.initials(e.name)), 1),
+						n("span", ZU, U(s.initials(e.name)), 1),
 						r[68] ||= z(),
 						n("span", null, U(e.name), 1),
 						r[69] ||= z(),
-						o.selectedEmployees.has(e.id) ? (J(), H("span", XU, "×")) : K("", !0)
-					], 10, JU))), 128)),
+						o.selectedEmployees.has(e.id) ? (J(), H("span", QU, "×")) : K("", !0)
+					], 10, XU))), 128)),
 					r[72] ||= z(),
 					s.visibleEmployees.hidden ? (J(), H("button", {
 						key: 0,
@@ -30556,40 +30587,40 @@ function jW(e, r, i, a, o, s) {
 						onClick: r[15] ||= (e) => o.employeesExpanded = !0
 					}, U(e.t("worktime", "+ {count} weitere", { count: s.visibleEmployees.hidden })), 1)) : K("", !0),
 					r[73] ||= z(),
-					n("label", ZU, [
+					n("label", $U, [
 						I(T, { size: 16 }),
 						r[70] ||= z(),
 						N(n("input", {
 							"onUpdate:modelValue": r[16] ||= (e) => o.employeeSearch = e,
 							type: "text",
 							placeholder: e.t("worktime", "Mitarbeiter suchen …")
-						}, null, 8, QU), [[y, o.employeeSearch]])
+						}, null, 8, eW), [[y, o.employeeSearch]])
 					])
 				])
 			]),
 			r[114] ||= z(),
-			n("div", $U, [
-				n("div", eW, [
-					n("div", tW, U(e.t("worktime", "Gebuchte Stunden")), 1),
+			n("div", tW, [
+				n("div", nW, [
+					n("div", rW, U(e.t("worktime", "Gebuchte Stunden")), 1),
 					r[75] ||= z(),
-					n("div", nW, U(s.hours(s.totals.totalMinutes)), 1)
+					n("div", iW, U(s.hours(s.totals.totalMinutes)), 1)
 				]),
 				r[78] ||= z(),
-				n("div", rW, [
-					n("div", iW, U(e.t("worktime", "Projekte")), 1),
+				n("div", aW, [
+					n("div", oW, U(e.t("worktime", "Projekte")), 1),
 					r[76] ||= z(),
-					n("div", aW, U(s.totals.projectCount), 1)
+					n("div", sW, U(s.totals.projectCount), 1)
 				]),
 				r[79] ||= z(),
-				n("div", oW, [
-					n("div", sW, U(e.t("worktime", "Mitarbeitende")), 1),
+				n("div", cW, [
+					n("div", lW, U(e.t("worktime", "Mitarbeitende")), 1),
 					r[77] ||= z(),
-					n("div", cW, U(s.totals.employeeCount), 1)
+					n("div", uW, U(s.totals.employeeCount), 1)
 				])
 			]),
 			r[115] ||= z(),
-			n("div", lW, [
-				n("div", uW, [
+			n("div", dW, [
+				n("div", fW, [
 					n("button", {
 						class: G(["seg-btn", { active: o.tab === "agg" }]),
 						onClick: r[17] ||= (e) => o.tab = "agg"
@@ -30601,7 +30632,7 @@ function jW(e, r, i, a, o, s) {
 					}, [I(D, { size: 18 }), z(" " + U(e.t("worktime", "Einzelbuchungen")), 1)], 2)
 				]),
 				r[82] ||= z(),
-				n("div", dW, [
+				n("div", pW, [
 					I(m, {
 						variant: "secondary",
 						onClick: r[19] ||= (e) => s.exportData("csv")
@@ -30626,7 +30657,7 @@ function jW(e, r, i, a, o, s) {
 				key: 1,
 				class: "ev-loading",
 				size: 32
-			})) : o.tab === "agg" && s.aggRows.length ? (J(), H("div", fW, [n("table", pW, [
+			})) : o.tab === "agg" && s.aggRows.length ? (J(), H("div", mW, [n("table", hW, [
 				n("thead", null, [n("tr", null, [
 					n("th", {
 						class: "sortable",
@@ -30643,28 +30674,28 @@ function jW(e, r, i, a, o, s) {
 				r[92] ||= z(),
 				n("tbody", null, [(J(!0), H(F, null, u(s.aggRows, (i) => (J(), H("tr", { key: i.id }, [
 					n("td", null, [
-						n("div", mW, U(i.name), 1),
+						n("div", gW, U(i.name), 1),
 						r[85] ||= z(),
-						s.weeklyLabel(i.weeklyHours) ? (J(), H("div", hW, U(s.weeklyLabel(i.weeklyHours)) + " " + U(e.t("worktime", "Std./Woche")), 1)) : K("", !0)
+						s.weeklyLabel(i.weeklyHours) ? (J(), H("div", _W, U(s.weeklyLabel(i.weeklyHours)) + " " + U(e.t("worktime", "Std./Woche")), 1)) : K("", !0)
 					]),
 					r[87] ||= z(),
-					n("td", gW, U(s.hours(i.minutes)), 1),
+					n("td", vW, U(s.hours(i.minutes)), 1),
 					r[88] ||= z(),
-					n("td", null, [n("div", _W, [
-						n("div", vW, [n("span", { style: Pe({ width: s.pct(i.minutes) + "%" }) }, null, 4)]),
+					n("td", null, [n("div", yW, [
+						n("div", bW, [n("span", { style: Pe({ width: s.pct(i.minutes) + "%" }) }, null, 4)]),
 						r[86] ||= z(),
-						n("span", yW, U(s.pct(i.minutes)) + " %", 1)
+						n("span", xW, U(s.pct(i.minutes)) + " %", 1)
 					])])
 				]))), 128))]),
 				r[93] ||= z(),
 				n("tfoot", null, [n("tr", null, [
 					n("td", null, U(e.t("worktime", "Gesamt")), 1),
 					r[89] ||= z(),
-					n("td", bW, U(s.hours(s.totals.totalMinutes)), 1),
+					n("td", SW, U(s.hours(s.totals.totalMinutes)), 1),
 					r[90] ||= z(),
 					r[91] ||= n("td", { class: "ev-muted" }, "100 %", -1)
 				])])
-			])])) : o.tab === "detail" && s.detailRows.length ? (J(), H("div", xW, [n("table", SW, [
+			])])) : o.tab === "detail" && s.detailRows.length ? (J(), H("div", CW, [n("table", wW, [
 				n("thead", null, [n("tr", null, [
 					n("th", {
 						class: "sortable",
@@ -30693,9 +30724,9 @@ function jW(e, r, i, a, o, s) {
 				n("tbody", null, [(J(!0), H(F, null, u(s.detailRows, (i) => (J(), H("tr", { key: i.id }, [
 					n("td", null, U(s.formatDate(i.date)), 1),
 					r[101] ||= z(),
-					n("td", CW, U(s.timeRange(i)), 1),
+					n("td", TW, U(s.timeRange(i)), 1),
 					r[102] ||= z(),
-					n("td", wW, [
+					n("td", EW, [
 						n("span", {
 							class: "ev-cdot",
 							style: Pe({ background: i.color || "var(--color-border-dark)" })
@@ -30704,33 +30735,33 @@ function jW(e, r, i, a, o, s) {
 						n("span", null, U(i.projectName || e.t("worktime", "Kein Projekt")), 1)
 					]),
 					r[103] ||= z(),
-					n("td", TW, U(i.customer || "–"), 1),
+					n("td", DW, U(i.customer || "–"), 1),
 					r[104] ||= z(),
 					n("td", null, U(i.employeeName || e.t("worktime", "Unbekannt")), 1),
 					r[105] ||= z(),
-					n("td", EW, U(s.hours(i.minutes)), 1),
+					n("td", OW, U(s.hours(i.minutes)), 1),
 					r[106] ||= z(),
-					n("td", DW, U(i.description || ""), 1)
+					n("td", kW, U(i.description || ""), 1)
 				]))), 128))]),
 				r[111] ||= z(),
 				n("tfoot", null, [n("tr", null, [
-					n("td", OW, U(e.t("worktime", "Gesamt")), 1),
+					n("td", AW, U(e.t("worktime", "Gesamt")), 1),
 					r[107] ||= z(),
-					n("td", kW, U(s.hours(s.totals.totalMinutes)), 1),
+					n("td", jW, U(s.hours(s.totals.totalMinutes)), 1),
 					r[108] ||= z(),
 					r[109] ||= n("td", null, null, -1)
 				])])
-			])])) : (J(), H("div", AW, U(e.t("worktime", "Für diese Auswahl liegen keine Buchungen vor.")), 1))
+			])])) : (J(), H("div", MW, U(e.t("worktime", "Für diese Auswahl liegen keine Buchungen vor.")), 1))
 		], 512), [[k, o.mode === "projekte"]])
 	]);
 }
-var MW = /*#__PURE__*/ Y(eU, [["render", jW], ["__scopeId", "data-v-9ce58c09"]]), NW = () => {
+var PW = /*#__PURE__*/ Y(nU, [["render", NW], ["__scopeId", "data-v-d9eefeb5"]]), FW = () => {
 	let e = qo().permissions;
 	return e.employeeId ? "/tracking" : e.canManageSettings || e.canManageEmployees ? "/settings" : e.canApprove || e.isAdmin || e.isHrManager ? "/approvals" : "/tracking";
-}, PW = [
+}, IW = [
 	{
 		path: "/",
-		redirect: NW
+		redirect: FW
 	},
 	{
 		path: "/tracking",
@@ -30759,7 +30790,7 @@ var MW = /*#__PURE__*/ Y(eU, [["render", jW], ["__scopeId", "data-v-9ce58c09"]])
 	{
 		path: "/evaluation",
 		name: "evaluation",
-		component: MW
+		component: PW
 	},
 	{
 		path: "/my-settings",
@@ -30769,45 +30800,45 @@ var MW = /*#__PURE__*/ Y(eU, [["render", jW], ["__scopeId", "data-v-9ce58c09"]])
 	{
 		path: "/settings",
 		name: "settings",
-		component: qB
+		component: YB
 	},
 	{
 		path: "/audit",
 		name: "audit",
-		component: IV
+		component: RV
 	},
 	{
 		path: "/:pathMatch(.*)*",
-		redirect: NW
+		redirect: FW
 	}
-], FW = ri({
+], LW = ri({
 	history: Mr(),
-	routes: PW
+	routes: IW
 });
-FW.beforeEach((e) => {
+LW.beforeEach((e) => {
 	let n = qo().accessProfile;
 	return ts(e.name, n) ? !0 : "/";
-}), FW.afterEach((e) => {
+}), LW.afterEach((e) => {
 	localStorage.setItem("worktime_last_view", e.path);
 });
 // src/utils/modalEscape.js
-function IW(e) {
+function RW(e) {
 	if (e.key !== "Escape" || e.defaultPrevented || e.isComposing) return;
 	let n = e.target;
 	if (!n?.matches?.("input, textarea, select")) return;
 	let r = n.closest(".modal-mask");
 	r && (n.closest(".vs--open") || document.querySelector(".dp__menu") || r.querySelector(".modal-container__close")?.click());
 }
-function LW() {
-	document.addEventListener("keydown", IW);
+function zW() {
+	document.addEventListener("keydown", RW);
 }
 // src/main.js
-var RW = xe(Cc);
-RW.use(ur()), RW.config.globalProperties.t = R, RW.config.globalProperties.n = Fe;
-var zW = qo();
-zW.initFromInitialState(Ge("worktime", "permissions", {})), zW.setApprovalRequired(Ge("worktime", "approvalRequired", !1)), zW.setRequiredFields({
+var BW = xe(Cc);
+BW.use(ur()), BW.config.globalProperties.t = R, BW.config.globalProperties.n = Fe;
+var VW = qo();
+VW.initFromInitialState(Ge("worktime", "permissions", {})), VW.setApprovalRequired(Ge("worktime", "approvalRequired", !1)), VW.setRequiredFields({
 	requireProject: Ge("worktime", "requireProject", !1),
 	requireDescription: Ge("worktime", "requireDescription", !1)
-}), zW.setHourlySickEnabled(Ge("worktime", "hourlySickEnabled", !1)), zW.setEmergencyWorkEnabled(Ge("worktime", "emergencyWorkEnabled", !1)), RW.use(FW);
-var BW = localStorage.getItem("worktime_last_view");
-Fk(window.location.hash, BW) && FW.push(BW).catch(() => {}), RW.mount(".app-worktime"), LW();
+}), VW.setHourlySickEnabled(Ge("worktime", "hourlySickEnabled", !1)), VW.setEmergencyWorkEnabled(Ge("worktime", "emergencyWorkEnabled", !1)), BW.use(LW);
+var HW = localStorage.getItem("worktime_last_view");
+Fk(window.location.hash, HW) && LW.push(HW).catch(() => {}), BW.mount(".app-worktime"), zW();
