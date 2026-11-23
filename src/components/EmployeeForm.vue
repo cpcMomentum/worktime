@@ -195,7 +195,7 @@ import WorkScheduleEditor from './WorkScheduleEditor.vue'
 import { mapState, mapActions } from 'pinia'
 import { useDepartmentsStore } from '../stores/departments.ts'
 import { useEmployeesStore } from '../stores/employees.ts'
-import { formatDateISO } from '../utils/dateUtils.js'
+import { formatDateISO, parseISODate } from '../utils/dateUtils.js'
 import { sum } from '../utils/dayHours.js'
 import { showErrorMessage } from '../utils/errorHandler.js'
 import SettingsService from '../services/SettingsService.js'
@@ -245,7 +245,7 @@ export default {
          * dieses eine Jahr, deshalb wird es im Label mitgenannt (#522).
          */
         entryYear() {
-            return this.form.entryDate ? new Date(this.form.entryDate).getFullYear() : null
+            return this.form.entryDate ? parseISODate(this.form.entryDate).getFullYear() : null
         },
         /**
          * Leeres Feld heisst "nichts hinterlegt", nicht 0 — beides rechnet gleich,
@@ -371,8 +371,8 @@ export default {
                         supervisorId: employee.supervisorId,
                         departmentId: employee.departmentId ?? null,
                         federalState: employee.federalState,
-                        entryDate: employee.entryDate ? new Date(employee.entryDate) : null,
-                        exitDate: employee.exitDate ? new Date(employee.exitDate) : null,
+                        entryDate: employee.entryDate ? parseISODate(employee.entryDate) : null,
+                        exitDate: employee.exitDate ? parseISODate(employee.exitDate) : null,
                         vacationDaysUsed: employee.vacationDaysUsed ?? null,
                         vacationTransferred: employee.vacationTransferred ?? false,
                     }
