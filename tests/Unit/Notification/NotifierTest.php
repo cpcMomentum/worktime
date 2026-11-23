@@ -282,4 +282,47 @@ class NotifierTest extends TestCase {
             $this->renderAbsenceSubject(['typeName' => 'Krank', 'startDate' => '01.08.', 'endDate' => '05.08.'])
         );
     }
+
+    /**
+     * @param array<string, mixed> $params
+     */
+    private function renderSubject(string $subject, array $params): string {
+        $l10n = $this->createMock(IL10N::class);
+        $l10n->method('t')->willReturnCallback(
+            static fn (string $text, $p = []): string => vsprintf($text, (array)$p)
+        );
+        $l10nFactory = $this->createMock(IFactory::class);
+        $l10nFactory->method('get')->willReturn($l10n);
+        $notifier = new Notifier($this->createMock(IURLGenerator::class), $l10nFactory, $this->activePunchMapper);
+
+        $rendered = null;
+        $notification = $this->createMock(INotification::class);
+        $notification->method('getApp')->willReturn(Application::APP_ID);
+        $notification->method('getSubject')->willReturn($subject);
+        $notification->method('getSubjectParameters')->willReturn($params);
+        $notification->method('setParsedSubject')->willReturnCallback(
+            function (string $s) use (&$rendered, $notification) {
+                $rendered = $s;
+                return $notification;
+            }
+        );
+        $notification->method('setIcon')->willReturnSelf();
+        $notification->method('setLink')->willReturnSelf();
+        $notifier->prepare($notification, 'de');
+        return (string)$rendered;
+    }
+
+    public function testRejectedShowsReason(): void {
+        $this->assertStringContainsString(
+            'Bitte 14.10. prüfen',
+            $this->renderSubject('time_entries_rejected', ['month' => 10, 'year' => 2026, 'reason' => 'Bitte 14.10. prüfen'])
+        );
+    }
+
+    public function testRejectedWithoutReasonKeepsOldText(): void {
+        $this->assertStringStartsWith(
+            'Deine Zeiteinträge für ',
+            $this->renderSubject('time_entries_rejected', ['month' => 10, 'year' => 2026])
+        );
+    }
 }

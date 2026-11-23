@@ -141,8 +141,8 @@ class NotificationService {
 		$this->sendTimeEntryDecisionNotification($employeeId, $year, $month, 'time_entries_approved');
 	}
 
-	public function notifyTimeEntriesRejected(int $employeeId, int $year, int $month): void {
-		$this->sendTimeEntryDecisionNotification($employeeId, $year, $month, 'time_entries_rejected');
+	public function notifyTimeEntriesRejected(int $employeeId, int $year, int $month, string $reason = ''): void {
+		$this->sendTimeEntryDecisionNotification($employeeId, $year, $month, 'time_entries_rejected', $reason);
 	}
 
 	public function notifyTimeEntriesReopened(int $employeeId, int $year, int $month, string $reason = ''): void {
@@ -267,7 +267,8 @@ class NotificationService {
 
 			$this->notificationManager->notify($notification);
 
-			// Phase B/C (#593): mirror the decision to the employee's phone.
+			// Mirror to the phone without the reason: the push text omits it and a long one exceeds the job argument limit.
+			unset($params['reason']);
 			$this->queuePush($employee->getUserId(), $subject, $params);
 		} catch (\Throwable $e) {
 			$this->logger->error('Failed to send ' . $subject . ' notification', [
